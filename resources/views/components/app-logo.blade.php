@@ -3,15 +3,13 @@
 ])
 
 @if($sidebar)
-    <flux:sidebar.brand name="قطاع الشهر العقاري" {{ $attributes }}>
-        <x-slot name="logo" class="flex aspect-square size-8 items-center justify-center rounded-md overflow-hidden">
-            <img src="{{ asset('images/logo2.png') }}" class="size-8 object-contain" alt="الشعار" />
-        </x-slot>
-    </flux:sidebar.brand>
+    <a {{ $attributes }} class="flex items-center justify-center py-2">
+        <img src="{{ asset('images/logo3.png') }}" class="w-35 h-35 object-contain" alt="الشعار" />
+    </a>
 @else
     <flux:brand name="قطاع الشهر العقاري" {{ $attributes }}>
         <x-slot name="logo" class="flex aspect-square size-8 items-center justify-center rounded-md overflow-hidden">
-            <img src="{{ asset('images/logo2.png') }}" class="size-8 object-contain" alt="الشعار" />
+            <img src="{{ asset('images/logo3.png') }}" class="size-8 object-contain" alt="الشعار" />
         </x-slot>
     </flux:brand>
 @endif
