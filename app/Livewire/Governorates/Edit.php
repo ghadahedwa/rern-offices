@@ -13,18 +13,20 @@ use Livewire\Component;
 class Edit extends Component
 {
     public Governorate $governorate;
-    public string $name      = '';
-    public string $latitude  = '';
-    public string $longitude = '';
+    public string $name                   = '';
+    public string $supervising_counselor  = '';
+    public string $latitude               = '';
+    public string $longitude              = '';
 
     public function mount(Governorate $governorate): void
     {
         abort_unless(auth()->user()?->hasRole('super-admin'), 403);
 
-        $this->governorate = $governorate;
-        $this->name        = $governorate->name;
-        $this->latitude    = (string) ($governorate->latitude ?? '');
-        $this->longitude   = (string) ($governorate->longitude ?? '');
+        $this->governorate            = $governorate;
+        $this->name                   = $governorate->name;
+        $this->supervising_counselor  = $governorate->supervising_counselor ?? '';
+        $this->latitude               = (string) ($governorate->latitude ?? '');
+        $this->longitude              = (string) ($governorate->longitude ?? '');
     }
 
     public function save(): void
@@ -36,9 +38,10 @@ class Edit extends Component
         ]);
 
         $this->governorate->update([
-            'name'      => $this->name,
-            'latitude'  => $this->latitude ?: null,
-            'longitude' => $this->longitude ?: null,
+            'name'                  => $this->name,
+            'supervising_counselor' => $this->supervising_counselor ?: null,
+            'latitude'              => $this->latitude ?: null,
+            'longitude'             => $this->longitude ?: null,
         ]);
 
         Flux::toast(variant: 'success', text: __('home.governorate_updated'));

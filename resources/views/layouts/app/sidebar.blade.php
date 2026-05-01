@@ -27,14 +27,17 @@
                     <flux:sidebar.item icon="home" :href="route('dashboard')" :current="request()->routeIs('dashboard')" wire:navigate>
                         {{ __('home.dashboard') }}
                     </flux:sidebar.item>
+                    <flux:sidebar.item icon="map-pin" :href="route('governorates.index')" :current="request()->routeIs('governorates.*')" wire:navigate>
+                        {{ __('home.governorates') }}
+                    </flux:sidebar.item>
+                    <flux:sidebar.item icon="building-office-2" :href="route('offices.index')" :current="request()->routeIs('offices.*')" wire:navigate>
+                        {{ __('home.offices') }}
+                    </flux:sidebar.item>
                     <flux:sidebar.item icon="users" :href="route('users.index')" :current="request()->routeIs('users.*')" wire:navigate>
                         {{ __('home.users') }}
                     </flux:sidebar.item>
                     <flux:sidebar.item icon="shield-check" :href="route('roles.index')" :current="request()->routeIs('roles.*')" wire:navigate>
                         {{ __('home.roles') }}
-                    </flux:sidebar.item>
-                    <flux:sidebar.item icon="map-pin" :href="route('governorates.index')" :current="request()->routeIs('governorates.*')" wire:navigate>
-                        {{ __('home.governorates') }}
                     </flux:sidebar.item>
                 </flux:sidebar.group>
             </flux:sidebar.nav>

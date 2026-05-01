@@ -12,9 +12,10 @@ use Livewire\Component;
 #[Title('إضافة محافظة')]
 class Create extends Component
 {
-    public string $name      = '';
-    public string $latitude  = '';
-    public string $longitude = '';
+    public string $name                   = '';
+    public string $supervising_counselor  = '';
+    public string $latitude               = '';
+    public string $longitude              = '';
 
     public function mount(): void
     {
@@ -30,9 +31,10 @@ class Create extends Component
         ]);
 
         Governorate::create([
-            'name'      => $this->name,
-            'latitude'  => $this->latitude ?: null,
-            'longitude' => $this->longitude ?: null,
+            'name'                  => $this->name,
+            'supervising_counselor' => $this->supervising_counselor ?: null,
+            'latitude'              => $this->latitude ?: null,
+            'longitude'             => $this->longitude ?: null,
         ]);
 
         Flux::toast(variant: 'success', text: __('home.governorate_created'));
