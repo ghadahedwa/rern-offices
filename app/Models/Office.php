@@ -10,12 +10,16 @@ class Office extends Model
 {
     protected $fillable = [
         'governorate_id', 'parent_office_id',
-        'name', 'established_at', 'type',
-        'location_description', 'work_system', 'address',
-        'google_maps_link', 'floors_description', 'connection_type',
-        'avg_daily_transactions', 'contractual_status', 'structural_condition',
-        'cleanliness_rating', 'working_hours', 'archive_rating',
-        'microfilm', 'disabilities_access', 'fire_safety',
+        'name', 'established_at',
+        'type_id', 'location_description_id', 'work_system_id',
+        'address', 'google_maps_link', 'floors_description',
+        'connection_type_id', 'working_hours_id', 'avg_daily_transactions',
+        'contractual_status_id', 'structural_condition',
+        'cleanliness_rating', 'archive_rating',
+        'microfilm_option_id', 'disabilities_access_id', 'fire_safety_id',
+        'document_photocopying_service_id', 'buffet_service_id', 'cleanliness_contract_id',
+        'office_area', 'district_court', 'Braille_sign_device', 'queue_management_system',
+        'payment_machine_count', 'computers_count', 'scanners_count', 'printers_count', 'fingerprints_count',
         'negatives_and_solutions', 'development_proposals',
     ];
 
@@ -23,46 +27,7 @@ class Office extends Model
         'established_at' => 'date',
     ];
 
-    public const TYPES = [
-        'main'                 => 'مكتب رئيسي',
-        'documentation_branch' => 'فرع توثيق',
-        'registration_agency'  => 'مأمورية شهر',
-        'merged'               => 'فرع توثيق ومأمورية شهر (مدمج)',
-        'real_estate_register' => 'سجل عيني',
-        'administration'       => 'إدارة',
-    ];
-
-    public const LOCATION_DESCRIPTIONS = [
-        'regular'         => 'مقر عادي',
-        'court'           => 'محكمة',
-        'post'            => 'بريد',
-        'urban_community' => 'مجتمع عمراني',
-        'club'            => 'أندية',
-        'investment'      => 'استثمار',
-        'mall'            => 'مول',
-        'orange'          => 'أورنج',
-        'telecom'         => 'اتصالات',
-    ];
-
-    public const WORK_SYSTEMS = [
-        'advance_booking' => 'حجز مسبق',
-        'regular'         => 'عادي',
-    ];
-
-    public const CONNECTION_TYPES = [
-        'fiber'          => 'فايبر',
-        'copper'         => 'نحاسي',
-        'wifi'           => 'واي فاي',
-        'safety_network' => 'شبكة سلامة',
-    ];
-
-    public const CONTRACTUAL_STATUSES = [
-        'new_rent'  => 'إيجار جديد',
-        'old_rent'  => 'إيجار قديم',
-        'owned'     => 'ملك',
-        'allocated' => 'تخصيص',
-    ];
-
+    // Lookup table constants (step 3 assessments — still string-based)
     public const STRUCTURAL_CONDITIONS = [
         'good'                 => 'جيدة',
         'average'              => 'متوسطة',
@@ -76,12 +41,6 @@ class Office extends Model
         'bad'     => 'سيئة',
     ];
 
-    public const WORKING_HOURS = [
-        'morning_eve1'      => 'صباحي ومسائي أول',
-        'morning_eve1_eve2' => 'صباحي ومسائي أول وثاني',
-        'evening_only'      => 'مسائي فقط',
-    ];
-
     public const ARCHIVE_RATINGS = [
         'excellent' => 'ممتازة',
         'good'      => 'جيدة',
@@ -89,28 +48,71 @@ class Office extends Model
         'bad'       => 'سيئة',
     ];
 
-    public const MICROFILM_OPTIONS = [
-        'al_ahram'  => 'يوجد ويتبع الأهرام',
-        'al_akhbar' => 'يوجد ويتبع الأخبار',
-        'none'      => 'لا يوجد',
-    ];
-
-    public const DISABILITIES_ACCESS = [
-        'equipped'     => 'يوجد',
-        'feasible'     => 'لا يوجد ويصلح لعمل التجهيزات',
-        'not_feasible' => 'لا يوجد ولا يصلح',
-    ];
-
-    public const FIRE_SAFETY = [
-        'auto'                      => 'إطفاء ذاتي',
-        'extinguishers_ok'          => 'يوجد طفايات ولا تحتاج صيانة',
-        'extinguishers_maintenance' => 'يوجد طفايات وتحتاج صيانة',
-        'none'                      => 'لا يوجد طفايات حريق',
-    ];
+    
 
     public function governorate(): BelongsTo
     {
         return $this->belongsTo(Governorate::class);
+    }
+
+    public function officeType(): BelongsTo
+    {
+        return $this->belongsTo(OfficeType::class, 'type_id');
+    }
+
+    public function locationDescription(): BelongsTo
+    {
+        return $this->belongsTo(LocationDescription::class, 'location_description_id');
+    }
+
+    public function workSystem(): BelongsTo
+    {
+        return $this->belongsTo(WorkSystem::class, 'work_system_id');
+    }
+
+    public function connectionType(): BelongsTo
+    {
+        return $this->belongsTo(ConnectionType::class, 'connection_type_id');
+    }
+
+    public function workingHour(): BelongsTo
+    {
+        return $this->belongsTo(WorkingHour::class, 'working_hours_id');
+    }
+
+    public function contractualStatus(): BelongsTo
+    {
+        return $this->belongsTo(ContractualStatus::class, 'contractual_status_id');
+    }
+
+    public function MicrofilmOption(): BelongsTo
+    {
+        return $this->belongsTo(MicrofilmOption::class, 'microfilm_option_id');
+    }
+
+    public function DisabilitieAccess(): BelongsTo
+    {
+        return $this->belongsTo(DisabilitieAccess::class, 'disabilitie_access_id');
+    }
+
+    public function FireSafety(): BelongsTo
+    {
+        return $this->belongsTo(FireSafety::class, 'fire_safety_id');
+    }
+
+    public function DocumentPhotocopyingService(): BelongsTo
+    {
+        return $this->belongsTo(DocumentPhotocopyingService::class, 'document_photocopying_service_id');
+    }
+
+    public function BuffetService(): BelongsTo
+    {
+        return $this->belongsTo(BuffetService::class, 'buffet_service_id');
+    }
+
+    public function CleanlinessContract(): BelongsTo
+    {
+        return $this->belongsTo(CleanlinessContract::class, 'cleanliness_contract_id');
     }
 
     public function parentOffice(): BelongsTo

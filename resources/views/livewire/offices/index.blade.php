@@ -55,7 +55,7 @@
                         <td class="px-4 py-3 text-zinc-600 dark:text-zinc-300">{{ $office->governorate->name }}</td>
                         <td class="px-4 py-3">
                             <span class="inline-block px-2 py-0.5 rounded-full text-xs font-medium bg-[#c9a847]/15 text-[#b8962e] dark:text-[#c9a847]">
-                                {{ \App\Models\Office::TYPES[$office->type] ?? $office->type }}
+                              {{ $office->officeType->name ?? '—' }}
                             </span>
                         </td>
                         <td class="px-4 py-3 text-zinc-600 dark:text-zinc-300">

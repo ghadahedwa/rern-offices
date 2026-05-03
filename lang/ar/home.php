@@ -73,6 +73,9 @@ return [
     'cannot_delete_superadmin' => 'لا يمكن حذف مستخدم المدير العام',
     'cannot_edit_superadmin'   => 'لا يمكن تعديل مستخدم المدير العام',
     'leave_blank_password'   => 'اتركه فارغاً إذا لم تريد تغيير كلمة المرور',
+    'users_settings'=>'إعدادات المستخدمين',
+    'program_settings'=>'إعدادات البرنامج',
+
         //governorates
     'governorates'           => 'المحافظات(المكاتب)',
     'governorate'            => 'المحافظة(المقر الرئيسي)',
@@ -99,4 +102,88 @@ return [
     'confirm_delete_office'    => 'هل أنت متأكد من حذف هذا المقر؟',
     'all_governorates'         => 'كل المحافظات',
     'supervising_counselor'    => 'المستشار المشرف',
+
+    // Office create — step labels
+    'step_1_label'             => 'المعلومات الأساسية',
+    'step_2_label'             => 'خدمات وتجهيزات المقر',
+    'step_3_label'             => 'التقييمات والملاحظات',
+    'step_4_label'             => 'الوسائط',
+
+    // Office create — section headers
+    'section_basic_data'       => 'البيانات الأساسية',
+    'section_location_data'    => 'بيانات الموقع',
+    'section_operations_data'  => 'بيانات التشغيل',
+    'section_structure_data'   => 'البنية والمساحة',
+
+    // Office create — field labels
+    'established_at'           => 'تاريخ الإنشاء',
+    'parent_office'            => 'المقر الرئيسي (إن وجد)',
+    'location_description'     => 'وصف المقر',
+    'work_system'              => 'نظام العمل',
+    'address'                  => 'العنوان تفصيلاً',
+    'google_maps_link'         => 'رابط جوجل مابس',
+    'floors_description'       => 'تحديد أدوار المقر',
+    'connection_type'          => 'نوع خط الربط',
+    'avg_daily_transactions'   => 'متوسط المعاملات اليومية',
+    'contractual_status'       => 'الوضع التعاقدي',
+    'working_hours'            => 'ساعات العمل',
+    'structural_condition'     => 'الحالة الإنشائية',
+    'office_area'              => 'مساحة المقر (م²)',
+    'district_court'           => 'المحكمة الجزئية التى تقع بدائرتها المقر',
+    'microfilm'                => 'ميكروفيلم',
+    'disabilities_access'      => 'إمكانية الوصول لذوي الاحتياجات',
+    'fire_safety'              => 'سلامة الحريق',
+
+    // Office create — select placeholders
+    'select_governorate'       => '— اختر المحافظة —',
+    'select_type'              => '— اختر نوع المقر —',
+    'select_location'          => '— اختر وصف المقر —',
+    'select_work_system'       => '— اختر نظام العمل —',
+    'select_connection'        => '— اختياري —',
+    'select_contractual_status'=> '— اختر الوضع —',
+    'select_working_hours'     => '— اختر ساعات العمل —',
+    'select_structural'        => '— اختر الحالة —',
+    'no_parent_office'         => '— لا يوجد —',
+    'select_option'            => '— اختر —',
+
+    // Office create — field placeholders
+    'placeholder_office_name'  => 'اسم المقر',
+    'placeholder_google_maps'  => 'https://maps.google.com/...',
+    'placeholder_floors'       => 'مثال: الدور الأول والثاني',
+    'placeholder_address'      => 'العنوان الكامل للمقر',
+    'placeholder_district_court'=> 'اسم محكمة الدائرة',
+
+    // Office create — step 2 section headers
+    'section_services_equipment'       => 'الخدمات والتجهيزات',
+    'section_devices_counts'           => 'الأجهزة والمعدات',
+
+    // Office create — step 2 field labels
+    'microfilm_option'                 => 'الميكروفيلم',
+    'disabilities_access_label'        => 'تجهيزات ذوى الهمم',
+    'fire_safety_label'                => 'الحماية المدنية',
+    'document_photocopying_service'    => 'خدمة تصوير المستندات',
+    'buffet_service'                   => 'البوفيه',
+    'cleanliness_contract'             => 'عقد النظافة',
+    'braille_sign_device'              => 'جهاز برايل لغة الإشارة',
+    'queue_management_system'          => 'منظم الدور كيوسيستم',
+    'payment_machine_count'            => 'عدد ماكينات التحصيل',
+    'computers_count'                  => 'عدد أجهزة الكمبيوتر',
+    'scanners_count'                   => 'عدد أجهزة الاسكانر',
+    'printers_count'                   => 'عدد الطابعات',
+    'fingerprints_count'               => 'عدد أجهزة البصمة',
+
+    // Office create — step 2 static options
+    'option_available'                 => 'يوجد',
+    'option_not_available'             => 'لا يوجد',
+    'option_working'                   => 'يعمل',
+    'option_not_working'               => 'لا يعمل',
+
+    // Office create — navigation buttons
+    'save_and_exit'            => 'حفظ والخروج',
+    'previous_step'            => 'السابق',
+    'next_step'                => 'حفظ والتالي',
+    'save_office_btn'          => 'حفظ المقر',
+
+    // Shared
+    'coming_soon'              => 'قيد التطوير — سيتم إضافته قريباً',
 ];

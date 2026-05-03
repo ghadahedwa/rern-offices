@@ -33,13 +33,38 @@
                     <flux:sidebar.item icon="building-office-2" :href="route('offices.index')" :current="request()->routeIs('offices.*')" wire:navigate>
                         {{ __('home.offices') }}
                     </flux:sidebar.item>
-                    <flux:sidebar.item icon="users" :href="route('users.index')" :current="request()->routeIs('users.*')" wire:navigate>
-                        {{ __('home.users') }}
-                    </flux:sidebar.item>
-                    <flux:sidebar.item icon="shield-check" :href="route('roles.index')" :current="request()->routeIs('roles.*')" wire:navigate>
-                        {{ __('home.roles') }}
-                    </flux:sidebar.item>
+                    
+                    <div x-data="{ open: {{ request()->routeIs('users.*') || request()->routeIs('roles.*') ? 'true' : 'false' }} }">
+                        <!-- Parent Item -->
+                        <button @click="open = !open"
+                            class="flex items-center w-full px-3 py-2 text-sm font-medium hover:bg-gray-100 rounded">
+
+                            <span>⚙️</span>
+                            <span class="ml-2 text-[#747474]">{{ __('home.users_settings') }}</span>
+
+                            <svg class="ml-auto w-4 h-4 transition-transform"
+                                :class="{ 'rotate-180': open }"
+                                viewBox="0 0 20 20">
+                                <path d="M5 8l5 5 5-5" fill="none" stroke="currentColor"/>
+                            </svg>
+
+                        </button>
+
+                        <!-- Submenu -->
+                        <div x-show="open" x-transition class="ml-6 mt-1 space-y-1">
+                            <flux:sidebar.item icon="users" :href="route('users.index')" :current="request()->routeIs('users.*')" wire:navigate>
+                                            {{ __('home.users') }}
+                                        </flux:sidebar.item>
+                                        <flux:sidebar.item icon="shield-check" :href="route('roles.index')" :current="request()->routeIs('roles.*')" wire:navigate>
+                                            {{ __('home.roles') }}
+                                        </flux:sidebar.item>
+
+                        </div>
+
+                    </div>
+                    
                 </flux:sidebar.group>
+                
             </flux:sidebar.nav>
         </flux:sidebar>
 
