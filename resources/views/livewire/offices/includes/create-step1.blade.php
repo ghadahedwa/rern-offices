@@ -29,6 +29,10 @@
                         @error('name') <p class="mt-1 text-xs text-red-500">{{ $message }}</p> @enderror
                     </div>
                     <div>
+                        <label class="{{ $lbl }}">{{ __('home.established_at') }}</label>
+                        <input wire:model="established_at" type="date" class="{{ $inp }}" />
+                    </div>
+                    <div>
                         <label class="{{ $lbl }}">{{ __('home.office_type') }} <span class="text-red-500">*</span></label>
                         <select wire:model="type_id" class="{{ $inp }}">
                             <option value="">{{ __('home.select_type') }}</option>
@@ -37,6 +41,15 @@
                             @endforeach
                         </select>
                         @error('type_id') <p class="mt-1 text-xs text-red-500">{{ $message }}</p> @enderror
+                    </div>
+                    <div>
+                        <label class="{{ $lbl }}">{{ __('home.parent_office') }}</label>
+                        <select wire:model="parent_office_id" class="{{ $inp }}">
+                            <option value="">{{ __('home.no_parent_office') }}</option>
+                            @foreach ($mainOffices as $item)
+                                <option value="{{ $item->id }}">{{ $item->name }}</option>
+                            @endforeach
+                        </select>
                     </div>
                 </div>
             </div>
@@ -137,15 +150,6 @@
                     <h3 class="text-sm font-semibold text-zinc-600 dark:text-zinc-400 uppercase tracking-wide">{{ __('home.section_structure_data') }}</h3>
                 </div>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-                    <div>
-                        <label class="{{ $lbl }}">{{ __('home.structural_condition') }}</label>
-                        <select wire:model="structural_condition" class="{{ $inp }}">
-                            <option value="">{{ __('home.select_structural') }}</option>
-                            @foreach (\App\Models\Office::STRUCTURAL_CONDITIONS as $value => $label)
-                                <option value="{{ $value }}">{{ $label }}</option>
-                            @endforeach
-                        </select>
-                    </div>
                     <div>
                         <label class="{{ $lbl }}">{{ __('home.office_area') }}</label>
                         <input wire:model="office_area" type="number" min="0" placeholder="0" class="{{ $inp }}" />

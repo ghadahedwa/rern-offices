@@ -55,6 +55,7 @@
         @php
             $inp = 'w-full border border-zinc-300 dark:border-zinc-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-[#c9a847]';
             $lbl = 'block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1';
+            $err = 'text-red-500 text-xs mt-1';
         @endphp
 
         {{-- ===================== STEP 1 ===================== --}}
@@ -74,15 +75,7 @@
 
         {{-- ===================== STEP 4 ===================== --}}
         @if ($step === 4)
-            <div class="flex flex-col items-center justify-center py-16 text-center gap-3">
-                <div class="w-14 h-14 rounded-full bg-[#c9a847]/10 flex items-center justify-center">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="w-7 h-7 text-[#c9a847]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-                    </svg>
-                </div>
-                <h3 class="text-lg font-semibold text-zinc-700 dark:text-zinc-300">{{ __('home.step_4_label') }}</h3>
-                <p class="text-sm text-zinc-400">{{ __('home.coming_soon') }}</p>
-            </div>
+            @include('livewire.offices.includes.create-step4') 
         @endif
 
     </div>

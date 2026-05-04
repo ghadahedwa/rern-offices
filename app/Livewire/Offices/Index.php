@@ -3,7 +3,9 @@
 namespace App\Livewire\Offices;
 
 use App\Models\Governorate;
+use App\Models\LocationDescription;
 use App\Models\Office;
+use App\Models\OfficeType;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 use Livewire\Attributes\Url;
@@ -21,6 +23,12 @@ class Index extends Component
     #[Url]
     public ?int $governorate_id = null;
 
+    #[Url]
+    public ?int $type_id = null;
+
+    #[Url]
+    public ?int $location_description_id = null;
+
     public function mount(): void
     {
         abort_unless(
@@ -31,11 +39,15 @@ class Index extends Component
 
     public function updatingSearch(): void { $this->resetPage(); }
     public function updatingGovernorateId(): void { $this->resetPage(); }
+    public function updatingTypeId(): void { $this->resetPage(); }
+    public function updatingLocationDescriptionId(): void { $this->resetPage(); }
 
     public function render()
     {
-        $query = Office::with(['governorate'])
+        $query = Office::with(['governorate', 'officeType', 'locationDescription'])
             ->when($this->governorate_id, fn($q) => $q->where('governorate_id', $this->governorate_id))
+            ->when($this->type_id, fn($q) => $q->where('type_id', $this->type_id))
+            ->when($this->location_description_id, fn($q) => $q->where('location_description_id', $this->location_description_id))
             ->when($this->search, fn($q) => $q->where('name', 'like', "%{$this->search}%"))
             ->latest();
 
@@ -43,8 +55,10 @@ class Index extends Component
         $isSuperAdmin = $user?->hasRole('super-admin');
 
         return view('livewire.offices.index', [
-            'offices'      => $query->paginate(10),
-            'governorates' => Governorate::orderBy('id')->get(),
+            'offices'               => $query->paginate(10),
+            'governorates'          => Governorate::orderBy('id')->get(),
+            'officeTypes'           => OfficeType::orderBy('name')->get(),
+            'locationDescriptions'  => LocationDescription::orderBy('name')->get(),
             'isSuperAdmin' => $isSuperAdmin,
             'canCreate'    => $isSuperAdmin || $user?->can('offices.create'),
             'canEdit'      => $isSuperAdmin || $user?->can('offices.edit'),

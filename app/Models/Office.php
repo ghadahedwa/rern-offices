@@ -10,12 +10,13 @@ class Office extends Model
 {
     protected $fillable = [
         'governorate_id', 'parent_office_id',
-        'name', 'established_at',
+        'name', 'established_at', 'visited_at',
         'type_id', 'location_description_id', 'work_system_id',
         'address', 'google_maps_link', 'floors_description',
         'connection_type_id', 'working_hours_id', 'avg_daily_transactions',
-        'contractual_status_id', 'structural_condition',
+        'contractual_status_id', 'structural_condition_id',
         'cleanliness_rating', 'archive_rating',
+        'work_schedule_commitment', 'citizen_treatment_commitment',
         'microfilm_option_id', 'disabilities_access_id', 'fire_safety_id',
         'document_photocopying_service_id', 'buffet_service_id', 'cleanliness_contract_id',
         'office_area', 'district_court', 'Braille_sign_device', 'queue_management_system',
@@ -25,14 +26,7 @@ class Office extends Model
 
     protected $casts = [
         'established_at' => 'date',
-    ];
-
-    // Lookup table constants (step 3 assessments — still string-based)
-    public const STRUCTURAL_CONDITIONS = [
-        'good'                 => 'جيدة',
-        'average'              => 'متوسطة',
-        'deteriorated_upgrade' => 'متهالك ويحتاج رفع كفاءة',
-        'deteriorated_replace' => 'متهالك ويحتاج لمقر بديل',
+        'visited_at'     => 'date',
     ];
 
     public const CLEANLINESS_RATINGS = [
@@ -48,11 +42,23 @@ class Office extends Model
         'bad'       => 'سيئة',
     ];
 
+    public const COMMITMENT_RATINGS = [
+        'excellent' => 'ممتازة',
+        'good'      => 'جيدة',
+        'average'   => 'متوسطة',
+        'bad'       => 'سيئة',
+    ];
+
     
 
     public function governorate(): BelongsTo
     {
         return $this->belongsTo(Governorate::class);
+    }
+
+    public function structuralCondition(): BelongsTo
+    {
+        return $this->belongsTo(StructuralCondition::class, 'structural_condition_id');
     }
 
     public function officeType(): BelongsTo

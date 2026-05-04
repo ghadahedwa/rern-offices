@@ -15,18 +15,36 @@
     </div>
 
     {{-- Filters --}}
-    <div class="flex flex-wrap gap-4">
+    <div class="flex flex-wrap gap-3">
         <div class="flex-1 min-w-48 max-w-sm">
             <input wire:model.live.debounce.300ms="search" type="text"
                    placeholder="{{ __('home.search') }}"
                    class="w-full border border-zinc-300 dark:border-zinc-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-[#c9a847]" />
         </div>
-        <div class="min-w-48">
+        <div class="min-w-44">
             <select wire:model.live="governorate_id"
                     class="w-full border border-zinc-300 dark:border-zinc-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-[#c9a847]">
                 <option value="">{{ __('home.all_governorates') }}</option>
                 @foreach ($governorates as $gov)
                     <option value="{{ $gov->id }}">{{ $gov->name }}</option>
+                @endforeach
+            </select>
+        </div>
+        <div class="min-w-44">
+            <select wire:model.live="type_id"
+                    class="w-full border border-zinc-300 dark:border-zinc-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-[#c9a847]">
+                <option value="">— {{ __('home.office_type') }} —</option>
+                @foreach ($officeTypes as $type)
+                    <option value="{{ $type->id }}">{{ $type->name }}</option>
+                @endforeach
+            </select>
+        </div>
+        <div class="min-w-44">
+            <select wire:model.live="location_description_id"
+                    class="w-full border border-zinc-300 dark:border-zinc-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-[#c9a847]">
+                <option value="">— {{ __('home.location_description') }} —</option>
+                @foreach ($locationDescriptions as $desc)
+                    <option value="{{ $desc->id }}">{{ $desc->name }}</option>
                 @endforeach
             </select>
         </div>
@@ -65,9 +83,13 @@
                             <td class="px-4 py-3">
                                 <div class="flex items-center gap-2">
                                     @if($canEdit)
-                                        <span class="inline-flex items-center text-xs px-3 py-1.5 rounded-md border border-zinc-300 dark:border-zinc-600 text-zinc-500 dark:text-zinc-400">
+                                        <a href="{{ route('offices.edit', $office) }}" wire:navigate
+                                           class="inline-flex items-center gap-1 text-xs px-3 py-1.5 rounded-md border border-zinc-300 dark:border-zinc-600 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                                            </svg>
                                             {{ __('home.edit') }}
-                                        </span>
+                                        </a>
                                     @endif
                                 </div>
                             </td>

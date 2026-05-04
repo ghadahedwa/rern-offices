@@ -9,7 +9,7 @@ class OfficeMedia extends Model
 {
     protected $table = 'office_media';
 
-    protected $fillable = ['office_id', 'type', 'path'];
+    protected $fillable = ['office_id', 'type', 'path', 'original_name'];
 
     public function office(): BelongsTo
     {

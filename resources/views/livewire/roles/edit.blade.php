@@ -1,4 +1,4 @@
-<div class="p-6 max-w-2xl mx-auto space-y-6">
+<div class="p-6 max-w-3xl mx-auto space-y-6">
 
     {{-- Header --}}
     <div class="flex items-center justify-between">
@@ -29,19 +29,7 @@
                 <label class="text-sm font-medium text-zinc-700 dark:text-zinc-300">
                     {{ __('home.permissions') }}
                 </label>
-                <div class="grid grid-cols-2 gap-3">
-                    @foreach($permissions as $permission)
-                        <label class="flex items-center gap-3 p-3 rounded-lg border border-zinc-200 dark:border-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-800 cursor-pointer transition">
-                            <input
-                                type="checkbox"
-                                wire:model="selectedPermissions"
-                                value="{{ $permission->name }}"
-                                class="w-4 h-4 rounded accent-[#c9a847]"
-                            />
-                            <span class="text-sm text-zinc-700 dark:text-zinc-300">{{ $permission->name }}</span>
-                        </label>
-                    @endforeach
-                </div>
+                @include('livewire.roles.partials.permissions-grid')
             </div>
 
             {{-- Buttons --}}

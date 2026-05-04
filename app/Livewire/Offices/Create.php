@@ -3,6 +3,8 @@
 namespace App\Livewire\Offices;
 
 use App\Models\BuffetService;
+use App\Models\OfficeMedia;
+use App\Models\StructuralCondition;
 use App\Models\CleanlinessContract;
 use App\Models\ConnectionType;
 use App\Models\ContractualStatus;
@@ -21,13 +23,17 @@ use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 use Livewire\Attributes\Url;
 use Livewire\Component;
+use Livewire\WithFileUploads;
 
 #[Layout('layouts.app')]
 #[Title('مقر')]
 class Create extends Component
 {
+    use WithFileUploads;
+    #[Url]
     public int $step = 1;
     public int $totalSteps = 4;
+    #[Url]
     public ?int $office_id = null;
     public bool $isEditing = false;
 
@@ -48,7 +54,7 @@ class Create extends Component
     public string $avg_daily_transactions = '';
     public ?int $contractual_status_id = null;
 
-    public string $structural_condition = '';
+    public ?int $structural_condition_id = null;
     public string $office_area = '';
     public string $district_court = '';
 
@@ -67,6 +73,20 @@ class Create extends Component
     public string $printers_count = '';
     public string $fingerprints_count = '';
 
+    // Step 3 — Assessments
+    public string $visited_at = '';
+    public string $cleanliness_rating = '';
+    public string $archive_rating = '';
+    public string $work_schedule_commitment = '';
+    public string $citizen_treatment_commitment = '';
+    public string $negatives_and_solutions = '';
+    public string $development_proposals = '';
+
+    // Step 3 — Media uploads
+    public array $newPhotos    = [];
+    public mixed $newVideo     = null;
+    public array $newDocuments = [];
+
     public function mount(?Office $office = null): void
     {
         /** @var \App\Models\User|null $user */
@@ -77,6 +97,16 @@ class Create extends Component
             $this->isEditing = true;
             $this->office_id = $office->id;
             $this->loadOffice($office);
+        } elseif ($this->office_id) {
+            // Resuming a create session (e.g. browser back) — office already persisted
+            $existing = Office::find($this->office_id);
+            if ($existing) {
+                abort_unless($user?->hasRole('super-admin') || $user?->can('offices.create') || $user?->can('offices.edit'), 403);
+                $this->loadOffice($existing);
+            } else {
+                $this->office_id = null;
+                abort_unless($user?->hasRole('super-admin') || $user?->can('offices.create'), 403);
+            }
         } else {
             abort_unless($user?->hasRole('super-admin') || $user?->can('offices.create'), 403);
         }
@@ -99,7 +129,7 @@ class Create extends Component
         $this->working_hours_id        = $office->working_hours_id;
         $this->avg_daily_transactions  = (string) ($office->avg_daily_transactions ?? '');
         $this->contractual_status_id   = $office->contractual_status_id;
-        $this->structural_condition    = $office->structural_condition ?? '';
+        $this->structural_condition_id = $office->structural_condition_id;
         $this->office_area             = (string) ($office->office_area ?? '');
         $this->district_court          = $office->district_court ?? '';
 
@@ -117,6 +147,15 @@ class Create extends Component
         $this->scanners_count                   = (string) ($office->scanners_count ?? '');
         $this->printers_count                   = (string) ($office->printers_count ?? '');
         $this->fingerprints_count               = (string) ($office->fingerprints_count ?? '');
+
+        // Step 3
+        $this->visited_at                  = $office->visited_at?->format('Y-m-d') ?? '';
+        $this->cleanliness_rating          = $office->cleanliness_rating ?? '';
+        $this->archive_rating              = $office->archive_rating ?? '';
+        $this->work_schedule_commitment    = $office->work_schedule_commitment ?? '';
+        $this->citizen_treatment_commitment = $office->citizen_treatment_commitment ?? '';
+        $this->negatives_and_solutions     = $office->negatives_and_solutions ?? '';
+        $this->development_proposals       = $office->development_proposals ?? '';
     }
 
     private function step1Validation(): void
@@ -131,6 +170,64 @@ class Create extends Component
             'name.required'             => 'يرجى إدخال اسم المقر',
             'type_id.required'          => 'يرجى اختيار نوع المقر',
             'working_hours_id.required' => 'يرجى اختيار ساعات العمل',
+        ]);
+    }
+
+    public function clearPhotos(): void    { $this->newPhotos    = []; }
+    public function clearVideo(): void     { $this->newVideo     = null; }
+    public function clearDocuments(): void { $this->newDocuments = []; }
+
+    private function mediaValidation(): void
+    {
+        $existingCount = $this->office_id
+            ? OfficeMedia::where('office_id', $this->office_id)->where('type', 'photo')->count()
+            : 0;
+        $remaining = max(0, 5 - $existingCount);
+
+        $this->validate([
+            'newPhotos'    => "array|max:{$remaining}",
+            'newPhotos.*'  => 'image|max:5120',
+            'newVideo'     => 'nullable|mimetypes:video/mp4,video/avi,video/quicktime|max:102400',
+            'newDocuments'   => 'array',
+            'newDocuments.*' => 'mimes:pdf|max:10240',
+        ], [
+            'newPhotos.max'        => "الحد الأقصى {$remaining} صورة متبقية",
+            'newPhotos.*.image'    => 'يجب أن تكون الملفات صوراً',
+            'newPhotos.*.max'      => 'الحد الأقصى لحجم الصورة 5 ميجا',
+            'newVideo.max'         => 'الحد الأقصى لحجم الفيديو 100 ميجا',
+            'newDocuments.*.mimes' => 'يجب أن تكون الملفات بصيغة PDF',
+            'newDocuments.*.max'   => 'الحد الأقصى لحجم الملف 10 ميجا',
+        ]);
+    }
+
+    public function deleteMedia(int $id): void
+    {
+        $media = OfficeMedia::find($id);
+        if ($media && $media->office_id === $this->office_id) {
+            \Illuminate\Support\Facades\Storage::disk('public')->delete($media->path);
+            $media->delete();
+        }
+    }
+
+    private function step3Validation(): void
+    {
+        $commitmentKeys = array_keys(\App\Models\Office::COMMITMENT_RATINGS);
+
+        $this->validate([
+            'visited_at'                   => 'required|date',
+            'structural_condition_id'      => 'required|exists:structural_conditions,id',
+            'cleanliness_rating'           => 'required|in:' . implode(',', array_keys(\App\Models\Office::CLEANLINESS_RATINGS)),
+            'archive_rating'               => 'required|in:' . implode(',', array_keys(\App\Models\Office::ARCHIVE_RATINGS)),
+            'work_schedule_commitment'     => 'required|in:' . implode(',', $commitmentKeys),
+            'citizen_treatment_commitment' => 'required|in:' . implode(',', $commitmentKeys),
+        ], [
+            'visited_at.required'                   => 'يرجى إدخال تاريخ الزيارة',
+            'visited_at.date'                       => 'تاريخ الزيارة غير صحيح',
+            'structural_condition_id.required'      => 'يرجى اختيار الحالة الإنشائية',
+            'cleanliness_rating.required'           => 'يرجى اختيار تقييم النظافة',
+            'archive_rating.required'               => 'يرجى اختيار تقييم غرف الحفظ',
+            'work_schedule_commitment.required'     => 'يرجى اختيار مدى الالتزام بمواعيد العمل',
+            'citizen_treatment_commitment.required' => 'يرجى اختيار مدى الالتزام بحسن المعاملة',
         ]);
     }
 
@@ -151,9 +248,22 @@ class Create extends Component
             'working_hours_id'       => $this->working_hours_id,
             'avg_daily_transactions' => $this->avg_daily_transactions !== '' ? (int) $this->avg_daily_transactions : null,
             'contractual_status_id'  => $this->contractual_status_id ?: null,
-            'structural_condition'   => $this->structural_condition ?: null,
             'office_area'            => $this->office_area !== '' ? (int) $this->office_area : null,
             'district_court'         => $this->district_court ?: null,
+        ];
+    }
+
+    private function step3Data(): array
+    {
+        return [
+            'visited_at'                  => $this->visited_at ?: null,
+            'structural_condition_id'     => $this->structural_condition_id ?: null,
+            'cleanliness_rating'          => $this->cleanliness_rating ?: null,
+            'archive_rating'              => $this->archive_rating ?: null,
+            'work_schedule_commitment'    => $this->work_schedule_commitment ?: null,
+            'citizen_treatment_commitment' => $this->citizen_treatment_commitment ?: null,
+            'negatives_and_solutions'     => $this->negatives_and_solutions ?: null,
+            'development_proposals'       => $this->development_proposals ?: null,
         ];
     }
 
@@ -191,6 +301,42 @@ class Create extends Component
         Office::find($this->office_id)?->update($this->step2Data());
     }
 
+    private function persistStep3(): void
+    {
+        Office::find($this->office_id)?->update($this->step3Data());
+    }
+
+    private function persistMedia(): void
+    {
+        $this->mediaValidation();
+
+        $existingPhotos = OfficeMedia::where('office_id', $this->office_id)->where('type', 'photo')->count();
+
+        foreach ($this->newPhotos as $photo) {
+            if ($existingPhotos >= 5) break;
+            $path = $photo->store("offices/{$this->office_id}/photos", 'public');
+            OfficeMedia::create(['office_id' => $this->office_id, 'type' => 'photo', 'path' => $path, 'original_name' => $photo->getClientOriginalName()]);
+            $existingPhotos++;
+        }
+
+        if ($this->newVideo) {
+            OfficeMedia::where('office_id', $this->office_id)->where('type', 'video')
+                ->each(fn($m) => \Illuminate\Support\Facades\Storage::disk('public')->delete($m->path));
+            OfficeMedia::where('office_id', $this->office_id)->where('type', 'video')->delete();
+            $path = $this->newVideo->store("offices/{$this->office_id}/videos", 'public');
+            OfficeMedia::create(['office_id' => $this->office_id, 'type' => 'video', 'path' => $path, 'original_name' => $this->newVideo->getClientOriginalName()]);
+        }
+
+        foreach ($this->newDocuments as $doc) {
+            $path = $doc->store("offices/{$this->office_id}/documents", 'public');
+            OfficeMedia::create(['office_id' => $this->office_id, 'type' => 'document', 'path' => $path, 'original_name' => $doc->getClientOriginalName()]);
+        }
+
+        $this->newPhotos    = [];
+        $this->newVideo     = null;
+        $this->newDocuments = [];
+    }
+
     public function saveAndExit(): void
     {
         $this->step1Validation();
@@ -206,6 +352,11 @@ class Create extends Component
             $this->persistStep1();
         } elseif ($this->step === 2) {
             $this->persistStep2();
+        } elseif ($this->step === 3) {
+            $this->step3Validation();
+            $this->persistStep3();
+        } elseif ($this->step === 4) {
+            $this->persistMedia();
         }
         $this->step++;
     }
@@ -217,6 +368,7 @@ class Create extends Component
 
     public function save(): void
     {
+        $this->persistMedia();
         Flux::toast(variant: 'success', text: __('home.office_created'));
         $this->redirect(route('offices.index'), navigate: true);
     }
@@ -238,6 +390,10 @@ class Create extends Component
             'photocopyingOptions'          => DocumentPhotocopyingService::orderBy('id')->get(),
             'buffetOptions'               => BuffetService::orderBy('id')->get(),
             'cleanlinessContractOptions'  => CleanlinessContract::orderBy('id')->get(),
+            'structuralConditions'        => StructuralCondition::orderBy('id')->get(),
+            'existingMedia'               => $this->office_id
+                ? OfficeMedia::where('office_id', $this->office_id)->get()->groupBy('type')
+                : collect(),
         ]);
     }
 }

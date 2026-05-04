@@ -1,9 +1,99 @@
-<div class="flex flex-col items-center justify-center py-16 text-center gap-3">
-                <div class="w-14 h-14 rounded-full bg-[#c9a847]/10 flex items-center justify-center">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="w-7 h-7 text-[#c9a847]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"/>
-                    </svg>
+
+            {{-- ── Section: بيانات الزيارة والتقييم ── --}}
+            <div class="mb-1">
+                <div class="flex items-center gap-3 mb-5">
+                    <div class="w-1 h-5 bg-[#c9a847] rounded-full"></div>
+                    <h3 class="text-sm font-semibold text-zinc-600 dark:text-zinc-400 uppercase tracking-wide">{{ __('home.step_3_label') }}</h3>
                 </div>
-                <h3 class="text-lg font-semibold text-zinc-700 dark:text-zinc-300">{{ __('home.step_3_label') }}</h3>
-                <p class="text-sm text-zinc-400">{{ __('home.coming_soon') }}</p>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+
+                    {{-- تاريخ الزيارة --}}
+                    <div>
+                        <label class="{{ $lbl }}">{{ __('home.visited_at') }}<span class="text-red-500">*</span></label>
+                        <input type="date" wire:model="visited_at" class="{{ $inp }}" />
+                        @error('visited_at') <p class="{{ $err }}">{{ $message }}</p> @enderror
+                    </div>
+
+                    {{-- الحالة الإنشائية --}}
+                    <div>
+                        <label class="{{ $lbl }}">{{ __('home.structural_condition') }}<span class="text-red-500">*</span></label>
+                        <select wire:model="structural_condition_id" class="{{ $inp }}">
+                            <option value="">{{ __('home.select_structural') }}</option>
+                            @foreach ($structuralConditions as $item)
+                                <option value="{{ $item->id }}">{{ $item->name }}</option>
+                            @endforeach
+                        </select>
+                        @error('structural_condition_id') <p class="{{ $err }}">{{ $message }}</p> @enderror
+                    </div>
+
+                    {{-- تقييم نظافة المقر --}}
+                    <div>
+                        <label class="{{ $lbl }}">{{ __('home.cleanliness_rating') }}<span class="text-red-500">*</span></label>
+                        <select wire:model="cleanliness_rating" class="{{ $inp }}">
+                            <option value="">— {{ __('home.cleanliness_rating') }} —</option>
+                            @foreach (\App\Models\Office::CLEANLINESS_RATINGS as $key => $label)
+                                <option value="{{ $key }}">{{ $label }}</option>
+                            @endforeach
+                        </select>
+                        @error('cleanliness_rating') <p class="{{ $err }}">{{ $message }}</p> @enderror
+                    </div>
+
+                    {{-- تقييم غرف الحفظ --}}
+                    <div>
+                        <label class="{{ $lbl }}">{{ __('home.archive_rating') }}<span class="text-red-500">*</span></label>
+                        <select wire:model="archive_rating" class="{{ $inp }}">
+                            <option value="">— {{ __('home.archive_rating') }} —</option>
+                            @foreach (\App\Models\Office::ARCHIVE_RATINGS as $key => $label)
+                                <option value="{{ $key }}">{{ $label }}</option>
+                            @endforeach
+                        </select>
+                        @error('archive_rating') <p class="{{ $err }}">{{ $message }}</p> @enderror
+                    </div>
+
+                    {{-- مدى الالتزام بمواعيد العمل --}}
+                    <div>
+                        <label class="{{ $lbl }}">{{ __('home.work_schedule_commitment') }}<span class="text-red-500">*</span></label>
+                        <select wire:model="work_schedule_commitment" class="{{ $inp }}">
+                            <option value="">— {{ __('home.work_schedule_commitment') }} —</option>
+                            @foreach (\App\Models\Office::COMMITMENT_RATINGS as $key => $label)
+                                <option value="{{ $key }}">{{ $label }}</option>
+                            @endforeach
+                        </select>
+                        @error('work_schedule_commitment') <p class="{{ $err }}">{{ $message }}</p> @enderror
+                    </div>
+
+                    {{-- مدى الالتزام بحسن معاملة المواطنين --}}
+                    <div>
+                        <label class="{{ $lbl }}">{{ __('home.citizen_treatment_commitment') }}<span class="text-red-500">*</span></label>
+                        <select wire:model="citizen_treatment_commitment" class="{{ $inp }}">
+                            <option value="">— {{ __('home.citizen_treatment_commitment') }} —</option>
+                            @foreach (\App\Models\Office::COMMITMENT_RATINGS as $key => $label)
+                                <option value="{{ $key }}">{{ $label }}</option>
+                            @endforeach
+                        </select>
+                        @error('citizen_treatment_commitment') <p class="{{ $err }}">{{ $message }}</p> @enderror
+                    </div>
+
+                </div>
+
+                {{-- السلبيات ومقترحات الحل --}}
+                <div class="mt-5">
+                    <label class="{{ $lbl }}">{{ __('home.negatives_and_solutions') }}</label>
+                    <textarea wire:model="negatives_and_solutions" rows="4"
+                              class="{{ $inp }} resize-none"
+                              placeholder="{{ __('home.negatives_and_solutions') }}..."></textarea>
+                    @error('negatives_and_solutions') <p class="{{ $err }}">{{ $message }}</p> @enderror
+                </div>
+
+                {{-- مقترحات التطوير --}}
+                <div class="mt-5">
+                    <label class="{{ $lbl }}">{{ __('home.development_proposals') }}</label>
+                    <textarea wire:model="development_proposals" rows="4"
+                              class="{{ $inp }} resize-none"
+                              placeholder="{{ __('home.development_proposals') }}..."></textarea>
+                    @error('development_proposals') <p class="{{ $err }}">{{ $message }}</p> @enderror
+                </div>
+
             </div>
+
