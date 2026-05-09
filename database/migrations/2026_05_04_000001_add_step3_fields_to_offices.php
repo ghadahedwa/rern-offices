@@ -16,6 +16,7 @@ return new class extends Migration
         });
 
         DB::table('structural_conditions')->insert([
+            ['name' => 'ممتازة',                              'created_at' => now(), 'updated_at' => now()],
             ['name' => 'جيدة',                              'created_at' => now(), 'updated_at' => now()],
             ['name' => 'متوسطة',                            'created_at' => now(), 'updated_at' => now()],
             ['name' => 'متهالك ويحتاج رفع كفاءة',           'created_at' => now(), 'updated_at' => now()],

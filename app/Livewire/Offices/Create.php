@@ -82,9 +82,14 @@ class Create extends Component
     public string $negatives_and_solutions = '';
     public string $development_proposals = '';
 
-    // Step 3 — Media uploads
+    // Step 4 — Media uploads (single-file, instant save)
+    public mixed $newPhoto    = null;
+    public mixed $newVideo    = null;
+    public mixed $newDocument = null;
+
+    // kept for legacy validation compatibility
     public array $newPhotos    = [];
-    public mixed $newVideo     = null;
+     public array $newVideos    = [];
     public array $newDocuments = [];
 
     public function mount(?Office $office = null): void
@@ -173,20 +178,75 @@ class Create extends Component
         ]);
     }
 
-    public function clearPhotos(): void    { $this->newPhotos    = []; }
-    public function clearVideo(): void     { $this->newVideo     = null; }
-    public function clearDocuments(): void { $this->newDocuments = []; }
+    public function clearPhotos(): void    { $this->newPhoto    = null; }
+    public function clearVideo(): void     { $this->newVideo    = null; }
+    public function clearDocuments(): void { $this->newDocument = null; }
+
+    public function uploadPhoto(): void
+    {
+        $this->validate(
+            ['newPhoto' => 'required|image|max:5120'],
+            ['newPhoto.required' => 'يرجى اختيار صورة', 'newPhoto.image' => 'يجب أن يكون الملف صورة', 'newPhoto.max' => 'الحد الأقصى 5 ميجا']
+        );
+
+        $existing = OfficeMedia::where('office_id', $this->office_id)->where('type', 'photo')->count();
+        if ($existing >= 10) { return; }
+
+        $path = $this->newPhoto->store("offices/{$this->office_id}/photos", 'public');
+        OfficeMedia::create(['office_id' => $this->office_id, 'type' => 'photo', 'path' => $path, 'original_name' => $this->newPhoto->getClientOriginalName()]);
+
+        $this->newPhoto = null;
+        $this->dispatch('mediaUploaded');
+    }
+
+    public function uploadVideo(): void
+    {
+        $this->validate(
+            ['newVideo' => 'required|mimetypes:video/mp4,video/avi,video/x-msvideo,video/quicktime,video/webm|max:102400'],
+            ['newVideo.required' => 'يرجى اختيار فيديو', 'newVideo.mimetypes' => 'نوع الفيديو غير مدعوم (MP4, AVI, MOV فقط)', 'newVideo.max' => 'الحد الأقصى 100 ميجا']
+        );
+
+        $existing = OfficeMedia::where('office_id', $this->office_id)->where('type', 'video')->count();
+        if ($existing >= 2) { return; }
+        $path = $this->newVideo->store("offices/{$this->office_id}/videos", 'public');
+        OfficeMedia::create(['office_id' => $this->office_id, 'type' => 'video', 'path' => $path, 'original_name' => $this->newVideo->getClientOriginalName()]);
+
+
+        $this->newVideo = null;
+        $this->dispatch('mediaUploaded');
+    }
+
+    public function uploadDocument(): void
+    {
+        $this->validate(
+            ['newDocument' => 'required|mimes:pdf|max:10240'],
+            ['newDocument.required' => 'يرجى اختيار ملف', 'newDocument.mimes' => 'يجب أن يكون الملف PDF', 'newDocument.max' => 'الحد الأقصى 10 ميجا']
+        );
+$existing = OfficeMedia::where('office_id', $this->office_id)->where('type', 'document')->count();
+        if ($existing >= 1) { return; }
+        $path = $this->newDocument->store("offices/{$this->office_id}/documents", 'public');
+        OfficeMedia::create(['office_id' => $this->office_id, 'type' => 'document', 'path' => $path, 'original_name' => $this->newDocument->getClientOriginalName()]);
+
+        $this->newDocument = null;
+        $this->dispatch('mediaUploaded');
+    }
 
     private function mediaValidation(): void
     {
         $existingCount = $this->office_id
             ? OfficeMedia::where('office_id', $this->office_id)->where('type', 'photo')->count()
             : 0;
-        $remaining = max(0, 5 - $existingCount);
+        $remaining = max(0, 10 - $existingCount);
+
+        $existingvideoCount = $this->office_id
+            ? OfficeMedia::where('office_id', $this->office_id)->where('type', 'video')->count()
+            : 0;
+        $remainingvideo = max(0, 10 - $existingCount);
 
         $this->validate([
             'newPhotos'    => "array|max:{$remaining}",
             'newPhotos.*'  => 'image|max:5120',
+            'newVideos'    => "array|max:{$remainingvideo}",
             'newVideo'     => 'nullable|mimetypes:video/mp4,video/avi,video/quicktime|max:102400',
             'newDocuments'   => 'array',
             'newDocuments.*' => 'mimes:pdf|max:10240',
@@ -313,13 +373,14 @@ class Create extends Component
         $existingPhotos = OfficeMedia::where('office_id', $this->office_id)->where('type', 'photo')->count();
 
         foreach ($this->newPhotos as $photo) {
-            if ($existingPhotos >= 5) break;
+            if ($existingPhotos >= 10) break;
             $path = $photo->store("offices/{$this->office_id}/photos", 'public');
             OfficeMedia::create(['office_id' => $this->office_id, 'type' => 'photo', 'path' => $path, 'original_name' => $photo->getClientOriginalName()]);
             $existingPhotos++;
         }
 
         if ($this->newVideo) {
+            dd('video upload');
             OfficeMedia::where('office_id', $this->office_id)->where('type', 'video')
                 ->each(fn($m) => \Illuminate\Support\Facades\Storage::disk('public')->delete($m->path));
             OfficeMedia::where('office_id', $this->office_id)->where('type', 'video')->delete();
@@ -355,8 +416,6 @@ class Create extends Component
         } elseif ($this->step === 3) {
             $this->step3Validation();
             $this->persistStep3();
-        } elseif ($this->step === 4) {
-            $this->persistMedia();
         }
         $this->step++;
     }
@@ -368,7 +427,6 @@ class Create extends Component
 
     public function save(): void
     {
-        $this->persistMedia();
         Flux::toast(variant: 'success', text: __('home.office_created'));
         $this->redirect(route('offices.index'), navigate: true);
     }

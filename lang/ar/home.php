@@ -130,7 +130,7 @@ return [
     'working_hours'            => 'ساعات العمل',
     'structural_condition'          => 'الحالة الإنشائية',
     'office_area'                   => 'مساحة المقر (م²)',
-    'visited_at'                    => 'تاريخ الزيارة',
+    'visited_at'                    => 'تاريخ أخر زيارة',
     'cleanliness_rating'            => 'تقييم نظافة المقر',
     'archive_rating'                => 'تقييم غرف الحفظ',
     'work_schedule_commitment'      => 'مدى الالتزام بمواعيد العمل',
