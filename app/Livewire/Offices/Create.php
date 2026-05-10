@@ -380,7 +380,6 @@ $existing = OfficeMedia::where('office_id', $this->office_id)->where('type', 'do
         }
 
         if ($this->newVideo) {
-            dd('video upload');
             OfficeMedia::where('office_id', $this->office_id)->where('type', 'video')
                 ->each(fn($m) => \Illuminate\Support\Facades\Storage::disk('public')->delete($m->path));
             OfficeMedia::where('office_id', $this->office_id)->where('type', 'video')->delete();
