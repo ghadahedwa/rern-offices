@@ -20,12 +20,12 @@ return new class extends Migration
             'offices.export',
         ])->get();
 
-        $superAdmin = Role::findByName('super-admin');
+        $superAdmin = Role::where('name', 'super-admin')->first();
         if ($superAdmin) {
             $superAdmin->givePermissionTo($officePermissions);
         }
 
-        $admin = Role::findByName('admin');
+        $admin = Role::where('name', 'admin')->first();
         if ($admin) {
             $admin->givePermissionTo($officePermissions);
         }
@@ -44,7 +44,7 @@ return new class extends Migration
             'offices.export',
         ])->get();
 
-        $admin = Role::findByName('admin');
+        $admin = Role::where('name', 'admin')->first();
         if ($admin) {
             $admin->revokePermissionTo($officePermissions);
         }
