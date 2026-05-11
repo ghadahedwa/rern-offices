@@ -14,7 +14,9 @@ class GovernoratesSeeder extends Seeder
         }
 
         DB::table('governorates')->insert([
-            ['name' => 'القاهرة',       'created_at' => now(), 'updated_at' => now()],
+            ['name' => 'شمال القاهرة',       'created_at' => now(), 'updated_at' => now()],
+            ['name' => 'جنوب القاهرة',       'created_at' => now(), 'updated_at' => now()],
+            ['name' => 'مكتب رئيس القطاع',        'created_at' => now(), 'updated_at' => now()],
             ['name' => 'الجيزة',        'created_at' => now(), 'updated_at' => now()],
             ['name' => 'الإسكندرية',    'created_at' => now(), 'updated_at' => now()],
             ['name' => 'الدقهلية',      'created_at' => now(), 'updated_at' => now()],
