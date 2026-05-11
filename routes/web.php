@@ -25,7 +25,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::livewire('roles/{role}/edit', \App\Livewire\Roles\Edit::class)->name('roles.edit');
 
         Route::livewire('governorates/create', \App\Livewire\Governorates\Create::class)->name('governorates.create');
-        Route::livewire('governorates/{governorate}/edit', \App\Livewire\Governorates\Edit::class)->name('governorates.edit');
+        Route::livewire('governorates/{governorate}/edit', \App\Livewire\Governorates\Create::class)->name('governorates.edit');
     });
 });
 

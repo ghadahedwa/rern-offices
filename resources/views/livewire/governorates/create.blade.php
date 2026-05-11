@@ -1,7 +1,9 @@
 <div class="p-6 max-w-2xl mx-auto space-y-6">
 
     <div class="flex items-center justify-between">
-        <h1 class="text-2xl font-semibold text-zinc-800 dark:text-zinc-100">{{ __('home.add_governorate') }}</h1>
+        <h1 class="text-2xl font-semibold text-zinc-800 dark:text-zinc-100">
+            {{ $governorate?->exists ? __('home.edit_governorate') : __('home.add_governorate') }}
+        </h1>
         <a href="{{ route('governorates.index') }}" wire:navigate
            class="text-sm text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 transition">
             ← {{ __('home.back') }}

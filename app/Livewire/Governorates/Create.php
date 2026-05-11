@@ -9,17 +9,27 @@ use Livewire\Attributes\Title;
 use Livewire\Component;
 
 #[Layout('layouts.app')]
-#[Title('إضافة محافظة')]
+#[Title('المحافظة')]
 class Create extends Component
 {
-    public string $name                   = '';
-    public string $supervising_counselor  = '';
-    public string $latitude               = '';
-    public string $longitude              = '';
+    public ?Governorate $governorate = null;
 
-    public function mount(): void
+    public string $name                  = '';
+    public string $supervising_counselor = '';
+    public string $latitude              = '';
+    public string $longitude             = '';
+
+    public function mount(?Governorate $governorate = null): void
     {
         abort_unless(auth()->user()?->hasRole('super-admin'), 403);
+
+        if ($governorate?->exists) {
+            $this->governorate           = $governorate;
+            $this->name                  = $governorate->name;
+            $this->supervising_counselor = $governorate->supervising_counselor ?? '';
+            $this->latitude              = (string) ($governorate->latitude ?? '');
+            $this->longitude             = (string) ($governorate->longitude ?? '');
+        }
     }
 
     public function save(): void
@@ -30,14 +40,21 @@ class Create extends Component
             'longitude' => ['nullable', 'numeric', 'between:-180,180'],
         ]);
 
-        Governorate::create([
+        $data = [
             'name'                  => $this->name,
             'supervising_counselor' => $this->supervising_counselor ?: null,
             'latitude'              => $this->latitude ?: null,
             'longitude'             => $this->longitude ?: null,
-        ]);
+        ];
 
-        Flux::toast(variant: 'success', text: __('home.governorate_created'));
+        if ($this->governorate?->exists) {
+            $this->governorate->update($data);
+            Flux::toast(variant: 'success', text: __('home.governorate_updated'));
+        } else {
+            Governorate::create($data);
+            Flux::toast(variant: 'success', text: __('home.governorate_created'));
+        }
+
         $this->redirect(route('governorates.index'), navigate: true);
     }
 

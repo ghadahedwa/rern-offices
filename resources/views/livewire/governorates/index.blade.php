@@ -29,8 +29,6 @@
                     <th class="px-4 py-3 font-medium">#</th>
                     <th class="px-4 py-3 font-medium">{{ __('home.governorate_name') }}</th>
                     <th class="px-4 py-3 font-medium">{{ __('home.supervising_counselor') }}</th>
-                    <th class="px-4 py-3 font-medium">{{ __('home.latitude') }}</th>
-                    <th class="px-4 py-3 font-medium">{{ __('home.longitude') }}</th>
                     <th class="px-4 py-3 font-medium">{{ __('home.offices') }}</th>
                     @if($isSuperAdmin)
                         <th class="px-4 py-3 font-medium">{{ __('home.actions') }}</th>
@@ -43,8 +41,6 @@
                         <td class="px-4 py-3 text-zinc-500">{{ $governorates->firstItem() + $loop->index }}</td>
                         <td class="px-4 py-3 font-medium text-zinc-800 dark:text-zinc-100">{{ $governorate->name }}</td>
                         <td class="px-4 py-3 text-zinc-600 dark:text-zinc-300">{{ $governorate->supervising_counselor ?? '—' }}</td>
-                        <td class="px-4 py-3 text-zinc-600 dark:text-zinc-300">{{ $governorate->latitude ?? '—' }}</td>
-                        <td class="px-4 py-3 text-zinc-600 dark:text-zinc-300">{{ $governorate->longitude ?? '—' }}</td>
                         <td class="px-4 py-3">
                             <a href="{{ route('offices.index', ['governorate_id' => $governorate->id]) }}" wire:navigate
                                class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold transition
