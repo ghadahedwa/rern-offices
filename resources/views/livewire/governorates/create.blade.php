@@ -29,6 +29,7 @@
                        class="border border-zinc-300 dark:border-zinc-600 rounded-lg px-3 py-2 text-sm w-full bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-[#c9a847]" />
             </div>
 
+            {{-- latitude / longitude — hidden for now
             <div class="grid grid-cols-2 gap-4">
                 <div class="flex flex-col gap-1">
                     <label class="text-sm font-medium text-zinc-700 dark:text-zinc-300">{{ __('home.latitude') }}</label>
@@ -43,6 +44,7 @@
                     @error('longitude') <p class="text-red-500 text-xs">{{ $message }}</p> @enderror
                 </div>
             </div>
+            --}}
 
             <div class="flex items-center gap-3 pt-2">
                 <button type="submit"
