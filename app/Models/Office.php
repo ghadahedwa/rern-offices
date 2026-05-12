@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\Storage;
 
 class Office extends Model
 {
@@ -134,5 +135,15 @@ class Office extends Model
     public function media(): HasMany
     {
         return $this->hasMany(OfficeMedia::class);
+    }
+
+    protected static function booted(): void
+    {
+        static::deleting(function (Office $office) {
+            $office->media->each(function ($media) {
+                Storage::disk('public')->delete($media->path);
+            });
+            $office->media()->delete();
+        });
     }
 }
