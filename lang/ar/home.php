@@ -75,7 +75,12 @@ return [
     'leave_blank_password'   => 'اتركه فارغاً إذا لم تريد تغيير كلمة المرور',
     'users_settings'=>'إعدادات المستخدمين',
     'program_settings' => 'إعدادات البرنامج',
-    'offices_type'     => 'أنواع المقرات',
+    'offices_type'        => 'أنواع المقرات',
+    'add_office_type'     => 'إضافة نوع مقر',
+    'edit_office_type'    => 'تعديل نوع المقر',
+    'office_type_created' => 'تم إضافة نوع المقر بنجاح',
+    'office_type_updated' => 'تم تحديث نوع المقر بنجاح',
+    'office_type_deleted' => 'تم حذف نوع المقر بنجاح',
 
         //governorates
     'governorates'           => 'المحافظات(المكاتب)',

@@ -37,7 +37,9 @@
                     <div x-data="{ open: false }">
                         <button @click="open = !open"
                             class="flex items-center w-full px-3 py-2 text-sm font-medium hover:bg-gray-100 rounded">
-                            <span>🗂️</span>
+                            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-gray-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 11-3 0m3 0a1.5 1.5 0 10-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-9.75 0h9.75" />
+                            </svg>
                             <span class="ml-2 text-[#747474]">{{ __('home.program_settings') }}</span>
                             <svg class="ml-auto w-4 h-4 transition-transform"
                                 :class="{ 'rotate-180': open }"
@@ -46,7 +48,7 @@
                             </svg>
                         </button>
                         <div x-show="open" x-transition class="ml-6 mt-1 space-y-1">
-                            <flux:sidebar.item icon="tag">
+                            <flux:sidebar.item icon="tag" :href="route('office-types.index')" :current="request()->routeIs('office-types.*')" wire:navigate>
                                 {{ __('home.offices_type') }}
                             </flux:sidebar.item>
                         </div>
