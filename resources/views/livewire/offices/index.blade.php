@@ -91,6 +91,14 @@
                                             {{ __('home.edit') }}
                                         </a>
                                     @endif
+                                    @if($canDelete)
+                                        <button
+                                            wire:click="delete({{ $office->id }})"
+                                            wire:confirm="{{ __('home.confirm_delete') }}"
+                                            class="inline-flex items-center text-xs px-3 py-1.5 rounded-md border border-red-200 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition">
+                                            {{ __('home.delete') }}
+                                        </button>
+                                    @endif
                                 </div>
                             </td>
                         @endif

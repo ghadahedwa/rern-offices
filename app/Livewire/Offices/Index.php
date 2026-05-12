@@ -6,6 +6,7 @@ use App\Models\Governorate;
 use App\Models\LocationDescription;
 use App\Models\Office;
 use App\Models\OfficeType;
+use Flux\Flux;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 use Livewire\Attributes\Url;
@@ -35,6 +36,16 @@ class Index extends Component
             auth()->user()?->hasRole('super-admin') || auth()->user()?->can('offices.index'),
             403
         );
+    }
+
+    public function delete(Office $office): void
+    {
+        abort_unless(
+            auth()->user()?->hasRole('super-admin') || auth()->user()?->can('offices.delete'),
+            403
+        );
+        $office->delete();
+        Flux::toast(variant: 'success', text: __('home.office_deleted'));
     }
 
     public function updatingSearch(): void { $this->resetPage(); }
