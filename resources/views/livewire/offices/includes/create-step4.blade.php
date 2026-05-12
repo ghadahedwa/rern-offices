@@ -3,14 +3,20 @@
             <div class="mb-1" x-data="{
                 modal: null,
                 fileName: '',
+                uploading: false,
                 viewer: null,
                 viewerSrc: '',
                 viewerType: '',
-                openModal(name)  { this.modal = name; this.fileName = ''; },
-                closeModal()     { this.modal = null; this.fileName = ''; },
+                openModal(name)  { this.modal = name; this.fileName = ''; this.uploading = false; },
+                closeModal()     { this.modal = null; this.fileName = ''; this.uploading = false; },
                 openViewer(src, type) { this.viewerSrc = src; this.viewerType = type; this.viewer = true; },
                 closeViewer()    { this.viewer = false; this.$nextTick(() => { this.viewerSrc = ''; }); },
-                init() { $wire.on('mediaUploaded', () => this.closeModal()); }
+                init() {
+                    $wire.on('mediaUploaded', () => this.closeModal());
+                    $el.addEventListener('livewire-upload-start',  () => { this.uploading = true; });
+                    $el.addEventListener('livewire-upload-finish', () => { this.uploading = false; });
+                    $el.addEventListener('livewire-upload-error',  () => { this.uploading = false; this.fileName = ''; });
+                }
             }" @keydown.escape.window="closeModal(); closeViewer();">
 
                 {{-- Header --}}
@@ -316,12 +322,13 @@
                             {{-- أزرار الإجراء --}}
                             <div class="flex gap-3">
                                 <button type="button"
-                                        :disabled="!fileName"
-                                        :class="fileName ? 'bg-[#c9a847] hover:bg-[#b8962e] text-white' : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-400 cursor-not-allowed'"
+                                        :disabled="!fileName || uploading"
+                                        :class="(fileName && !uploading) ? 'bg-[#c9a847] hover:bg-[#b8962e] text-white' : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-400 cursor-not-allowed'"
                                         class="flex-1 text-sm font-medium py-2.5 rounded-lg transition"
                                         @click="modal === 'photo' ? $wire.uploadPhoto() : (modal === 'video' ? $wire.uploadVideo() : $wire.uploadDocument())">
-                                    <span wire:loading.remove wire:target="uploadPhoto,uploadVideo,uploadDocument">رفع الملف</span>
-                                    <span wire:loading wire:target="uploadPhoto,uploadVideo,uploadDocument">جاري الرفع...</span>
+                                    <span x-show="uploading">جاري تحميل الملف...</span>
+                                    <span x-show="!uploading" wire:loading.remove wire:target="uploadPhoto,uploadVideo,uploadDocument">رفع الملف</span>
+                                    <span x-show="!uploading" wire:loading wire:target="uploadPhoto,uploadVideo,uploadDocument">جاري الرفع...</span>
                                 </button>
                                 <button type="button" @click="closeModal()"
                                         class="flex-1 border border-zinc-300 dark:border-zinc-600 text-zinc-600 dark:text-zinc-300 text-sm font-medium py-2.5 rounded-lg hover:bg-zinc-50 dark:hover:bg-zinc-800 transition">
