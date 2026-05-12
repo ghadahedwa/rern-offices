@@ -51,6 +51,9 @@
                             <flux:sidebar.item icon="tag" :href="route('office-types.index')" :current="request()->routeIs('office-types.*')" wire:navigate>
                                 {{ __('home.offices_type') }}
                             </flux:sidebar.item>
+                            <flux:sidebar.item icon="map-pin" :href="route('location-descriptions.index')" :current="request()->routeIs('location-descriptions.*')" wire:navigate>
+                                {{ __('home.location_description') }}
+                            </flux:sidebar.item>
                         </div>
                     </div>
 

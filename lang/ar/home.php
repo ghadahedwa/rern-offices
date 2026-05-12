@@ -124,7 +124,12 @@ return [
     // Office create — field labels
     'established_at'           => 'تاريخ الإنشاء',
     'parent_office'            => 'المقر الرئيسي (إن وجد)',
-    'location_description'     => 'وصف المقر',
+    'location_description'             => 'وصف المقر',
+    'add_location_description'         => 'إضافة وصف مقر',
+    'edit_location_description'        => 'تعديل وصف المقر',
+    'location_description_created'     => 'تم إضافة وصف المقر بنجاح',
+    'location_description_updated'     => 'تم تحديث وصف المقر بنجاح',
+    'location_description_deleted'     => 'تم حذف وصف المقر بنجاح',
     'work_system'              => 'نظام العمل',
     'address'                  => 'العنوان تفصيلاً',
     'google_maps_link'         => 'رابط جوجل مابس',

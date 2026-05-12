@@ -30,6 +30,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::livewire('office-types', \App\Livewire\OfficeTypes\Index::class)->name('office-types.index');
         Route::livewire('office-types/create', \App\Livewire\OfficeTypes\Create::class)->name('office-types.create');
         Route::livewire('office-types/{officeType}/edit', \App\Livewire\OfficeTypes\Create::class)->name('office-types.edit');
+
+        Route::livewire('location-descriptions', \App\Livewire\LocationDescriptions\Index::class)->name('location-descriptions.index');
+        Route::livewire('location-descriptions/create', \App\Livewire\LocationDescriptions\Create::class)->name('location-descriptions.create');
+        Route::livewire('location-descriptions/{locationDescription}/edit', \App\Livewire\LocationDescriptions\Create::class)->name('location-descriptions.edit');
     });
 });
 
