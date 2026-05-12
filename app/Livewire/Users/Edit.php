@@ -79,7 +79,7 @@ class Edit extends Component
     public function render()
     {
         $roles        = Role::all();
-        $governorates = Governorate::oldest()->get();
+        $governorates = Governorate::orderBy('id')->get();
         return view('livewire.users.edit', compact('roles', 'governorates'));
     }
 }

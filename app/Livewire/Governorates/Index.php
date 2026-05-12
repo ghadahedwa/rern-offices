@@ -4,6 +4,7 @@ namespace App\Livewire\Governorates;
 
 use App\Models\Governorate;
 use Flux\Flux;
+use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 use Livewire\Component;
@@ -24,7 +25,7 @@ class Index extends Component
 
     public function deleteGovernorate(int $id): void
     {
-        abort_unless(auth()->user()?->hasRole('super-admin'), 403);
+        abort_unless(Auth::user()?->hasRole('super-admin'), 403);
 
         Governorate::findOrFail($id)->delete();
         Flux::toast(variant: 'success', text: __('home.governorate_deleted'));
@@ -32,19 +33,19 @@ class Index extends Component
 
     public function render()
     {
-        $isSuperAdmin = auth()->user()?->hasRole('super-admin');
+        $isSuperAdmin = Auth::user()?->hasRole('super-admin');
 
         if ($isSuperAdmin) {
             $governorates = Governorate::withCount('offices')
                 ->where('name', 'like', "%{$this->search}%")
-                ->oldest()
+                ->orderBy('id')
                 ->paginate(10);
         } else {
             $governorates = auth()->user()
                 ->governorates()
                 ->withCount('offices')
                 ->where('name', 'like', "%{$this->search}%")
-                ->oldest()
+                ->orderBy('id')
                 ->paginate(10);
         }
 
