@@ -37,14 +37,16 @@
                         <td class="px-4 py-3 text-zinc-400">{{ $type->id }}</td>
                         <td class="px-4 py-3 font-medium text-zinc-800 dark:text-zinc-100">{{ $type->name }}</td>
                         @role('super-admin')
-                        <td class="px-4 py-3 text-end">
-                            <div class="flex items-center justify-end gap-3">
+                        <td class="px-4 py-3">
+                            <div class="flex items-center gap-2">
                                 <a href="{{ route('office-types.edit', $type) }}" wire:navigate
-                                   class="text-xs text-[#b8962e] hover:underline">{{ __('home.edit') }}</a>
+                                   class="inline-flex items-center text-xs px-3 py-1.5 rounded-md border border-zinc-300 dark:border-zinc-600 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition">
+                                    {{ __('home.edit') }}
+                                </a>
                                 <button type="button"
                                         wire:click="delete({{ $type->id }})"
                                         wire:confirm="{{ __('home.confirm_delete') }}"
-                                        class="text-xs text-red-500 hover:text-red-700 transition">
+                                        class="inline-flex items-center text-xs px-3 py-1.5 rounded-md border border-red-200 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition">
                                     {{ __('home.delete') }}
                                 </button>
                             </div>
