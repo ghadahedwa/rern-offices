@@ -437,13 +437,13 @@ $existing = OfficeMedia::where('office_id', $this->office_id)->where('type', 'do
         }
     }
 
-    public function addTransactionStat(): void  { $this->transactionStats[]  = ['year' => '', 'value' => '']; }
+    public function addTransactionStat(): void  { array_unshift($this->transactionStats,  ['year' => '', 'value' => '']); }
     public function removeTransactionStat(int $i): void { array_splice($this->transactionStats, $i, 1); }
 
-    public function addFormSaleStat(): void     { $this->formSalesStats[]    = ['year' => '', 'month' => '', 'value' => '']; }
+    public function addFormSaleStat(): void     { array_unshift($this->formSalesStats,    ['year' => '', 'month' => '', 'value' => '']); }
     public function removeFormSaleStat(int $i): void { array_splice($this->formSalesStats, $i, 1); }
 
-    public function addFolderSaleStat(): void   { $this->folderSalesStats[]  = ['year' => '', 'month' => '', 'value' => '']; }
+    public function addFolderSaleStat(): void   { array_unshift($this->folderSalesStats,  ['year' => '', 'month' => '', 'value' => '']); }
     public function removeFolderSaleStat(int $i): void { array_splice($this->folderSalesStats, $i, 1); }
 
     public function addBrokenDevice(): void

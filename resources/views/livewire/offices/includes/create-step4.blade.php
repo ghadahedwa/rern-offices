@@ -33,8 +33,9 @@
                     $selectedTxYears = collect($transactionStats)->pluck('year')->filter()->map(fn($v)=>(int)$v)->toArray();
                 @endphp
                 <div class="rounded-xl border border-zinc-200 dark:border-zinc-700 overflow-hidden">
+                    <div style="max-height:208px;overflow-y:auto;">
                     <table class="w-full text-sm text-right">
-                        <thead class="bg-zinc-50 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 text-xs">
+                        <thead class="bg-zinc-50 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 text-xs sticky top-0">
                             <tr>
                                 <th class="px-4 py-2.5 font-medium">السنة</th>
                                 <th class="px-4 py-2.5 font-medium">عدد المعاملات</th>
@@ -49,7 +50,7 @@
                             @endphp
                             <tr>
                                 <td class="px-4 py-2">
-                                    <select wire:model="transactionStats.{{ $index }}.year" class="{{ $inp }}">
+                                    <select wire:model.live="transactionStats.{{ $index }}.year" class="{{ $inp }}">
                                         <option value="">— السنة —</option>
                                         @foreach($years as $y)
                                             @if(!in_array($y, $otherTxYears))
@@ -73,6 +74,7 @@
                             @endforeach
                         </tbody>
                     </table>
+                    </div>
                 </div>
                 @else
                 <p class="text-sm text-zinc-400 dark:text-zinc-500 text-center py-4 rounded-xl border border-dashed border-zinc-200 dark:border-zinc-700">لا توجد بيانات مسجلة</p>
@@ -102,8 +104,9 @@
                     $usedFormPairs = collect($formSalesStats)->filter(fn($r)=>!empty($r['year'])&&!empty($r['month']))->map(fn($r)=>$r['year'].'-'.$r['month'])->toArray();
                 @endphp
                 <div class="rounded-xl border border-zinc-200 dark:border-zinc-700 overflow-hidden">
+                    <div style="max-height:650px;overflow-y:auto;">
                     <table class="w-full text-sm text-right">
-                        <thead class="bg-zinc-50 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 text-xs">
+                        <thead class="bg-zinc-50 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 text-xs sticky top-0">
                             <tr>
                                 <th class="px-4 py-2.5 font-medium">السنة</th>
                                 <th class="px-4 py-2.5 font-medium">الشهر</th>
@@ -121,7 +124,7 @@
                             @endphp
                             <tr>
                                 <td class="px-4 py-2">
-                                    <select wire:model="formSalesStats.{{ $index }}.year" class="{{ $inp }}">
+                                    <select wire:model.live="formSalesStats.{{ $index }}.year" class="{{ $inp }}">
                                         <option value="">— السنة —</option>
                                         @foreach($years as $y)
                                             <option value="{{ $y }}">{{ $y }}</option>
@@ -129,7 +132,7 @@
                                     </select>
                                 </td>
                                 <td class="px-4 py-2">
-                                    <select wire:model="formSalesStats.{{ $index }}.month" class="{{ $inp }}">
+                                    <select wire:model.live="formSalesStats.{{ $index }}.month" class="{{ $inp }}">
                                         <option value="">— الشهر —</option>
                                         @foreach($months as $num => $name)
                                             @if(!in_array($thisFormYear.'-'.$num, $otherFormPairs))
@@ -153,6 +156,7 @@
                             @endforeach
                         </tbody>
                     </table>
+                    </div>
                 </div>
                 @else
                 <p class="text-sm text-zinc-400 dark:text-zinc-500 text-center py-4 rounded-xl border border-dashed border-zinc-200 dark:border-zinc-700">لا توجد بيانات مسجلة</p>
@@ -182,8 +186,9 @@
                     $usedFolderPairs = collect($folderSalesStats)->filter(fn($r)=>!empty($r['year'])&&!empty($r['month']))->map(fn($r)=>$r['year'].'-'.$r['month'])->toArray();
                 @endphp
                 <div class="rounded-xl border border-zinc-200 dark:border-zinc-700 overflow-hidden">
+                    <div style="max-height:650px;overflow-y:auto;">
                     <table class="w-full text-sm text-right">
-                        <thead class="bg-zinc-50 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 text-xs">
+                        <thead class="bg-zinc-50 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 text-xs sticky top-0">
                             <tr>
                                 <th class="px-4 py-2.5 font-medium">السنة</th>
                                 <th class="px-4 py-2.5 font-medium">الشهر</th>
@@ -201,7 +206,7 @@
                             @endphp
                             <tr>
                                 <td class="px-4 py-2">
-                                    <select wire:model="folderSalesStats.{{ $index }}.year" class="{{ $inp }}">
+                                    <select wire:model.live="folderSalesStats.{{ $index }}.year" class="{{ $inp }}">
                                         <option value="">— السنة —</option>
                                         @foreach($years as $y)
                                             <option value="{{ $y }}">{{ $y }}</option>
@@ -209,7 +214,7 @@
                                     </select>
                                 </td>
                                 <td class="px-4 py-2">
-                                    <select wire:model="folderSalesStats.{{ $index }}.month" class="{{ $inp }}">
+                                    <select wire:model.live="folderSalesStats.{{ $index }}.month" class="{{ $inp }}">
                                         <option value="">— الشهر —</option>
                                         @foreach($months as $num => $name)
                                             @if(!in_array($thisFolderYear.'-'.$num, $otherFolderPairs))
@@ -233,6 +238,7 @@
                             @endforeach
                         </tbody>
                     </table>
+                    </div>
                 </div>
                 @else
                 <p class="text-sm text-zinc-400 dark:text-zinc-500 text-center py-4 rounded-xl border border-dashed border-zinc-200 dark:border-zinc-700">لا توجد بيانات مسجلة</p>
