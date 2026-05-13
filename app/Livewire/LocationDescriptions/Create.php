@@ -16,14 +16,16 @@ class Create extends Component
     public ?LocationDescription $locationDescription = null;
 
     public string $name = '';
+    public bool $shows_windows_count = false;
 
     public function mount(?LocationDescription $locationDescription = null): void
     {
         abort_unless(Auth::user()?->hasRole('super-admin'), 403);
 
         if ($locationDescription?->exists) {
-            $this->locationDescription = $locationDescription;
-            $this->name                = $locationDescription->name;
+            $this->locationDescription    = $locationDescription;
+            $this->name                   = $locationDescription->name;
+            $this->shows_windows_count    = $locationDescription->shows_windows_count;
         }
     }
 
@@ -31,11 +33,13 @@ class Create extends Component
     {
         $this->validate(['name' => ['required', 'string', 'max:255']]);
 
+        $data = ['name' => $this->name, 'shows_windows_count' => $this->shows_windows_count];
+
         if ($this->locationDescription?->exists) {
-            $this->locationDescription->update(['name' => $this->name]);
+            $this->locationDescription->update($data);
             Flux::toast(variant: 'success', text: __('home.location_description_updated'));
         } else {
-            LocationDescription::create(['name' => $this->name]);
+            LocationDescription::create($data);
             Flux::toast(variant: 'success', text: __('home.location_description_created'));
         }
 

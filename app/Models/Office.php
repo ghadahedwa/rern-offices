@@ -23,6 +23,7 @@ class Office extends Model
         'office_area', 'district_court', 'Braille_sign_device', 'queue_management_system',
         'payment_machine_count', 'computers_count', 'scanners_count', 'printers_count', 'fingerprints_count',
         'negatives_and_solutions', 'development_proposals',
+        'windows_count', 'office_needs',
     ];
 
     protected $casts = [
@@ -41,6 +42,7 @@ class Office extends Model
         'good'      => 'جيدة',
         'average'   => 'متوسطة',
         'bad'       => 'سيئة',
+        'none'      => 'لا يوجد غرفة حفظ',
     ];
 
     public const COMMITMENT_RATINGS = [
@@ -135,6 +137,11 @@ class Office extends Model
     public function media(): HasMany
     {
         return $this->hasMany(OfficeMedia::class);
+    }
+
+    public function brokenDevices(): HasMany
+    {
+        return $this->hasMany(OfficeBrokenDevice::class);
     }
 
     protected static function booted(): void

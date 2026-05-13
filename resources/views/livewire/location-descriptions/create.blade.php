@@ -22,6 +22,14 @@
                 @error('name') <p class="text-red-500 text-xs">{{ $message }}</p> @enderror
             </div>
 
+            <div class="flex items-center gap-3">
+                <input type="checkbox" id="shows_windows_count" wire:model="shows_windows_count"
+                       class="w-4 h-4 rounded border-zinc-300 text-[#c9a847] focus:ring-[#c9a847]" />
+                <label for="shows_windows_count" class="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                    يتيح تحديد عدد الشبابيك
+                </label>
+            </div>
+
             <div class="flex items-center gap-3 pt-2">
                 <button type="submit"
                         class="bg-[#c9a847] hover:bg-[#b8962e] text-white text-sm font-medium px-5 py-2 rounded-lg transition">

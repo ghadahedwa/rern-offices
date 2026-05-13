@@ -64,13 +64,14 @@
                     </div>
                     <div>
                         <label class="{{ $lbl }}">{{ __('home.location_description') }}</label>
-                        <select wire:model="location_description_id" class="{{ $inp }}">
+                        <select wire:model.live="location_description_id" class="{{ $inp }}">
                             <option value="">{{ __('home.select_location') }}</option>
                             @foreach ($locations as $item)
                                 <option value="{{ $item->id }}">{{ $item->name }}</option>
                             @endforeach
                         </select>
                     </div>
+    
                     <div>
                         <label class="{{ $lbl }}">{{ __('home.working_hours') }} <span class="text-red-500">*</span></label>
                         <select wire:model="working_hours_id" class="{{ $inp }}">
@@ -81,6 +82,12 @@
                         </select>
                         @error('working_hours_id') <p class="mt-1 text-xs text-red-500">{{ $message }}</p> @enderror
                     </div>
+                    @if($locations->firstWhere('id', $location_description_id)?->shows_windows_count)
+                    <div>
+                        <label class="{{ $lbl }}">عدد الشبابيك</label>
+                        <input wire:model="windows_count" type="number" min="0" placeholder="0" class="{{ $inp }}" />
+                    </div>
+                    @endif
                 </div>
             </div>
 

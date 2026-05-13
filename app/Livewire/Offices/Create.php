@@ -3,6 +3,8 @@
 namespace App\Livewire\Offices;
 
 use App\Models\BuffetService;
+use App\Models\DeviceType;
+use App\Models\OfficeBrokenDevice;
 use App\Models\OfficeMedia;
 use App\Models\StructuralCondition;
 use App\Models\CleanlinessContract;
@@ -73,6 +75,9 @@ class Create extends Component
     public string $printers_count = '';
     public string $fingerprints_count = '';
 
+    // Step 2 — extra
+    public string $windows_count = '';
+
     // Step 3 — Assessments
     public string $visited_at = '';
     public string $cleanliness_rating = '';
@@ -81,6 +86,10 @@ class Create extends Component
     public string $citizen_treatment_commitment = '';
     public string $negatives_and_solutions = '';
     public string $development_proposals = '';
+    public string $office_needs = '';
+
+    // Step 3 — Broken devices (array of [device_type_id => int, count => int])
+    public array $brokenDevices = [];
 
     // Step 4 — Media uploads (single-file, instant save)
     public mixed $newPhoto    = null;
@@ -152,15 +161,23 @@ class Create extends Component
         $this->scanners_count                   = (string) ($office->scanners_count ?? '');
         $this->printers_count                   = (string) ($office->printers_count ?? '');
         $this->fingerprints_count               = (string) ($office->fingerprints_count ?? '');
+        $this->windows_count                    = (string) ($office->windows_count ?? '');
 
         // Step 3
-        $this->visited_at                  = $office->visited_at?->format('Y-m-d') ?? '';
-        $this->cleanliness_rating          = $office->cleanliness_rating ?? '';
-        $this->archive_rating              = $office->archive_rating ?? '';
-        $this->work_schedule_commitment    = $office->work_schedule_commitment ?? '';
+        $this->visited_at                   = $office->visited_at?->format('Y-m-d') ?? '';
+        $this->cleanliness_rating           = $office->cleanliness_rating ?? '';
+        $this->archive_rating               = $office->archive_rating ?? '';
+        $this->work_schedule_commitment     = $office->work_schedule_commitment ?? '';
         $this->citizen_treatment_commitment = $office->citizen_treatment_commitment ?? '';
-        $this->negatives_and_solutions     = $office->negatives_and_solutions ?? '';
-        $this->development_proposals       = $office->development_proposals ?? '';
+        $this->negatives_and_solutions      = $office->negatives_and_solutions ?? '';
+        $this->development_proposals        = $office->development_proposals ?? '';
+        $this->office_needs                 = $office->office_needs ?? '';
+
+        $this->brokenDevices = $office->brokenDevices()
+            ->get()
+            ->map(fn($d) => ['device_type_id' => $d->device_type_id, 'count' => $d->count])
+            ->values()
+            ->toArray();
     }
 
     private function step1Validation(): void
@@ -310,6 +327,7 @@ $existing = OfficeMedia::where('office_id', $this->office_id)->where('type', 'do
             'contractual_status_id'  => $this->contractual_status_id ?: null,
             'office_area'            => $this->office_area !== '' ? (int) $this->office_area : null,
             'district_court'         => $this->district_court ?: null,
+            'windows_count'          => $this->windows_count !== '' ? (int) $this->windows_count : null,
         ];
     }
 
@@ -324,6 +342,7 @@ $existing = OfficeMedia::where('office_id', $this->office_id)->where('type', 'do
             'citizen_treatment_commitment' => $this->citizen_treatment_commitment ?: null,
             'negatives_and_solutions'     => $this->negatives_and_solutions ?: null,
             'development_proposals'       => $this->development_proposals ?: null,
+            'office_needs'                => $this->office_needs ?: null,
         ];
     }
 
@@ -359,11 +378,32 @@ $existing = OfficeMedia::where('office_id', $this->office_id)->where('type', 'do
     private function persistStep2(): void
     {
         Office::find($this->office_id)?->update($this->step2Data());
+
+        OfficeBrokenDevice::where('office_id', $this->office_id)->delete();
+        foreach ($this->brokenDevices as $row) {
+            if (!empty($row['device_type_id']) && isset($row['count']) && (int) $row['count'] > 0) {
+                OfficeBrokenDevice::create([
+                    'office_id'      => $this->office_id,
+                    'device_type_id' => $row['device_type_id'],
+                    'count'          => (int) $row['count'],
+                ]);
+            }
+        }
     }
 
     private function persistStep3(): void
     {
         Office::find($this->office_id)?->update($this->step3Data());
+    }
+
+    public function addBrokenDevice(): void
+    {
+        $this->brokenDevices[] = ['device_type_id' => '', 'count' => 1];
+    }
+
+    public function removeBrokenDevice(int $index): void
+    {
+        array_splice($this->brokenDevices, $index, 1);
     }
 
     private function persistMedia(): void
@@ -450,6 +490,7 @@ $existing = OfficeMedia::where('office_id', $this->office_id)->where('type', 'do
             'buffetOptions'               => BuffetService::orderBy('id')->get(),
             'cleanlinessContractOptions'  => CleanlinessContract::orderBy('id')->get(),
             'structuralConditions'        => StructuralCondition::orderBy('id')->get(),
+            'deviceTypes'                 => DeviceType::orderBy('id')->get(),
             'existingMedia'               => $this->office_id
                 ? OfficeMedia::where('office_id', $this->office_id)->get()->groupBy('type')
                 : collect(),

@@ -109,5 +109,66 @@
                         <label class="{{ $lbl }}">{{ __('home.fingerprints_count') }}</label>
                         <input wire:model="fingerprints_count" type="number" min="0" placeholder="0" class="{{ $inp }}" />
                     </div>
+
                 </div>
+            </div>
+
+            <div class="border-t border-zinc-100 dark:border-zinc-700 mb-2"></div>
+
+            {{-- ── Section 3: الأجهزة المعطلة ── --}}
+            <div>
+                <div class="flex items-center justify-between mb-5">
+                    <div class="flex items-center gap-3">
+                        <div class="w-1 h-5 bg-[#c9a847] rounded-full"></div>
+                        <h3 class="text-sm font-semibold text-zinc-600 dark:text-zinc-400 uppercase tracking-wide">الأجهزة المعطلة</h3>
+                    </div>
+                    @if(count($brokenDevices) < count($deviceTypes))
+                    <button type="button" wire:click="addBrokenDevice"
+                            class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-[#c9a847] hover:bg-[#b8962e] text-white transition">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
+                        </svg>
+                        إضافة جهاز
+                    </button>
+                    @endif
+                </div>
+
+                @if(count($brokenDevices) > 0)
+                @php
+                    $selectedDeviceTypeIds = collect($brokenDevices)->pluck('device_type_id')->filter()->map(fn($v) => (int)$v)->toArray();
+                @endphp
+                <div class="space-y-3">
+                    @foreach($brokenDevices as $index => $device)
+                    @php
+                        $currentId = (int)($device['device_type_id'] ?? 0);
+                        $otherSelected = array_filter($selectedDeviceTypeIds, fn($id) => $id !== $currentId);
+                    @endphp
+                    <div class="flex items-center gap-3">
+                        <div class="flex-1">
+                            <select wire:model="brokenDevices.{{ $index }}.device_type_id" class="{{ $inp }}">
+                                <option value="">— نوع الجهاز —</option>
+                                @foreach($deviceTypes as $type)
+                                    @if(!in_array($type->id, $otherSelected))
+                                    <option value="{{ $type->id }}">{{ $type->name }}</option>
+                                    @endif
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="w-28">
+                            <input type="number" wire:model="brokenDevices.{{ $index }}.count"
+                                   min="1" placeholder="العدد"
+                                   class="{{ $inp }}" />
+                        </div>
+                        <button type="button" wire:click="removeBrokenDevice({{ $index }})"
+                                class="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+                            </svg>
+                        </button>
+                    </div>
+                    @endforeach
+                </div>
+                @else
+                <p class="text-sm text-zinc-400 dark:text-zinc-500 text-center py-4">لا توجد أجهزة معطلة مسجلة</p>
+                @endif
             </div>

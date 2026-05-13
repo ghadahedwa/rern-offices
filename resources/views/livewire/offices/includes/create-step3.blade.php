@@ -77,6 +77,14 @@
 
                 </div>
 
+                {{-- احتياجات المقر --}}
+                <div class="mt-5">
+                    <label class="{{ $lbl }}">احتياجات المقر</label>
+                    <textarea wire:model="office_needs" rows="4"
+                              class="{{ $inp }} resize-none"
+                              placeholder="احتياجات المقر..."></textarea>
+                </div>
+                
                 {{-- السلبيات ومقترحات الحل --}}
                 <div class="mt-5">
                     <label class="{{ $lbl }}">{{ __('home.negatives_and_solutions') }}</label>
@@ -95,5 +103,7 @@
                     @error('development_proposals') <p class="{{ $err }}">{{ $message }}</p> @enderror
                 </div>
 
+
             </div>
+
 
