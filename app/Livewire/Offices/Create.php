@@ -433,7 +433,9 @@ $existing = OfficeMedia::where('office_id', $this->office_id)->where('type', 'do
     public function render()
     {
         return view('livewire.offices.create', [
-            'governorates'        => Governorate::orderBy('id')->get(),
+            'governorates'        => auth()->user()?->hasRole('super-admin')
+                ? Governorate::orderBy('id')->get()
+                : auth()->user()->governorates()->orderBy('id')->get(),
             'mainOffices'         => Office::with('officeType')->whereNotNull('type_id')->orderBy('name')->get(),
             'types'               => OfficeType::orderBy('id')->get(),
             'locations'           => LocationDescription::orderBy('id')->get(),

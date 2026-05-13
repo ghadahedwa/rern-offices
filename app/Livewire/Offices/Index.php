@@ -55,19 +55,26 @@ class Index extends Component
 
     public function render()
     {
+        $user         = auth()->user();
+        $isSuperAdmin = $user?->hasRole('super-admin');
+
+        $governorates = $isSuperAdmin
+            ? Governorate::orderBy('id')->get()
+            : $user->governorates()->orderBy('id')->get();
+
+        $allowedGovIds = $isSuperAdmin ? null : $governorates->pluck('id');
+
         $query = Office::with(['governorate', 'officeType', 'locationDescription'])
+            ->when($allowedGovIds, fn($q) => $q->whereIn('governorate_id', $allowedGovIds))
             ->when($this->governorate_id, fn($q) => $q->where('governorate_id', $this->governorate_id))
             ->when($this->type_id, fn($q) => $q->where('type_id', $this->type_id))
             ->when($this->location_description_id, fn($q) => $q->where('location_description_id', $this->location_description_id))
             ->when($this->search, fn($q) => $q->where('name', 'like', "%{$this->search}%"))
             ->latest();
 
-        $user = auth()->user();
-        $isSuperAdmin = $user?->hasRole('super-admin');
-
         return view('livewire.offices.index', [
             'offices'               => $query->paginate(10),
-            'governorates'          => Governorate::orderBy('id')->get(),
+            'governorates'          => $governorates,
             'officeTypes'           => OfficeType::orderBy('name')->get(),
             'locationDescriptions'  => LocationDescription::orderBy('name')->get(),
             'isSuperAdmin' => $isSuperAdmin,
