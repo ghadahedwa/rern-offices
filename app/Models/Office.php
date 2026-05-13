@@ -144,6 +144,11 @@ class Office extends Model
         return $this->hasMany(OfficeBrokenDevice::class);
     }
 
+    public function statistics(): HasMany
+    {
+        return $this->hasMany(OfficeStat::class);
+    }
+
     protected static function booted(): void
     {
         static::deleting(function (Office $office) {

@@ -6,6 +6,7 @@ use App\Models\BuffetService;
 use App\Models\DeviceType;
 use App\Models\OfficeBrokenDevice;
 use App\Models\OfficeMedia;
+use App\Models\OfficeStat;
 use App\Models\StructuralCondition;
 use App\Models\CleanlinessContract;
 use App\Models\ConnectionType;
@@ -34,7 +35,7 @@ class Create extends Component
     use WithFileUploads;
     #[Url]
     public int $step = 1;
-    public int $totalSteps = 4;
+    public int $totalSteps = 5;
     #[Url]
     public ?int $office_id = null;
     public bool $isEditing = false;
@@ -91,6 +92,11 @@ class Create extends Component
 
     // Step 3 — Broken devices (array of [device_type_id => int, count => int])
     public array $brokenDevices = [];
+
+    // Step 4 — Statistics
+    public array $transactionStats = []; // [year, value]
+    public array $formSalesStats    = []; // [year, month, value]
+    public array $folderSalesStats  = []; // [year, month, value]
 
     // Step 4 — Media uploads (single-file, instant save)
     public mixed $newPhoto    = null;
@@ -180,6 +186,17 @@ class Create extends Component
             ->map(fn($d) => ['device_type_id' => $d->device_type_id, 'count' => $d->count])
             ->values()
             ->toArray();
+
+        $stats = $office->statistics()->get();
+        $this->transactionStats = $stats->where('stat_type', 'transactions')
+            ->map(fn($s) => ['year' => $s->year, 'value' => $s->value])
+            ->values()->toArray();
+        $this->formSalesStats = $stats->where('stat_type', 'form_sales')
+            ->map(fn($s) => ['year' => $s->year, 'month' => $s->month, 'value' => $s->value])
+            ->values()->toArray();
+        $this->folderSalesStats = $stats->where('stat_type', 'folder_sales')
+            ->map(fn($s) => ['year' => $s->year, 'month' => $s->month, 'value' => $s->value])
+            ->values()->toArray();
     }
 
     private function step1Validation(): void
@@ -399,6 +416,36 @@ $existing = OfficeMedia::where('office_id', $this->office_id)->where('type', 'do
         Office::find($this->office_id)?->update($this->step3Data());
     }
 
+    private function persistStep4(): void
+    {
+        OfficeStat::where('office_id', $this->office_id)->delete();
+
+        foreach ($this->transactionStats as $row) {
+            if (!empty($row['year'])) {
+                OfficeStat::create(['office_id' => $this->office_id, 'stat_type' => 'transactions', 'year' => $row['year'], 'month' => null, 'value' => (int)($row['value'] ?? 0)]);
+            }
+        }
+        foreach ($this->formSalesStats as $row) {
+            if (!empty($row['year']) && !empty($row['month'])) {
+                OfficeStat::create(['office_id' => $this->office_id, 'stat_type' => 'form_sales', 'year' => $row['year'], 'month' => $row['month'], 'value' => (int)($row['value'] ?? 0)]);
+            }
+        }
+        foreach ($this->folderSalesStats as $row) {
+            if (!empty($row['year']) && !empty($row['month'])) {
+                OfficeStat::create(['office_id' => $this->office_id, 'stat_type' => 'folder_sales', 'year' => $row['year'], 'month' => $row['month'], 'value' => (int)($row['value'] ?? 0)]);
+            }
+        }
+    }
+
+    public function addTransactionStat(): void  { $this->transactionStats[]  = ['year' => '', 'value' => '']; }
+    public function removeTransactionStat(int $i): void { array_splice($this->transactionStats, $i, 1); }
+
+    public function addFormSaleStat(): void     { $this->formSalesStats[]    = ['year' => '', 'month' => '', 'value' => '']; }
+    public function removeFormSaleStat(int $i): void { array_splice($this->formSalesStats, $i, 1); }
+
+    public function addFolderSaleStat(): void   { $this->folderSalesStats[]  = ['year' => '', 'month' => '', 'value' => '']; }
+    public function removeFolderSaleStat(int $i): void { array_splice($this->folderSalesStats, $i, 1); }
+
     public function addBrokenDevice(): void
     {
         $this->brokenDevices[] = ['device_type_id' => '', 'count' => 1];
@@ -458,12 +505,21 @@ $existing = OfficeMedia::where('office_id', $this->office_id)->where('type', 'do
         } elseif ($this->step === 3) {
             $this->step3Validation();
             $this->persistStep3();
+        } elseif ($this->step === 4) {
+            $this->persistStep4();
         }
         $this->step++;
     }
 
     public function prevStep(): void
     {
+        if ($this->step === 2) {
+            $this->persistStep2();
+        } elseif ($this->step === 3) {
+            $this->persistStep3();
+        } elseif ($this->step === 4) {
+            $this->persistStep4();
+        }
         $this->step--;
     }
 
