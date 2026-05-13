@@ -15,39 +15,29 @@
     </div>
 
     {{-- Filters --}}
-    <div class="flex flex-wrap gap-3">
-        <div class="flex-1 min-w-48 max-w-sm">
-            <input wire:model.live.debounce.300ms="search" type="text"
-                   placeholder="{{ __('home.search') }}"
-                   class="w-full border border-zinc-300 dark:border-zinc-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-[#c9a847]" />
-        </div>
-        <div class="min-w-44">
-            <select wire:model.live="governorate_id"
-                    class="w-full border border-zinc-300 dark:border-zinc-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-[#c9a847]">
-                <option value="">{{ __('home.all_governorates') }}</option>
-                @foreach ($governorates as $gov)
-                    <option value="{{ $gov->id }}">{{ $gov->name }}</option>
-                @endforeach
-            </select>
-        </div>
-        <div class="min-w-44">
-            <select wire:model.live="type_id"
-                    class="w-full border border-zinc-300 dark:border-zinc-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-[#c9a847]">
-                <option value="">— {{ __('home.office_type') }} —</option>
-                @foreach ($officeTypes as $type)
-                    <option value="{{ $type->id }}">{{ $type->name }}</option>
-                @endforeach
-            </select>
-        </div>
-        <div class="min-w-44">
-            <select wire:model.live="location_description_id"
-                    class="w-full border border-zinc-300 dark:border-zinc-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-[#c9a847]">
-                <option value="">— {{ __('home.location_description') }} —</option>
-                @foreach ($locationDescriptions as $desc)
-                    <option value="{{ $desc->id }}">{{ $desc->name }}</option>
-                @endforeach
-            </select>
-        </div>
+    @php $filterCls = 'w-full border border-zinc-300 dark:border-zinc-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-[#c9a847]'; @endphp
+    <div class="grid grid-cols-4 gap-3">
+        <input wire:model.live.debounce.300ms="search" type="text"
+               placeholder="{{ __('home.search') }}"
+               class="{{ $filterCls }}" />
+        <select wire:model.live="governorate_id" class="{{ $filterCls }}">
+            <option value="">{{ __('home.all_governorates') }}</option>
+            @foreach ($governorates as $gov)
+                <option value="{{ $gov->id }}">{{ $gov->name }}</option>
+            @endforeach
+        </select>
+        <select wire:model.live="type_id" class="{{ $filterCls }}">
+            <option value="">— {{ __('home.office_type') }} —</option>
+            @foreach ($officeTypes as $type)
+                <option value="{{ $type->id }}">{{ $type->name }}</option>
+            @endforeach
+        </select>
+        <select wire:model.live="location_description_id" class="{{ $filterCls }}">
+            <option value="">— {{ __('home.location_description') }} —</option>
+            @foreach ($locationDescriptions as $desc)
+                <option value="{{ $desc->id }}">{{ $desc->name }}</option>
+            @endforeach
+        </select>
     </div>
 
     {{-- Table --}}
@@ -59,6 +49,7 @@
                     <th class="px-4 py-3 font-medium">{{ __('home.office_name') }}</th>
                     <th class="px-4 py-3 font-medium">{{ __('home.governorate_name') }}</th>
                     <th class="px-4 py-3 font-medium">{{ __('home.office_type') }}</th>
+                    <th class="px-4 py-3 font-medium">{{ __('home.location_description') }}</th>
                     <th class="px-4 py-3 font-medium">{{ __('home.supervising_counselor') }}</th>
                     @if($canEdit || $canDelete)
                         <th class="px-4 py-3 font-medium">{{ __('home.actions') }}</th>
@@ -74,6 +65,11 @@
                         <td class="px-4 py-3">
                             <span class="inline-block px-2 py-0.5 rounded-full text-xs font-medium bg-[#c9a847]/15 text-[#b8962e] dark:text-[#c9a847]">
                               {{ $office->officeType->name ?? '—' }}
+                            </span>
+                        </td>
+                        <td class="px-4 py-3 text-zinc-600 dark:text-zinc-300">
+                            <span class="inline-block px-2 py-0.5 rounded-full text-xs font-medium bg-[#c9a847]/15 text-[#b8962e] dark:text-[#c9a847]">
+                              {{ $office->locationDescription->name ?? '—' }}
                             </span>
                         </td>
                         <td class="px-4 py-3 text-zinc-600 dark:text-zinc-300">

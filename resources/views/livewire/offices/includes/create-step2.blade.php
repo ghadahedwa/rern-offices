@@ -109,6 +109,10 @@
                         <label class="{{ $lbl }}">{{ __('home.fingerprints_count') }}</label>
                         <input wire:model="fingerprints_count" type="number" min="0" placeholder="0" class="{{ $inp }}" />
                     </div>
+                    <div>
+                        <label class="{{ $lbl }}">عدد التكييفات</label>
+                        <input wire:model="air_conditioners_count" type="number" min="0" placeholder="0" class="{{ $inp }}" />
+                    </div>
 
                 </div>
             </div>

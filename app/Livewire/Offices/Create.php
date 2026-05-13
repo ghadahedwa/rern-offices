@@ -77,6 +77,7 @@ class Create extends Component
 
     // Step 2 — extra
     public string $windows_count = '';
+    public string $air_conditioners_count = '';
 
     // Step 3 — Assessments
     public string $visited_at = '';
@@ -162,6 +163,7 @@ class Create extends Component
         $this->printers_count                   = (string) ($office->printers_count ?? '');
         $this->fingerprints_count               = (string) ($office->fingerprints_count ?? '');
         $this->windows_count                    = (string) ($office->windows_count ?? '');
+        $this->air_conditioners_count           = (string) ($office->air_conditioners_count ?? '');
 
         // Step 3
         $this->visited_at                   = $office->visited_at?->format('Y-m-d') ?? '';
@@ -362,6 +364,7 @@ $existing = OfficeMedia::where('office_id', $this->office_id)->where('type', 'do
             'scanners_count'                    => $this->scanners_count !== '' ? (int) $this->scanners_count : null,
             'printers_count'                    => $this->printers_count !== '' ? (int) $this->printers_count : null,
             'fingerprints_count'                => $this->fingerprints_count !== '' ? (int) $this->fingerprints_count : null,
+            'air_conditioners_count'            => $this->air_conditioners_count !== '' ? (int) $this->air_conditioners_count : null,
         ];
     }
 

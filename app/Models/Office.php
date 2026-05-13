@@ -23,7 +23,7 @@ class Office extends Model
         'office_area', 'district_court', 'Braille_sign_device', 'queue_management_system',
         'payment_machine_count', 'computers_count', 'scanners_count', 'printers_count', 'fingerprints_count',
         'negatives_and_solutions', 'development_proposals',
-        'windows_count', 'office_needs',
+        'windows_count', 'office_needs', 'air_conditioners_count',
     ];
 
     protected $casts = [

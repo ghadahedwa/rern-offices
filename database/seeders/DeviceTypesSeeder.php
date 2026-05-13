@@ -15,6 +15,7 @@ class DeviceTypesSeeder extends Seeder
             'الأسكانر',
             'البصمة',
             'ماكينات التحصيل',
+            'تكييفات'
         ];
 
         foreach ($types as $name) {
