@@ -153,7 +153,7 @@
 <br>
                 <div class="flex items-center gap-3 mb-6">
                     <div class="w-1 h-5 bg-[#c9a847] rounded-full"></div>
-                    <h3 class="text-sm font-semibold text-zinc-600 dark:text-zinc-400 uppercase tracking-wide">ملفات سند الملكية</h3>
+                    <h3 class="text-sm font-semibold text-zinc-600 dark:text-zinc-400 uppercase tracking-wide">ملفات سند الملكيه أو الحيازه وتاريخ الإنشاء</h3>
                 </div>
 
                 <div class="space-y-8">
