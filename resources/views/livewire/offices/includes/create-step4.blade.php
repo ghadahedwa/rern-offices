@@ -110,7 +110,7 @@
                             <tr>
                                 <th class="px-4 py-2.5 font-medium">السنة</th>
                                 <th class="px-4 py-2.5 font-medium">الشهر</th>
-                                <th class="px-4 py-2.5 font-medium">القيمة</th>
+                                <th class="px-4 py-2.5 font-medium">العدد</th>
                                 <th class="px-4 py-2.5 font-medium w-12"></th>
                             </tr>
                         </thead>
@@ -192,7 +192,7 @@
                             <tr>
                                 <th class="px-4 py-2.5 font-medium">السنة</th>
                                 <th class="px-4 py-2.5 font-medium">الشهر</th>
-                                <th class="px-4 py-2.5 font-medium">القيمة</th>
+                                <th class="px-4 py-2.5 font-medium">العدد</th>
                                 <th class="px-4 py-2.5 font-medium w-12"></th>
                             </tr>
                         </thead>
