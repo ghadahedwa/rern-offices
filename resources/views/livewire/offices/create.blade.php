@@ -28,8 +28,21 @@
             @foreach ($steps as $num => $label)
                 <div class="flex items-center {{ !$loop->last ? 'flex-1' : '' }}">
                     <div class="flex flex-col items-center gap-1">
+                        @if($office_id && $num !== $step)
+                        <button type="button" wire:click="goToStep({{ $num }})"
+                                class="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold transition-all cursor-pointer
+                                    {{ $step > $num ? 'bg-[#c9a847] text-white hover:bg-[#b8962e]' : 'bg-zinc-200 dark:bg-zinc-700 text-zinc-500 hover:bg-zinc-300 dark:hover:bg-zinc-600' }}">
+                            @if ($step > $num)
+                                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
+                                </svg>
+                            @else
+                                {{ $num }}
+                            @endif
+                        </button>
+                        @else
                         <div class="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold transition-all
-                            {{ $step > $num ? 'bg-[#c9a847] text-white' : ($step === $num ? 'bg-[#c9a847] text-white ring-4 ring-[#c9a847]/20' : 'bg-zinc-200 dark:bg-zinc-700 text-zinc-500') }}">
+                                {{ $step === $num ? 'bg-[#c9a847] text-white ring-4 ring-[#c9a847]/20' : 'bg-zinc-200 dark:bg-zinc-700 text-zinc-500 opacity-50' }}">
                             @if ($step > $num)
                                 <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
@@ -38,6 +51,7 @@
                                 {{ $num }}
                             @endif
                         </div>
+                        @endif
                         <span class="text-xs font-medium hidden sm:block {{ $step === $num ? 'text-[#c9a847]' : 'text-zinc-400' }}">
                             {{ $label }}
                         </span>
@@ -95,7 +109,7 @@
                     <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
                     </svg>
-                    {{ __('home.previous_step') }}
+                    حفظ والسابق
                 </button>
             @endif
         </div>

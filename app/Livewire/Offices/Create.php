@@ -500,27 +500,36 @@ $existing = OfficeMedia::where('office_id', $this->office_id)->where('type', 'do
         if ($this->step === 1) {
             $this->step1Validation();
             $this->persistStep1();
-        } elseif ($this->step === 2) {
-            $this->persistStep2();
         } elseif ($this->step === 3) {
             $this->step3Validation();
             $this->persistStep3();
-        } elseif ($this->step === 4) {
-            $this->persistStep4();
+        } else {
+            $this->saveCurrentStep();
         }
         $this->step++;
     }
 
     public function prevStep(): void
     {
-        if ($this->step === 2) {
-            $this->persistStep2();
-        } elseif ($this->step === 3) {
-            $this->persistStep3();
-        } elseif ($this->step === 4) {
-            $this->persistStep4();
-        }
+        $this->saveCurrentStep();
         $this->step--;
+    }
+
+    public function goToStep(int $target): void
+    {
+        if (!$this->office_id || $target === $this->step) return;
+        $this->saveCurrentStep();
+        $this->step = $target;
+    }
+
+    private function saveCurrentStep(): void
+    {
+        match($this->step) {
+            2 => $this->persistStep2(),
+            3 => $this->persistStep3(),
+            4 => $this->persistStep4(),
+            default => null,
+        };
     }
 
     public function save(): void
