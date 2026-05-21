@@ -108,6 +108,7 @@ return [
     'confirm_delete_office'    => 'هل أنت متأكد من حذف هذا المقر؟',
     'all_governorates'         => 'كل المحافظات',
     'supervising_counselor'    => 'المستشار المشرف',
+    'order'                    => 'الترتيب',
 
     // Office create — step labels
     'step_1_label'             => 'المعلومات الأساسية',
@@ -186,6 +187,7 @@ return [
     'queue_management_system'          => 'منظم الدور كيوسيستم',
     'payment_machine_count'            => 'عدد ماكينات التحصيل',
     'computers_count'                  => 'عدد أجهزة الكمبيوتر',
+    'monitors_count'                   => 'عدد الشاشات',
     'scanners_count'                   => 'عدد أجهزة الاسكانر',
     'printers_count'                   => 'عدد الطابعات',
     'fingerprints_count'               => 'عدد أجهزة البصمة',
@@ -195,6 +197,8 @@ return [
     'option_not_available'             => 'لا يوجد',
     'option_working'                   => 'يعمل',
     'option_not_working'               => 'لا يعمل',
+    'option_broken'                    => 'معطل',
+    'surveillance_cameras'             => 'كاميرات المراقبة',
 
     // Office create — navigation buttons
     'save_and_exit'            => 'حفظ والخروج',

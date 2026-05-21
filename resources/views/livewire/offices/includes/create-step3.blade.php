@@ -10,14 +10,14 @@
 
                     {{-- تاريخ الزيارة --}}
                     <div>
-                        <label class="{{ $lbl }}">{{ __('home.visited_at') }}<span class="text-red-500">*</span></label>
+                        <label class="{{ $lbl }}">{{ __('home.visited_at') }}</label>
                         <input type="date" wire:model="visited_at" class="{{ $inp }}" />
                         @error('visited_at') <p class="{{ $err }}">{{ $message }}</p> @enderror
                     </div>
 
                     {{-- الحالة الإنشائية --}}
                     <div>
-                        <label class="{{ $lbl }}">{{ __('home.structural_condition') }}<span class="text-red-500">*</span></label>
+                        <label class="{{ $lbl }}">{{ __('home.structural_condition') }}</label>
                         <select wire:model="structural_condition_id" class="{{ $inp }}">
                             <option value="">{{ __('home.select_structural') }}</option>
                             @foreach ($structuralConditions as $item)
@@ -29,7 +29,7 @@
 
                     {{-- تقييم نظافة المقر --}}
                     <div>
-                        <label class="{{ $lbl }}">{{ __('home.cleanliness_rating') }}<span class="text-red-500">*</span></label>
+                        <label class="{{ $lbl }}">{{ __('home.cleanliness_rating') }}</label>
                         <select wire:model="cleanliness_rating" class="{{ $inp }}">
                             <option value="">— {{ __('home.cleanliness_rating') }} —</option>
                             @foreach (\App\Models\Office::CLEANLINESS_RATINGS as $key => $label)
@@ -41,7 +41,7 @@
 
                     {{-- تقييم غرف الحفظ --}}
                     <div>
-                        <label class="{{ $lbl }}">{{ __('home.archive_rating') }}<span class="text-red-500">*</span></label>
+                        <label class="{{ $lbl }}">{{ __('home.archive_rating') }}</label>
                         <select wire:model="archive_rating" class="{{ $inp }}">
                             <option value="">— {{ __('home.archive_rating') }} —</option>
                             @foreach (\App\Models\Office::ARCHIVE_RATINGS as $key => $label)
@@ -53,7 +53,7 @@
 
                     {{-- مدى الالتزام بمواعيد العمل --}}
                     <div>
-                        <label class="{{ $lbl }}">{{ __('home.work_schedule_commitment') }}<span class="text-red-500">*</span></label>
+                        <label class="{{ $lbl }}">{{ __('home.work_schedule_commitment') }}</label>
                         <select wire:model="work_schedule_commitment" class="{{ $inp }}">
                             <option value="">— {{ __('home.work_schedule_commitment') }} —</option>
                             @foreach (\App\Models\Office::COMMITMENT_RATINGS as $key => $label)
@@ -65,7 +65,7 @@
 
                     {{-- مدى الالتزام بحسن معاملة المواطنين --}}
                     <div>
-                        <label class="{{ $lbl }}">{{ __('home.citizen_treatment_commitment') }}<span class="text-red-500">*</span></label>
+                        <label class="{{ $lbl }}">{{ __('home.citizen_treatment_commitment') }}</label>
                         <select wire:model="citizen_treatment_commitment" class="{{ $inp }}">
                             <option value="">— {{ __('home.citizen_treatment_commitment') }} —</option>
                             @foreach (\App\Models\Office::COMMITMENT_RATINGS as $key => $label)
@@ -73,6 +73,17 @@
                             @endforeach
                         </select>
                         @error('citizen_treatment_commitment') <p class="{{ $err }}">{{ $message }}</p> @enderror
+                    </div>
+
+                    {{-- كاميرات المراقبة --}}
+                    <div>
+                        <label class="{{ $lbl }}">{{ __('home.surveillance_cameras') }}</label>
+                        <select wire:model="surveillance_cameras" class="{{ $inp }}">
+                            <option value="">{{ __('home.select_option') }}</option>
+                            <option value="available">{{ __('home.option_available') }}</option>
+                            <option value="not_available">{{ __('home.option_not_available') }}</option>
+                            <option value="broken">{{ __('home.option_broken') }}</option>
+                        </select>
                     </div>
 
                 </div>

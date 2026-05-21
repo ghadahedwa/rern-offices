@@ -59,8 +59,8 @@ class Index extends Component
         $isSuperAdmin = $user?->hasRole('super-admin');
 
         $governorates = $isSuperAdmin
-            ? Governorate::orderBy('id')->get()
-            : $user->governorates()->orderBy('id')->get();
+            ? Governorate::orderBy('order')->orderBy('id')->get()
+            : $user->governorates()->orderBy('order')->orderBy('id')->get();
 
         $allowedGovIds = $isSuperAdmin ? null : $governorates->pluck('id');
 

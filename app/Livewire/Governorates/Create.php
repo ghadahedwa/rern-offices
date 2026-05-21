@@ -15,6 +15,7 @@ class Create extends Component
     public ?Governorate $governorate = null;
 
     public string $name                  = '';
+    public int    $order                 = 0;
     public string $supervising_counselor = '';
     public string $latitude              = '';
     public string $longitude             = '';
@@ -26,9 +27,12 @@ class Create extends Component
         if ($governorate?->exists) {
             $this->governorate           = $governorate;
             $this->name                  = $governorate->name;
+            $this->order                 = $governorate->order ?? 0;
             $this->supervising_counselor = $governorate->supervising_counselor ?? '';
             $this->latitude              = (string) ($governorate->latitude ?? '');
             $this->longitude             = (string) ($governorate->longitude ?? '');
+        } else {
+            $this->order = (int) Governorate::max('order') + 1;
         }
     }
 
@@ -36,12 +40,14 @@ class Create extends Component
     {
         $this->validate([
             'name'      => ['required', 'string', 'max:255'],
+            'order'     => ['required', 'integer', 'min:0'],
             'latitude'  => ['nullable', 'numeric', 'between:-90,90'],
             'longitude' => ['nullable', 'numeric', 'between:-180,180'],
         ]);
 
         $data = [
             'name'                  => $this->name,
+            'order'                 => $this->order,
             'supervising_counselor' => $this->supervising_counselor ?: null,
             'latitude'              => $this->latitude ?: null,
             'longitude'             => $this->longitude ?: null,

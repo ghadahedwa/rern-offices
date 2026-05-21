@@ -9,10 +9,15 @@ class OfficeStat extends Model
 {
     protected $table = 'office_statistics';
 
-    protected $fillable = ['office_id', 'stat_type', 'year', 'month', 'value'];
+    protected $fillable = ['office_id', 'stat_type_id', 'year', 'month', 'value'];
 
     public function office(): BelongsTo
     {
         return $this->belongsTo(Office::class);
+    }
+
+    public function statType(): BelongsTo
+    {
+        return $this->belongsTo(StatType::class);
     }
 }

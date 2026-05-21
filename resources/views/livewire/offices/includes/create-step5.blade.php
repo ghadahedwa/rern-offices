@@ -7,17 +7,21 @@
                 viewer: null,
                 viewerSrc: '',
                 viewerType: '',
+                deleteId: null,
+                deleteLabel: '',
                 openModal(name)  { this.modal = name; this.fileName = ''; this.uploading = false; },
                 closeModal()     { this.modal = null; this.fileName = ''; this.uploading = false; },
                 openViewer(src, type) { this.viewerSrc = src; this.viewerType = type; this.viewer = true; },
                 closeViewer()    { this.viewer = false; this.$nextTick(() => { this.viewerSrc = ''; }); },
+                askDelete(id, label) { this.deleteId = id; this.deleteLabel = label; },
+                confirmDelete()  { $wire.deleteMedia(this.deleteId); this.deleteId = null; this.deleteLabel = ''; },
                 init() {
                     $wire.on('mediaUploaded', () => this.closeModal());
                     $el.addEventListener('livewire-upload-start',  () => { this.uploading = true; });
                     $el.addEventListener('livewire-upload-finish', () => { this.uploading = false; });
                     $el.addEventListener('livewire-upload-error',  () => { this.uploading = false; this.fileName = ''; });
                 }
-            }" @keydown.escape.window="closeModal(); closeViewer();">
+            }" @keydown.escape.window="closeModal(); closeViewer(); deleteId = null;">
 
                 {{-- Header --}}
                 <div class="flex items-center gap-3 mb-6">
@@ -59,9 +63,8 @@
                                                  class="rounded-lg border-2 border-[#c9a847] cursor-pointer transition-transform duration-150 hover:opacity-95 active:scale-90" />
                                         <br>
                                             <button type="button"
-                                                    wire:click="deleteMedia({{ $photo->id }})"
-                                                    wire:confirm="حذف هذه الصورة؟"
-                                                    class="text-xs text-red-500 hover:text-red-700 font-medium transition whitespace-nowrap">
+                                                    @click="askDelete({{ $photo->id }}, 'هذه الصورة')"
+                                                    class="text-xs text-red-500 hover:text-red-700 font-medium transition whitespace-nowrap cursor-pointer">
                                                 حذف
                                             </button>
                                         </td>
@@ -89,9 +92,9 @@
                     <div>
                         <div class="flex items-center justify-between mb-3">
                             <span class="text-sm font-medium text-zinc-700 dark:text-zinc-300">فيديو المقر
-                                <span class="text-xs font-normal text-zinc-400 mr-1">({{ ($existingMedia['video'] ?? collect())->count() }} / 2)</span>
+                                <span class="text-xs font-normal text-zinc-400 mr-1">({{ ($existingMedia['video'] ?? collect())->count() }} / 1)</span>
                             </span>
-                            @if(($existingMedia['video'] ?? collect())->count() < 2)
+                            @if(($existingMedia['video'] ?? collect())->count() < 1)
                                 <button type="button" @click="openModal('video')"
                                         class="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg bg-[#c9a847]/10 text-[#b8962e] hover:bg-[#c9a847]/20 transition">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -120,8 +123,8 @@
                                                         <p class="text-xs text-zinc-400">اضغط للتشغيل</p>
                                                     </div>
                                                 </button>
-                                                <button type="button" wire:click="deleteMedia({{ $vid->id }})" wire:confirm="حذف الفيديو؟"
-                                                        class="text-xs text-red-500 hover:text-red-700 transition font-medium shrink-0 mr-3">حذف</button>
+                                                <button type="button" @click="askDelete({{ $vid->id }}, 'هذا الفيديو')"
+                                                        class="text-xs text-red-500 hover:text-red-700 transition font-medium shrink-0 mr-3 cursor-pointer">حذف</button>
                                             </div>
                                         </td>
                                 @endforeach
@@ -141,7 +144,7 @@
                 <br>
                 <div class="flex items-center gap-3 mb-6">
                     <div class="w-1 h-5 bg-[#c9a847] rounded-full"></div>
-                    <h3 class="text-sm font-semibold text-zinc-600 dark:text-zinc-400 uppercase tracking-wide">ملفات سند الملكيه أو الحيازه وتاريخ الإنشاء</h3>
+                    <h3 class="text-sm font-semibold text-zinc-600 dark:text-zinc-400 uppercase tracking-wide">ملفات سند الملكيه أو الحيازه وقرار الإنشاء</h3>
                 </div>
 
                 <div class="space-y-8">
@@ -175,8 +178,8 @@
                                             </div>
                                             <span class="text-sm text-zinc-700 dark:text-zinc-300 truncate">{{ $doc->original_name ?? basename($doc->path) }}</span>
                                         </a>
-                                        <button type="button" wire:click="deleteMedia({{ $doc->id }})" wire:confirm="حذف هذا الملف؟"
-                                                class="text-xs text-red-500 hover:text-red-700 transition font-medium shrink-0 mr-3">حذف</button>
+                                        <button type="button" @click="askDelete({{ $doc->id }}, 'هذا الملف')"
+                                                class="text-xs text-red-500 hover:text-red-700 transition font-medium shrink-0 mr-3 cursor-pointer">حذف</button>
                                     </div>
                                 @endforeach
                             </div>
@@ -285,6 +288,48 @@
                         </template>
                         <button type="button" @click="closeViewer()"
                                 class="absolute -top-3 -right-3 w-8 h-8 rounded-full bg-white text-zinc-800 font-bold flex items-center justify-center shadow hover:bg-zinc-100 transition text-base leading-none">×</button>
+                    </div>
+                </div>
+
+                {{-- Delete Confirmation Modal (موحّد) --}}
+                <div x-show="deleteId !== null"
+                     x-transition.opacity
+                     @click.self="deleteId = null"
+                     class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
+                     style="display:none">
+                    <div x-transition:enter="transition ease-out duration-200"
+                         x-transition:enter-start="opacity-0 scale-95"
+                         x-transition:enter-end="opacity-100 scale-100"
+                         class="w-full max-w-md rounded-2xl shadow-2xl overflow-hidden border-2 border-red-500">
+
+                        <div class="flex items-center justify-between px-5 py-3.5 bg-red-500">
+                            <div class="flex items-center gap-2.5">
+                                <div class="w-7 h-7 rounded-lg bg-white/20 flex items-center justify-center">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                    </svg>
+                                </div>
+                                <h3 class="text-sm font-semibold text-white">تأكيد الحذف</h3>
+                            </div>
+                            <button type="button" @click="deleteId = null"
+                                    class="w-6 h-6 rounded-full flex items-center justify-center text-white/70 hover:text-white hover:bg-white/20 transition text-base leading-none">×</button>
+                        </div>
+
+                        <div class="bg-white dark:bg-zinc-900 px-5 py-6 space-y-5">
+                            <p class="text-sm text-zinc-600 dark:text-zinc-300 text-center">
+                                هل أنت متأكد من حذف <span class="font-semibold text-zinc-800 dark:text-zinc-100" x-text="deleteLabel"></span>؟
+                            </p>
+                            <div class="flex gap-3">
+                                <button type="button" @click="confirmDelete()"
+                                        class="flex-1 bg-red-500 hover:bg-red-600 text-white text-sm font-medium py-2.5 rounded-lg transition">
+                                    حذف
+                                </button>
+                                <button type="button" @click="deleteId = null"
+                                        class="flex-1 border border-zinc-300 dark:border-zinc-600 text-zinc-600 dark:text-zinc-300 text-sm font-medium py-2.5 rounded-lg hover:bg-zinc-50 dark:hover:bg-zinc-800 transition">
+                                    إلغاء
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
 

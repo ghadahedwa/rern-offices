@@ -20,10 +20,11 @@ class Office extends Model
         'work_schedule_commitment', 'citizen_treatment_commitment',
         'microfilm_option_id', 'disabilities_access_id', 'fire_safety_id',
         'document_photocopying_service_id', 'buffet_service_id', 'cleanliness_contract_id',
-        'office_area', 'district_court', 'Braille_sign_device', 'queue_management_system',
-        'payment_machine_count', 'computers_count', 'scanners_count', 'printers_count', 'fingerprints_count',
+        'office_area', 'district_court', 'Braille_sign_device', 'queue_management_system', 'surveillance_cameras',
+        'payment_machine_count', 'computers_count', 'monitors_count', 'scanners_count', 'printers_count', 'fingerprints_count',
         'negatives_and_solutions', 'development_proposals',
         'windows_count', 'office_needs', 'air_conditioners_count',
+        'debt_amount',
     ];
 
     protected $casts = [

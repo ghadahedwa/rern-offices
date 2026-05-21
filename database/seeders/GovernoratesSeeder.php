@@ -42,7 +42,7 @@ class GovernoratesSeeder extends Seeder
             ['name' => 'كفر الشيخ',     'created_at' => now(), 'updated_at' => now()],
             ['name' => 'مطروح',         'created_at' => now(), 'updated_at' => now()],
             ['name' => 'الأقصر',        'created_at' => now(), 'updated_at' => now()],
-            ['name' => 'عين شمس',       'created_at' => now(), 'updated_at' => now()],
+            ['name' => 'شبين الكوم',       'created_at' => now(), 'updated_at' => now()],
         ]);
     }
 }

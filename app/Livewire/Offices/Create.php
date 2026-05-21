@@ -72,6 +72,7 @@ class Create extends Component
     public string $queue_management_system = '';
     public string $payment_machine_count = '';
     public string $computers_count = '';
+    public string $monitors_count = '';
     public string $scanners_count = '';
     public string $printers_count = '';
     public string $fingerprints_count = '';
@@ -86,6 +87,7 @@ class Create extends Component
     public string $archive_rating = '';
     public string $work_schedule_commitment = '';
     public string $citizen_treatment_commitment = '';
+    public string $surveillance_cameras = '';
     public string $negatives_and_solutions = '';
     public string $development_proposals = '';
     public string $office_needs = '';
@@ -165,6 +167,7 @@ class Create extends Component
         $this->queue_management_system          = $office->queue_management_system ?? '';
         $this->payment_machine_count            = (string) ($office->payment_machine_count ?? '');
         $this->computers_count                  = (string) ($office->computers_count ?? '');
+        $this->monitors_count                   = (string) ($office->monitors_count ?? '');
         $this->scanners_count                   = (string) ($office->scanners_count ?? '');
         $this->printers_count                   = (string) ($office->printers_count ?? '');
         $this->fingerprints_count               = (string) ($office->fingerprints_count ?? '');
@@ -177,6 +180,7 @@ class Create extends Component
         $this->archive_rating               = $office->archive_rating ?? '';
         $this->work_schedule_commitment     = $office->work_schedule_commitment ?? '';
         $this->citizen_treatment_commitment = $office->citizen_treatment_commitment ?? '';
+        $this->surveillance_cameras         = $office->surveillance_cameras ?? '';
         $this->negatives_and_solutions      = $office->negatives_and_solutions ?? '';
         $this->development_proposals        = $office->development_proposals ?? '';
         $this->office_needs                 = $office->office_needs ?? '';
@@ -188,13 +192,13 @@ class Create extends Component
             ->toArray();
 
         $stats = $office->statistics()->get();
-        $this->transactionStats = $stats->where('stat_type', 'transactions')
+        $this->transactionStats = $stats->where('stat_type_id', 1)
             ->map(fn($s) => ['year' => $s->year, 'value' => $s->value])
             ->values()->toArray();
-        $this->formSalesStats = $stats->where('stat_type', 'form_sales')
+        $this->formSalesStats = $stats->where('stat_type_id', 2)
             ->map(fn($s) => ['year' => $s->year, 'month' => $s->month, 'value' => $s->value])
             ->values()->toArray();
-        $this->folderSalesStats = $stats->where('stat_type', 'folder_sales')
+        $this->folderSalesStats = $stats->where('stat_type_id', 3)
             ->map(fn($s) => ['year' => $s->year, 'month' => $s->month, 'value' => $s->value])
             ->values()->toArray();
     }
@@ -243,7 +247,7 @@ class Create extends Component
         );
 
         $existing = OfficeMedia::where('office_id', $this->office_id)->where('type', 'video')->count();
-        if ($existing >= 2) { return; }
+        if ($existing >= 1) { return; }
         $path = $this->newVideo->store("offices/{$this->office_id}/videos", 'public');
         OfficeMedia::create(['office_id' => $this->office_id, 'type' => 'video', 'path' => $path, 'original_name' => $this->newVideo->getClientOriginalName()]);
 
@@ -359,6 +363,7 @@ $existing = OfficeMedia::where('office_id', $this->office_id)->where('type', 'do
             'archive_rating'              => $this->archive_rating ?: null,
             'work_schedule_commitment'    => $this->work_schedule_commitment ?: null,
             'citizen_treatment_commitment' => $this->citizen_treatment_commitment ?: null,
+            'surveillance_cameras'        => $this->surveillance_cameras ?: null,
             'negatives_and_solutions'     => $this->negatives_and_solutions ?: null,
             'development_proposals'       => $this->development_proposals ?: null,
             'office_needs'                => $this->office_needs ?: null,
@@ -378,6 +383,7 @@ $existing = OfficeMedia::where('office_id', $this->office_id)->where('type', 'do
             'queue_management_system'           => $this->queue_management_system ?: null,
             'payment_machine_count'             => $this->payment_machine_count !== '' ? (int) $this->payment_machine_count : null,
             'computers_count'                   => $this->computers_count !== '' ? (int) $this->computers_count : null,
+            'monitors_count'                    => $this->monitors_count !== '' ? (int) $this->monitors_count : null,
             'scanners_count'                    => $this->scanners_count !== '' ? (int) $this->scanners_count : null,
             'printers_count'                    => $this->printers_count !== '' ? (int) $this->printers_count : null,
             'fingerprints_count'                => $this->fingerprints_count !== '' ? (int) $this->fingerprints_count : null,
@@ -422,17 +428,17 @@ $existing = OfficeMedia::where('office_id', $this->office_id)->where('type', 'do
 
         foreach ($this->transactionStats as $row) {
             if (!empty($row['year'])) {
-                OfficeStat::create(['office_id' => $this->office_id, 'stat_type' => 'transactions', 'year' => $row['year'], 'month' => null, 'value' => (int)($row['value'] ?? 0)]);
+                OfficeStat::create(['office_id' => $this->office_id, 'stat_type_id' => 1, 'year' => $row['year'], 'month' => null, 'value' => $row['value'] ?? 0]);
             }
         }
         foreach ($this->formSalesStats as $row) {
             if (!empty($row['year']) && !empty($row['month'])) {
-                OfficeStat::create(['office_id' => $this->office_id, 'stat_type' => 'form_sales', 'year' => $row['year'], 'month' => $row['month'], 'value' => (int)($row['value'] ?? 0)]);
+                OfficeStat::create(['office_id' => $this->office_id, 'stat_type_id' => 2, 'year' => $row['year'], 'month' => $row['month'], 'value' => $row['value'] ?? 0]);
             }
         }
         foreach ($this->folderSalesStats as $row) {
             if (!empty($row['year']) && !empty($row['month'])) {
-                OfficeStat::create(['office_id' => $this->office_id, 'stat_type' => 'folder_sales', 'year' => $row['year'], 'month' => $row['month'], 'value' => (int)($row['value'] ?? 0)]);
+                OfficeStat::create(['office_id' => $this->office_id, 'stat_type_id' => 3, 'year' => $row['year'], 'month' => $row['month'], 'value' => $row['value'] ?? 0]);
             }
         }
     }
@@ -501,7 +507,7 @@ $existing = OfficeMedia::where('office_id', $this->office_id)->where('type', 'do
             $this->step1Validation();
             $this->persistStep1();
         } elseif ($this->step === 3) {
-            $this->step3Validation();
+            //$this->step3Validation();
             $this->persistStep3();
         } else {
             $this->saveCurrentStep();
@@ -542,8 +548,8 @@ $existing = OfficeMedia::where('office_id', $this->office_id)->where('type', 'do
     {
         return view('livewire.offices.create', [
             'governorates'        => auth()->user()?->hasRole('super-admin')
-                ? Governorate::orderBy('id')->get()
-                : auth()->user()->governorates()->orderBy('id')->get(),
+                ? Governorate::orderBy('order')->orderBy('id')->get()
+                : auth()->user()->governorates()->orderBy('order')->orderBy('id')->get(),
             'mainOffices'         => Office::with('officeType')->whereNotNull('type_id')->orderBy('name')->get(),
             'types'               => OfficeType::orderBy('id')->get(),
             'locations'           => LocationDescription::orderBy('id')->get(),

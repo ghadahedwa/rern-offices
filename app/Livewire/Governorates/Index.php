@@ -38,14 +38,14 @@ class Index extends Component
         if ($isSuperAdmin) {
             $governorates = Governorate::withCount('offices')
                 ->where('name', 'like', "%{$this->search}%")
-                ->orderBy('id')
+                ->orderBy('order')->orderBy('id')
                 ->paginate(10);
         } else {
             $governorates = auth()->user()
                 ->governorates()
                 ->withCount('offices')
                 ->where('name', 'like', "%{$this->search}%")
-                ->orderBy('id')
+                ->orderBy('order')->orderBy('id')
                 ->paginate(10);
         }
 

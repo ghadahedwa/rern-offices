@@ -154,12 +154,13 @@
                             @endforeach
                         </select>
                     </div>
+                    {{-- نُقل إلى صفحة الإحصائيات (تاب المعاملات والمبيعات). محفوظ هنا للاسترجاع السهل لو عُدل القرار.
                     <div>
                         <label class="{{ $lbl }}">{{ __('home.avg_daily_transactions') }}</label>
                         <input wire:model="avg_daily_transactions" type="number" min="0" placeholder="0" class="{{ $inp }}" />
                     </div>
-                    
-                    
+                    --}}
+
                 </div>
             </div>
 

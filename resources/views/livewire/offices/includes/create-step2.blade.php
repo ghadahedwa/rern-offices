@@ -98,6 +98,10 @@
                         <input wire:model="computers_count" type="number" min="0" placeholder="0" class="{{ $inp }}" />
                     </div>
                     <div>
+                        <label class="{{ $lbl }}">{{ __('home.monitors_count') }}</label>
+                        <input wire:model="monitors_count" type="number" min="0" placeholder="0" class="{{ $inp }}" />
+                    </div>
+                    <div>
                         <label class="{{ $lbl }}">{{ __('home.scanners_count') }}</label>
                         <input wire:model="scanners_count" type="number" min="0" placeholder="0" class="{{ $inp }}" />
                     </div>

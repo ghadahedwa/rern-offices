@@ -55,7 +55,7 @@ class Create extends Component
     public function render()
     {
         $roles        = Role::all();
-        $governorates = Governorate::orderBy('id')->get();
+        $governorates = Governorate::orderBy('order')->orderBy('id')->get();
         return view('livewire.users.create', compact('roles', 'governorates'));
     }
 }
