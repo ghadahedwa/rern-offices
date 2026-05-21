@@ -33,7 +33,7 @@
                     1 => __('home.step_1_label'),
                     2 => __('home.step_2_label'),
                     3 => __('home.step_3_label'),
-                    4 => 'الإحصائيات',
+                    //4 => 'الإحصائيات',
                     5 => __('home.step_4_label'),
                 ];
             @endphp
@@ -101,9 +101,12 @@
         @endif
 
         {{-- ===================== STEP 4 ===================== --}}
+        {{--
         @if ($step === 4)
             @include('livewire.offices.includes.create-step4')
         @endif
+        --}}
+        
 
         {{-- ===================== STEP 5 ===================== --}}
         @if ($step === 5)

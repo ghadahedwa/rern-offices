@@ -44,10 +44,10 @@
     <div>
         @if($activeTab === 'transactions_sales')
             <livewire:offices.stat-tab.transactions-sales :office="$office" :key="'ts-'.$office->id" />
-        {{--
+    
             @elseif($activeTab === 'claims')
             <livewire:offices.stat-tab.claims :office="$office" :key="'cl-'.$office->id" />
-            --}}
+            
         @elseif($activeTab === 'requests')
             <livewire:offices.stat-tab.requests :office="$office" :key="'rq-'.$office->id" />
         @endif
