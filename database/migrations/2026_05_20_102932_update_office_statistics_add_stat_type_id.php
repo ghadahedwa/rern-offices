@@ -26,21 +26,14 @@ return new class extends Migration
         });
 
         // 4 — احذف عمود ENUM القديم
-        Schema::table('office_statistics', function (Blueprint $table) {
+        /*Schema::table('office_statistics', function (Blueprint $table) {
             $table->dropColumn('stat_type');
-        });
+        });*/
     }
 
     public function down(): void
     {
-        Schema::table('office_statistics', function (Blueprint $table) {
-            $table->enum('stat_type', ['transactions', 'form_sales', 'folder_sales'])->nullable()->after('office_id');
-        });
-
-        DB::table('office_statistics')->where('stat_type_id', 1)->update(['stat_type' => 'transactions']);
-        DB::table('office_statistics')->where('stat_type_id', 2)->update(['stat_type' => 'form_sales']);
-        DB::table('office_statistics')->where('stat_type_id', 3)->update(['stat_type' => 'folder_sales']);
-
+        // عمود stat_type القديم لم يُحذف في up()، فنكتفي بإزالة العمود الجديد + الـ FK
         Schema::table('office_statistics', function (Blueprint $table) {
             $table->dropForeign(['stat_type_id']);
             $table->dropColumn('stat_type_id');
