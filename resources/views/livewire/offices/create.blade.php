@@ -14,7 +14,7 @@
             </h1>
         </div>
 
-        @if($isEditing)
+        @if($office_id)
         <a href="{{ route('offices.statistics', $office_id) }}" wire:navigate
            class="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-[#c9a847] text-[#c9a847] hover:bg-[#c9a847]/10 text-sm font-medium transition">
             <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -34,7 +34,7 @@
                     2 => __('home.step_2_label'),
                     3 => __('home.step_3_label'),
                     //4 => 'الإحصائيات',
-                    5 => __('home.step_4_label'),
+                    4 => __('home.step_4_label'),
                 ];
             @endphp
             @foreach ($steps as $num => $label)
