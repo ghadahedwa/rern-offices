@@ -63,13 +63,14 @@
                         </select>
                     </div>
                     <div>
-                        <label class="{{ $lbl }}">{{ __('home.location_description') }}</label>
+                        <label class="{{ $lbl }}">{{ __('home.location_description') }}<span class="text-red-500">*</span></label>
                         <select wire:model.live="location_description_id" class="{{ $inp }}">
                             <option value="">{{ __('home.select_location') }}</option>
                             @foreach ($locations as $item)
                                 <option value="{{ $item->id }}">{{ $item->name }}</option>
                             @endforeach
                         </select>
+                        @error('location_description_id') <p class="mt-1 text-xs text-red-500">{{ $message }}</p> @enderror
                     </div>
     
                     <div>

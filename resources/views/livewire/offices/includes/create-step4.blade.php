@@ -1,5 +1,5 @@
 
-            {{-- ── Step 5: الوسائط ── --}}
+            {{-- ── Step 4: الوسائط ── --}}
             <div class="mb-1" x-data="{
                 modal: null,
                 fileName: '',
