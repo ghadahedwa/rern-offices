@@ -42,14 +42,17 @@
 
     {{-- Tab Content --}}
     <div>
-        @if($activeTab === 'transactions_sales')
+        @if($activeTab === 'transactions')
             <livewire:offices.stat-tab.transactions-sales :office="$office" :key="'ts-'.$office->id" />
-    
-            @elseif($activeTab === 'claims')
-            <livewire:offices.stat-tab.claims :office="$office" :key="'cl-'.$office->id" />
-            
-        @elseif($activeTab === 'requests')
-            <livewire:offices.stat-tab.requests :office="$office" :key="'rq-'.$office->id" />
+
+        @elseif($activeTab === 'forms_folders')
+            <livewire:offices.stat-tab.forms-and-folders :office="$office" :key="'ff-'.$office->id" />
+
+        @elseif($activeTab === 'shaher_requests')
+            <livewire:offices.stat-tab.requests :office="$office" :key="'sr-'.$office->id" />
+
+        @elseif($activeTab === 'registry_requests')
+            <livewire:offices.stat-tab.registry-requests :office="$office" :key="'rr-'.$office->id" />
         @endif
     </div>
 

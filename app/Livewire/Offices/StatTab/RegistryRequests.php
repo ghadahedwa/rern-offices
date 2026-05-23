@@ -9,21 +9,18 @@ use Flux\Flux;
 use Livewire\Component;
 use Livewire\WithPagination;
 
-class Requests extends Component
+class RegistryRequests extends Component
 {
     use WithPagination;
 
     public Office $office;
 
-    // فلاتر مستقلة لكل نوع
     public array $filterYear  = [];
     public array $filterMonth = [];
 
-    // ظهور الـ modals (مربوطة بـ Alpine عبر $wire)
     public bool $showForm   = false;
     public bool $showDelete = false;
 
-    // حالة popup الإضافة/التعديل
     public ?int $editingId = null;
     public ?int $formTypeId = null;
     public string $formName      = '';
@@ -33,7 +30,6 @@ class Requests extends Component
     public string $formMonth = '';
     public string $formValue = '';
 
-    // حالة حذف
     public ?int $deletingId = null;
     public string $deletingLabel = '';
 
@@ -41,7 +37,7 @@ class Requests extends Component
     {
         $this->office = $office;
 
-        foreach (StatType::where('group_key', 'shaher_requests')->pluck('id') as $id) {
+        foreach (StatType::where('group_key', 'registry_requests')->pluck('id') as $id) {
             $this->filterYear[$id]  = '';
             $this->filterMonth[$id] = '';
         }
@@ -171,7 +167,7 @@ class Requests extends Component
 
     public function render()
     {
-        $statTypes = StatType::where('group_key', 'shaher_requests')
+        $statTypes = StatType::where('group_key', 'registry_requests')
             ->orderBy('order')
             ->get();
 
@@ -193,7 +189,7 @@ class Requests extends Component
             9 => 'سبتمبر', 10 => 'أكتوبر',11 => 'نوفمبر', 12 => 'ديسمبر',
         ];
 
-        return view('livewire.offices.stat-tab.requests', [
+        return view('livewire.offices.stat-tab.registry-requests', [
             'statTypes' => $statTypes,
             'existing'  => $existing,
             'years'     => $years,

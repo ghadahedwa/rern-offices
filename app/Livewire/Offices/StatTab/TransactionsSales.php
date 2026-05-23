@@ -46,7 +46,7 @@ class TransactionsSales extends Component
         $this->office = $office;
         $this->avgDaily = $office->avg_daily_transactions !== null ? (string) (0 + $office->avg_daily_transactions) : '';
 
-        foreach (StatType::where('group_key', 'transactions_sales')->pluck('id') as $id) {
+        foreach (StatType::where('group_key', 'transactions')->pluck('id') as $id) {
             $this->filterYear[$id]  = '';
             $this->filterMonth[$id] = '';
         }
@@ -197,7 +197,7 @@ class TransactionsSales extends Component
 
     public function render()
     {
-        $statTypes = StatType::where('group_key', 'transactions_sales')
+        $statTypes = StatType::where('group_key', 'transactions')
             ->orderBy('order')
             ->get();
 

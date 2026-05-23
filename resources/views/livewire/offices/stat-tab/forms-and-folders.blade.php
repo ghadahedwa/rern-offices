@@ -1,35 +1,10 @@
 <div class="space-y-8"
      x-data
-     @keydown.escape.window="$wire.showForm = false; $wire.showAvg = false; $wire.showDelete = false">
+     @keydown.escape.window="$wire.showForm = false; $wire.showDelete = false">
 
     @php
         $inp = 'border border-zinc-300 dark:border-zinc-600 rounded-lg px-3 py-2 text-sm w-full bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-[#c9a847]';
     @endphp
-
-    {{-- ── متوسط المعاملات اليومية للتوثيق (قيمة واحدة) ── --}}
-    <div class="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-5 space-y-4">
-        <div class="flex items-center justify-between">
-            <div class="flex items-center gap-3">
-                <div class="w-1 h-5 bg-[#c9a847] rounded-full"></div>
-                <h3 class="text-sm font-semibold text-zinc-600 dark:text-zinc-400 uppercase tracking-wide">{{ __('home.average_daily_transactions') }}</h3>
-            </div>
-            <button type="button" wire:click="openAvg"
-                    class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-[#c9a847] hover:bg-[#b8962e] text-white transition cursor-pointer">
-                <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
-                </svg>
-                تعديل
-            </button>
-        </div>
-        <div class="flex items-baseline gap-2 pr-4">
-            <span class="text-2xl font-bold text-zinc-800 dark:text-zinc-100">
-                {{ $office->avg_daily_transactions !== null ? number_format($office->avg_daily_transactions) : '—' }}
-            </span>
-            @if($office->avg_daily_transactions !== null)
-            <span class="text-sm text-zinc-400">معاملة / يوم</span>
-            @endif
-        </div>
-    </div>
 
     {{-- Stat Type Sections --}}
     @foreach($statTypes as $type)
@@ -40,7 +15,7 @@
 
     <div class="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-5 space-y-4">
 
-        {{-- Header: title + gold bar (right) + add button (left) --}}
+        {{-- Header --}}
         <div class="flex items-center justify-between">
             <div class="flex items-center gap-3">
                 <div class="w-1 h-5 bg-[#c9a847] rounded-full"></div>
@@ -57,7 +32,7 @@
             </button>
         </div>
 
-        {{-- Filters (year + month dropdowns) --}}
+        {{-- Filters --}}
         <div class="flex items-center justify-end gap-2">
             @if($type->period === 'monthly')
             <select wire:model.live="filterMonth.{{ $type->id }}" class="{{ $inp }} max-w-[140px]">
@@ -132,7 +107,7 @@
     </div>
     @endforeach
 
-    {{-- ── Shared Add/Edit Modal (Alpine — موحّد مع تاب الوسائط) ── --}}
+    {{-- ── Add/Edit Modal ── --}}
     <div x-show="$wire.showForm"
          x-transition.opacity
          @click.self="$wire.showForm = false"
@@ -142,8 +117,6 @@
              x-transition:enter-start="opacity-0 scale-95"
              x-transition:enter-end="opacity-100 scale-100"
              class="w-full max-w-md rounded-2xl shadow-2xl overflow-hidden border-2 border-[#c9a847]">
-
-            {{-- Gold Header --}}
             <div class="flex items-center justify-between px-5 py-3.5 bg-[#c9a847]">
                 <div class="flex items-center gap-2.5">
                     <div class="w-7 h-7 rounded-lg bg-white/20 flex items-center justify-center">
@@ -158,11 +131,8 @@
                 <button type="button" @click="$wire.showForm = false"
                         class="w-6 h-6 rounded-full flex items-center justify-center text-white/70 hover:text-white hover:bg-white/20 transition text-base leading-none">×</button>
             </div>
-
-            {{-- White Body --}}
             <div class="bg-white dark:bg-zinc-900 px-5 py-6">
                 <form wire:submit="save" class="space-y-5">
-
                     <div class="flex flex-col gap-1">
                         <label class="text-sm font-medium text-zinc-700 dark:text-zinc-300">السنة <span class="text-red-500">*</span></label>
                         <select wire:model="formYear" class="{{ $inp }}">
@@ -208,57 +178,12 @@
                             إلغاء
                         </button>
                     </div>
-
                 </form>
             </div>
         </div>
     </div>
 
-    {{-- ── Avg Daily Edit Modal (موحّد) ── --}}
-    <div x-show="$wire.showAvg"
-         x-transition.opacity
-         @click.self="$wire.showAvg = false"
-         class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
-         style="display:none">
-        <div x-transition:enter="transition ease-out duration-200"
-             x-transition:enter-start="opacity-0 scale-95"
-             x-transition:enter-end="opacity-100 scale-100"
-             class="w-full max-w-md rounded-2xl shadow-2xl overflow-hidden border-2 border-[#c9a847]">
-            <div class="flex items-center justify-between px-5 py-3.5 bg-[#c9a847]">
-                <div class="flex items-center gap-2.5">
-                    <div class="w-7 h-7 rounded-lg bg-white/20 flex items-center justify-center">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
-                        </svg>
-                    </div>
-                    <h3 class="text-sm font-semibold text-white">تعديل متوسط المعاملات اليومية للتوثيق</h3>
-                </div>
-                <button type="button" @click="$wire.showAvg = false"
-                        class="w-6 h-6 rounded-full flex items-center justify-center text-white/70 hover:text-white hover:bg-white/20 transition text-base leading-none">×</button>
-            </div>
-            <div class="bg-white dark:bg-zinc-900 px-5 py-6">
-                <form wire:submit="saveAvg" class="space-y-5">
-                    <div class="flex flex-col gap-1">
-                        <label class="text-sm font-medium text-zinc-700 dark:text-zinc-300">المتوسط (معاملة / يوم)</label>
-                        <input type="number" wire:model="avgDaily" min="0" step="1" placeholder="0" class="{{ $inp }}" />
-                        @error('avgDaily') <p class="text-red-500 text-xs">{{ $message }}</p> @enderror
-                    </div>
-                    <div class="flex gap-3 pt-1">
-                        <button type="submit"
-                                class="flex-1 bg-[#c9a847] hover:bg-[#b8962e] text-white text-sm font-medium py-2.5 rounded-lg transition">
-                            حفظ
-                        </button>
-                        <button type="button" @click="$wire.showAvg = false"
-                                class="flex-1 border border-zinc-300 dark:border-zinc-600 text-zinc-600 dark:text-zinc-300 text-sm font-medium py-2.5 rounded-lg hover:bg-zinc-50 dark:hover:bg-zinc-800 transition">
-                            إلغاء
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-
-    {{-- ── Delete Confirmation Modal (موحّد) ── --}}
+    {{-- ── Delete Confirmation Modal ── --}}
     <div x-show="$wire.showDelete"
          x-transition.opacity
          @click.self="$wire.showDelete = false"
@@ -268,8 +193,6 @@
              x-transition:enter-start="opacity-0 scale-95"
              x-transition:enter-end="opacity-100 scale-100"
              class="w-full max-w-md rounded-2xl shadow-2xl overflow-hidden border-2 border-red-500">
-
-            {{-- Red Header --}}
             <div class="flex items-center justify-between px-5 py-3.5 bg-red-500">
                 <div class="flex items-center gap-2.5">
                     <div class="w-7 h-7 rounded-lg bg-white/20 flex items-center justify-center">
@@ -282,14 +205,11 @@
                 <button type="button" @click="$wire.showDelete = false"
                         class="w-6 h-6 rounded-full flex items-center justify-center text-white/70 hover:text-white hover:bg-white/20 transition text-base leading-none">×</button>
             </div>
-
-            {{-- White Body --}}
             <div class="bg-white dark:bg-zinc-900 px-5 py-6 space-y-5">
                 <p class="text-sm text-zinc-600 dark:text-zinc-300 text-center">
                     هل أنت متأكد من حذف هذا السجل؟<br>
                     <span class="font-semibold text-zinc-800 dark:text-zinc-100">{{ $deletingLabel }}</span>
                 </p>
-
                 <div class="flex gap-3">
                     <button type="button" wire:click="deleteRow"
                             class="flex-1 bg-red-500 hover:bg-red-600 text-white text-sm font-medium py-2.5 rounded-lg transition">

@@ -13,12 +13,13 @@ class Statistics extends Component
 {
     public Office $office;
 
-    public string $activeTab = 'transactions_sales';
+    public string $activeTab = 'transactions';
 
     public array $tabs = [
-        'transactions_sales' => 'المعاملات والمبيعات',
-        'claims'             => 'المطالبات',
-        'requests'           => 'الطلبات',
+        'transactions'     => 'معاملات التوثيق',
+        'forms_folders'    => 'إحصائية النماذج والحوافظ',
+        'shaher_requests'  => 'طلبات الشهر',
+        'registry_requests'=> 'طلبات السجل',
     ];
 
     public function mount(Office $office): void
