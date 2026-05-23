@@ -202,10 +202,13 @@ return [
 
     // Office create — navigation buttons
     'save_and_exit'            => 'حفظ والخروج',
+    'save_and_previous'            => 'حفظ والسابق',
     'previous_step'            => 'السابق',
     'next_step'                => 'حفظ والتالي',
     'save_office_btn'          => 'حفظ المقر',
 
     // Shared
     'coming_soon'              => 'قيد التطوير — سيتم إضافته قريباً',
+    'office_statistics'          => 'إحصائيات المقر',
+    'average_daily_transactions' => 'متوسط المعاملات اليومية للتوثيق'
 ];
