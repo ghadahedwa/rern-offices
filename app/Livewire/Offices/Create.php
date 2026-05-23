@@ -35,7 +35,7 @@ class Create extends Component
     use WithFileUploads;
     #[Url]
     public int $step = 1;
-    public int $totalSteps = 5;
+    public int $totalSteps = 4;
     #[Url]
     public ?int $office_id = null;
     public bool $isEditing = false;
