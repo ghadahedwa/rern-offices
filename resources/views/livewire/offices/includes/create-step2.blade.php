@@ -98,7 +98,7 @@
                         <input wire:model="computers_count" type="number" min="0" placeholder="0" class="{{ $inp }}" />
                     </div>
                     <div>
-                        <label class="{{ $lbl }}">{{ __('home.monitors_count') }}</label>
+                        <label class="{{ $lbl }}">عدد شاشات العرض</label>
                         <input wire:model="monitors_count" type="number" min="0" placeholder="0" class="{{ $inp }}" />
                     </div>
                     <div>
@@ -116,6 +116,38 @@
                     <div>
                         <label class="{{ $lbl }}">عدد التكييفات</label>
                         <input wire:model="air_conditioners_count" type="number" min="0" placeholder="0" class="{{ $inp }}" />
+                    </div>
+                    <div>
+                        <label class="{{ $lbl }}">عداد الكهرباء</label>
+                        <select wire:model="electricity_meter_type" class="{{ $inp }}">
+                            <option value="">— اختر —</option>
+                            <option value="prepaid">مسبق الدفع</option>
+                            <option value="invoice">فاتورة</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="{{ $lbl }}">مديونية عداد الكهرباء</label>
+                        <select wire:model="electricity_meter_debt" class="{{ $inp }}">
+                            <option value="">— اختر —</option>
+                            <option value="yes">يوجد</option>
+                            <option value="no">لا يوجد</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="{{ $lbl }}">عداد المياه</label>
+                        <select wire:model="water_meter_type" class="{{ $inp }}">
+                            <option value="">— اختر —</option>
+                            <option value="prepaid">مسبق الدفع</option>
+                            <option value="invoice">فاتورة</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="{{ $lbl }}">مديونية عداد المياه</label>
+                        <select wire:model="water_meter_debt" class="{{ $inp }}">
+                            <option value="">— اختر —</option>
+                            <option value="yes">يوجد</option>
+                            <option value="no">لا يوجد</option>
+                        </select>
                     </div>
 
                 </div>

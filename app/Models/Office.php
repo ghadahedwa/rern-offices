@@ -25,11 +25,15 @@ class Office extends Model
         'negatives_and_solutions', 'development_proposals',
         'windows_count', 'office_needs', 'air_conditioners_count',
         'debt_amount',
+        'working_days', 'mechanization_at',
+        'electricity_meter_type', 'electricity_meter_debt',
+        'water_meter_type', 'water_meter_debt',
     ];
 
     protected $casts = [
-        'established_at' => 'date',
-        'visited_at'     => 'date',
+        'established_at'  => 'date',
+        'visited_at'      => 'date',
+        'mechanization_at' => 'date',
     ];
 
     public const CLEANLINESS_RATINGS = [

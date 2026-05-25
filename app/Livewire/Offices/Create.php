@@ -46,6 +46,7 @@ class Create extends Component
     public ?int $parent_office_id = null;
     public string $name = '';
     public string $established_at = '';
+    public string $mechanization_at = '';
     public ?int $type_id = null;
     public ?int $location_description_id = null;
     public ?int $work_system_id = null;
@@ -54,6 +55,7 @@ class Create extends Component
     public string $floors_description = '';
     public ?int $connection_type_id = null;
     public ?int $working_hours_id = null;
+    public string $working_days = '';
     public string $avg_daily_transactions = '';
     public ?int $contractual_status_id = null;
 
@@ -80,6 +82,10 @@ class Create extends Component
     // Step 2 — extra
     public string $windows_count = '';
     public string $air_conditioners_count = '';
+    public string $electricity_meter_type = '';
+    public string $electricity_meter_debt = '';
+    public string $water_meter_type = '';
+    public string $water_meter_debt = '';
 
     // Step 3 — Assessments
     public string $visited_at = '';
@@ -142,6 +148,7 @@ class Create extends Component
         $this->parent_office_id        = $office->parent_office_id;
         $this->name                    = $office->name ?? '';
         $this->established_at          = $office->established_at?->format('Y-m-d') ?? '';
+        $this->mechanization_at        = $office->mechanization_at?->format('Y-m-d') ?? '';
         $this->type_id                 = $office->type_id;
         $this->location_description_id = $office->location_description_id;
         $this->work_system_id          = $office->work_system_id;
@@ -150,6 +157,7 @@ class Create extends Component
         $this->floors_description      = $office->floors_description ?? '';
         $this->connection_type_id      = $office->connection_type_id;
         $this->working_hours_id        = $office->working_hours_id;
+        $this->working_days            = $office->working_days ?? '';
         $this->avg_daily_transactions  = (string) ($office->avg_daily_transactions ?? '');
         $this->contractual_status_id   = $office->contractual_status_id;
         $this->structural_condition_id = $office->structural_condition_id;
@@ -173,6 +181,10 @@ class Create extends Component
         $this->fingerprints_count               = (string) ($office->fingerprints_count ?? '');
         $this->windows_count                    = (string) ($office->windows_count ?? '');
         $this->air_conditioners_count           = (string) ($office->air_conditioners_count ?? '');
+        $this->electricity_meter_type           = $office->electricity_meter_type ?? '';
+        $this->electricity_meter_debt           = $office->electricity_meter_debt ?? '';
+        $this->water_meter_type                 = $office->water_meter_type ?? '';
+        $this->water_meter_debt                 = $office->water_meter_debt ?? '';
 
         // Step 3
         $this->visited_at                   = $office->visited_at?->format('Y-m-d') ?? '';
@@ -340,6 +352,7 @@ $existing = OfficeMedia::where('office_id', $this->office_id)->where('type', 'do
             'parent_office_id'       => $this->parent_office_id ?: null,
             'name'                   => $this->name,
             'established_at'         => $this->established_at ?: null,
+            'mechanization_at'       => $this->mechanization_at ?: null,
             'type_id'                => $this->type_id,
             'location_description_id' => $this->location_description_id ?: null,
             'work_system_id'         => $this->work_system_id ?: null,
@@ -348,6 +361,7 @@ $existing = OfficeMedia::where('office_id', $this->office_id)->where('type', 'do
             'floors_description'     => $this->floors_description ?: null,
             'connection_type_id'     => $this->connection_type_id ?: null,
             'working_hours_id'       => $this->working_hours_id,
+            'working_days'           => $this->working_days ?: null,
             'avg_daily_transactions' => $this->avg_daily_transactions !== '' ? (int) $this->avg_daily_transactions : null,
             'contractual_status_id'  => $this->contractual_status_id ?: null,
             'office_area'            => $this->office_area !== '' ? (int) $this->office_area : null,
@@ -390,6 +404,10 @@ $existing = OfficeMedia::where('office_id', $this->office_id)->where('type', 'do
             'printers_count'                    => $this->printers_count !== '' ? (int) $this->printers_count : null,
             'fingerprints_count'                => $this->fingerprints_count !== '' ? (int) $this->fingerprints_count : null,
             'air_conditioners_count'            => $this->air_conditioners_count !== '' ? (int) $this->air_conditioners_count : null,
+            'electricity_meter_type'            => $this->electricity_meter_type ?: null,
+            'electricity_meter_debt'            => $this->electricity_meter_debt ?: null,
+            'water_meter_type'                  => $this->water_meter_type ?: null,
+            'water_meter_debt'                  => $this->water_meter_debt ?: null,
         ];
     }
 

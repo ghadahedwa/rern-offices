@@ -16,10 +16,12 @@ class Statistics extends Component
     public string $activeTab = 'transactions';
 
     public array $tabs = [
-        'transactions'     => 'معاملات التوثيق',
-        'forms_folders'    => 'إحصائية النماذج والحوافظ',
-        'shaher_requests'  => 'طلبات الشهر',
-        'registry_requests'=> 'طلبات السجل',
+        'transactions'           => 'معاملات التوثيق',
+        'forms_folders'          => 'نماذج وحوافظ توثيق',
+        'shaher_requests'        => 'طلبات الشهر',
+        'monthly_forms_folders'  => 'نماذج وحوافظ شهر',
+        'registry_requests'      => 'طلبات السجل',
+        'registry_forms_folders' => 'نماذج وحوافظ سجل',
     ];
 
     public function mount(Office $office): void

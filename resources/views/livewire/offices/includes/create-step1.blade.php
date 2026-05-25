@@ -54,15 +54,6 @@
                     </div>
                     --}}
                     <div>
-                        <label class="{{ $lbl }}">{{ __('home.work_system') }}</label>
-                        <select wire:model="work_system_id" class="{{ $inp }}">
-                            <option value="">{{ __('home.select_work_system') }}</option>
-                            @foreach ($workSystems as $item)
-                                <option value="{{ $item->id }}">{{ $item->name }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div>
                         <label class="{{ $lbl }}">{{ __('home.location_description') }}<span class="text-red-500">*</span></label>
                         <select wire:model.live="location_description_id" class="{{ $inp }}">
                             <option value="">{{ __('home.select_location') }}</option>
@@ -72,7 +63,31 @@
                         </select>
                         @error('location_description_id') <p class="mt-1 text-xs text-red-500">{{ $message }}</p> @enderror
                     </div>
-    
+                </div>
+            </div>
+
+            <div class="border-t border-zinc-100 dark:border-zinc-700 mb-2"></div>
+
+            {{-- ── Section 2: أوقات وأنظمة العمل ── --}}
+            <div class="mb-1">
+                <div class="flex items-center gap-3 mb-5">
+                    <div class="w-1 h-5 bg-[#c9a847] rounded-full"></div>
+                    <h3 class="text-sm font-semibold text-zinc-600 dark:text-zinc-400 uppercase tracking-wide">أوقات وأنظمة العمل</h3>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <div>
+                        <label class="{{ $lbl }}">تاريخ العمل بنظام الميكنة / الشباك الواحد</label>
+                        <input wire:model="mechanization_at" type="date" class="{{ $inp }}" />
+                    </div>
+                    <div>
+                        <label class="{{ $lbl }}">{{ __('home.work_system') }}</label>
+                        <select wire:model="work_system_id" class="{{ $inp }}">
+                            <option value="">{{ __('home.select_work_system') }}</option>
+                            @foreach ($workSystems as $item)
+                                <option value="{{ $item->id }}">{{ $item->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
                     <div>
                         <label class="{{ $lbl }}">{{ __('home.working_hours') }} <span class="text-red-500">*</span></label>
                         <select wire:model="working_hours_id" class="{{ $inp }}">
@@ -82,6 +97,18 @@
                             @endforeach
                         </select>
                         @error('working_hours_id') <p class="mt-1 text-xs text-red-500">{{ $message }}</p> @enderror
+                    </div>
+                    <div>
+                        <label class="{{ $lbl }}">أيام العمل</label>
+                        <select wire:model="working_days" class="{{ $inp }}">
+                            <option value="">— اختر —</option>
+                            <option value="full_week">طوال أسبوع</option>
+                            <option value="one_day">يوم</option>
+                            <option value="two_days">يومين</option>
+                            <option value="three_days">ثلاث أيام</option>
+                            <option value="four_days">أربع أيام</option>
+                            <option value="five_days">خمس أيام</option>
+                        </select>
                     </div>
                     @if($locations->firstWhere('id', $location_description_id)?->shows_windows_count)
                     <div>
@@ -94,7 +121,7 @@
 
             <div class="border-t border-zinc-100 dark:border-zinc-700 mb-2"></div>
 
-            {{-- ── Section 2: بيانات الموقع ── --}}
+            {{-- ── Section 3: بيانات الموقع ── --}}
             <div class="mb-1">
                 <div class="flex items-center gap-3 mb-5">
                     <div class="w-1 h-5 bg-[#c9a847] rounded-full"></div>

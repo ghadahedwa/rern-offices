@@ -53,6 +53,12 @@
 
         @elseif($activeTab === 'registry_requests')
             <livewire:offices.stat-tab.registry-requests :office="$office" :key="'rr-'.$office->id" />
+
+        @elseif($activeTab === 'registry_forms_folders')
+            <livewire:offices.stat-tab.registry-forms-and-folders :office="$office" :key="'rff-'.$office->id" />
+
+        @elseif($activeTab === 'monthly_forms_folders')
+            <livewire:offices.stat-tab.monthly-forms-and-folders :office="$office" :key="'mff-'.$office->id" />
         @endif
     </div>
 
