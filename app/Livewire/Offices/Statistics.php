@@ -19,9 +19,9 @@ class Statistics extends Component
         'transactions'           => 'معاملات التوثيق',
         'forms_folders'          => 'نماذج وحوافظ توثيق',
         'shaher_requests'        => 'طلبات الشهر',
-        //'monthly_forms_folders'  => 'نماذج وحوافظ شهر',
+        'monthly_forms_folders'  => 'نماذج وحوافظ شهر',
         'registry_requests'      => 'طلبات السجل',
-        //'registry_forms_folders' => 'نماذج وحوافظ سجل',
+        'registry_forms_folders' => 'نماذج وحوافظ سجل',
     ];
 
     public function mount(Office $office): void
