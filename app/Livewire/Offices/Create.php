@@ -222,13 +222,12 @@ class Create extends Component
             'name'            => 'required|string|max:255',
             'type_id'         => 'required|exists:office_types,id',
             'location_description_id' => 'required|exists:location_descriptions,id',
-            'working_hours_id' => 'required|exists:working_hours,id',
+            'working_hours_id' => 'nullable|exists:working_hours,id',
         ], [
             'governorate_id.required'   => 'يرجى اختيار المحافظة',
             'name.required'             => 'يرجى إدخال اسم المقر',
             'type_id.required'          => 'يرجى اختيار نوع المقر',
             'location_description_id.required' => 'يرجى اختيار وصف المقر',
-            'working_hours_id.required' => 'يرجى اختيار ساعات العمل',
         ]);
     }
 

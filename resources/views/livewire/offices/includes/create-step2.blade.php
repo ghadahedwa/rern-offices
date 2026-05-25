@@ -123,6 +123,7 @@
                             <option value="">— اختر —</option>
                             <option value="prepaid">مسبق الدفع</option>
                             <option value="invoice">فاتورة</option>
+                            <option value="entity_meter">عداد خاص بالجهة التابع لها المقر</option>
                         </select>
                     </div>
                     <div>
@@ -139,6 +140,7 @@
                             <option value="">— اختر —</option>
                             <option value="prepaid">مسبق الدفع</option>
                             <option value="invoice">فاتورة</option>
+                            <option value="entity_meter">عداد خاص بالجهة التابع لها المقر</option>
                         </select>
                     </div>
                     <div>

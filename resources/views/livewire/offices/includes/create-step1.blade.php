@@ -89,7 +89,7 @@
                         </select>
                     </div>
                     <div>
-                        <label class="{{ $lbl }}">{{ __('home.working_hours') }} <span class="text-red-500">*</span></label>
+                        <label class="{{ $lbl }}">{{ __('home.working_hours') }}</label>
                         <select wire:model="working_hours_id" class="{{ $inp }}">
                             <option value="">{{ __('home.select_working_hours') }}</option>
                             @foreach ($workingHoursOptions as $item)
