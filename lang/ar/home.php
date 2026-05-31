@@ -210,5 +210,95 @@ return [
     // Shared
     'coming_soon'              => 'قيد التطوير — سيتم إضافته قريباً',
     'office_statistics'          => 'إحصائيات المقر',
-    'average_daily_transactions' => 'متوسط المعاملات اليومية للتوثيق'
+    'average_daily_transactions' => 'متوسط المعاملات اليومية للتوثيق',
+    'no_data'                    => '—',
+
+    // Office show — tab labels
+    'show_tab_basic'             => 'البيانات الأساسية',
+    'show_tab_services'          => 'الخدمات والأجهزة',
+    'show_tab_assessment'        => 'التقييم',
+    'show_tab_media'             => 'الوسائط',
+    'show_tab_statistics'        => 'الإحصائيات',
+
+    // Office show — page
+    'office_details'             => 'تفاصيل المقر',
+    'view_office'                => 'عرض',
+
+    // Office show — section headers
+    'section_work_schedule'      => 'أوقات وأنظمة العمل',
+    'section_broken_devices'     => 'الأجهزة المعطلة',
+    'section_meters'             => 'العدادات',
+    'section_photos'             => 'صور المقر',
+    'section_video'              => 'فيديو المقر',
+    'section_documents'          => 'وثائق المقر',
+
+    // Office show — field labels (not already in lang)
+    'mechanization_at'           => 'تاريخ العمل بنظام الميكنة / الشباك الواحد',
+    'working_days'               => 'أيام العمل',
+    'windows_count'              => 'عدد الشبابيك',
+    'monitors_count'             => 'عدد شاشات العرض',
+    'air_conditioners_count'     => 'عدد التكييفات',
+    'electricity_meter_type'     => 'عداد الكهرباء',
+    'electricity_meter_debt'     => 'مديونية عداد الكهرباء',
+    'water_meter_type'           => 'عداد المياه',
+    'water_meter_debt'           => 'مديونية عداد المياه',
+    'office_needs'               => 'احتياجات المقر',
+    'debt_amount'                => 'قيمة المديونية',
+
+    // Office show — working_days options
+    'working_days_full_week'     => 'طوال الأسبوع',
+    'working_days_one_day'       => 'يوم',
+    'working_days_two_days'      => 'يومين',
+    'working_days_three_days'    => 'ثلاثة أيام',
+    'working_days_four_days'     => 'أربعة أيام',
+    'working_days_five_days'     => 'خمسة أيام',
+
+    // Meter type options
+    'meter_type_prepaid'         => 'مسبق الدفع',
+    'meter_type_invoice'         => 'فاتورة',
+    'meter_type_entity'          => 'عداد خاص بالجهة التابع لها المقر',
+
+    // Empty state messages
+    'no_broken_devices'          => 'لا توجد أجهزة معطلة مسجلة',
+    'no_photos'                  => 'لا توجد صور',
+    'no_video'                   => 'لا يوجد فيديو',
+    'no_documents'               => 'لا توجد وثائق',
+    'play_video'                 => 'اضغط للتشغيل',
+    'no_stats_data'              => 'لا توجد بيانات مسجلة',
+
+    // Broken devices
+    'add_device'                 => 'إضافة جهاز',
+    'select_device_type'         => '— نوع الجهاز —',
+    'device_count'               => 'العدد',
+
+    // Media actions
+    'add_photo'                  => 'إضافة صورة',
+    'add_video'                  => 'إضافة فيديو',
+    'add_document'               => 'إضافة ملف',
+    'add_document_pdf'           => 'إضافة ملف PDF',
+    'browse_files'               => 'استعراض الملفات',
+    'upload_file'                => 'رفع الملف',
+    'uploading'                  => 'جاري تحميل الملف...',
+    'uploading_in_progress'      => 'جاري الرفع...',
+    'photo_types_hint'           => 'JPG, PNG, WEBP — max 5MB',
+    'video_types_hint'           => 'MP4, AVI, MOV — max 100MB',
+    'pdf_types_hint'             => 'PDF — max 10MB',
+    'section_documents_full'     => 'ملفات سند الملكية أو الحيازة وقرار الإنشاء',
+    'pdf_files'                  => 'ملفات PDF',
+
+    // Delete confirmation
+    'confirm_delete_title'       => 'تأكيد الحذف',
+    'confirm_delete_media'       => 'هل أنت متأكد من حذف',
+
+    // Statistics
+    'stat_transactions_annual'   => 'إحصائية معاملات المكتب (سنوية)',
+    'stat_form_sales_monthly'    => 'إحصائية بيع النماذج (شهرية)',
+    'stat_folder_sales_monthly'  => 'إحصائية بيع الحوافظ (شهرية)',
+    'add_year'                   => 'إضافة سنة',
+    'add_month'                  => 'إضافة شهر',
+    'year'                       => 'السنة',
+    'month'                      => 'الشهر',
+    'transactions_count'         => 'عدد المعاملات',
+    'select_year'                => '— السنة —',
+    'select_month'               => '— الشهر —',
 ];

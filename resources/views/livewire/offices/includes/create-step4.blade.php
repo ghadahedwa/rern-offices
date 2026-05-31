@@ -26,7 +26,7 @@
                 {{-- Header --}}
                 <div class="flex items-center gap-3 mb-6">
                     <div class="w-1 h-5 bg-[#c9a847] rounded-full"></div>
-                    <h3 class="text-sm font-semibold text-zinc-600 dark:text-zinc-400 uppercase tracking-wide">صور المقر</h3>
+                    <h3 class="text-sm font-semibold text-zinc-600 dark:text-zinc-400 uppercase tracking-wide">{{ __('home.section_photos') }}</h3>
                 </div>
 
                 <div class="space-y-8">
@@ -37,7 +37,7 @@
                     <div>
                         <div class="flex items-center justify-between mb-3">
                             <span class="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                                صور المقر
+                                {{ __('home.section_photos') }}
                                 <span class="text-xs font-normal text-zinc-400 mr-1">({{ ($existingMedia['photo'] ?? collect())->count() }} / 10)</span>
                             </span>
                             @if(($existingMedia['photo'] ?? collect())->count() < 10)
@@ -46,7 +46,7 @@
                                     <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                         <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
                                     </svg>
-                                    إضافة صورة
+                                    {{ __('home.add_photo') }}
                                 </button>
                             @endif
                         </div>
@@ -76,7 +76,7 @@
                                 <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909M3.75 21h16.5M21 3.75H3A2.25 2.25 0 00.75 6v12A2.25 2.25 0 003 20.25h18A2.25 2.25 0 0023.25 18V6A2.25 2.25 0 0021 3.75z"/>
                                 </svg>
-                                لا توجد صور
+                                {{ __('home.no_photos') }}
                             </div>
                         @endif
                     </div>
@@ -85,13 +85,13 @@
                 <br>
                 <div class="flex items-center gap-3 mb-6">
                     <div class="w-1 h-5 bg-[#c9a847] rounded-full"></div>
-                    <h3 class="text-sm font-semibold text-zinc-600 dark:text-zinc-400 uppercase tracking-wide">فيديو المقر</h3>
+                    <h3 class="text-sm font-semibold text-zinc-600 dark:text-zinc-400 uppercase tracking-wide">{{ __('home.section_video') }}</h3>
                 </div>
 
                 <div class="space-y-8">
                     <div>
                         <div class="flex items-center justify-between mb-3">
-                            <span class="text-sm font-medium text-zinc-700 dark:text-zinc-300">فيديو المقر
+                            <span class="text-sm font-medium text-zinc-700 dark:text-zinc-300">{{ __('home.section_video') }}
                                 <span class="text-xs font-normal text-zinc-400 mr-1">({{ ($existingMedia['video'] ?? collect())->count() }} / 1)</span>
                             </span>
                             @if(($existingMedia['video'] ?? collect())->count() < 1)
@@ -100,7 +100,7 @@
                                     <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                         <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
                                     </svg>
-                                    إضافة فيديو
+                                    {{ __('home.add_video') }}
                                 </button>
                             @endif
                         </div>
@@ -120,7 +120,7 @@
                                                     </div>
                                                     <div class="min-w-0">
                                                         <p class="text-sm font-medium text-zinc-800 dark:text-zinc-100 truncate">{{ $vid->original_name ?? basename($vid->path) }}</p>
-                                                        <p class="text-xs text-zinc-400">اضغط للتشغيل</p>
+                                                        <p class="text-xs text-zinc-400">{{ __('home.play_video') }}</p>
                                                     </div>
                                                 </button>
                                                 <button type="button" @click="askDelete({{ $vid->id }}, 'هذا الفيديو')"
@@ -135,7 +135,7 @@
                                 <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 10.5l4.72-4.72a.75.75 0 011.28.53v11.38a.75.75 0 01-1.28.53l-4.72-4.72M4.5 18.75h9a2.25 2.25 0 002.25-2.25v-9a2.25 2.25 0 00-2.25-2.25h-9A2.25 2.25 0 002.25 7.5v9a2.25 2.25 0 002.25 2.25z"/>
                                 </svg>
-                                لا يوجد فيديو
+                                {{ __('home.no_video') }}
                             </div>
                         @endif
                     </div>
@@ -144,14 +144,14 @@
                 <br>
                 <div class="flex items-center gap-3 mb-6">
                     <div class="w-1 h-5 bg-[#c9a847] rounded-full"></div>
-                    <h3 class="text-sm font-semibold text-zinc-600 dark:text-zinc-400 uppercase tracking-wide">ملفات سند الملكيه أو الحيازه وقرار الإنشاء</h3>
+                    <h3 class="text-sm font-semibold text-zinc-600 dark:text-zinc-400 uppercase tracking-wide">{{ __('home.section_documents_full') }}</h3>
                 </div>
 
                 <div class="space-y-8">
                     <div>
                         <div class="flex items-center justify-between mb-3">
                             <span class="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                                ملفات PDF
+                                {{ __('home.pdf_files') }}
                                 <span class="text-xs font-normal text-zinc-400 mr-1">({{ ($existingMedia['document'] ?? collect())->count() }} / 1)</span>
                             </span>
                             @if(($existingMedia['document'] ?? collect())->count() < 1)
@@ -160,7 +160,7 @@
                                 <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
                                 </svg>
-                                إضافة ملف
+                                {{ __('home.add_document') }}
                             </button>
                             @endif
                         </div>
@@ -188,7 +188,7 @@
                                 <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/>
                                 </svg>
-                                لا توجد ملفات
+                                {{ __('home.no_documents') }}
                             </div>
                         @endif
                     </div>
@@ -212,9 +212,9 @@
                                     <svg x-show="modal === 'document'" xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/></svg>
                                 </div>
                                 <h3 class="text-sm font-semibold text-white">
-                                    <span x-show="modal === 'photo'">إضافة صورة</span>
-                                    <span x-show="modal === 'video'">إضافة فيديو</span>
-                                    <span x-show="modal === 'document'">إضافة ملف PDF</span>
+                                    <span x-show="modal === 'photo'">{{ __('home.add_photo') }}</span>
+                                    <span x-show="modal === 'video'">{{ __('home.add_video') }}</span>
+                                    <span x-show="modal === 'document'">{{ __('home.add_document_pdf') }}</span>
                                 </h3>
                             </div>
                             <button type="button" @click="closeModal(); fileName = ''"
@@ -229,25 +229,25 @@
                                 </div>
                                 <p class="text-sm text-zinc-500 dark:text-zinc-400 min-h-5">
                                     <span x-show="!fileName" class="text-zinc-400">
-                                        <span x-show="modal === 'photo'">JPG, PNG, WEBP — max 5MB</span>
-                                        <span x-show="modal === 'video'">MP4, AVI, MOV — max 100MB</span>
-                                        <span x-show="modal === 'document'">PDF — max 10MB</span>
+                                        <span x-show="modal === 'photo'">{{ __('home.photo_types_hint') }}</span>
+                                        <span x-show="modal === 'video'">{{ __('home.video_types_hint') }}</span>
+                                        <span x-show="modal === 'document'">{{ __('home.pdf_types_hint') }}</span>
                                     </span>
                                     <span x-show="fileName" x-text="fileName" class="text-[#b8962e] font-medium break-all"></span>
                                 </p>
                                 <label x-show="modal === 'photo'" class="cursor-pointer inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-[#c9a847] text-[#b8962e] text-sm font-medium hover:bg-[#c9a847]/10 transition">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"/></svg>
-                                    استعراض الملفات
+                                    {{ __('home.browse_files') }}
                                     <input type="file" class="hidden" accept="image/*" wire:model="newPhoto" @change="fileName = $event.target.files[0]?.name ?? ''" />
                                 </label>
                                 <label x-show="modal === 'video'" class="cursor-pointer inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-[#c9a847] text-[#b8962e] text-sm font-medium hover:bg-[#c9a847]/10 transition">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"/></svg>
-                                    استعراض الملفات
+                                    {{ __('home.browse_files') }}
                                     <input type="file" class="hidden" accept="video/mp4,video/avi,video/quicktime,video/webm" wire:model="newVideo" @change="fileName = $event.target.files[0]?.name ?? ''" />
                                 </label>
                                 <label x-show="modal === 'document'" class="cursor-pointer inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-[#c9a847] text-[#b8962e] text-sm font-medium hover:bg-[#c9a847]/10 transition">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"/></svg>
-                                    استعراض الملفات
+                                    {{ __('home.browse_files') }}
                                     <input type="file" class="hidden" accept="application/pdf,.pdf" wire:model="newDocument" @change="fileName = $event.target.files[0]?.name ?? ''" />
                                 </label>
                             </div>
@@ -260,13 +260,13 @@
                                         :class="(fileName && !uploading) ? 'bg-[#c9a847] hover:bg-[#b8962e] text-white' : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-400 cursor-not-allowed'"
                                         class="flex-1 text-sm font-medium py-2.5 rounded-lg transition"
                                         @click="modal === 'photo' ? $wire.uploadPhoto() : (modal === 'video' ? $wire.uploadVideo() : $wire.uploadDocument())">
-                                    <span x-show="uploading">جاري تحميل الملف...</span>
-                                    <span x-show="!uploading" wire:loading.remove wire:target="uploadPhoto,uploadVideo,uploadDocument">رفع الملف</span>
-                                    <span x-show="!uploading" wire:loading wire:target="uploadPhoto,uploadVideo,uploadDocument">جاري الرفع...</span>
+                                    <span x-show="uploading">{{ __('home.uploading') }}</span>
+                                    <span x-show="!uploading" wire:loading.remove wire:target="uploadPhoto,uploadVideo,uploadDocument">{{ __('home.upload_file') }}</span>
+                                    <span x-show="!uploading" wire:loading wire:target="uploadPhoto,uploadVideo,uploadDocument">{{ __('home.uploading_in_progress') }}</span>
                                 </button>
                                 <button type="button" @click="closeModal()"
                                         class="flex-1 border border-zinc-300 dark:border-zinc-600 text-zinc-600 dark:text-zinc-300 text-sm font-medium py-2.5 rounded-lg hover:bg-zinc-50 dark:hover:bg-zinc-800 transition">
-                                    إلغاء
+                                    {{ __('home.cancel') }}
                                 </button>
                             </div>
                         </div>
@@ -309,7 +309,7 @@
                                         <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
                                     </svg>
                                 </div>
-                                <h3 class="text-sm font-semibold text-white">تأكيد الحذف</h3>
+                                <h3 class="text-sm font-semibold text-white">{{ __('home.confirm_delete_title') }}</h3>
                             </div>
                             <button type="button" @click="deleteId = null"
                                     class="w-6 h-6 rounded-full flex items-center justify-center text-white/70 hover:text-white hover:bg-white/20 transition text-base leading-none">×</button>
@@ -317,7 +317,7 @@
 
                         <div class="bg-white dark:bg-zinc-900 px-5 py-6 space-y-5">
                             <p class="text-sm text-zinc-600 dark:text-zinc-300 text-center">
-                                هل أنت متأكد من حذف <span class="font-semibold text-zinc-800 dark:text-zinc-100" x-text="deleteLabel"></span>؟
+                                {{ __('home.confirm_delete_media') }} <span class="font-semibold text-zinc-800 dark:text-zinc-100" x-text="deleteLabel"></span>؟
                             </p>
                             <div class="flex gap-3">
                                 <button type="button" @click="confirmDelete()"
@@ -326,7 +326,7 @@
                                 </button>
                                 <button type="button" @click="deleteId = null"
                                         class="flex-1 border border-zinc-300 dark:border-zinc-600 text-zinc-600 dark:text-zinc-300 text-sm font-medium py-2.5 rounded-lg hover:bg-zinc-50 dark:hover:bg-zinc-800 transition">
-                                    إلغاء
+                                    {{ __('home.cancel') }}
                                 </button>
                             </div>
                         </div>

@@ -90,7 +90,7 @@
 
                 {{-- احتياجات المقر --}}
                 <div class="mt-5">
-                    <label class="{{ $lbl }}">احتياجات المقر</label>
+                    <label class="{{ $lbl }}">{{ __('home.office_needs') }}</label>
                     <textarea wire:model="office_needs" rows="4"
                               class="{{ $inp }} resize-none"
                               placeholder="احتياجات المقر..."></textarea>

@@ -15,7 +15,7 @@
                 <div class="flex items-center justify-between mb-5">
                     <div class="flex items-center gap-3">
                         <div class="w-1 h-5 bg-[#c9a847] rounded-full"></div>
-                        <h3 class="text-sm font-semibold text-zinc-600 dark:text-zinc-400 uppercase tracking-wide">إحصائية معاملات المكتب (سنوية)</h3>
+                        <h3 class="text-sm font-semibold text-zinc-600 dark:text-zinc-400 uppercase tracking-wide">{{ __('home.stat_transactions_annual') }}</h3>
                     </div>
                     @if(count($transactionStats) < count($years))
                     <button type="button" wire:click="addTransactionStat"
@@ -23,7 +23,7 @@
                         <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
                         </svg>
-                        إضافة سنة
+                        {{ __('home.add_year') }}
                     </button>
                     @endif
                 </div>
@@ -37,8 +37,8 @@
                     <table class="w-full text-sm text-right">
                         <thead class="bg-zinc-50 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 text-xs sticky top-0">
                             <tr>
-                                <th class="px-4 py-2.5 font-medium">السنة</th>
-                                <th class="px-4 py-2.5 font-medium">عدد المعاملات</th>
+                                <th class="px-4 py-2.5 font-medium">{{ __('home.year') }}</th>
+                                <th class="px-4 py-2.5 font-medium">{{ __('home.transactions_count') }}</th>
                                 <th class="px-4 py-2.5 font-medium w-12"></th>
                             </tr>
                         </thead>
@@ -51,7 +51,7 @@
                             <tr>
                                 <td class="px-4 py-2">
                                     <select wire:model.live="transactionStats.{{ $index }}.year" class="{{ $inp }}">
-                                        <option value="">— السنة —</option>
+                                        <option value="">{{ __('home.select_year') }}</option>
                                         @foreach($years as $y)
                                             @if(!in_array($y, $otherTxYears))
                                             <option value="{{ $y }}">{{ $y }}</option>
@@ -77,7 +77,7 @@
                     </div>
                 </div>
                 @else
-                <p class="text-sm text-zinc-400 dark:text-zinc-500 text-center py-4 rounded-xl border border-dashed border-zinc-200 dark:border-zinc-700">لا توجد بيانات مسجلة</p>
+                <p class="text-sm text-zinc-400 dark:text-zinc-500 text-center py-4 rounded-xl border border-dashed border-zinc-200 dark:border-zinc-700">{{ __('home.no_stats_data') }}</p>
                 @endif
             </div>
 
@@ -88,14 +88,14 @@
                 <div class="flex items-center justify-between mb-5">
                     <div class="flex items-center gap-3">
                         <div class="w-1 h-5 bg-[#c9a847] rounded-full"></div>
-                        <h3 class="text-sm font-semibold text-zinc-600 dark:text-zinc-400 uppercase tracking-wide">إحصائية بيع النماذج (شهرية)</h3>
+                        <h3 class="text-sm font-semibold text-zinc-600 dark:text-zinc-400 uppercase tracking-wide">{{ __('home.stat_form_sales_monthly') }}</h3>
                     </div>
                     <button type="button" wire:click="addFormSaleStat"
                             class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-[#c9a847] hover:bg-[#b8962e] text-white transition">
                         <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
                         </svg>
-                        إضافة شهر
+                        {{ __('home.add_month') }}
                     </button>
                 </div>
 
@@ -108,9 +108,9 @@
                     <table class="w-full text-sm text-right">
                         <thead class="bg-zinc-50 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 text-xs sticky top-0">
                             <tr>
-                                <th class="px-4 py-2.5 font-medium">السنة</th>
-                                <th class="px-4 py-2.5 font-medium">الشهر</th>
-                                <th class="px-4 py-2.5 font-medium">العدد</th>
+                                <th class="px-4 py-2.5 font-medium">{{ __('home.year') }}</th>
+                                <th class="px-4 py-2.5 font-medium">{{ __('home.month') }}</th>
+                                <th class="px-4 py-2.5 font-medium">{{ __('home.device_count') }}</th>
                                 <th class="px-4 py-2.5 font-medium w-12"></th>
                             </tr>
                         </thead>
@@ -125,7 +125,7 @@
                             <tr>
                                 <td class="px-4 py-2">
                                     <select wire:model.live="formSalesStats.{{ $index }}.year" class="{{ $inp }}">
-                                        <option value="">— السنة —</option>
+                                        <option value="">{{ __('home.select_year') }}</option>
                                         @foreach($years as $y)
                                             <option value="{{ $y }}">{{ $y }}</option>
                                         @endforeach
@@ -133,7 +133,7 @@
                                 </td>
                                 <td class="px-4 py-2">
                                     <select wire:model.live="formSalesStats.{{ $index }}.month" class="{{ $inp }}">
-                                        <option value="">— الشهر —</option>
+                                        <option value="">{{ __('home.select_month') }}</option>
                                         @foreach($months as $num => $name)
                                             @if(!in_array($thisFormYear.'-'.$num, $otherFormPairs))
                                             <option value="{{ $num }}">{{ $name }}</option>
@@ -159,7 +159,7 @@
                     </div>
                 </div>
                 @else
-                <p class="text-sm text-zinc-400 dark:text-zinc-500 text-center py-4 rounded-xl border border-dashed border-zinc-200 dark:border-zinc-700">لا توجد بيانات مسجلة</p>
+                <p class="text-sm text-zinc-400 dark:text-zinc-500 text-center py-4 rounded-xl border border-dashed border-zinc-200 dark:border-zinc-700">{{ __('home.no_stats_data') }}</p>
                 @endif
             </div>
 
@@ -170,14 +170,14 @@
                 <div class="flex items-center justify-between mb-5">
                     <div class="flex items-center gap-3">
                         <div class="w-1 h-5 bg-[#c9a847] rounded-full"></div>
-                        <h3 class="text-sm font-semibold text-zinc-600 dark:text-zinc-400 uppercase tracking-wide">إحصائية بيع الحوافظ (شهرية)</h3>
+                        <h3 class="text-sm font-semibold text-zinc-600 dark:text-zinc-400 uppercase tracking-wide">{{ __('home.stat_folder_sales_monthly') }}</h3>
                     </div>
                     <button type="button" wire:click="addFolderSaleStat"
                             class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-[#c9a847] hover:bg-[#b8962e] text-white transition">
                         <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
                         </svg>
-                        إضافة شهر
+                        {{ __('home.add_month') }}
                     </button>
                 </div>
 
@@ -190,9 +190,9 @@
                     <table class="w-full text-sm text-right">
                         <thead class="bg-zinc-50 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 text-xs sticky top-0">
                             <tr>
-                                <th class="px-4 py-2.5 font-medium">السنة</th>
-                                <th class="px-4 py-2.5 font-medium">الشهر</th>
-                                <th class="px-4 py-2.5 font-medium">العدد</th>
+                                <th class="px-4 py-2.5 font-medium">{{ __('home.year') }}</th>
+                                <th class="px-4 py-2.5 font-medium">{{ __('home.month') }}</th>
+                                <th class="px-4 py-2.5 font-medium">{{ __('home.device_count') }}</th>
                                 <th class="px-4 py-2.5 font-medium w-12"></th>
                             </tr>
                         </thead>
@@ -207,7 +207,7 @@
                             <tr>
                                 <td class="px-4 py-2">
                                     <select wire:model.live="folderSalesStats.{{ $index }}.year" class="{{ $inp }}">
-                                        <option value="">— السنة —</option>
+                                        <option value="">{{ __('home.select_year') }}</option>
                                         @foreach($years as $y)
                                             <option value="{{ $y }}">{{ $y }}</option>
                                         @endforeach
@@ -215,7 +215,7 @@
                                 </td>
                                 <td class="px-4 py-2">
                                     <select wire:model.live="folderSalesStats.{{ $index }}.month" class="{{ $inp }}">
-                                        <option value="">— الشهر —</option>
+                                        <option value="">{{ __('home.select_month') }}</option>
                                         @foreach($months as $num => $name)
                                             @if(!in_array($thisFolderYear.'-'.$num, $otherFolderPairs))
                                             <option value="{{ $num }}">{{ $name }}</option>
@@ -241,6 +241,6 @@
                     </div>
                 </div>
                 @else
-                <p class="text-sm text-zinc-400 dark:text-zinc-500 text-center py-4 rounded-xl border border-dashed border-zinc-200 dark:border-zinc-700">لا توجد بيانات مسجلة</p>
+                <p class="text-sm text-zinc-400 dark:text-zinc-500 text-center py-4 rounded-xl border border-dashed border-zinc-200 dark:border-zinc-700">{{ __('home.no_stats_data') }}</p>
                 @endif
             </div>

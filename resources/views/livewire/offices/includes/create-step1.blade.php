@@ -72,11 +72,11 @@
             <div class="mb-1">
                 <div class="flex items-center gap-3 mb-5">
                     <div class="w-1 h-5 bg-[#c9a847] rounded-full"></div>
-                    <h3 class="text-sm font-semibold text-zinc-600 dark:text-zinc-400 uppercase tracking-wide">أوقات وأنظمة العمل</h3>
+                    <h3 class="text-sm font-semibold text-zinc-600 dark:text-zinc-400 uppercase tracking-wide">{{ __('home.section_work_schedule') }}</h3>
                 </div>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                     <div>
-                        <label class="{{ $lbl }}">تاريخ العمل بنظام الميكنة / الشباك الواحد</label>
+                        <label class="{{ $lbl }}">{{ __('home.mechanization_at') }}</label>
                         <input wire:model="mechanization_at" type="date" class="{{ $inp }}" />
                     </div>
                     <div>
@@ -99,20 +99,20 @@
                         @error('working_hours_id') <p class="mt-1 text-xs text-red-500">{{ $message }}</p> @enderror
                     </div>
                     <div>
-                        <label class="{{ $lbl }}">أيام العمل</label>
+                        <label class="{{ $lbl }}">{{ __('home.working_days') }}</label>
                         <select wire:model="working_days" class="{{ $inp }}">
-                            <option value="">— اختر —</option>
-                            <option value="full_week">طوال أسبوع</option>
-                            <option value="one_day">يوم</option>
-                            <option value="two_days">يومين</option>
-                            <option value="three_days">ثلاث أيام</option>
-                            <option value="four_days">أربع أيام</option>
-                            <option value="five_days">خمس أيام</option>
+                            <option value="">{{ __('home.select_option') }}</option>
+                            <option value="full_week">{{ __('home.working_days_full_week') }}</option>
+                            <option value="one_day">{{ __('home.working_days_one_day') }}</option>
+                            <option value="two_days">{{ __('home.working_days_two_days') }}</option>
+                            <option value="three_days">{{ __('home.working_days_three_days') }}</option>
+                            <option value="four_days">{{ __('home.working_days_four_days') }}</option>
+                            <option value="five_days">{{ __('home.working_days_five_days') }}</option>
                         </select>
                     </div>
                     @if($locations->firstWhere('id', $location_description_id)?->shows_windows_count)
                     <div>
-                        <label class="{{ $lbl }}">عدد الشبابيك</label>
+                        <label class="{{ $lbl }}">{{ __('home.windows_count') }}</label>
                         <input wire:model="windows_count" type="number" min="0" placeholder="0" class="{{ $inp }}" />
                     </div>
                     @endif
