@@ -38,34 +38,43 @@
         </div>
     </div>
 
-    {{-- Card with Tabs --}}
-    <div class="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-700 shadow-sm">
-
-        {{-- Tabs Nav --}}
-        <div class="border-b border-zinc-200 dark:border-zinc-700 px-4">
-            <nav class="flex gap-1">
-                @php
-                    $tabs = [
-                        'basic'      => __('home.show_tab_basic'),
-                        'services'   => __('home.show_tab_services'),
-                        'assessment' => __('home.show_tab_assessment'),
-                        'media'      => __('home.show_tab_media'),
-                    ];
-                @endphp
-                @foreach($tabs as $key => $label)
-                <button type="button"
-                        wire:click="$set('activeTab', '{{ $key }}')"
-                        class="px-4 py-3 text-sm font-medium border-b-2 -mb-px transition cursor-pointer
-                            {{ $activeTab === $key
-                                ? 'border-[#c9a847] text-[#c9a847]'
-                                : 'border-transparent text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300' }}">
-                    {{ $label }}
-                </button>
-                @endforeach
-            </nav>
+    {{-- Step Progress --}}
+    <div class="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-700 shadow-sm p-6">
+        <div class="flex items-center justify-between">
+            @php
+                $tabs = [
+                    'basic'      => __('home.step_1_label'),
+                    'services'   => __('home.step_2_label'),
+                    'assessment' => __('home.step_3_label'),
+                    'media'      => __('home.step_4_label'),
+                ];
+                $tabKeys = array_keys($tabs);
+            @endphp
+            @foreach($tabs as $key => $label)
+            @php $num = array_search($key, $tabKeys) + 1; @endphp
+            <div class="flex items-center {{ !$loop->last ? 'flex-1' : '' }}">
+                <div class="flex flex-col items-center gap-1">
+                    <button type="button" wire:click="$set('activeTab', '{{ $key }}')"
+                            class="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold transition-all cursor-pointer
+                                {{ $activeTab === $key
+                                    ? 'bg-[#c9a847] text-white ring-4 ring-[#c9a847]/20'
+                                    : 'bg-zinc-200 dark:bg-zinc-700 text-zinc-500 hover:bg-zinc-300 dark:hover:bg-zinc-600' }}">
+                        {{ $num }}
+                    </button>
+                    <span class="text-xs font-medium hidden sm:block {{ $activeTab === $key ? 'text-[#c9a847]' : 'text-zinc-400' }}">
+                        {{ $label }}
+                    </span>
+                </div>
+                @if(!$loop->last)
+                <div class="flex-1 h-0.5 mx-3 bg-zinc-200 dark:bg-zinc-700"></div>
+                @endif
+            </div>
+            @endforeach
         </div>
+    </div>
 
-        {{-- Tab Content --}}
+    {{-- Tab Content --}}
+    <div class="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-700 shadow-sm">
         <div class="p-6 space-y-6">
 
             @if($activeTab === 'basic')
