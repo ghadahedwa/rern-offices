@@ -13,6 +13,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Offices — access controlled per-permission inside component mount()
     Route::livewire('offices', \App\Livewire\Offices\Index::class)->name('offices.index');
     Route::livewire('offices/create', \App\Livewire\Offices\Create::class)->name('offices.create');
+    Route::livewire('offices/{office}', \App\Livewire\Offices\Show::class)->name('offices.show');
     Route::livewire('offices/{office}/edit', \App\Livewire\Offices\Create::class)->name('offices.edit');
     Route::livewire('offices/{office}/statistics', \App\Livewire\Offices\Statistics::class)->name('offices.statistics');
 

@@ -120,10 +120,12 @@ offices/{office}                     → Offices\Show        (offices.show)
 - 6 تابز: معاملات التوثيق، نماذج/حوافظ توثيق، طلبات الشهر، نماذج/حوافظ شهر، طلبات السجل، نماذج/حوافظ سجل
 - كل تاب = Livewire sub-component في `Offices\StatTab\`
 
-### Offices\Show ← **مطلوب إنشاؤه**
+### Offices\Show ✅
 - `/offices/{id}` — view-only
 - صلاحية: `offices.view` أو `offices.edit` أو `super-admin`
-- التصميم المتفق عليه: Cards (read-only) + نفس تابز الإحصائيات في الأسفل
+- التصميم: Card واحدة بـ 4 tabs (البيانات الأساسية / الخدمات والأجهزة / التقييم / الوسائط)
+- زر "إحصائيات" في الـ header يذهب إلى `/offices/{id}/statistics` (مثل صفحة التعديل)
+- زر "تعديل" يظهر فقط لمن لديه صلاحية `offices.edit`
 
 ---
 
@@ -225,9 +227,9 @@ resources/views/livewire/offices/
 
 ## المتبقي من Features
 
-### 1. صفحة Show `/offices/{id}` — **نعمل عليها الآن**
-- Cards read-only لكل sections
-- الإحصائيات كتابز في الأسفل (مدمجة)
+### 1. صفحة Show `/offices/{id}` ✅ **منجزة**
+- 4 tabs: البيانات الأساسية / الخدمات والأجهزة / التقييم / الوسائط
+- زر إحصائيات → `/offices/{id}/statistics`
 - زر تعديل للمستخدمين ذوي صلاحية edit
 
 ### 2. Export

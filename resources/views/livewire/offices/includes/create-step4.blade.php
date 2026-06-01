@@ -229,7 +229,7 @@
                                 </div>
                                 <p class="text-sm text-zinc-500 dark:text-zinc-400 min-h-5">
                                     <span x-show="!fileName" class="text-zinc-400">
-                                        <span x-show="modal === 'photo'">{{ __('home.photo_types_hint') }}</span>
+                                        <span x-show="modal === 'photo'">{{ __('home.photo_types_hint') }} — {{ __('home.photos_multiple_hint') }}</span>
                                         <span x-show="modal === 'video'">{{ __('home.video_types_hint') }}</span>
                                         <span x-show="modal === 'document'">{{ __('home.pdf_types_hint') }}</span>
                                     </span>
@@ -238,7 +238,8 @@
                                 <label x-show="modal === 'photo'" class="cursor-pointer inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-[#c9a847] text-[#b8962e] text-sm font-medium hover:bg-[#c9a847]/10 transition">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"/></svg>
                                     {{ __('home.browse_files') }}
-                                    <input type="file" class="hidden" accept="image/*" wire:model="newPhoto" @change="fileName = $event.target.files[0]?.name ?? ''" />
+                                    <input type="file" class="hidden" accept="image/*" multiple wire:model="newPhotos"
+                                           @change="let f=$event.target.files; fileName = f.length > 1 ? f.length + ' {{ __('home.photos_selected') }}' : (f[0]?.name ?? '')" />
                                 </label>
                                 <label x-show="modal === 'video'" class="cursor-pointer inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-[#c9a847] text-[#b8962e] text-sm font-medium hover:bg-[#c9a847]/10 transition">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"/></svg>
@@ -251,7 +252,8 @@
                                     <input type="file" class="hidden" accept="application/pdf,.pdf" wire:model="newDocument" @change="fileName = $event.target.files[0]?.name ?? ''" />
                                 </label>
                             </div>
-                            @error('newPhoto')    <p class="text-xs text-red-500 text-center -mt-2">{{ $message }}</p> @enderror
+                            @error('newPhotos')   <p class="text-xs text-red-500 text-center -mt-2">{{ $message }}</p> @enderror
+                            @error('newPhotos.*') <p class="text-xs text-red-500 text-center -mt-2">{{ $message }}</p> @enderror
                             @error('newVideo')    <p class="text-xs text-red-500 text-center -mt-2">{{ $message }}</p> @enderror
                             @error('newDocument') <p class="text-xs text-red-500 text-center -mt-2">{{ $message }}</p> @enderror
                             <div class="flex gap-3">

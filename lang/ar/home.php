@@ -301,4 +301,8 @@ return [
     'transactions_count'         => 'عدد المعاملات',
     'select_year'                => '— السنة —',
     'select_month'               => '— الشهر —',
+    'open_maps_link'             => 'فتح في خرائط جوجل',
+    'photos_selected'            => 'صور محددة',
+    'photos_multiple_hint'       => 'يمكن اختيار أكثر من صورة',
+    'download_file'              => 'تحميل الملف',
 ];

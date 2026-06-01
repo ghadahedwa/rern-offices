@@ -106,13 +106,10 @@ class Create extends Component
     public array $formSalesStats    = []; // [year, month, value]
     public array $folderSalesStats  = []; // [year, month, value]
 
-    // Step 4 — Media uploads (single-file, instant save)
-    public mixed $newPhoto    = null;
+    // Step 4 — Media uploads
+    public array $newPhotos   = [];   // multiple photos, instant save
     public mixed $newVideo    = null;
     public mixed $newDocument = null;
-
-    // kept for legacy validation compatibility
-    public array $newPhotos    = [];
      public array $newVideos    = [];
     public array $newDocuments = [];
 
@@ -231,24 +228,38 @@ class Create extends Component
         ]);
     }
 
-    public function clearPhotos(): void    { $this->newPhoto    = null; }
+    public function clearPhotos(): void    { $this->newPhotos   = []; }
     public function clearVideo(): void     { $this->newVideo    = null; }
     public function clearDocuments(): void { $this->newDocument = null; }
 
     public function uploadPhoto(): void
     {
         $this->validate(
-            ['newPhoto' => 'required|image|max:5120'],
-            ['newPhoto.required' => 'يرجى اختيار صورة', 'newPhoto.image' => 'يجب أن يكون الملف صورة', 'newPhoto.max' => 'الحد الأقصى 5 ميجا']
+            [
+                'newPhotos'   => 'required|array',
+                'newPhotos.*' => 'image|max:5120',
+            ],
+            [
+                'newPhotos.required'  => 'يرجى اختيار صورة على الأقل',
+                'newPhotos.*.image'   => 'يجب أن تكون الملفات صوراً',
+                'newPhotos.*.max'     => 'الحد الأقصى لحجم الصورة 5 ميجا',
+            ]
         );
 
-        $existing = OfficeMedia::where('office_id', $this->office_id)->where('type', 'photo')->count();
-        if ($existing >= 10) { return; }
+        $existing  = OfficeMedia::where('office_id', $this->office_id)->where('type', 'photo')->count();
+        $remaining = max(0, 10 - $existing);
 
-        $path = $this->newPhoto->store("offices/{$this->office_id}/photos", 'public');
-        OfficeMedia::create(['office_id' => $this->office_id, 'type' => 'photo', 'path' => $path, 'original_name' => $this->newPhoto->getClientOriginalName()]);
+        foreach (array_slice($this->newPhotos, 0, $remaining) as $photo) {
+            $path = $photo->store("offices/{$this->office_id}/photos", 'public');
+            OfficeMedia::create([
+                'office_id'     => $this->office_id,
+                'type'          => 'photo',
+                'path'          => $path,
+                'original_name' => $photo->getClientOriginalName(),
+            ]);
+        }
 
-        $this->newPhoto = null;
+        $this->newPhotos = [];
         $this->dispatch('mediaUploaded');
     }
 
