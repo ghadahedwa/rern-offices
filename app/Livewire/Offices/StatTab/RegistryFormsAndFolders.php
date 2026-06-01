@@ -14,6 +14,7 @@ class RegistryFormsAndFolders extends Component
     use WithPagination;
 
     public Office $office;
+    public bool $canEdit = false;
 
     public bool $showForm   = false;
     public bool $showDelete = false;

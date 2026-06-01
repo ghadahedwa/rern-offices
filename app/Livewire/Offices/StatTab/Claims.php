@@ -14,6 +14,7 @@ class Claims extends Component
     use WithPagination;
 
     public Office $office;
+    public bool $canEdit = false;
 
     // مديونية الطلبات (قيمة واحدة في offices.debt_amount)
     public string $debtAmount = '';

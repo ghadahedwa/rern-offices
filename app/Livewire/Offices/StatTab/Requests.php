@@ -14,6 +14,7 @@ class Requests extends Component
     use WithPagination;
 
     public Office $office;
+    public bool $canEdit = false;
 
     // فلاتر مستقلة لكل نوع
     public array $filterYear  = [];

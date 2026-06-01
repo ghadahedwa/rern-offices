@@ -14,6 +14,7 @@ class TransactionsSales extends Component
     use WithPagination;
 
     public Office $office;
+    public bool $canEdit = false;
 
     // متوسط المعاملات اليومية للتوثيق (قيمة واحدة في offices.avg_daily_transactions)
     public string $avgDaily = '';

@@ -93,4 +93,44 @@
         </div>
     </div>
 
+    {{-- Prev / Next --}}
+    @php
+        $tabOrder     = ['basic', 'services', 'assessment', 'media'];
+        $currentIndex = array_search($activeTab, $tabOrder);
+        $prevTab      = $currentIndex > 0 ? $tabOrder[$currentIndex - 1] : null;
+        $nextTab      = $currentIndex < count($tabOrder) - 1 ? $tabOrder[$currentIndex + 1] : null;
+    @endphp
+    <div class="flex items-center justify-between">
+        <div>
+            @if($prevTab)
+            <button type="button" wire:click="$set('activeTab', '{{ $prevTab }}')"
+                    class="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg border border-zinc-300 dark:border-zinc-600 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700 text-sm font-medium transition">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
+                </svg>
+                {{ __('home.previous_step') }}
+            </button>
+            @endif
+        </div>
+        <div>
+            @if($nextTab)
+            <button type="button" wire:click="$set('activeTab', '{{ $nextTab }}')"
+                    class="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-[#c9a847] hover:bg-[#b8962e] text-white text-sm font-medium transition">
+                {{ __('home.next_tab') }}
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
+                </svg>
+            </button>
+            @else
+            <a href="{{ route('offices.index') }}" wire:navigate
+               class="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg border border-zinc-300 dark:border-zinc-600 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700 text-sm font-medium transition">
+                {{ __('home.exit') }}
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
+                </svg>
+            </a>
+            @endif
+        </div>
+    </div>
+
 </div>

@@ -12,6 +12,7 @@ use Livewire\Component;
 class Statistics extends Component
 {
     public Office $office;
+    public bool $canEdit = false;
 
     public string $activeTab = 'transactions';
 
@@ -26,12 +27,14 @@ class Statistics extends Component
 
     public function mount(Office $office): void
     {
+        $user = auth()->user();
         abort_unless(
-            auth()->user()?->hasRole('super-admin') || auth()->user()?->can('offices.edit'),
+            $user?->hasRole('super-admin') || $user?->can('offices.view') || $user?->can('offices.edit'),
             403
         );
 
-        $this->office = $office;
+        $this->canEdit = $user?->hasRole('super-admin') || $user?->can('offices.edit');
+        $this->office  = $office;
     }
 
     public function render()

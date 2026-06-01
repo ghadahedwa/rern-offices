@@ -14,6 +14,7 @@ class RegistryRequests extends Component
     use WithPagination;
 
     public Office $office;
+    public bool $canEdit = false;
 
     public array $filterYear  = [];
     public array $filterMonth = [];
