@@ -10,6 +10,7 @@
                     photos: @js($photoUrls),
                     active: 0,
                     viewer: false,
+                    viewerType: '',
                     viewerSrc: '',
                     slidePrev() {
                         this.active = (this.active - 1 + this.photos.length) % this.photos.length;
@@ -17,13 +18,30 @@
                     slideNext() {
                         this.active = (this.active + 1) % this.photos.length;
                     },
+                    openViewer(index) {
+                        this.active = index;
+                        this.viewerSrc = this.photos[index];
+                        this.viewerType = 'photo';
+                        this.viewer = true;
+                    },
+                    viewerPrev() {
+                        this.active = (this.active - 1 + this.photos.length) % this.photos.length;
+                        this.viewerSrc = this.photos[this.active];
+                    },
+                    viewerNext() {
+                        this.active = (this.active + 1) % this.photos.length;
+                        this.viewerSrc = this.photos[this.active];
+                    },
                     closeViewer() {
                         this.$el.querySelectorAll('video').forEach(v => v.pause());
                         this.viewer = false;
+                        this.viewerType = '';
                         this.viewerSrc = '';
                     }
                  }"
-                 @keydown.escape.window="closeViewer()">
+                 @keydown.escape.window="closeViewer()"
+                 @keydown.left.window="viewer && viewerType === 'photo' ? viewerNext() : null"
+                 @keydown.right.window="viewer && viewerType === 'photo' ? viewerPrev() : null">
 
                 {{-- ── صور المقر ── --}}
                 <div class="mb-6">
@@ -52,11 +70,20 @@
                         </button>
 
                         {{-- الصورة الكبيرة --}}
-                        <div class="flex-1 relative rounded-xl overflow-hidden"
-                             style="aspect-ratio:16/9">
+                        <div class="flex-1 relative rounded-xl overflow-hidden cursor-zoom-in group"
+                             style="aspect-ratio:16/9"
+                             @click="openViewer(active)">
                             <img :src="photos[active]"
-                                 class="w-full h-full object-cover transition-transform duration-300"
+                                 class="w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-300"
                                  alt="" />
+                            {{-- overlay zoom icon --}}
+                            <div class="absolute inset-0 bg-black/0 group-hover:bg-black/15 transition-colors duration-200 flex items-center justify-center">
+                                <div class="w-10 h-10 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                                    <svg class="w-5 h-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 15.803a7.5 7.5 0 0010.607 10.607zM10.5 7.5v6m3-3h-6"/>
+                                    </svg>
+                                </div>
+                            </div>
                             {{-- counter badge --}}
                             <div x-show="photos.length > 1"
                                  class="absolute bottom-2 left-2 bg-black/50 text-white text-xs px-2.5 py-1 rounded-full backdrop-blur-sm">
@@ -114,7 +141,7 @@
                     @foreach($videos as $vid)
                     <div class="flex items-center p-3 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/50">
                         <button type="button"
-                                @click="viewerSrc='{{ asset('storage/' . $vid->path) }}'; viewer=true"
+                                @click="viewerSrc='{{ asset('storage/' . $vid->path) }}'; viewerType='video'; viewer=true"
                                 class="flex items-center gap-3 min-w-0 hover:opacity-70 transition">
                             <div class="w-10 h-10 rounded-lg bg-[#c9a847]/10 flex items-center justify-center shrink-0">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-[#c9a847]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
@@ -175,23 +202,65 @@
                      class="fixed inset-0 z-9999 flex flex-col bg-black/92"
                      style="display:none">
 
-                    {{-- Header: close (left) --}}
-                    <div class="flex items-center h-14 shrink-0 px-4">
-                        <button type="button" @click="closeViewer()"
-                                class="flex items-center gap-2 px-4 py-2 rounded-xl bg-red-500 hover:bg-red-600 text-white transition text-sm font-semibold shadow-lg">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
-                            </svg>
-                            إغلاق
-                        </button>
+                    {{-- Header row: close (left) | counter (center) | spacer (right) --}}
+                    {{-- direction:ltr ensures physical columns regardless of page RTL --}}
+                    <div class="grid items-center h-14 shrink-0 px-4"
+                         style="grid-template-columns: 1fr auto 1fr; direction: ltr;">
+                        {{-- col 1 — close button, physically left --}}
+                        <div>
+                            <button type="button" @click="closeViewer()"
+                                    class="flex items-center gap-2 px-4 py-2 rounded-xl bg-red-500 hover:bg-red-600 text-white transition text-sm font-semibold shadow-lg">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+                                </svg>
+                                إغلاق
+                            </button>
+                        </div>
+                        {{-- col 2 — counter, physically center --}}
+                        <div x-show="viewerType === 'photo' && photos.length > 1"
+                             class="flex items-center gap-2 bg-white text-black text-sm font-semibold px-4 py-2 rounded-xl shadow">
+                            <span x-text="active + 1"></span>
+                            <span class="opacity-40">/</span>
+                            <span x-text="photos.length"></span>
+                        </div>
+                        {{-- col 3 — spacer --}}
+                        <div></div>
                     </div>
 
-                    {{-- Video area --}}
-                    <div class="flex-1 min-h-0 flex items-center justify-center"
+                    {{-- Image area: centered, arrows overlaid --}}
+                    <div class="flex-1 min-h-0 flex items-center justify-center relative"
                          @click.self="closeViewer()">
-                        <video :src="viewerSrc" controls autoplay
-                               class="block rounded-xl"
-                               style="width: calc(100vw - 32px); height: calc(100vh - 72px); object-fit: contain;"></video>
+
+                        <template x-if="viewerType === 'photo'">
+                            <img :src="viewerSrc"
+                                 class="block rounded-xl shadow-2xl"
+                                 style="width: calc(100vw - 32px); height: calc(100vh - 72px); object-fit: contain;"
+                                 @click="closeViewer()" />
+                        </template>
+                        <template x-if="viewerType === 'video'">
+                            <video :src="viewerSrc" controls autoplay
+                                   class="block rounded-xl"
+                                   style="width: calc(100vw - 32px); height: calc(100vh - 72px); object-fit: contain;"></video>
+                        </template>
+
+                        {{-- Arrow prev (right in RTL) --}}
+                        <button type="button" @click="viewerPrev()"
+                                x-show="viewerType === 'photo' && photos.length > 1"
+                                class="absolute right-4 top-1/2 -translate-y-1/2 z-10 w-12 h-12 rounded-full bg-white/15 hover:bg-white/30 text-white flex items-center justify-center transition backdrop-blur-sm">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
+                            </svg>
+                        </button>
+
+                        {{-- Arrow next (left in RTL) --}}
+                        <button type="button" @click="viewerNext()"
+                                x-show="viewerType === 'photo' && photos.length > 1"
+                                class="absolute left-4 top-1/2 -translate-y-1/2 z-10 w-12 h-12 rounded-full bg-white/15 hover:bg-white/30 text-white flex items-center justify-center transition backdrop-blur-sm">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
+                            </svg>
+                        </button>
+
                     </div>
                 </div>
                 </template>
