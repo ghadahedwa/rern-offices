@@ -195,9 +195,11 @@
                 </div>
 
                 {{-- ── Fullscreen Viewer Modal ── --}}
+                {{-- x-teleport moves the modal to <body> directly, bypassing any parent overflow/transform --}}
+                <template x-teleport="body">
                 <div x-show="viewer"
                      x-transition.opacity
-                     class="fixed inset-0 z-50 flex flex-col bg-black/92"
+                     class="fixed inset-0 z-9999 flex flex-col bg-black/92"
                      style="display:none">
 
                     {{-- Header row: close (left) | counter (center) | spacer (right) --}}
@@ -261,5 +263,6 @@
 
                     </div>
                 </div>
+                </template>
 
             </div>
