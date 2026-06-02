@@ -33,8 +33,10 @@
                         this.viewerSrc = this.photos[this.active];
                     },
                     closeViewer() {
-                        this.$el.querySelectorAll('video').forEach(v => { v.pause(); v.src = ''; });
+                        this.$el.querySelectorAll('video').forEach(v => v.pause());
                         this.viewer = false;
+                        this.viewerType = '';
+                        this.viewerSrc = '';
                     }
                  }"
                  @keydown.escape.window="closeViewer()"
