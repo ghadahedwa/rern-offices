@@ -189,11 +189,9 @@
                     {{-- Video area --}}
                     <div class="flex-1 min-h-0 flex items-center justify-center"
                          @click.self="closeViewer()">
-                        <template x-if="viewer">
-                            <video :src="viewerSrc" controls autoplay
-                                   class="block rounded-xl"
-                                   style="width: calc(100vw - 32px); height: calc(100vh - 72px); object-fit: contain;"></video>
-                        </template>
+                        <video :src="viewerSrc" controls autoplay
+                               class="block rounded-xl"
+                               style="width: calc(100vw - 32px); height: calc(100vh - 72px); object-fit: contain;"></video>
                     </div>
                 </div>
                 </template>
