@@ -13,6 +13,7 @@ class Statistics extends Component
 {
     public Office $office;
     public bool $canEdit = false;
+    public bool $canView = false;
 
     public string $activeTab = 'transactions';
 
@@ -34,6 +35,7 @@ class Statistics extends Component
         );
 
         $this->canEdit = $user?->hasRole('super-admin') || $user?->can('offices.edit');
+        $this->canView = $user?->hasRole('super-admin') || $user?->can('offices.view');
         $this->office  = $office;
     }
 
