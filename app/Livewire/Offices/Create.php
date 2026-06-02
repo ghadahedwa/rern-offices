@@ -579,8 +579,10 @@ $existing = OfficeMedia::where('office_id', $this->office_id)->where('type', 'do
 
     public function render()
     {
+        $user = auth()->user();
         return view('livewire.offices.create', [
-            'governorates'        => auth()->user()?->hasRole('super-admin')
+            'canView'             => $user?->hasRole('super-admin') || $user?->can('offices.view'),
+            'governorates'        => $user?->hasRole('super-admin')
                 ? Governorate::orderBy('order')->orderBy('id')->get()
                 : auth()->user()->governorates()->orderBy('order')->orderBy('id')->get(),
             'mainOffices'         => Office::with('officeType')->whereNotNull('type_id')->orderBy('name')->get(),
