@@ -225,18 +225,20 @@
                         <div></div>
                     </div>
 
-                    {{-- Image area: full remaining space, arrows overlaid --}}
-                    <div class="relative flex-1 min-h-0" @click.self="closeViewer()">
+                    {{-- Image area: centered, arrows overlaid --}}
+                    <div class="flex-1 min-h-0 flex items-center justify-center relative"
+                         @click.self="closeViewer()">
 
-                        {{-- Image / Video — fills entire area with contain --}}
                         <template x-if="viewerType === 'photo'">
                             <img :src="viewerSrc"
-                                 class="absolute inset-0 w-full h-full object-contain p-4 rounded-xl"
+                                 class="block rounded-xl shadow-2xl"
+                                 style="max-width: calc(100vw - 32px); max-height: calc(100vh - 72px); width: auto; height: auto;"
                                  @click="closeViewer()" />
                         </template>
                         <template x-if="viewerType === 'video'">
                             <video :src="viewerSrc" controls autoplay
-                                   class="absolute inset-0 w-full h-full object-contain p-4 rounded-xl"></video>
+                                   class="block rounded-xl"
+                                   style="max-width: calc(100vw - 32px); max-height: calc(100vh - 72px);"></video>
                         </template>
 
                         {{-- Arrow prev (right in RTL) --}}
