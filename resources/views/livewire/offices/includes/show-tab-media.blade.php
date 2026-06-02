@@ -205,7 +205,7 @@
                         </div>
                         <div x-show="!(viewerType === 'photo' && photos.length > 1)"></div>
                         <button type="button" @click="viewer = false"
-                                class="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white/15 hover:bg-white/30 text-white backdrop-blur-sm transition text-sm font-medium">
+                                class="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-red-500 hover:bg-red-600 text-white transition text-sm font-medium shadow-lg">
                             <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
                             </svg>
