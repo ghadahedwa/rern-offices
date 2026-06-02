@@ -23,7 +23,7 @@ class Office extends Model
         'office_area', 'district_court', 'Braille_sign_device', 'queue_management_system', 'surveillance_cameras',
         'payment_machine_count', 'computers_count', 'monitors_count', 'scanners_count', 'printers_count', 'fingerprints_count',
         'negatives_and_solutions', 'development_proposals',
-        'windows_count', 'office_needs', 'air_conditioners_count',
+        'windows_count', 'office_needs', 'air_conditioners_count', 'ups_count',
         'debt_amount',
         'working_days', 'mechanization_at',
         'electricity_meter_type', 'electricity_meter_debt',

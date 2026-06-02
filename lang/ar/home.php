@@ -242,6 +242,7 @@ return [
     'windows_count'              => 'عدد الشبابيك',
     'monitors_count'             => 'عدد شاشات العرض',
     'air_conditioners_count'     => 'عدد التكييفات',
+    'ups_count'                  => 'عدد UPS',
     'electricity_meter_type'     => 'عداد الكهرباء',
     'electricity_meter_debt'     => 'مديونية عداد الكهرباء',
     'water_meter_type'           => 'عداد المياه',

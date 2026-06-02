@@ -99,6 +99,10 @@
                         <p class="text-xs text-zinc-400 dark:text-zinc-500 mb-0.5">{{ __('home.air_conditioners_count') }}</p>
                         <p class="text-sm font-medium text-zinc-800 dark:text-zinc-100">{{ $office->air_conditioners_count ?? __('home.no_data') }}</p>
                     </div>
+                    <div>
+                        <p class="text-xs text-zinc-400 dark:text-zinc-500 mb-0.5">{{ __('home.ups_count') }}</p>
+                        <p class="text-sm font-medium text-zinc-800 dark:text-zinc-100">{{ $office->ups_count ?? __('home.no_data') }}</p>
+                    </div>
                 </div>
             </div>
 
