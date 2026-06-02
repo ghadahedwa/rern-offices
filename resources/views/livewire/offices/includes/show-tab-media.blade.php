@@ -234,13 +234,13 @@
                         <template x-if="viewerType === 'photo'">
                             <img :src="viewerSrc"
                                  class="block rounded-xl shadow-2xl"
-                                 style="max-width: calc(100vw - 32px); max-height: calc(100vh - 72px); width: auto; height: auto;"
+                                 style="width: calc(100vw - 32px); height: calc(100vh - 72px); object-fit: contain;"
                                  @click="closeViewer()" />
                         </template>
                         <template x-if="viewerType === 'video'">
                             <video :src="viewerSrc" controls autoplay
                                    class="block rounded-xl"
-                                   style="max-width: calc(100vw - 32px); max-height: calc(100vh - 72px);"></video>
+                                   style="width: calc(100vw - 32px); height: calc(100vh - 72px); object-fit: contain;"></video>
                         </template>
 
                         {{-- Arrow prev (right in RTL) --}}
