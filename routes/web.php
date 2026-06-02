@@ -17,6 +17,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::livewire('offices/{office}/edit', \App\Livewire\Offices\Create::class)->name('offices.edit');
     Route::livewire('offices/{office}/statistics', \App\Livewire\Offices\Statistics::class)->name('offices.statistics');
 
+    Route::livewire('reports/office-pdf', \App\Livewire\Reports\OfficePdf::class)->name('reports.office-pdf');
+    Route::livewire('reports/multi-office', \App\Livewire\Reports\MultiOffice::class)->name('reports.multi-office');
+    Route::get('offices/{office}/pdf', [\App\Http\Controllers\OfficePdfController::class, '__invoke'])->name('offices.pdf');
+
     Route::middleware('role:super-admin')->group(function () {
         Route::livewire('users', \App\Livewire\Users\Index::class)->name('users.index');
         Route::livewire('users/create', \App\Livewire\Users\Create::class)->name('users.create');

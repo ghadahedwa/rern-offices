@@ -19,12 +19,13 @@ class Statistics extends Component
 
     public array $tabs = [
         'transactions'           => 'معاملات التوثيق',
-        'forms_folders'          => 'نماذج وحوافظ توثيق',
+        'forms_folders'          => 'نماذج وحوافظ التوثيق',
         'shaher_requests'        => 'طلبات الشهر',
-        'monthly_forms_folders'  => 'نماذج وحوافظ شهر',
+        'law9_registrations'     => 'مشهرات قانون ٩',
+        'monthly_forms_folders'  => 'نماذج وحوافظ قانون ٩',
+        'law27_forms_folders'    => 'نماذج وحوافظ قانون ٢٧',
         'registry_requests'      => 'طلبات السجل',
         'registry_forms_folders' => 'نماذج وحوافظ سجل',
-        'law9_registrations'     => 'مشهرات قانون ٩',
     ];
 
     public function mount(Office $office): void

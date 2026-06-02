@@ -84,11 +84,14 @@
         @elseif($activeTab === 'registry_forms_folders')
             <livewire:offices.stat-tab.registry-forms-and-folders :office="$office" :canEdit="$canEdit" :key="'rff-'.$office->id" />
 
+        @elseif($activeTab === 'law9_registrations')
+            <livewire:offices.stat-tab.law9-registrations :office="$office" :canEdit="$canEdit" :key="'l9-'.$office->id" />
+
         @elseif($activeTab === 'monthly_forms_folders')
             <livewire:offices.stat-tab.monthly-forms-and-folders :office="$office" :canEdit="$canEdit" :key="'mff-'.$office->id" />
 
-        @elseif($activeTab === 'law9_registrations')
-            <livewire:offices.stat-tab.law9-registrations :office="$office" :canEdit="$canEdit" :key="'l9-'.$office->id" />
+        @elseif($activeTab === 'law27_forms_folders')
+            <livewire:offices.stat-tab.law27-forms-and-folders :office="$office" :canEdit="$canEdit" :key="'l27-'.$office->id" />
         @endif
     </div>
 

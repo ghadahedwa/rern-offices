@@ -81,9 +81,18 @@ HasMany: offices
 
 ### OfficeStat (جدول: office_statistics)
 ```
-stat_type_id: 1=معاملات التوثيق(سنوية), 2=نماذج توثيق(شهرية), 3=حوافظ توثيق(شهرية)
+البيانات مربوطة بـ stat_type_id من جدول stat_types
+stat_types.group_key:
+  transactions          → معاملات التوثيق (سنوية)
+  forms_folders         → نماذج وحوافظ توثيق (شهرية)
+  shaher_requests       → طلبات الشهر
+  monthly_forms_folders → نماذج وحوافظ شهر (شهرية)
+  registry_requests     → طلبات السجل
+  registry_forms_folders→ نماذج وحوافظ سجل (شهرية)
+  law9_registrations    → مشهرات قانون ٩ (سنوية، min year: 2022)
+  law27_forms_folders   → نماذج وحوافظ قانون ٢٧ (شهرية: بيع النماذج، بيع الحوافظ)
 ```
-**ملاحظة:** تابز الإحصائيات تشمل أيضاً: طلبات الشهر، نماذج/حوافظ شهر، طلبات السجل، نماذج/حوافظ سجل — هذه تستعمل جدول مستقل (StatTab components).
+**StatType model:** `fillable: name, period(yearly|monthly), value_type(count|amount), group_key, order`
 
 ---
 
@@ -91,10 +100,9 @@ stat_type_id: 1=معاملات التوثيق(سنوية), 2=نماذج توثي
 ```php
 offices                              → Offices\Index       (offices.index)
 offices/create                       → Offices\Create      (offices.create)
+offices/{office}                     → Offices\Show        (offices.show)
 offices/{office}/edit                → Offices\Create      (offices.edit)  ← نفس component
 offices/{office}/statistics          → Offices\Statistics  (offices.statistics)
-// مطلوب إضافته:
-offices/{office}                     → Offices\Show        (offices.show)
 ```
 
 ---
@@ -103,8 +111,7 @@ offices/{office}                     → Offices\Show        (offices.show)
 
 ### Offices\Index
 - جدول مقرات مع بحث + فلتر (محافظة، نوع، وصف موقع)
-- أزرار: تعديل، حذف
-- يجب إضافة: زر "عرض" → offices.show
+- أزرار: عرض، تعديل، حذف
 
 ### Offices\Create
 - **Wizard 4 steps** (step في URL):
@@ -117,8 +124,17 @@ offices/{office}                     → Offices\Show        (offices.show)
 
 ### Offices\Statistics
 - صفحة إحصائيات مستقلة `/offices/{id}/statistics`
-- 6 تابز: معاملات التوثيق، نماذج/حوافظ توثيق، طلبات الشهر، نماذج/حوافظ شهر، طلبات السجل، نماذج/حوافظ سجل
+- **8 تابز** (مرتبة):
+  1. `transactions` → معاملات التوثيق (سنوية)
+  2. `forms_folders` → نماذج وحوافظ التوثيق (شهرية)
+  3. `shaher_requests` → طلبات الشهر
+  4. `law9_registrations` → مشهرات قانون ٩ (سنوية، من 2022)
+  5. `monthly_forms_folders` → نماذج وحوافظ قانون ٩ (شهرية)
+  6. `law27_forms_folders` → نماذج وحوافظ قانون ٢٧ (شهرية) ← **مضافة**
+  7. `registry_requests` → طلبات السجل
+  8. `registry_forms_folders` → نماذج وحوافظ سجل
 - كل تاب = Livewire sub-component في `Offices\StatTab\`
+- نظام التابز: أزرار دائرية مرقمة متصلة بخط أفقي (وليس border-b tabs)
 
 ### Offices\Show ✅
 - `/offices/{id}` — view-only
@@ -197,22 +213,34 @@ $lbl = 'block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1'
 app/
   Livewire/Offices/
     Index.php
-    Create.php       ← create + edit
+    Create.php          ← create + edit (نفس component)
     Statistics.php
-    Show.php         ← مطلوب
-    StatTab/         ← 6 sub-components للإحصائيات
+    Show.php            ✅
+    StatTab/            ← 7 sub-components للإحصائيات
+      TransactionsSales.php
+      FormsAndFolders.php
+      Requests.php            ← group_key: shaher_requests
+      MonthlyFormsAndFolders.php
+      RegistryRequests.php
+      RegistryFormsAndFolders.php
+      Law9Registrations.php       ← group_key: law9_registrations ✅
+      Law27FormsAndFolders.php    ← group_key: law27_forms_folders ✅ مضاف
 
 resources/views/livewire/offices/
     index.blade.php
     create.blade.php
     statistics.blade.php
-    show.blade.php          ← مطلوب
+    show.blade.php       ✅
     includes/
-        create-step1.blade.php   ← بيانات أساسية + عمل + موقع + تشغيل
-        create-step2.blade.php   ← خدمات + أجهزة + عدادات + أجهزة معطلة
-        create-step3.blade.php   ← تقييم + نصوص حرة
-        create-step4.blade.php   ← وسائط + إحصائيات (قديمة)
-        create-step5.blade.php   ← إحصائيات منفصلة (محتوى مشابه لـ create-step4)
+        create-step1.blade.php      ← بيانات أساسية + عمل + موقع + تشغيل
+        create-step2.blade.php      ← خدمات + أجهزة + عدادات + أجهزة معطلة
+        create-step3.blade.php      ← تقييم + نصوص حرة
+        create-step4.blade.php      ← وسائط
+        create-step5.blade.php      ← إحصائيات قديمة (معلّقة)
+        show-tab-basic.blade.php    ← تاب البيانات الأساسية
+        show-tab-services.blade.php ← تاب الخدمات والأجهزة
+        show-tab-assessment.blade.php ← تاب التقييم
+        show-tab-media.blade.php    ← تاب الوسائط
     stat-tab/
         transactions-sales.blade.php
         forms-and-folders.blade.php
@@ -220,7 +248,9 @@ resources/views/livewire/offices/
         registry-requests.blade.php
         registry-forms-and-folders.blade.php
         monthly-forms-and-folders.blade.php
-        claims.blade.php
+        law9-registrations.blade.php        ✅
+        law27-forms-and-folders.blade.php   ✅ مضاف
+        claims.blade.php                    ← موجود لكن غير مفعّل
 ```
 
 ---
@@ -232,15 +262,21 @@ resources/views/livewire/offices/
 - زر إحصائيات → `/offices/{id}/statistics`
 - زر تعديل للمستخدمين ذوي صلاحية edit
 
-### 2. Export
-- صلاحية `offices.export` موجودة لكن بدون تنفيذ
-- المطلوب: Excel أو PDF من صفحة Index
+### 2. تقرير PDF للمقر ← **قيد التطبيق**
+- PDF شامل لبيانات مقر واحد (بيانات أساسية + خدمات + تقييم + ملخص إحصائيات)
+- الحزمة المقررة: `barryvdh/laravel-dompdf`
+- route مقترح: `GET /offices/{office}/pdf` → controller عادي (ليس Livewire)
+- التحدي: دعم العربية RTL في dompdf (يحتاج unicode_enabled + DejaVu font)
 
-### 3. تشكيل المكتب (موديول الموظفين)
+### 3. Export (قائمة)
+- صلاحية `offices.export` موجودة لكن بدون تنفيذ
+- المطلوب: Excel من صفحة Index (بعد PDF)
+
+### 4. تشكيل المكتب (موديول الموظفين)
 - صفحة مستقلة `/offices/{id}/formation`
 - لا تزال في مرحلة التخطيط
 
-### 4. Dashboard
+### 5. Dashboard
 - لا توجد إحصائيات عامة حتى الآن
 
 ---
