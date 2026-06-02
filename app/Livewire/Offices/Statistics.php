@@ -24,6 +24,7 @@ class Statistics extends Component
         'monthly_forms_folders'  => 'نماذج وحوافظ شهر',
         'registry_requests'      => 'طلبات السجل',
         'registry_forms_folders' => 'نماذج وحوافظ سجل',
+        'law9_registrations'     => 'مشهرات قانون ٩',
     ];
 
     public function mount(Office $office): void

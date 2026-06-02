@@ -86,6 +86,9 @@
 
         @elseif($activeTab === 'monthly_forms_folders')
             <livewire:offices.stat-tab.monthly-forms-and-folders :office="$office" :canEdit="$canEdit" :key="'mff-'.$office->id" />
+
+        @elseif($activeTab === 'law9_registrations')
+            <livewire:offices.stat-tab.law9-registrations :office="$office" :canEdit="$canEdit" :key="'l9-'.$office->id" />
         @endif
     </div>
 
