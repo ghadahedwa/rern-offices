@@ -31,9 +31,13 @@
                     viewerNext() {
                         this.active = (this.active + 1) % this.photos.length;
                         this.viewerSrc = this.photos[this.active];
+                    },
+                    closeViewer() {
+                        this.$el.querySelectorAll('video').forEach(v => { v.pause(); v.src = ''; });
+                        this.viewer = false;
                     }
                  }"
-                 @keydown.escape.window="viewer = false"
+                 @keydown.escape.window="closeViewer()"
                  @keydown.left.window="viewer && viewerType === 'photo' ? viewerNext() : null"
                  @keydown.right.window="viewer && viewerType === 'photo' ? viewerPrev() : null">
 
@@ -200,7 +204,7 @@
                          style="grid-template-columns: 1fr auto 1fr; direction: ltr;">
                         {{-- col 1 — close button, physically left --}}
                         <div>
-                            <button type="button" @click="viewer = false"
+                            <button type="button" @click="closeViewer()"
                                     class="flex items-center gap-2 px-4 py-2 rounded-xl bg-red-500 hover:bg-red-600 text-white transition text-sm font-semibold shadow-lg">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
@@ -221,7 +225,7 @@
 
                     {{-- Image area fills remaining space --}}
                     <div class="flex-1 flex items-center justify-center px-4 pb-4 min-h-0"
-                         @click.self="viewer = false">
+                         @click.self="closeViewer()">
                     <div class="flex items-center gap-4 w-full max-w-6xl h-full">
 
                         <button type="button" @click="viewerNext()"
