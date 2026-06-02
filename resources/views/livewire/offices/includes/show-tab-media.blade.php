@@ -192,10 +192,29 @@
                 <div x-show="viewer"
                      x-transition.opacity
                      @click.self="viewer = false"
-                     class="fixed inset-0 z-50 flex items-center justify-center bg-black/90 p-4"
+                     class="fixed inset-0 z-50 flex flex-col bg-black/92 p-4 gap-3"
                      style="display:none">
 
-                    <div class="flex items-center gap-3 w-full max-w-5xl">
+                    {{-- Row 1: Close button --}}
+                    <div class="flex items-center justify-between shrink-0">
+                        <div x-show="viewerType === 'photo' && photos.length > 1"
+                             class="flex items-center gap-2 bg-white/10 text-white text-sm px-4 py-2 rounded-xl backdrop-blur-sm">
+                            <span x-text="active + 1"></span>
+                            <span class="opacity-40">/</span>
+                            <span x-text="photos.length"></span>
+                        </div>
+                        <div x-show="!(viewerType === 'photo' && photos.length > 1)"></div>
+                        <button type="button" @click="viewer = false"
+                                class="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white/15 hover:bg-white/30 text-white backdrop-blur-sm transition text-sm font-medium">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+                            </svg>
+                            إغلاق
+                        </button>
+                    </div>
+
+                    {{-- Row 2: Arrows + Image --}}
+                    <div class="flex items-center gap-3 flex-1 min-h-0">
 
                         <button type="button" @click="viewerNext()"
                                 x-show="viewerType === 'photo' && photos.length > 1"
@@ -205,23 +224,13 @@
                             </svg>
                         </button>
 
-                        <div class="relative flex-1 flex flex-col items-center gap-3">
-                            <button type="button" @click="viewer = false"
-                                    class="absolute -top-3 -right-3 z-10 w-8 h-8 rounded-full bg-white text-zinc-800 font-bold flex items-center justify-center shadow hover:bg-zinc-100 transition text-base leading-none">×</button>
-
+                        <div class="flex-1 flex items-center justify-center min-h-0">
                             <template x-if="viewerType === 'photo'">
-                                <img :src="viewerSrc" class="max-h-[82vh] max-w-full object-contain rounded-xl shadow-2xl" />
+                                <img :src="viewerSrc" class="max-h-full max-w-full object-contain rounded-xl shadow-2xl" style="max-height: calc(100vh - 120px)" />
                             </template>
                             <template x-if="viewerType === 'video'">
-                                <video :src="viewerSrc" controls autoplay class="w-full rounded-xl max-h-[80vh]"></video>
+                                <video :src="viewerSrc" controls autoplay class="max-w-full rounded-xl" style="max-height: calc(100vh - 120px)"></video>
                             </template>
-
-                            <div x-show="viewerType === 'photo' && photos.length > 1"
-                                 class="flex items-center gap-2 bg-black/50 text-white text-xs px-4 py-1.5 rounded-full backdrop-blur-sm">
-                                <span x-text="active + 1"></span>
-                                <span class="opacity-50">/</span>
-                                <span x-text="photos.length"></span>
-                            </div>
                         </div>
 
                         <button type="button" @click="viewerPrev()"
