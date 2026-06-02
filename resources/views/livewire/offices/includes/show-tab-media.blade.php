@@ -225,41 +225,38 @@
                         <div></div>
                     </div>
 
-                    {{-- Image area fills remaining space --}}
-                    <div class="flex-1 flex items-center justify-center px-4 pb-4 min-h-0"
-                         @click.self="closeViewer()">
-                    <div class="flex items-center gap-4 w-full max-w-6xl h-full">
+                    {{-- Image area: full remaining space, arrows overlaid --}}
+                    <div class="relative flex-1 min-h-0" @click.self="closeViewer()">
 
-                        <button type="button" @click="viewerNext()"
-                                x-show="viewerType === 'photo' && photos.length > 1"
-                                class="w-12 h-12 rounded-full bg-white/15 hover:bg-white/30 text-white flex items-center justify-center shrink-0 transition backdrop-blur-sm">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
-                            </svg>
-                        </button>
+                        {{-- Image / Video — fills entire area with contain --}}
+                        <template x-if="viewerType === 'photo'">
+                            <img :src="viewerSrc"
+                                 class="absolute inset-0 w-full h-full object-contain p-4 rounded-xl"
+                                 @click="closeViewer()" />
+                        </template>
+                        <template x-if="viewerType === 'video'">
+                            <video :src="viewerSrc" controls autoplay
+                                   class="absolute inset-0 w-full h-full object-contain p-4 rounded-xl"></video>
+                        </template>
 
-                        <div class="flex-1 flex items-center justify-center min-h-0">
-                            <template x-if="viewerType === 'photo'">
-                                <img :src="viewerSrc"
-                                     class="max-w-full object-contain rounded-xl shadow-2xl"
-                                     style="max-height: calc(100vh - 80px)" />
-                            </template>
-                            <template x-if="viewerType === 'video'">
-                                <video :src="viewerSrc" controls autoplay
-                                       class="max-w-full rounded-xl"
-                                       style="max-height: calc(100vh - 80px)"></video>
-                            </template>
-                        </div>
-
+                        {{-- Arrow prev (right in RTL) --}}
                         <button type="button" @click="viewerPrev()"
                                 x-show="viewerType === 'photo' && photos.length > 1"
-                                class="w-12 h-12 rounded-full bg-white/15 hover:bg-white/30 text-white flex items-center justify-center shrink-0 transition backdrop-blur-sm">
+                                class="absolute right-4 top-1/2 -translate-y-1/2 z-10 w-12 h-12 rounded-full bg-white/15 hover:bg-white/30 text-white flex items-center justify-center transition backdrop-blur-sm">
                             <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
                             </svg>
                         </button>
 
-                    </div>
+                        {{-- Arrow next (left in RTL) --}}
+                        <button type="button" @click="viewerNext()"
+                                x-show="viewerType === 'photo' && photos.length > 1"
+                                class="absolute left-4 top-1/2 -translate-y-1/2 z-10 w-12 h-12 rounded-full bg-white/15 hover:bg-white/30 text-white flex items-center justify-center transition backdrop-blur-sm">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
+                            </svg>
+                        </button>
+
                     </div>
                 </div>
 
