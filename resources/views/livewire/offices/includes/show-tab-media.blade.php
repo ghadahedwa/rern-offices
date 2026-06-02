@@ -172,29 +172,29 @@
                 <template x-teleport="body">
                 <div x-show="viewer"
                      x-transition.opacity
-                     class="fixed inset-0 z-9999 bg-black/92"
+                     class="fixed inset-0 z-9999 flex flex-col bg-black/92"
                      style="display:none">
-                    <template x-if="viewer">
-                        <div class="flex flex-col w-full h-full">
-                            {{-- Header: close --}}
-                            <div class="flex items-center h-14 shrink-0 px-4">
-                                <button type="button" @click="closeViewer()"
-                                        class="flex items-center gap-2 px-4 py-2 rounded-xl bg-red-500 hover:bg-red-600 text-white transition text-sm font-semibold shadow-lg">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
-                                    </svg>
-                                    إغلاق
-                                </button>
-                            </div>
-                            {{-- Video area --}}
-                            <div class="flex-1 min-h-0 flex items-center justify-center"
-                                 @click.self="closeViewer()">
-                                <video :src="viewerSrc" controls autoplay
-                                       class="block rounded-xl"
-                                       style="max-width: calc(100vw - 32px); max-height: calc(100vh - 72px);"></video>
-                            </div>
-                        </div>
-                    </template>
+
+                    {{-- Header: close (left) --}}
+                    <div class="flex items-center h-14 shrink-0 px-4">
+                        <button type="button" @click="closeViewer()"
+                                class="flex items-center gap-2 px-4 py-2 rounded-xl bg-red-500 hover:bg-red-600 text-white transition text-sm font-semibold shadow-lg">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+                            </svg>
+                            إغلاق
+                        </button>
+                    </div>
+
+                    {{-- Video area --}}
+                    <div class="flex-1 min-h-0 flex items-center justify-center"
+                         @click.self="closeViewer()">
+                        <template x-if="viewer">
+                            <video :src="viewerSrc" controls autoplay
+                                   class="block rounded-xl"
+                                   style="width: calc(100vw - 32px); height: calc(100vh - 72px); object-fit: contain;"></video>
+                        </template>
+                    </div>
                 </div>
                 </template>
 
