@@ -79,7 +79,7 @@ class Index extends Component
             'locationDescriptions'  => LocationDescription::orderBy('name')->get(),
             'isSuperAdmin' => $isSuperAdmin,
             'canCreate'    => $isSuperAdmin || $user?->can('offices.create'),
-            'canView'      => $isSuperAdmin || $user?->can('offices.view') || $user?->can('offices.edit'),
+            'canView'      => $isSuperAdmin || $user?->can('offices.view'),
             'canEdit'      => $isSuperAdmin || $user?->can('offices.edit'),
             'canDelete'    => $isSuperAdmin || $user?->can('offices.delete'),
         ]);

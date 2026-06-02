@@ -78,7 +78,7 @@
                         @if($canView || $canEdit || $canDelete)
                             <td class="px-4 py-3">
                                 <div class="flex items-center gap-2">
-                                    @if($canView || $canEdit)
+                                    @if($canView)
                                         <a href="{{ route('offices.show', $office) }}" wire:navigate
                                            class="inline-flex items-center gap-1 text-xs px-3 py-1.5 rounded-md border border-[#c9a847] text-[#c9a847] hover:bg-[#c9a847]/10 transition">
                                             <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
