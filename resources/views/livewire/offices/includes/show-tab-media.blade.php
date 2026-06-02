@@ -238,12 +238,16 @@
                             </svg>
                         </button>
 
-                        <div class="flex-1 flex items-center justify-center min-h-0 h-full">
+                        <div class="flex-1 flex items-center justify-center min-h-0">
                             <template x-if="viewerType === 'photo'">
-                                <img :src="viewerSrc" class="max-w-full max-h-full object-contain rounded-xl shadow-2xl" />
+                                <img :src="viewerSrc"
+                                     class="max-w-full object-contain rounded-xl shadow-2xl"
+                                     style="max-height: calc(100vh - 80px)" />
                             </template>
                             <template x-if="viewerType === 'video'">
-                                <video :src="viewerSrc" controls autoplay class="max-w-full max-h-full rounded-xl"></video>
+                                <video :src="viewerSrc" controls autoplay
+                                       class="max-w-full rounded-xl"
+                                       style="max-height: calc(100vh - 80px)"></video>
                             </template>
                         </div>
 
