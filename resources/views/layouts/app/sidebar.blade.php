@@ -228,13 +228,15 @@
                     });
                 }
 
-                // عند انتهاء الصفحة: نحفظ بيانات الشاشة الحالية ثم نعيد التحميل بصمت
+                // عند انتهاء الصفحة: نحفظ بيانات الشاشة الحالية ثم نعيد التحميل
                 Livewire.onPageExpired(() => {
                     if (document.querySelector('[data-form-recovery]')) {
                         try {
                             sessionStorage.setItem(backupKey, JSON.stringify(collectFields()));
                         } catch (e) {}
                     }
+                    // رسالة تشخيصية مؤقتة للتأكد من تطبيق التحديث
+                    alert('✅ تم تحديث النظام — سيتم تحديث الصفحة واسترجاع بياناتك تلقائياً');
                     window.location.reload();
                     return false;
                 });
