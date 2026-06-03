@@ -178,11 +178,10 @@
 
         {{-- معالجة "This page has expired" (419): حفظ البيانات وإعادة التحميل بصمت ثم استرجاعها --}}
         <script>
-            document.addEventListener('livewire:init', () => {
-                const path = window.location.pathname + window.location.search;
-                const backupKey = 'form_backup:' + path;
-
+            (function () {
                 const fieldSelector = '[wire\\:model], [wire\\:model\\.live], [wire\\:model\\.blur], [wire\\:model\\.lazy], [wire\\:model\\.defer]';
+
+                const backupKey = () => 'form_backup:' + window.location.pathname + window.location.search;
 
                 const modelName = (el) =>
                     el.getAttribute('wire:model')
@@ -228,31 +227,35 @@
                     });
                 }
 
-                // عند انتهاء الصفحة (419 في Livewire 4): نمنع رسالة Livewire، نحفظ البيانات، ونعيد التحميل
-                Livewire.interceptRequest(({ onError }) => {
-                    onError(({ response, preventDefault }) => {
-                        if (! response || response.status !== 419) return;
-                        preventDefault(); // يمنع رسالة "This page has expired" الإنجليزية
-                        if (document.querySelector('[data-form-recovery]')) {
-                            try {
-                                sessionStorage.setItem(backupKey, JSON.stringify(collectFields()));
-                            } catch (e) {}
-                        }
-                        // رسالة تشخيصية مؤقتة للتأكد من تطبيق التحديث
-                        alert('✅ تم تحديث النظام — سيتم تحديث الصفحة واسترجاع بياناتك تلقائياً');
-                        window.location.reload();
+                // الاسترجاع — يُستدعى بعد ما Livewire يجهّز الحقول فعلاً
+                function tryRestore() {
+                    if (! document.querySelector('[data-form-recovery]')) return;
+                    const saved = sessionStorage.getItem(backupKey());
+                    if (! saved) return;
+                    try { restoreFields(JSON.parse(saved)); } catch (e) {}
+                    sessionStorage.removeItem(backupKey());
+                }
+
+                // تسجيل اعتراض الـ 419 (Livewire 4): حفظ البيانات ثم إعادة التحميل
+                document.addEventListener('livewire:init', () => {
+                    Livewire.interceptRequest(({ onError }) => {
+                        onError(({ response, preventDefault }) => {
+                            if (! response || response.status !== 419) return;
+                            preventDefault(); // يمنع رسالة "This page has expired" الإنجليزية
+                            if (document.querySelector('[data-form-recovery]')) {
+                                try {
+                                    sessionStorage.setItem(backupKey(), JSON.stringify(collectFields()));
+                                } catch (e) {}
+                            }
+                            window.location.reload();
+                        });
                     });
                 });
 
-                // بعد إعادة التحميل: نرجّع البيانات المحفوظة إن وُجدت
-                const saved = sessionStorage.getItem(backupKey);
-                if (saved && document.querySelector('[data-form-recovery]')) {
-                    setTimeout(() => {
-                        try { restoreFields(JSON.parse(saved)); } catch (e) {}
-                        sessionStorage.removeItem(backupKey);
-                    }, 350);
-                }
-            });
+                // الاسترجاع يشتغل بعد تجهيز Livewire الكامل (وكذلك بعد تنقّل SPA)
+                document.addEventListener('livewire:initialized', tryRestore);
+                document.addEventListener('livewire:navigated', tryRestore);
+            })();
         </script>
     </body>
 </html>
