@@ -4,7 +4,8 @@
 نظام لإدارة مقرات التوثيق والشهر العقاري في مصر. يتيح تسجيل بيانات المقرات (البيانات الأساسية، الخدمات، التقييم، الوسائط، الإحصائيات) وعرضها وتعديلها.
 
 ## Stack التقني
-- **Laravel 12** + **Livewire 3** (wire:navigate للـ SPA navigation)
+- **Laravel 13** + **Livewire 4** (wire:navigate للـ SPA navigation)
+  - ⚠️ Livewire **4** مش 3 — الـ JS API مختلف (مثال: اعتراض 419 بـ `Livewire.interceptRequest({onError})` + `preventDefault()`، **مش** `Livewire.onPageExpired` الخاص بـ v3)
 - **Flux UI** (`Flux::toast` للإشعارات)
 - **Tailwind CSS** (ألوان: `#c9a847` ذهبي, `#b8962e` ذهبي داكن)
 - **Alpine.js** للـ modals والـ viewer
