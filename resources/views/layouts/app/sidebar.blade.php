@@ -175,5 +175,79 @@
         @endpersist
 
         @fluxScripts
+
+        {{-- معالجة "This page has expired" (419): حفظ البيانات وإعادة التحميل بصمت ثم استرجاعها --}}
+        <script>
+            document.addEventListener('livewire:init', () => {
+                const path = window.location.pathname + window.location.search;
+                const backupKey = 'form_backup:' + path;
+
+                const fieldSelector = '[wire\\:model], [wire\\:model\\.live], [wire\\:model\\.blur], [wire\\:model\\.lazy], [wire\\:model\\.defer]';
+
+                const modelName = (el) =>
+                    el.getAttribute('wire:model')
+                    || el.getAttribute('wire:model.live')
+                    || el.getAttribute('wire:model.blur')
+                    || el.getAttribute('wire:model.lazy')
+                    || el.getAttribute('wire:model.defer');
+
+                function collectFields() {
+                    const data = {};
+                    document.querySelectorAll(fieldSelector).forEach((el) => {
+                        const name = modelName(el);
+                        if (!name || el.type === 'file') return;
+                        if (el.type === 'checkbox') {
+                            data[name] = el.checked;
+                        } else if (el.type === 'radio') {
+                            if (el.checked) data[name] = el.value;
+                        } else {
+                            data[name] = el.value;
+                        }
+                    });
+                    return data;
+                }
+
+                function restoreFields(data) {
+                    Object.entries(data).forEach(([name, value]) => {
+                        const esc = name.replace(/(["\\])/g, '\\$1');
+                        const els = document.querySelectorAll(
+                            '[wire\\:model="' + esc + '"],[wire\\:model\\.live="' + esc + '"],[wire\\:model\\.blur="' + esc + '"],[wire\\:model\\.lazy="' + esc + '"],[wire\\:model\\.defer="' + esc + '"]'
+                        );
+                        els.forEach((el) => {
+                            if (el.type === 'file') return;
+                            if (el.type === 'checkbox') {
+                                el.checked = !!value;
+                            } else if (el.type === 'radio') {
+                                el.checked = (el.value == value);
+                            } else {
+                                el.value = value;
+                            }
+                            el.dispatchEvent(new Event('input', { bubbles: true }));
+                            el.dispatchEvent(new Event('change', { bubbles: true }));
+                        });
+                    });
+                }
+
+                // عند انتهاء الصفحة: نحفظ بيانات الشاشة الحالية ثم نعيد التحميل بصمت
+                Livewire.onPageExpired(() => {
+                    if (document.querySelector('[data-form-recovery]')) {
+                        try {
+                            sessionStorage.setItem(backupKey, JSON.stringify(collectFields()));
+                        } catch (e) {}
+                    }
+                    window.location.reload();
+                    return false;
+                });
+
+                // بعد إعادة التحميل: نرجّع البيانات المحفوظة إن وُجدت
+                const saved = sessionStorage.getItem(backupKey);
+                if (saved && document.querySelector('[data-form-recovery]')) {
+                    setTimeout(() => {
+                        try { restoreFields(JSON.parse(saved)); } catch (e) {}
+                        sessionStorage.removeItem(backupKey);
+                    }, 350);
+                }
+            });
+        </script>
     </body>
 </html>
