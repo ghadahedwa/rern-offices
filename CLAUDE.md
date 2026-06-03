@@ -206,6 +206,14 @@ $inp = 'w-full border border-zinc-300 dark:border-zinc-600 rounded-lg px-3 py-2 
 $lbl = 'block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1'
 ```
 
+### Keepalive (إلزامي في كل صفحات الإدخال)
+**كل صفحة يقضي فيها المستخدم وقتاً في كتابة بيانات** (create, edit, statistics, وأي صفحة إدخال جديدة) يجب أن تحتوي على هذا السطر قبل الـ `</div>` الأخير:
+```html
+{{-- keepalive: يجدد الـ snapshot والـ CSRF كل 10 دقائق --}}
+<div x-data x-init="setInterval(() => $wire.$refresh(), 600000)" class="hidden"></div>
+```
+**السبب:** يمنع مشكلة "This page has expired" (419) التي تظهر بعد وقت طويل من الإدخال بدون إرسال request للسيرفر.
+
 ---
 
 ## هيكل الملفات المهم
