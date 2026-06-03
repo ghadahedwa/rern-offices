@@ -152,4 +152,7 @@
         </div>
     </div>
 
+    {{-- keepalive: يجدد الـ snapshot والـ CSRF كل 10 دقائق --}}
+    <div x-data x-init="setInterval(() => $wire.$refresh(), 600000)" class="hidden"></div>
+
 </div>
