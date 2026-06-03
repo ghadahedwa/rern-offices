@@ -57,7 +57,7 @@
                     @endif
 
                     @if(auth()->user()?->hasRole('super-admin'))
-                    <div x-data="{ open: false }">
+                    <div x-data="{ open: {{ request()->routeIs('office-types.*') || request()->routeIs('location-descriptions.*') ? 'true' : 'false' }} }">
                         <button @click="open = !open"
                             class="flex items-center w-full px-3 py-2 text-sm font-medium hover:bg-gray-100 rounded">
                             <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-gray-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
