@@ -228,17 +228,20 @@
                     });
                 }
 
-                // عند انتهاء الصفحة: نحفظ بيانات الشاشة الحالية ثم نعيد التحميل
-                Livewire.onPageExpired(() => {
-                    if (document.querySelector('[data-form-recovery]')) {
-                        try {
-                            sessionStorage.setItem(backupKey, JSON.stringify(collectFields()));
-                        } catch (e) {}
-                    }
-                    // رسالة تشخيصية مؤقتة للتأكد من تطبيق التحديث
-                    alert('✅ تم تحديث النظام — سيتم تحديث الصفحة واسترجاع بياناتك تلقائياً');
-                    window.location.reload();
-                    return false;
+                // عند انتهاء الصفحة (419 في Livewire 4): نمنع رسالة Livewire، نحفظ البيانات، ونعيد التحميل
+                Livewire.interceptRequest(({ onError }) => {
+                    onError(({ response, preventDefault }) => {
+                        if (! response || response.status !== 419) return;
+                        preventDefault(); // يمنع رسالة "This page has expired" الإنجليزية
+                        if (document.querySelector('[data-form-recovery]')) {
+                            try {
+                                sessionStorage.setItem(backupKey, JSON.stringify(collectFields()));
+                            } catch (e) {}
+                        }
+                        // رسالة تشخيصية مؤقتة للتأكد من تطبيق التحديث
+                        alert('✅ تم تحديث النظام — سيتم تحديث الصفحة واسترجاع بياناتك تلقائياً');
+                        window.location.reload();
+                    });
                 });
 
                 // بعد إعادة التحميل: نرجّع البيانات المحفوظة إن وُجدت
