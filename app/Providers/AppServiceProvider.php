@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use Carbon\CarbonImmutable;
 use Illuminate\Auth\Events\Login;
+use Illuminate\Auth\Events\Logout;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
@@ -32,6 +33,20 @@ class AppServiceProvider extends ServiceProvider
                 ->where('user_id', $event->user->getAuthIdentifier())
                 ->where('id', '!=', session()->getId())
                 ->delete();
+
+            activity()
+                ->causedBy($event->user)
+                ->withProperties(['ip' => request()->ip()])
+                ->log('تسجيل دخول');
+        });
+
+        Event::listen(Logout::class, function (Logout $event) {
+            if ($event->user) {
+                activity()
+                    ->causedBy($event->user)
+                    ->withProperties(['ip' => request()->ip()])
+                    ->log('تسجيل خروج');
+            }
         });
     }
 
