@@ -19,7 +19,7 @@ class Profile extends Component
 
     public string $username = '';
 
-    public string $email = '';
+    public ?string $email = null;
 
     /**
      * Mount the component.
