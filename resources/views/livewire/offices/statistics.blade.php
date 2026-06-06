@@ -41,8 +41,8 @@
     {{-- Tabs Nav --}}
     <div class="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-700 shadow-sm p-6">
         <div class="flex items-start justify-between">
-            @php $tabKeys = array_keys($tabs); @endphp
-            @foreach($tabs as $key => $label)
+            @php $tabKeys = array_keys($this->tabs); @endphp
+            @foreach($this->tabs as $key => $label)
             @php $num = array_search($key, $tabKeys) + 1; @endphp
             <div class="flex items-start {{ !$loop->last ? 'flex-1' : '' }}">
                 <div class="flex flex-col items-center gap-1">

@@ -30,6 +30,9 @@ class Index extends Component
     #[Url]
     public ?int $location_description_id = null;
 
+    #[Url]
+    public bool $needs_visit = false;
+
     public function mount(): void
     {
         abort_unless(
@@ -52,6 +55,7 @@ class Index extends Component
     public function updatingGovernorateId(): void { $this->resetPage(); }
     public function updatingTypeId(): void { $this->resetPage(); }
     public function updatingLocationDescriptionId(): void { $this->resetPage(); }
+    public function updatingNeedsVisit(): void { $this->resetPage(); }
 
     public function render()
     {
@@ -70,6 +74,10 @@ class Index extends Component
             ->when($this->type_id, fn($q) => $q->where('type_id', $this->type_id))
             ->when($this->location_description_id, fn($q) => $q->where('location_description_id', $this->location_description_id))
             ->when($this->search, fn($q) => $q->where('name', 'like', "%{$this->search}%"))
+            ->when($this->needs_visit, fn($q) => $q->where(fn($q) => $q
+                ->whereNull('visited_at')
+                ->orWhere('visited_at', '<', now()->subMonths(6))
+            ))
             ->latest();
 
         return view('livewire.offices.index', [

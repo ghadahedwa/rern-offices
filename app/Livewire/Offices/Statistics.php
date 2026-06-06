@@ -17,9 +17,12 @@ class Statistics extends Component
 
     public string $activeTab = 'transactions';
 
-    public array $tabs = [
+    /**
+     * كل التابات المعرّفة (لا تُحذف — مرجع كامل).
+     */
+    public array $allTabs = [
         'transactions'           => 'معاملات التوثيق',
-        'forms_folders'          => 'نماذج وحوافظ التوثيق',
+        'forms_folders'          => 'النماذج والحوافظ',
         'shaher_requests'        => 'طلبات الشهر',
         'law9_registrations'     => 'مشهرات قانون ٩',
         'monthly_forms_folders'  => 'نماذج وحوافظ قانون ٩',
@@ -27,6 +30,33 @@ class Statistics extends Component
         'registry_requests'      => 'طلبات السجل',
         'registry_forms_folders' => 'نماذج وحوافظ سجل',
     ];
+
+    /**
+     * التابات الظاهرة وبالترتيب المطلوب (طلب العميل).
+     * لإظهار/إخفاء/إعادة ترتيب تاب: عدّل هذه القائمة فقط.
+     */
+    public array $visibleKeys = [
+        'transactions',       // معاملات التوثيق
+        'shaher_requests',    // طلبات الشهر
+        'law9_registrations', // مشهرات قانون ٩
+        'registry_requests',  // طلبات السجل
+        'forms_folders',      // النماذج والحوافظ
+    ];
+
+    /**
+     * التابات المعروضة فعلياً (key => label) بالترتيب.
+     */
+    public function getTabsProperty(): array
+    {
+        $tabs = [];
+        foreach ($this->visibleKeys as $key) {
+            if (isset($this->allTabs[$key])) {
+                $tabs[$key] = $this->allTabs[$key];
+            }
+        }
+
+        return $tabs;
+    }
 
     public function mount(Office $office): void
     {

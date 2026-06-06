@@ -4,7 +4,6 @@ namespace App\Livewire;
 
 use App\Models\Governorate;
 use App\Models\Office;
-use App\Models\OfficeType;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Livewire\Component;
@@ -34,9 +33,12 @@ class Dashboard extends Component
         $user         = auth()->user();
         $isSuperAdmin = $user->hasRole('super-admin');
 
+        $govIds = $isSuperAdmin
+            ? null
+            : $user->governorates()->pluck('governorates.id');
+
         $officesQuery = Office::query();
         if (! $isSuperAdmin) {
-            $govIds = $user->governorates()->pluck('governorates.id');
             $officesQuery->whereIn('governorate_id', $govIds);
         }
 
@@ -48,6 +50,13 @@ class Dashboard extends Component
         $addedThisMonth = (clone $officesQuery)
             ->whereMonth('created_at', now()->month)
             ->whereYear('created_at', now()->year)
+            ->count();
+
+        $needsVisitCount = (clone $officesQuery)
+            ->where(fn ($q) => $q
+                ->whereNull('visited_at')
+                ->orWhere('visited_at', '<', now()->subMonths(6))
+            )
             ->count();
 
         // Bar chart: توزيع المقرات على المحافظات (أعلى 10)
@@ -63,6 +72,18 @@ class Dashboard extends Component
                 'total' => $r->total,
             ]);
 
+        // Horizontal bar chart: توزيع المقرات حسب الحالة الإنشائية
+        $officesByStructure = (clone $officesQuery)
+            ->select('structural_condition_id', DB::raw('count(*) as total'))
+            ->with('structuralCondition:id,name')
+            ->groupBy('structural_condition_id')
+            ->orderByDesc('total')
+            ->get()
+            ->map(fn ($r) => [
+                'name'  => $r->structuralCondition?->name ?? 'غير محدد',
+                'total' => $r->total,
+            ]);
+
         // Donut chart: توزيع المقرات حسب النوع
         $officesByType = (clone $officesQuery)
             ->select('type_id', DB::raw('count(*) as total'))
@@ -74,6 +95,39 @@ class Dashboard extends Component
                 'name'  => $r->officeType?->name ?? 'غير محدد',
                 'total' => $r->total,
             ]);
+
+        // ملخص إحصائيات — 3 مجموعات سنوية
+        $statGroups = [
+            'transactions'       => 'home.stat_group_transactions',
+            'shaher_requests'    => 'home.stat_group_shaher',
+            'law9_registrations' => 'home.stat_group_law9',
+            'registry_requests'  => 'home.stat_group_registry',
+        ];
+
+        $statsSummary = collect($statGroups)->map(function ($langKey, $groupKey) use ($isSuperAdmin, $govIds) {
+            $years = \App\Models\OfficeStat::whereHas('statType', fn ($q) => $q->where('group_key', $groupKey))
+                ->when(! $isSuperAdmin, fn ($q) => $q->whereHas('office', fn ($o) => $o->whereIn('governorate_id', $govIds)))
+                ->where('value', '>', 0)
+                ->selectRaw('year, sum(value) as total')
+                ->groupBy('year')
+                ->orderByDesc('year')
+                ->limit(2)
+                ->get();
+
+            $latestTotal = $years->first()?->total ?? 0;
+            $prevTotal   = $years->skip(1)->first()?->total ?? 0;
+            $change      = $prevTotal > 0
+                ? round((($latestTotal - $prevTotal) / $prevTotal) * 100, 1)
+                : null;
+
+            return [
+                'label'       => $langKey,
+                'latestYear'  => $years->first()?->year,
+                'latestTotal' => $latestTotal,
+                'prevTotal'   => $prevTotal,
+                'change'      => $change,
+            ];
+        });
 
         $onlineUsers = $isSuperAdmin
             ? DB::table('sessions')
@@ -97,12 +151,13 @@ class Dashboard extends Component
                             ->where('causer_type', User::class);
         }
 
-        $activities = $activitiesQuery->paginate(25);
+        $activities = $activitiesQuery->paginate(10);
 
         return view('livewire.dashboard', compact(
             'totalOffices', 'totalGovernorates', 'totalUsers',
-            'addedThisMonth', 'onlineUsers', 'activities', 'isSuperAdmin',
-            'officesByGov', 'officesByType', 'user'
+            'addedThisMonth', 'needsVisitCount', 'onlineUsers', 'activities', 'isSuperAdmin',
+            'officesByGov', 'officesByType', 'officesByStructure',
+            'user', 'statsSummary'
         ));
     }
 }

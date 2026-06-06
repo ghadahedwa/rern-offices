@@ -16,28 +16,44 @@
 
     {{-- Filters --}}
     @php $filterCls = 'w-full border border-zinc-300 dark:border-zinc-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-[#c9a847]'; @endphp
-    <div class="grid grid-cols-4 gap-3">
-        <input wire:model.live.debounce.300ms="search" type="text"
-               placeholder="{{ __('home.search') }}"
-               class="{{ $filterCls }}" />
-        <select wire:model.live="governorate_id" class="{{ $filterCls }}">
-            <option value="">{{ __('home.all_governorates') }}</option>
-            @foreach ($governorates as $gov)
-                <option value="{{ $gov->id }}">{{ $gov->name }}</option>
-            @endforeach
-        </select>
-        <select wire:model.live="type_id" class="{{ $filterCls }}">
-            <option value="">— {{ __('home.office_type') }} —</option>
-            @foreach ($officeTypes as $type)
-                <option value="{{ $type->id }}">{{ $type->name }}</option>
-            @endforeach
-        </select>
-        <select wire:model.live="location_description_id" class="{{ $filterCls }}">
-            <option value="">— {{ __('home.location_description') }} —</option>
-            @foreach ($locationDescriptions as $desc)
-                <option value="{{ $desc->id }}">{{ $desc->name }}</option>
-            @endforeach
-        </select>
+    <div class="space-y-3">
+        <div class="grid grid-cols-4 gap-3">
+            <input wire:model.live.debounce.300ms="search" type="text"
+                   placeholder="{{ __('home.search') }}"
+                   class="{{ $filterCls }}" />
+            <select wire:model.live="governorate_id" class="{{ $filterCls }}">
+                <option value="">{{ __('home.all_governorates') }}</option>
+                @foreach ($governorates as $gov)
+                    <option value="{{ $gov->id }}">{{ $gov->name }}</option>
+                @endforeach
+            </select>
+            <select wire:model.live="type_id" class="{{ $filterCls }}">
+                <option value="">— {{ __('home.office_type') }} —</option>
+                @foreach ($officeTypes as $type)
+                    <option value="{{ $type->id }}">{{ $type->name }}</option>
+                @endforeach
+            </select>
+            <select wire:model.live="location_description_id" class="{{ $filterCls }}">
+                <option value="">— {{ __('home.location_description') }} —</option>
+                @foreach ($locationDescriptions as $desc)
+                    <option value="{{ $desc->id }}">{{ $desc->name }}</option>
+                @endforeach
+            </select>
+        </div>
+
+        <div class="flex items-center gap-3">
+            <button wire:click="$toggle('needs_visit')"
+                class="inline-flex items-center gap-2 text-sm px-4 py-2 rounded-lg border transition
+                    {{ $needs_visit
+                        ? 'bg-amber-50 border-amber-400 text-amber-700 dark:bg-amber-900/20 dark:border-amber-600 dark:text-amber-400'
+                        : 'bg-white border-zinc-300 text-zinc-600 dark:bg-zinc-800 dark:border-zinc-600 dark:text-zinc-400 hover:border-amber-400 hover:text-amber-700' }}">
+                <flux:icon.exclamation-triangle variant="outline" class="w-4 h-4" />
+                {{ __('home.needs_visit_filter') }}
+                @if($needs_visit)
+                    <span class="w-2 h-2 rounded-full bg-amber-500"></span>
+                @endif
+            </button>
+        </div>
     </div>
 
     {{-- Table --}}

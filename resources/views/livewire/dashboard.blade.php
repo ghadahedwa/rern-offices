@@ -1,8 +1,5 @@
 <div class="max-w-7xl mx-auto p-6 space-y-6">
 
-    {{-- Chart.js --}}
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-
     {{-- Welcome Banner --}}
     <div class="rounded-xl border border-[#c9a847]/30 bg-transparent p-6 flex items-center justify-between">
         <div>
@@ -10,7 +7,7 @@
             <h2 class="text-2xl font-bold text-[#b8962e] dark:text-[#c9a847]">{{ $user->name }}</h2>
             <p class="text-zinc-500 dark:text-zinc-400 text-sm mt-1">{{ __('home.welcome_subtitle') }}</p>
         </div>
-        <div class="hidden sm:flex items-center justify-center w-16 h-16 rounded-full bg-[#c9a847]/10">
+        <div class="hidden sm:flex items-center justify-center w-16 h-16 rounded-full border-2 border-[#c9a847]/40 bg-[#c9a847]/15 dark:bg-[#c9a847]/20">
             <flux:icon.building-office-2 variant="outline" class="w-8 h-8 text-[#b8962e] dark:text-[#c9a847]" />
         </div>
     </div>
@@ -66,48 +63,78 @@
 
     </div>
 
-    {{-- Charts Row --}}
-    @if($officesByGov->isNotEmpty() || $officesByType->isNotEmpty())
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
-
-        {{-- Bar Chart: توزيع المقرات على المحافظات --}}
-        @if($officesByGov->isNotEmpty())
-        <div class="lg:col-span-2 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-sm p-5">
-            <div class="flex items-center gap-3 mb-5">
-                <div class="w-1 h-5 bg-[#c9a847] rounded-full"></div>
-                <h3 class="text-sm font-semibold text-zinc-600 dark:text-zinc-400 uppercase tracking-wide">
-                    {{ __('home.chart_offices_by_gov') }}
-                </h3>
+    {{-- مقرات تحتاج زيارة --}}
+    @if($needsVisitCount > 0)
+    <div class="rounded-xl border border-amber-200 dark:border-amber-800/50 bg-amber-50 dark:bg-amber-900/10 p-4 flex items-center justify-between gap-4">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-lg bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center shrink-0">
+                <flux:icon.exclamation-triangle variant="outline" class="w-5 h-5 text-amber-600 dark:text-amber-400" />
             </div>
-            <div x-data x-init="
-                new Chart($refs.barChart, {
-                    type: 'bar',
-                    data: {
-                        labels: {{ Js::from($officesByGov->pluck('name')) }},
-                        datasets: [{
-                            label: '{{ __('home.chart_offices_count') }}',
-                            data: {{ Js::from($officesByGov->pluck('total')) }},
-                            backgroundColor: 'rgba(201,168,71,0.75)',
-                            borderColor: '#b8962e',
-                            borderWidth: 1.5,
-                            borderRadius: 6,
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: true,
-                        plugins: { legend: { display: false } },
-                        scales: {
-                            x: { ticks: { font: { size: 11 }, color: '#9ca3af' }, grid: { display: false } },
-                            y: { ticks: { font: { size: 11 }, color: '#9ca3af' }, grid: { color: 'rgba(156,163,175,0.1)' }, beginAtZero: true }
-                        }
-                    }
-                })
-            ">
-                <canvas x-ref="barChart" style="max-height: 260px;"></canvas>
+            <div>
+                <p class="text-sm font-semibold text-amber-800 dark:text-amber-300">
+                    {{ number_format($needsVisitCount) }} {{ __('home.needs_visit_label') }}
+                </p>
+                <p class="text-xs text-amber-600 dark:text-amber-500 mt-0.5">{{ __('home.needs_visit_desc') }}</p>
             </div>
         </div>
-        @endif
+        <a href="{{ route('offices.index', ['needs_visit' => 1]) }}" wire:navigate
+           class="shrink-0 text-xs font-medium text-amber-700 dark:text-amber-400 border border-amber-300 dark:border-amber-700 rounded-lg px-3 py-1.5 hover:bg-amber-100 dark:hover:bg-amber-900/30 transition">
+            {{ __('home.needs_visit_action') }}
+        </a>
+    </div>
+    @endif
+
+    {{-- Bar Chart: توزيع المقرات على المحافظات (صف مستقل) --}}
+    @if($officesByGov->isNotEmpty())
+    <div class="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-sm p-5">
+        <div class="flex items-center gap-3 mb-5">
+            <div class="w-1 h-5 bg-[#c9a847] rounded-full"></div>
+            <h3 class="text-sm font-semibold text-zinc-600 dark:text-zinc-400 uppercase tracking-wide">
+                {{ __('home.chart_offices_by_gov') }}
+            </h3>
+        </div>
+        <div wire:ignore x-data x-init="
+            new Chart($refs.barChart, {
+                type: 'bar',
+                data: {
+                    labels: {{ Js::from($officesByGov->pluck('name')) }},
+                    datasets: [{
+                        label: '{{ __('home.chart_offices_count') }}',
+                        data: {{ Js::from($officesByGov->pluck('total')) }},
+                        backgroundColor: 'rgba(201,168,71,0.75)',
+                        borderColor: '#b8962e',
+                        borderWidth: 1.5,
+                        borderRadius: 6,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: {
+                            ticks: {
+                                font: { size: 11 }, color: '#9ca3af',
+                                maxRotation: 35, minRotation: 35,
+                                callback: function(val) {
+                                    const label = this.getLabelForValue(val);
+                                    return label.length > 10 ? label.slice(0, 10) + '…' : label;
+                                }
+                            },
+                            grid: { display: false }
+                        },
+                        y: { ticks: { font: { size: 11 }, color: '#9ca3af' }, grid: { color: 'rgba(156,163,175,0.1)' }, beginAtZero: true }
+                    }
+                }
+            })
+        ">
+            <canvas x-ref="barChart" style="max-height: 300px;"></canvas>
+        </div>
+    </div>
+    @endif
+
+    {{-- Charts Row: النوع + الحالة الإنشائية --}}
+    @if($officesByType->isNotEmpty() || $officesByStructure->isNotEmpty())
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
 
         {{-- Donut Chart: توزيع المقرات حسب النوع --}}
         @if($officesByType->isNotEmpty())
@@ -118,7 +145,7 @@
                     {{ __('home.chart_offices_by_type') }}
                 </h3>
             </div>
-            <div x-data x-init="
+            <div wire:ignore x-data x-init="
                 new Chart($refs.donutChart, {
                     type: 'doughnut',
                     data: {
@@ -137,19 +164,132 @@
                         plugins: {
                             legend: {
                                 position: 'bottom',
-                                labels: { font: { size: 11 }, padding: 12, color: '#9ca3af', boxWidth: 12 }
+                                labels: { font: { size: 10 }, padding: 10, color: '#9ca3af', boxWidth: 10 }
                             }
                         }
                     }
                 })
             ">
-                <canvas x-ref="donutChart" style="max-height: 260px;"></canvas>
+                <canvas x-ref="donutChart" style="max-height: 240px;"></canvas>
+            </div>
+        </div>
+        @endif
+
+        {{-- Horizontal Bar: توزيع المقرات حسب الحالة الإنشائية --}}
+        @if($officesByStructure->isNotEmpty())
+        <div class="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-sm p-5">
+            <div class="flex items-center gap-3 mb-5">
+                <div class="w-1 h-5 bg-[#c9a847] rounded-full"></div>
+                <h3 class="text-sm font-semibold text-zinc-600 dark:text-zinc-400 uppercase tracking-wide">
+                    {{ __('home.chart_offices_by_structure') }}
+                </h3>
+            </div>
+            <div wire:ignore x-data x-init="
+                new Chart($refs.structureChart, {
+                    type: 'bar',
+                    data: {
+                        labels: {{ Js::from($officesByStructure->pluck('name')) }},
+                        datasets: [{
+                            label: '{{ __('home.chart_offices_count') }}',
+                            data: {{ Js::from($officesByStructure->pluck('total')) }},
+                            backgroundColor: ['#10b981','#c9a847','#f59e0b','#ef4444','#dc2626'],
+                            borderWidth: 0,
+                            borderRadius: 6,
+                        }]
+                    },
+                    options: {
+                        indexAxis: 'y',
+                        responsive: true,
+                        plugins: { legend: { display: false } },
+                        scales: {
+                            x: { ticks: { font: { size: 10 }, color: '#9ca3af' }, grid: { color: 'rgba(156,163,175,0.1)' }, beginAtZero: true },
+                            y: { ticks: { font: { size: 10 }, color: '#9ca3af' }, grid: { display: false } }
+                        }
+                    }
+                })
+            ">
+                <canvas x-ref="structureChart" style="max-height: 240px;"></canvas>
             </div>
         </div>
         @endif
 
     </div>
     @endif
+
+    {{-- ملخص الإحصائيات --}}
+    <div class="space-y-3">
+        <div class="flex items-center gap-3">
+            <div class="w-1 h-5 bg-[#c9a847] rounded-full"></div>
+            <h3 class="text-sm font-semibold text-zinc-600 dark:text-zinc-400 uppercase tracking-wide">
+                {{ __('home.stats_summary_title') }}
+            </h3>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+            @foreach($statsSummary as $stat)
+            <div class="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-sm p-5">
+
+                <p class="text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide mb-4">
+                    {{ __($stat['label']) }}
+                </p>
+
+                @if($stat['latestYear'])
+                <div class="grid grid-cols-3 gap-3">
+
+                    {{-- السنة الأحدث --}}
+                    <div class="flex items-start gap-2">
+                        <div class="w-8 h-8 rounded-lg bg-[#c9a847]/10 flex items-center justify-center shrink-0 mt-0.5">
+                            <flux:icon.document-text variant="outline" class="w-4 h-4 text-[#b8962e] dark:text-[#c9a847]" />
+                        </div>
+                        <div>
+                            <p class="text-xs text-zinc-400 mb-0.5">{{ __('home.stats_year') }} {{ $stat['latestYear'] }}</p>
+                            <p class="text-xl font-bold text-zinc-800 dark:text-zinc-100">{{ number_format($stat['latestTotal']) }}</p>
+                        </div>
+                    </div>
+
+                    {{-- السنة السابقة --}}
+                    <div class="flex items-start gap-2">
+                        <div class="w-8 h-8 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center shrink-0 mt-0.5">
+                            <flux:icon.clock variant="outline" class="w-4 h-4 text-zinc-400" />
+                        </div>
+                        <div>
+                            <p class="text-xs text-zinc-400 mb-0.5">{{ __('home.stats_year') }} {{ $stat['latestYear'] - 1 }}</p>
+                            <p class="text-xl font-bold text-zinc-500 dark:text-zinc-400">{{ number_format($stat['prevTotal']) }}</p>
+                        </div>
+                    </div>
+
+                    {{-- المقارنة --}}
+                    <div class="flex items-start gap-2">
+                        <div class="{{ $stat['change'] === null ? 'bg-zinc-100 dark:bg-zinc-800' : ($stat['change'] >= 0 ? 'bg-emerald-50 dark:bg-emerald-900/20' : 'bg-red-50 dark:bg-red-900/20') }} w-8 h-8 rounded-lg flex items-center justify-center shrink-0 mt-0.5">
+                            @if($stat['change'] === null)
+                                <flux:icon.minus variant="outline" class="w-4 h-4 text-zinc-400" />
+                            @elseif($stat['change'] >= 0)
+                                <flux:icon.arrow-trending-up variant="outline" class="w-4 h-4 text-emerald-500" />
+                            @else
+                                <flux:icon.arrow-trending-down variant="outline" class="w-4 h-4 text-red-500" />
+                            @endif
+                        </div>
+                        <div>
+                            <p class="text-xs text-zinc-400 mb-0.5">{{ __('home.stats_vs_prev_year') }}</p>
+                            @if($stat['change'] !== null)
+                                <p class="text-xl font-bold {{ $stat['change'] >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400' }}">
+                                    {{ $stat['change'] >= 0 ? '+' : '' }}{{ $stat['change'] }}%
+                                </p>
+                            @else
+                                <p class="text-xl font-bold text-zinc-400">—</p>
+                            @endif
+                        </div>
+                    </div>
+
+                </div>
+                @else
+                    <p class="text-sm text-zinc-400 py-2">{{ __('home.stats_no_data') }}</p>
+                @endif
+
+            </div>
+            @endforeach
+        </div>
+    </div>
 
     {{-- Bottom Row: Online Users + Activity Log --}}
     @if($isSuperAdmin)
@@ -194,7 +334,7 @@
         @endif
 
         {{-- Activity Log --}}
-        <div class="@if($isSuperAdmin) lg:col-span-2 @endif rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-sm p-5">
+        <div wire:poll.300s class="@if($isSuperAdmin) lg:col-span-2 @endif rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-sm p-5">
 
             <div class="flex items-center gap-3 mb-5">
                 <div class="w-1 h-5 bg-[#c9a847] rounded-full"></div>

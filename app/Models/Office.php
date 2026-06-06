@@ -20,9 +20,9 @@ class Office extends Model
             ->logOnlyDirty()
             ->dontSubmitEmptyLogs()
             ->setDescriptionForEvent(fn(string $eventName) => match($eventName) {
-                'created' => 'أضاف مقراً جديداً',
-                'updated' => 'عدّل بيانات مقر',
-                'deleted' => 'حذف مقراً',
+                'created' => 'إضافة مقر',
+                'updated' => 'تعديل مقر',
+                'deleted' => 'حذف مقر',
                 default    => $eventName,
             });
     }

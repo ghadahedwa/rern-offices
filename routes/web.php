@@ -5,7 +5,8 @@ use Illuminate\Support\Facades\Route;
 Route::redirect('/', '/login')->name('home');
 
 Route::middleware(['auth', 'verified'])->group(function () {
-    Route::view('dashboard', 'dashboard')->name('dashboard');
+    //Route::view('dashboard', 'dashboard')->name('dashboard');
+    Route::livewire('dashboard', \App\Livewire\Dashboard::class)->name('dashboard');
 
     // All authenticated users can view governorates list
     Route::livewire('governorates', \App\Livewire\Governorates\Index::class)->name('governorates.index');
