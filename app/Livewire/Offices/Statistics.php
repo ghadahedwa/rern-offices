@@ -25,6 +25,7 @@ class Statistics extends Component
         'forms_folders'          => 'النماذج والحوافظ',
         'shaher_requests'        => 'طلبات الشهر',
         'law9_registrations'     => 'مشهرات قانون ٩',
+        'law27_registrations'    => 'مشهرات قانون ٢٧',
         'monthly_forms_folders'  => 'نماذج وحوافظ قانون ٩',
         'law27_forms_folders'    => 'نماذج وحوافظ قانون ٢٧',
         'registry_requests'      => 'طلبات السجل',
@@ -36,11 +37,12 @@ class Statistics extends Component
      * لإظهار/إخفاء/إعادة ترتيب تاب: عدّل هذه القائمة فقط.
      */
     public array $visibleKeys = [
-        'transactions',       // معاملات التوثيق
-        'shaher_requests',    // طلبات الشهر
-        'law9_registrations', // مشهرات قانون ٩
-        'registry_requests',  // طلبات السجل
-        'forms_folders',      // النماذج والحوافظ
+        'transactions',         // معاملات التوثيق
+        'shaher_requests',      // طلبات الشهر
+        'law9_registrations',   // مشهرات قانون ٩
+        'law27_registrations',  // مشهرات قانون ٢٧
+        'registry_requests',    // طلبات السجل
+        'forms_folders',        // النماذج والحوافظ
     ];
 
     /**

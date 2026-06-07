@@ -94,6 +94,7 @@
             </h3>
         </div>
         <div wire:ignore x-data x-init="
+            const tooltipData = {{ Js::from($govTooltipData) }};
             new Chart($refs.barChart, {
                 type: 'bar',
                 data: {
@@ -109,7 +110,32 @@
                 },
                 options: {
                     responsive: true,
-                    plugins: { legend: { display: false } },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            rtl: true,
+                            callbacks: {
+                                title: function(items) {
+                                    return items[0].label;
+                                },
+                                label: function(item) {
+                                    return 'عدد المقرات: ' + item.parsed.y;
+                                },
+                                afterBody: function(items) {
+                                    const d = tooltipData[items[0].dataIndex];
+                                    if (!d || !Object.keys(d).length) return [];
+                                    const lines = [];
+                                    Object.values(d).forEach(function(s) {
+                                        lines.push('— ' + s.label + ' —');
+                                        s.years.forEach(function(y) {
+                                            lines.push('  ' + y.year + ': ' + y.total.toLocaleString('ar-EG'));
+                                        });
+                                    });
+                                    return lines;
+                                }
+                            }
+                        }
+                    },
                     scales: {
                         x: {
                             ticks: {
@@ -127,7 +153,7 @@
                 }
             })
         ">
-            <canvas x-ref="barChart" style="max-height: 300px;"></canvas>
+            <canvas x-ref="barChart" style="max-height: 350px;"></canvas>
         </div>
     </div>
     @endif
@@ -225,7 +251,7 @@
             </h3>
         </div>
 
-        <div class="grid grid-cols-2 gap-4">
+        <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
             @foreach($statsSummary as $stat)
             <div class="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-sm p-5">
 
@@ -291,50 +317,42 @@
         </div>
     </div>
 
-    {{-- Bottom Row: Online Users + Activity Log --}}
+    {{-- Online Users (super-admin only) — صف أفقي --}}
     @if($isSuperAdmin)
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
-    @else
-    <div class="grid grid-cols-1 gap-4">
+    <div class="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-sm p-4">
+        <div class="flex items-center gap-3 mb-3">
+            <div class="w-1 h-5 bg-emerald-500 rounded-full"></div>
+            <h3 class="text-sm font-semibold text-zinc-600 dark:text-zinc-400 uppercase tracking-wide">
+                {{ __('home.online_users_title') }}
+            </h3>
+            <span class="inline-flex items-center gap-1.5 text-xs text-emerald-600 dark:text-emerald-400">
+                <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                {{ $onlineUsers->count() }}
+            </span>
+        </div>
+
+        @if($onlineUsers->isEmpty())
+            <p class="text-sm text-zinc-400">{{ __('home.online_users_empty') }}</p>
+        @else
+            <div class="flex flex-wrap gap-2">
+                @foreach($onlineUsers as $u)
+                <div class="inline-flex items-center gap-2 rounded-full border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 px-3 py-1.5">
+                    <span class="w-2 h-2 rounded-full bg-emerald-500 shrink-0"></span>
+                    <div class="w-6 h-6 rounded-full bg-[#c9a847]/15 flex items-center justify-center text-xs font-bold text-[#b8962e]">
+                        {{ mb_substr($u->name, 0, 1) }}
+                    </div>
+                    <span class="text-sm font-medium text-zinc-700 dark:text-zinc-300">{{ $u->name }}</span>
+                    <span class="text-xs text-zinc-400">{{ $u->ip_address }}</span>
+                </div>
+                @endforeach
+            </div>
+        @endif
+    </div>
     @endif
 
-        {{-- Online Users (super-admin only) --}}
-        @if($isSuperAdmin)
-        <div class="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-sm p-5">
-            <div class="flex items-center gap-3 mb-4">
-                <div class="w-1 h-5 bg-emerald-500 rounded-full"></div>
-                <h3 class="text-sm font-semibold text-zinc-600 dark:text-zinc-400 uppercase tracking-wide">
-                    {{ __('home.online_users_title') }}
-                </h3>
-                <span class="inline-flex items-center gap-1.5 text-xs text-emerald-600 dark:text-emerald-400">
-                    <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                    {{ $onlineUsers->count() }}
-                </span>
-            </div>
-
-            @if($onlineUsers->isEmpty())
-                <p class="text-sm text-zinc-400 text-center py-6">{{ __('home.online_users_empty') }}</p>
-            @else
-                <div class="space-y-2">
-                    @foreach($onlineUsers as $u)
-                    <div class="flex items-center gap-3 rounded-lg border border-zinc-100 dark:border-zinc-800 px-3 py-2.5">
-                        <div class="w-8 h-8 rounded-full bg-[#c9a847]/15 flex items-center justify-center text-xs font-bold text-[#b8962e]">
-                            {{ mb_substr($u->name, 0, 1) }}
-                        </div>
-                        <div class="flex-1 min-w-0">
-                            <p class="text-sm font-medium text-zinc-700 dark:text-zinc-300 truncate">{{ $u->name }}</p>
-                            <p class="text-xs text-zinc-400">{{ $u->ip_address }}</p>
-                        </div>
-                        <span class="w-2 h-2 rounded-full bg-emerald-500 shrink-0"></span>
-                    </div>
-                    @endforeach
-                </div>
-            @endif
-        </div>
-        @endif
-
-        {{-- Activity Log --}}
-        <div wire:poll.300s class="@if($isSuperAdmin) lg:col-span-2 @endif rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-sm p-5">
+    {{-- Activity Log — صف مستقل كامل العرض --}}
+    <div>
+        <div wire:poll.300s class="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-sm p-5">
 
             <div class="flex items-center gap-3 mb-5">
                 <div class="w-1 h-5 bg-[#c9a847] rounded-full"></div>
@@ -415,7 +433,7 @@
                 </div>
 
                 <div class="mt-4">
-                    {{ $activities->links() }}
+                    {{ $activities->links(data: ['scrollTo' => false]) }}
                 </div>
             @endif
 

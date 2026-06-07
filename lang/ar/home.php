@@ -365,6 +365,8 @@ return [
     'stat_group_shaher'          => 'طلبات الشهر',
     'stat_group_registry'        => 'طلبات السجل العيني',
     'stat_group_law9'            => 'مشهرات قانون ٩',
+    'stat_group_law27'           => 'مشهرات قانون ٢٧',
+    'stat_group_forms_folders'   => 'النماذج والحوافظ',
     'stats_total_transactions'   => 'إجمالي المعاملات',
     'stats_year'                 => 'سنة',
     'stats_vs_prev_year'         => 'مقارنةً بالسنة السابقة',

@@ -178,6 +178,32 @@
 
         @fluxScripts
 
+        {{-- حفظ موضع الـ scroll عند النقر على pagination --}}
+        <script>
+            document.addEventListener('livewire:initialized', function () {
+                var savedScroll = null;
+
+                document.addEventListener('click', function (e) {
+                    if (e.target.closest('[wire\\:click*="Page"]') || e.target.closest('[wire\\:click*="page"]')) {
+                        savedScroll = window.scrollY;
+                    }
+                });
+
+                Livewire.hook('commit', function (ref) {
+                    var succeed = ref.succeed;
+                    if (savedScroll !== null) {
+                        var scroll = savedScroll;
+                        savedScroll = null;
+                        succeed(function () {
+                            requestAnimationFrame(function () {
+                                window.scrollTo({ top: scroll, behavior: 'instant' });
+                            });
+                        });
+                    }
+                });
+            });
+        </script>
+
         {{-- معالجة "This page has expired" (419): حفظ البيانات وإعادة التحميل بصمت ثم استرجاعها --}}
         <script>
             (function () {
