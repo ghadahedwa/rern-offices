@@ -95,7 +95,7 @@ class FormsAndFolders extends Component
         $type = StatType::findOrFail($this->formTypeId);
 
         $rules = [
-            'formYear'  => 'required|integer|min:2000',
+            'formYear'  => 'required|integer|min:2026',
             'formValue' => 'required|numeric|min:0',
         ];
         if ($type->period === 'monthly') {
@@ -183,7 +183,7 @@ class FormsAndFolders extends Component
                 ->paginate(8, ['*'], 'p' . $type->id);
         }
 
-        $years  = range((int) date('Y'), 2024);
+        $years  = range((int) date('Y'), 2026);
         $months = [
             1 => 'يناير',  2 => 'فبراير', 3 => 'مارس',    4 => 'أبريل',
             5 => 'مايو',   6 => 'يونيو',  7 => 'يوليو',   8 => 'أغسطس',

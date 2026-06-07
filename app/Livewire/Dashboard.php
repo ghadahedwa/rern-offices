@@ -6,15 +6,14 @@ use App\Models\Governorate;
 use App\Models\Office;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
-use Livewire\Attributes\WithoutUrlPagination;
 use Livewire\Component;
+use Livewire\WithoutUrlPagination;
 use Livewire\WithPagination;
 use Spatie\Activitylog\Models\Activity;
 
-#[WithoutUrlPagination]
 class Dashboard extends Component
 {
-    use WithPagination;
+    use WithPagination, WithoutUrlPagination;
 
     public string $search = '';
     public string $filterEvent = '';
@@ -153,9 +152,60 @@ class Dashboard extends Component
             'forms_folders'        => 'home.stat_group_forms_folders',
         ];
 
-        $statsSummary = collect($statGroups)->map(function ($langKey, $groupKey) use ($isSuperAdmin, $govIds) {
+        // حد أدنى للسنة لمجموعات معينة (بيانات السنوات الأقدم غير مكتملة)
+        $statGroupMinYear = [
+            'forms_folders' => 2026,
+        ];
+
+        // مجموعات تُعرض مفصّلة حسب النوع (بدل مقارنة السنوات)
+        $statGroupBreakdown = ['forms_folders'];
+
+        $statsSummary = collect($statGroups)->map(function ($langKey, $groupKey) use ($isSuperAdmin, $govIds, $statGroupMinYear, $statGroupBreakdown) {
+            $minYear = $statGroupMinYear[$groupKey] ?? null;
+
+            // بطاقة مفصّلة: عرض كل نوع على حدة، مع مقارنة آخر سنتين لكل نوع
+            if (in_array($groupKey, $statGroupBreakdown)) {
+                $rows = \App\Models\OfficeStat::whereHas('statType', fn ($q) => $q->where('group_key', $groupKey))
+                    ->when(! $isSuperAdmin, fn ($q) => $q->whereHas('office', fn ($o) => $o->whereIn('governorate_id', $govIds)))
+                    ->when($minYear, fn ($q) => $q->where('year', '>=', $minYear))
+                    ->where('value', '>', 0)
+                    ->with('statType:id,name')
+                    ->selectRaw('stat_type_id, year, sum(value) as total')
+                    ->groupBy('stat_type_id', 'year')
+                    ->get();
+
+                // سنوات البطاقة (موحّدة لكل الأنواع): أحدث سنتين
+                $distinctYears = $rows->pluck('year')->unique()->sortDesc()->values();
+                $latestYear    = $distinctYears->first();
+                $prevYear      = $distinctYears->skip(1)->first();
+
+                $breakdown = $rows->groupBy('stat_type_id')->map(function ($typeRows) use ($latestYear, $prevYear) {
+                    $byYear      = $typeRows->keyBy('year');
+                    $latestTotal = $byYear[$latestYear]->total ?? 0;
+                    $prevTotal   = $prevYear ? ($byYear[$prevYear]->total ?? 0) : 0;
+                    $change      = $prevTotal > 0
+                        ? round((($latestTotal - $prevTotal) / $prevTotal) * 100, 1)
+                        : null;
+
+                    return [
+                        'name'        => $typeRows->first()->statType?->name ?? '—',
+                        'latestTotal' => $latestTotal,
+                        'prevTotal'   => $prevTotal,
+                        'change'      => $change,
+                    ];
+                })->values();
+
+                return [
+                    'label'      => $langKey,
+                    'latestYear' => $latestYear,
+                    'prevYear'   => $prevYear,
+                    'breakdown'  => $breakdown,
+                ];
+            }
+
             $years = \App\Models\OfficeStat::whereHas('statType', fn ($q) => $q->where('group_key', $groupKey))
                 ->when(! $isSuperAdmin, fn ($q) => $q->whereHas('office', fn ($o) => $o->whereIn('governorate_id', $govIds)))
+                ->when($minYear, fn ($q) => $q->where('year', '>=', $minYear))
                 ->where('value', '>', 0)
                 ->selectRaw('year, sum(value) as total')
                 ->groupBy('year')
@@ -175,6 +225,7 @@ class Dashboard extends Component
                 'latestTotal' => $latestTotal,
                 'prevTotal'   => $prevTotal,
                 'change'      => $change,
+                'breakdown'   => null,
             ];
         });
 
