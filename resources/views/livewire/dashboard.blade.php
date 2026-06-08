@@ -526,10 +526,19 @@
                                 </td>
                                 <td class="py-2.5 px-3 text-zinc-600 dark:text-zinc-400">
                                     @if($activity->subject_type === \App\Models\Office::class && $activity->subject)
-                                        <a href="{{ route('offices.show', $activity->subject_id) }}" wire:navigate
-                                           class="text-[#c9a847] hover:underline text-xs">
-                                            {{ $activity->subject->name ?? '#' . $activity->subject_id }}
-                                        </a>
+                                        @php
+                                            $officeUrl = $canView
+                                                ? route('offices.show', $activity->subject_id)
+                                                : ($canEdit ? route('offices.edit', $activity->subject_id) : null);
+                                        @endphp
+                                        @if($officeUrl)
+                                            <a href="{{ $officeUrl }}" wire:navigate
+                                               class="text-[#c9a847] hover:underline text-xs">
+                                                {{ $activity->subject->name ?? '#' . $activity->subject_id }}
+                                            </a>
+                                        @else
+                                            <span class="text-xs text-zinc-600 dark:text-zinc-300">{{ $activity->subject->name ?? '#' . $activity->subject_id }}</span>
+                                        @endif
                                     @else
                                         <span class="text-xs text-zinc-400">—</span>
                                     @endif

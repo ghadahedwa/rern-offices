@@ -63,6 +63,8 @@ class Dashboard extends Component
         /** @var \App\Models\User $user */
         $user         = auth()->user();
         $isSuperAdmin = $user->hasRole('super-admin');
+        $canView      = $isSuperAdmin || $user->can('offices.view');
+        $canEdit      = $isSuperAdmin || $user->can('offices.edit');
 
         $govIds = $isSuperAdmin
             ? null
@@ -287,7 +289,8 @@ class Dashboard extends Component
             'totalOffices', 'totalGovernorates', 'totalUsers',
             'addedThisMonth', 'needsVisitCount', 'onlineUsers', 'activities', 'isSuperAdmin',
             'officesByGov', 'officesByType', 'officesByStructure',
-            'user', 'statsSummary', 'govTooltipData'
+            'user', 'statsSummary', 'govTooltipData',
+            'canView', 'canEdit'
         ));
     }
 }
