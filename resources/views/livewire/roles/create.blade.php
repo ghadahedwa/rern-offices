@@ -23,6 +23,9 @@
                 @error('name') <p class="text-red-500 text-xs">{{ $message }}</p> @enderror
             </div>
 
+            {{-- Level --}}
+            @include('livewire.roles.partials.level-select')
+
             {{-- Permissions --}}
             <div class="flex flex-col gap-3">
                 <label class="text-sm font-medium text-zinc-700 dark:text-zinc-300">

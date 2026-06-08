@@ -14,6 +14,7 @@ use Spatie\Permission\Models\Role;
 class Create extends Component
 {
     public string $name = '';
+    public int $level = 1;
     public array $selectedPermissions = [];
 
     public function mount(): void
@@ -25,10 +26,13 @@ class Create extends Component
     {
         $this->validate([
             'name'                => ['required', 'string', 'max:255', 'unique:roles,name'],
+            'level'               => ['required', 'integer', 'between:1,3'],
             'selectedPermissions' => ['array'],
         ]);
 
         $role = Role::create(['name' => $this->name, 'guard_name' => 'web']);
+        $role->level = $this->level;
+        $role->save();
         $role->syncPermissions($this->selectedPermissions);
 
         Flux::toast(variant: 'success', text: __('home.role_created'));

@@ -140,10 +140,11 @@
                         x: {
                             ticks: {
                                 font: { size: 11 }, color: '#9ca3af',
-                                maxRotation: 35, minRotation: 35,
+                                maxRotation: 90, minRotation: 90,
+                                autoSkip: false,
                                 callback: function(val) {
                                     const label = this.getLabelForValue(val);
-                                    return label.length > 10 ? label.slice(0, 10) + '…' : label;
+                                    return label.length > 12 ? label.slice(0, 12) + '…' : label;
                                 }
                             },
                             grid: { display: false }
@@ -393,8 +394,7 @@
         </div>
     </div>
 
-    {{-- Online Users (super-admin only) — صف أفقي --}}
-    @if($isSuperAdmin)
+    {{-- Online Users — صف أفقي (super-admin/مشرف: الفريق، مفتش: نفسه) --}}
     <div class="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-sm p-4">
         <div class="flex items-center gap-3 mb-3">
             <div class="w-1 h-5 bg-emerald-500 rounded-full"></div>
@@ -424,7 +424,6 @@
             </div>
         @endif
     </div>
-    @endif
 
     {{-- Activity Log — صف مستقل كامل العرض --}}
     <div>

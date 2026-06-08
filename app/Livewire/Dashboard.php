@@ -66,6 +66,10 @@ class Dashboard extends Component
         $canView      = $isSuperAdmin || $user->can('offices.view');
         $canEdit      = $isSuperAdmin || $user->can('offices.edit');
 
+        // مستوى المستخدم = أعلى مستوى بين أدواره (مفتش=1 افتراضياً)
+        $myLevel      = (int) ($user->roles()->max('level') ?: 1);
+        $isSupervisor = ! $isSuperAdmin && $myLevel >= 2;
+
         $govIds = $isSuperAdmin
             ? null
             : $user->governorates()->pluck('governorates.id');
@@ -261,14 +265,33 @@ class Dashboard extends Component
             ];
         });
 
-        $onlineUsers = $isSuperAdmin
-            ? DB::table('sessions')
-                ->whereNotNull('user_id')
-                ->where('last_activity', '>=', now()->subMinutes(10)->timestamp)
-                ->join('users', 'sessions.user_id', '=', 'users.id')
-                ->select('users.id', 'users.name', 'sessions.last_activity', 'sessions.ip_address')
-                ->get()
-            : collect();
+        // بيانات نطاق المشرف (level >= 2)
+        $teamUserIds   = collect(); // مستخدمو الفريق (يشاركون محافظة)
+        $usersAboveMe  = collect(); // مستخدمون مستواهم أعلى مني (لا أراهم)
+        $myOfficeIds   = collect(); // مقرات محافظاتي (لنطاق نشاط المقرات)
+        if ($isSupervisor) {
+            $teamUserIds = User::whereHas('governorates', fn ($q) => $q->whereIn('governorates.id', $govIds))
+                ->pluck('id');
+            // مستخدمون لا أراهم: مستواهم أعلى مني، أو super-admin (فوق الجميع دائماً)
+            $usersAboveMe = User::where(fn ($q) => $q
+                    ->whereHas('roles', fn ($r) => $r->where('level', '>', $myLevel))
+                    ->orWhereHas('roles', fn ($r) => $r->where('name', 'super-admin')))
+                ->pluck('id');
+            $myOfficeIds = Office::whereIn('governorate_id', $govIds)->pluck('id');
+        }
+
+        // المتصلون الآن: super-admin يرى الكل، المشرف يرى فريقه، المفتش يرى نفسه فقط
+        $onlineUsers = DB::table('sessions')
+            ->whereNotNull('user_id')
+            ->where('last_activity', '>=', now()->subMinutes(10)->timestamp)
+            ->join('users', 'sessions.user_id', '=', 'users.id')
+            ->when($isSupervisor, fn ($q) => $q
+                ->whereIn('sessions.user_id', $teamUserIds)
+                ->whereNotIn('sessions.user_id', $usersAboveMe))
+            ->when(! $isSuperAdmin && ! $isSupervisor, fn ($q) => $q
+                ->where('sessions.user_id', $user->id))
+            ->select('users.id', 'users.name', 'sessions.last_activity', 'sessions.ip_address')
+            ->get();
 
         $activitiesQuery = Activity::with('causer')
             ->when($this->search, fn ($q) => $q
@@ -278,7 +301,26 @@ class Dashboard extends Component
             ->when($this->filterEvent, fn ($q) => $q->where('event', $this->filterEvent))
             ->latest();
 
-        if (! $isSuperAdmin) {
+        if ($isSupervisor) {
+            // المشرف: نشاطه + نشاط المقرات في محافظاته + دخول/خروج فريقه — كلها لمستوى ≤ مستواه
+            $activitiesQuery->where(function ($q) use ($user, $myOfficeIds, $teamUserIds, $usersAboveMe) {
+                // نشاطه هو
+                $q->where(fn ($w) => $w->where('causer_id', $user->id)->where('causer_type', User::class));
+
+                // نشاط على مقر داخل محافظاته (من مستوى ≤ مستواه)
+                $q->orWhere(fn ($w) => $w
+                    ->where('subject_type', Office::class)
+                    ->whereIn('subject_id', $myOfficeIds)
+                    ->whereNotIn('causer_id', $usersAboveMe));
+
+                // دخول/خروج أعضاء فريقه (من مستوى ≤ مستواه)
+                $q->orWhere(fn ($w) => $w
+                    ->whereIn('event', ['login', 'logout'])
+                    ->whereIn('causer_id', $teamUserIds)
+                    ->whereNotIn('causer_id', $usersAboveMe));
+            });
+        } elseif (! $isSuperAdmin) {
+            // مفتش: نشاطه فقط
             $activitiesQuery->where('causer_id', $user->id)
                             ->where('causer_type', User::class);
         }
@@ -290,7 +332,7 @@ class Dashboard extends Component
             'addedThisMonth', 'needsVisitCount', 'onlineUsers', 'activities', 'isSuperAdmin',
             'officesByGov', 'officesByType', 'officesByStructure',
             'user', 'statsSummary', 'govTooltipData',
-            'canView', 'canEdit'
+            'canView', 'canEdit', 'isSupervisor'
         ));
     }
 }
