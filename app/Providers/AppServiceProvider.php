@@ -36,6 +36,7 @@ class AppServiceProvider extends ServiceProvider
 
             activity()
                 ->causedBy($event->user)
+                ->event('login')
                 ->withProperties(['ip' => request()->ip()])
                 ->log('تسجيل دخول');
         });
@@ -44,6 +45,7 @@ class AppServiceProvider extends ServiceProvider
             if ($event->user) {
                 activity()
                     ->causedBy($event->user)
+                    ->event('logout')
                     ->withProperties(['ip' => request()->ip()])
                     ->log('تسجيل خروج');
             }

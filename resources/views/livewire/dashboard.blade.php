@@ -453,7 +453,36 @@
                     <option value="created">{{ __('home.activity_filter_created') }}</option>
                     <option value="updated">{{ __('home.activity_filter_updated') }}</option>
                     <option value="deleted">{{ __('home.activity_filter_deleted') }}</option>
+                    <option value="viewed">{{ __('home.activity_filter_viewed') }}</option>
+                    <option value="login">{{ __('home.activity_filter_login') }}</option>
+                    <option value="logout">{{ __('home.activity_filter_logout') }}</option>
                 </select>
+
+                @if($isSuperAdmin)
+                {{-- حذف السجلات القديمة --}}
+                <div class="flex gap-2 sm:ms-auto">
+                    <select
+                        wire:model.live="deletePeriod"
+                        class="border border-zinc-300 dark:border-zinc-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-zinc-800 text-zinc-800 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-red-400/40"
+                    >
+                        <option value="">{{ __('home.activity_delete_label') }}</option>
+                        <option value="3days">{{ __('home.activity_period_3days') }}</option>
+                        <option value="1week">{{ __('home.activity_period_1week') }}</option>
+                        <option value="2weeks">{{ __('home.activity_period_2weeks') }}</option>
+                        <option value="3weeks">{{ __('home.activity_period_3weeks') }}</option>
+                        <option value="1month">{{ __('home.activity_period_1month') }}</option>
+                    </select>
+                    <button
+                        wire:click="deleteOldActivities"
+                        wire:confirm="{{ __('home.activity_delete_confirm') }}"
+                        @disabled(!$deletePeriod)
+                        class="inline-flex items-center gap-1.5 text-sm px-3 py-2 rounded-lg border border-red-300 dark:border-red-700 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition disabled:opacity-40 disabled:cursor-not-allowed"
+                    >
+                        <flux:icon.trash variant="outline" class="w-4 h-4" />
+                        {{ __('home.activity_delete_btn') }}
+                    </button>
+                </div>
+                @endif
             </div>
 
             @if($activities->isEmpty())
@@ -485,6 +514,9 @@
                                             'created' => 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
                                             'updated' => 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
                                             'deleted' => 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
+                                            'viewed'  => 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
+                                            'login'   => 'bg-teal-100 text-teal-700 dark:bg-teal-900/30 dark:text-teal-400',
+                                            'logout'  => 'bg-zinc-200 text-zinc-600 dark:bg-zinc-700 dark:text-zinc-300',
                                             default   => 'bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400',
                                         };
                                     @endphp

@@ -25,6 +25,12 @@ class Show extends Component
 
         $this->canEdit = $user?->hasRole('super-admin') || $user?->can('offices.edit');
 
+        activity()
+            ->performedOn($office)
+            ->causedBy($user)
+            ->event('viewed')
+            ->log('عرض مقر');
+
         $this->office = $office->load([
             'governorate',
             'officeType',
