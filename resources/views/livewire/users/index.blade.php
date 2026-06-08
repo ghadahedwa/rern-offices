@@ -12,14 +12,23 @@
             </a>
         </div>
 
-        {{-- Search --}}
-        <div class="max-w-sm">
+        {{-- Search & Filters --}}
+        <div class="flex flex-wrap gap-3">
             <input
                 wire:model.live.debounce.300ms="search"
                 type="text"
                 placeholder="{{ __('home.search') }}"
-                class="w-full border border-zinc-300 dark:border-zinc-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-[#c9a847]"
+                class="w-64 border border-zinc-300 dark:border-zinc-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-[#c9a847]"
             />
+            <select
+                wire:model.live="roleFilter"
+                class="border border-zinc-300 dark:border-zinc-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-zinc-800 text-zinc-800 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-[#c9a847]"
+            >
+                <option value="">{{ __('home.all_roles') }}</option>
+                @foreach($roles as $role)
+                    <option value="{{ $role->name }}">{{ $role->name }}</option>
+                @endforeach
+            </select>
         </div>
 
         {{-- Table --}}

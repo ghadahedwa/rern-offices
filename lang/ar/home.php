@@ -70,6 +70,7 @@ return [
     'edit_user'           => 'تعديل مستخدم',
     'create_user'         => 'إنشاء مستخدم',
     'select_role'         => 'اختر الدور',
+    'all_roles'           => 'كل الأدوار',
     'back'                => 'رجوع',
     'cancel'              => 'إلغاء',
     'confirm_delete'      => 'هل أنت متأكد من حذف هذا المستخدم؟',

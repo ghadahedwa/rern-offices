@@ -9,6 +9,7 @@ use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 use Livewire\Component;
 use Livewire\WithPagination;
+use Spatie\Permission\Models\Role;
 
 #[Layout('layouts.app')]
 #[Title('المستخدمون')]
@@ -17,6 +18,7 @@ class Index extends Component
     use WithPagination;
 
     public string $search = '';
+    public string $roleFilter = '';
 
     public function mount(): void
     {
@@ -24,6 +26,11 @@ class Index extends Component
     }
 
     public function updatingSearch(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatingRoleFilter(): void
     {
         $this->resetPage();
     }
@@ -48,14 +55,17 @@ class Index extends Component
 
     public function render()
     {
+        $roles = Role::orderBy('name')->get();
+
         $users = User::with(['roles', 'governorates'])
             ->where(function ($q) {
                 $q->where('name', 'like', "%{$this->search}%")
                   ->orWhere('username', 'like', "%{$this->search}%");
             })
+            ->when($this->roleFilter, fn($q) => $q->role($this->roleFilter))
             ->oldest()
             ->paginate(10);
 
-        return view('livewire.users.index', compact('users'));
+        return view('livewire.users.index', compact('users', 'roles'));
     }
 }
