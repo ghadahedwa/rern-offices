@@ -232,6 +232,7 @@ return [
     // Shared
     'coming_soon'              => 'قيد التطوير — سيتم إضافته قريباً',
     'office_statistics'          => 'إحصائيات المقر',
+    'export_pdf'                 => 'تصدير PDF',
     'average_daily_transactions' => 'متوسط المعاملات اليومية للتوثيق',
     'no_data'                    => '—',
 

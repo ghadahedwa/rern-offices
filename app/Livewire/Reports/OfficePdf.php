@@ -32,7 +32,12 @@ class OfficePdf extends Component
 
     public function generatePdf(): void
     {
-        Flux::toast(variant: 'warning', text: 'هذه الميزة قيد التطوير');
+        if (!$this->selectedOfficeId) {
+            Flux::toast(variant: 'warning', text: 'اختر مقراً أولاً');
+            return;
+        }
+
+        $this->js("window.open('" . route('offices.pdf', $this->selectedOfficeId) . "', '_blank')");
     }
 
     public function render()
