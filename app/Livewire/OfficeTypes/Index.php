@@ -18,16 +18,32 @@ class Index extends Component
 
     public string $search = '';
 
+    public bool $showDelete = false;
+    public ?int $deletingId = null;
+    public string $deletingLabel = '';
+
     public function updatingSearch(): void
     {
         $this->resetPage();
     }
 
-    public function delete(OfficeType $officeType): void
+    public function askDelete(int $id): void
     {
         abort_unless(Auth::user()?->hasRole('super-admin'), 403);
-        $officeType->delete();
-        Flux::toast(variant: 'success', text: __('home.office_type_deleted'));
+        $officeType = OfficeType::findOrFail($id);
+        $this->deletingId    = $officeType->id;
+        $this->deletingLabel = $officeType->name;
+        $this->showDelete    = true;
+    }
+
+    public function deleteRow(): void
+    {
+        abort_unless(Auth::user()?->hasRole('super-admin'), 403);
+        if ($this->deletingId) {
+            OfficeType::findOrFail($this->deletingId)->delete();
+            $this->reset('deletingId', 'deletingLabel', 'showDelete');
+            Flux::toast(variant: 'success', text: __('home.office_type_deleted'));
+        }
     }
 
     public function render()

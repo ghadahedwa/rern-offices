@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Livewire\LocationDescriptions;
+namespace App\Livewire\WorkingHours;
 
-use App\Models\LocationDescription;
+use App\Models\WorkingHour;
 use Flux\Flux;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Layout;
@@ -11,7 +11,7 @@ use Livewire\Component;
 use Livewire\WithPagination;
 
 #[Layout('layouts.app')]
-#[Title('وصف المقر')]
+#[Title('أوقات العمل')]
 class Index extends Component
 {
     use WithPagination;
@@ -30,9 +30,9 @@ class Index extends Component
     public function askDelete(int $id): void
     {
         abort_unless(Auth::user()?->hasRole('super-admin'), 403);
-        $item = LocationDescription::findOrFail($id);
-        $this->deletingId    = $item->id;
-        $this->deletingLabel = $item->name;
+        $workingHour = WorkingHour::findOrFail($id);
+        $this->deletingId    = $workingHour->id;
+        $this->deletingLabel = $workingHour->name;
         $this->showDelete    = true;
     }
 
@@ -40,16 +40,16 @@ class Index extends Component
     {
         abort_unless(Auth::user()?->hasRole('super-admin'), 403);
         if ($this->deletingId) {
-            LocationDescription::findOrFail($this->deletingId)->delete();
+            WorkingHour::findOrFail($this->deletingId)->delete();
             $this->reset('deletingId', 'deletingLabel', 'showDelete');
-            Flux::toast(variant: 'success', text: __('home.location_description_deleted'));
+            Flux::toast(variant: 'success', text: __('home.working_hour_deleted'));
         }
     }
 
     public function render()
     {
-        return view('livewire.location-descriptions.index', [
-            'items'        => LocationDescription::query()
+        return view('livewire.working-hours.index', [
+            'workingHours' => WorkingHour::query()
                 ->when($this->search, fn($q) => $q->where('name', 'like', "%{$this->search}%"))
                 ->orderBy('name')
                 ->paginate(15),

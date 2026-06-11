@@ -2,9 +2,9 @@
 
     <div class="flex items-center justify-between">
         <h1 class="text-2xl font-semibold text-zinc-800 dark:text-zinc-100">
-            {{ $locationDescription?->exists ? __('home.edit_location_description') : __('home.add_location_description') }}
+            {{ $workSystem?->exists ? __('home.edit_work_system') : __('home.add_work_system') }}
         </h1>
-        <a href="{{ route('location-descriptions.index') }}" wire:navigate
+        <a href="{{ route('work-systems.index') }}" wire:navigate
            class="text-sm text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 transition">
             ← {{ __('home.back') }}
         </a>
@@ -22,20 +22,12 @@
                 @error('name') <p class="text-red-500 text-xs">{{ $message }}</p> @enderror
             </div>
 
-            <div class="flex items-center gap-3">
-                <input type="checkbox" id="shows_windows_count" wire:model="shows_windows_count"
-                       class="w-4 h-4 rounded border-zinc-300 text-[#c9a847] focus:ring-[#c9a847]" />
-                <label for="shows_windows_count" class="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                    {{ __('home.allows_windows_count') }}
-                </label>
-            </div>
-
             <div class="flex items-center gap-3 pt-2">
                 <button type="submit"
                         class="bg-[#c9a847] hover:bg-[#b8962e] text-white text-sm font-medium px-5 py-2 rounded-lg transition">
                     {{ __('home.save') }}
                 </button>
-                <a href="{{ route('location-descriptions.index') }}" wire:navigate
+                <a href="{{ route('work-systems.index') }}" wire:navigate
                    class="text-sm text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 transition">
                     {{ __('home.cancel') }}
                 </a>

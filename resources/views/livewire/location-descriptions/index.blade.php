@@ -25,6 +25,7 @@
                 <tr>
                     <th class="px-4 py-3 font-medium">#</th>
                     <th class="px-4 py-3 font-medium">{{ __('home.name') }}</th>
+                    <th class="px-4 py-3 font-medium">{{ __('home.allows_windows_count') }}</th>
                     @if($isSuperAdmin)
                         <th class="px-4 py-3 font-medium">{{ __('home.actions') }}</th>
                     @endif
@@ -35,6 +36,16 @@
                     <tr class="hover:bg-zinc-50 dark:hover:bg-zinc-800 transition">
                         <td class="px-4 py-3 text-zinc-500">{{ $items->firstItem() + $loop->index }}</td>
                         <td class="px-4 py-3 font-medium text-zinc-800 dark:text-zinc-100">{{ $item->name }}</td>
+                        <td class="px-4 py-3">
+                            @if($item->shows_windows_count)
+                                <span class="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-full bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                                    {{ __('home.option_yes') }}
+                                </span>
+                            @else
+                                <span class="text-xs text-zinc-400">{{ __('home.option_no') }}</span>
+                            @endif
+                        </td>
                         @if($isSuperAdmin)
                             <td class="px-4 py-3">
                                 <div class="flex items-center gap-2">
@@ -43,8 +54,7 @@
                                         {{ __('home.edit') }}
                                     </a>
                                     <button
-                                        wire:click="delete({{ $item->id }})"
-                                        wire:confirm="{{ __('home.confirm_delete') }}"
+                                        wire:click="askDelete({{ $item->id }})"
                                         class="inline-flex items-center text-xs px-3 py-1.5 rounded-md border border-red-200 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition">
                                         {{ __('home.delete') }}
                                     </button>
@@ -54,7 +64,7 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="{{ $isSuperAdmin ? 3 : 2 }}" class="px-4 py-10 text-center text-zinc-400">
+                        <td colspan="{{ $isSuperAdmin ? 4 : 3 }}" class="px-4 py-10 text-center text-zinc-400">
                             {{ __('home.no_data') }}
                         </td>
                     </tr>
@@ -64,5 +74,7 @@
     </div>
 
     <div>{{ $items->links() }}</div>
+
+    @include('livewire.partials.delete-modal')
 
 </div>

@@ -18,17 +18,36 @@ class Index extends Component
 
     public string $search = '';
 
+    public bool $showDelete = false;
+    public ?int $deletingId = null;
+    public string $deletingLabel = '';
+    public string $deletingWarning = '';
+
     public function updatingSearch(): void
     {
         $this->resetPage();
     }
 
-    public function deleteGovernorate(int $id): void
+    public function askDelete(int $id): void
     {
         abort_unless(Auth::user()?->hasRole('super-admin'), 403);
+        $governorate = Governorate::withCount('offices')->findOrFail($id);
+        $this->deletingId    = $governorate->id;
+        $this->deletingLabel = $governorate->name;
+        $this->deletingWarning = $governorate->offices_count > 0
+            ? __('home.governorate_delete_warning', ['count' => $governorate->offices_count])
+            : __('home.governorate_delete_warning_empty');
+        $this->showDelete    = true;
+    }
 
-        Governorate::findOrFail($id)->delete();
-        Flux::toast(variant: 'success', text: __('home.governorate_deleted'));
+    public function deleteRow(): void
+    {
+        abort_unless(Auth::user()?->hasRole('super-admin'), 403);
+        if ($this->deletingId) {
+            Governorate::findOrFail($this->deletingId)->delete();
+            $this->reset('deletingId', 'deletingLabel', 'deletingWarning', 'showDelete');
+            Flux::toast(variant: 'success', text: __('home.governorate_deleted'));
+        }
     }
 
     public function render()

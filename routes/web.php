@@ -41,6 +41,30 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::livewire('location-descriptions', \App\Livewire\LocationDescriptions\Index::class)->name('location-descriptions.index');
         Route::livewire('location-descriptions/create', \App\Livewire\LocationDescriptions\Create::class)->name('location-descriptions.create');
         Route::livewire('location-descriptions/{locationDescription}/edit', \App\Livewire\LocationDescriptions\Create::class)->name('location-descriptions.edit');
+
+        Route::livewire('work-systems', \App\Livewire\WorkSystems\Index::class)->name('work-systems.index');
+        Route::livewire('work-systems/create', \App\Livewire\WorkSystems\Create::class)->name('work-systems.create');
+        Route::livewire('work-systems/{workSystem}/edit', \App\Livewire\WorkSystems\Create::class)->name('work-systems.edit');
+
+        Route::livewire('working-hours', \App\Livewire\WorkingHours\Index::class)->name('working-hours.index');
+        Route::livewire('working-hours/create', \App\Livewire\WorkingHours\Create::class)->name('working-hours.create');
+        Route::livewire('working-hours/{workingHour}/edit', \App\Livewire\WorkingHours\Create::class)->name('working-hours.edit');
+
+        Route::livewire('connection-types', \App\Livewire\ConnectionTypes\Index::class)->name('connection-types.index');
+        Route::livewire('connection-types/create', \App\Livewire\ConnectionTypes\Create::class)->name('connection-types.create');
+        Route::livewire('connection-types/{connectionType}/edit', \App\Livewire\ConnectionTypes\Create::class)->name('connection-types.edit');
+
+        Route::livewire('device-types', \App\Livewire\DeviceTypes\Index::class)->name('device-types.index');
+        Route::livewire('device-types/create', \App\Livewire\DeviceTypes\Create::class)->name('device-types.create');
+        Route::livewire('device-types/{deviceType}/edit', \App\Livewire\DeviceTypes\Create::class)->name('device-types.edit');
+
+        Route::livewire('contractual-statuses', \App\Livewire\ContractualStatuses\Index::class)->name('contractual-statuses.index');
+        Route::livewire('contractual-statuses/create', \App\Livewire\ContractualStatuses\Create::class)->name('contractual-statuses.create');
+        Route::livewire('contractual-statuses/{contractualStatus}/edit', \App\Livewire\ContractualStatuses\Create::class)->name('contractual-statuses.edit');
+
+        Route::livewire('structural-conditions', \App\Livewire\StructuralConditions\Index::class)->name('structural-conditions.index');
+        Route::livewire('structural-conditions/create', \App\Livewire\StructuralConditions\Create::class)->name('structural-conditions.create');
+        Route::livewire('structural-conditions/{structuralCondition}/edit', \App\Livewire\StructuralConditions\Create::class)->name('structural-conditions.edit');
     });
 });
 
