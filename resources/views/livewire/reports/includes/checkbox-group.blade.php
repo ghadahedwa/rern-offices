@@ -11,6 +11,7 @@
         ->values();
 @endphp
 <div
+    wire:key="{{ $wireKey ?? $field }}"
     x-data="{
         open: false,
         search: '',

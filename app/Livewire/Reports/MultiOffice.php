@@ -130,9 +130,7 @@ class MultiOffice extends Component
 
         $valid = $this->scopedOffices($this->allowedGovIds())->pluck('id')->all();
         $this->officeIds = array_values(array_intersect($this->officeIds, $valid));
-
-        // أعِد مزامنة عرض dropdown المقرات مع القيمة المُنقّحة
-        $this->dispatch('filters-reset');
+        // عرض dropdown المقر يُحدَّث تلقائياً عبر تغيّر wire:key (md5 لقائمة المقرات)
     }
 
     /** المحافظات المسموح بها للمستخدم (null = super-admin يرى الكل) */

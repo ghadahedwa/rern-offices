@@ -63,7 +63,7 @@
         {{-- الصف الأول: المحافظة والمقر --}}
         <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
             @include('livewire.reports.includes.checkbox-group', ['field' => 'governorateIds', 'options' => $governorates->pluck('name', 'id')->all(), 'label' => __('home.governorate_name'), 'live' => true])
-            @include('livewire.reports.includes.checkbox-group', ['field' => 'officeIds', 'options' => $officeOptions->pluck('name', 'id')->all(), 'label' => __('home.report_office_multi')])
+            @include('livewire.reports.includes.checkbox-group', ['field' => 'officeIds', 'options' => $officeOptions->pluck('name', 'id')->all(), 'label' => __('home.report_office_multi'), 'wireKey' => 'officeIds-' . md5($officeOptions->pluck('id')->implode(','))])
         </div>
 
         {{-- باقي الفلاتر الأساسية: 4 في الصف --}}
