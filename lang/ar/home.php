@@ -281,7 +281,7 @@ return [
     'queue_management_system'          => 'منظم الدور كيوسيستم',
     'payment_machine_count'            => 'عدد ماكينات التحصيل',
     'computers_count'                  => 'عدد أجهزة الكمبيوتر',
-    'monitors_count'                   => 'عدد الشاشات',
+    'monitors_count'                   => 'عدد شاشات العرض',
     'scanners_count'                   => 'عدد أجهزة الاسكانر',
     'printers_count'                   => 'عدد الطابعات',
     'fingerprints_count'               => 'عدد أجهزة البصمة',

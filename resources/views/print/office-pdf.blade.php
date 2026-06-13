@@ -209,7 +209,7 @@
             <tr>
                 <td><div class="lbl">ماكينات الدفع</div><div class="val">{{ $office->payment_machine_count ?? $dash }}</div></td>
                 <td><div class="lbl">أجهزة كمبيوتر</div><div class="val">{{ $office->computers_count ?? $dash }}</div></td>
-                <td><div class="lbl">شاشات</div><div class="val">{{ $office->monitors_count ?? $dash }}</div></td>
+                <td><div class="lbl">شاشات العرض</div><div class="val">{{ $office->monitors_count ?? $dash }}</div></td>
             </tr>
             <tr>
                 <td><div class="lbl">ماسحات ضوئية</div><div class="val">{{ $office->scanners_count ?? $dash }}</div></td>
