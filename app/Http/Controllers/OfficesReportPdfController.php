@@ -64,6 +64,8 @@ class OfficesReportPdfController extends Controller
             'fontDir'       => array_merge($fontDirs, [storage_path('fonts')]),
             'fontdata'      => $fontData,
             'tempDir'       => storage_path('mpdf'),
+            // امنع mPDF من تصغير خط الجدول لو اتسع — يفضل الخط ثابت والمحتوى يلتف
+            'shrink_tables_to_fit' => 0,
         ]);
         $mpdf->SetDirectionality('rtl');
         $mpdf->WriteHTML($html);

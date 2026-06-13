@@ -5,7 +5,7 @@
     <title>تقرير مقارنة المقرات</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: dejavusans, sans-serif; direction: rtl; font-size: 8px; color: #1a1a1a; }
+        body { font-family: dejavusans, sans-serif; direction: rtl; font-size: 9px; color: #1a1a1a; }
 
         /* ── Page Header ── */
         .header-table { width: 100%; border-collapse: collapse; border-bottom: 2px solid #c9a847; padding-bottom: 5px; margin-bottom: 8px; }
@@ -19,27 +19,27 @@
         .rt { width: 100%; border-collapse: collapse; table-layout: fixed; }
         .rt td, .rt th { word-wrap: break-word; overflow-wrap: break-word; }
         .rt th {
-            background-color: #c9a847; color: #fff; font-size: 8px; font-weight: bold;
+            background-color: #c9a847; color: #fff; font-size: 9px; font-weight: bold;
             padding: 4px 3px; border: 1px solid #b8962e; text-align: center; vertical-align: middle;
         }
         .rt td { border: 1px solid #ddd; padding: 3px 4px; vertical-align: top; }
         .rt tbody tr:nth-child(even) td { background-color: #fafafa; }
 
         /* ── Identity cells ── */
-        .o-name { font-size: 9px; font-weight: bold; color: #111; }
-        .o-addr { font-size: 7px; color: #777; }
-        .o-visit { font-size: 7px; color: #555; margin-top: 2px; }
-        .o-gov { font-size: 8px; font-weight: bold; color: #222; }
+        .o-name { font-size: 10px; font-weight: bold; color: #111; }
+        .o-addr { font-size: 8px; color: #777; }
+        .o-visit { font-size: 8px; color: #555; margin-top: 2px; }
+        .o-gov { font-size: 9px; font-weight: bold; color: #222; }
 
         /* ── Field lines inside section cells ── */
-        .f { margin-bottom: 2px; line-height: 1.35; }
-        .k { color: #999; font-size: 7px; }
-        .v { color: #111; font-weight: bold; font-size: 8px; }
+        .f { margin-bottom: 2px; line-height: 1.4; }
+        .k { color: #999; font-size: 8px; }
+        .v { color: #111; font-weight: bold; font-size: 9px; }
         a.maplink { color: #1a5fb4; text-decoration: underline; }
         .broken-item { color: #a33; }
         .none { color: #aaa; }
-        .note-k { color: #999; font-size: 7px; font-weight: bold; }
-        .note-v { color: #333; font-size: 7px; }
+        .note-k { color: #999; font-size: 8px; font-weight: bold; }
+        .note-v { color: #333; font-size: 8px; }
 
         .page-footer { margin-top: 8px; padding-top: 4px; border-top: 1px solid #e4e4e4; text-align: center; font-size: 7px; color: #aaa; }
     </style>
@@ -89,16 +89,16 @@
         <thead>
             <tr>
                 <th width="9%">المقر</th>
-                <th width="10%">المحافظة</th>
+                <th width="7%">المحافظة</th>
                 <th width="15%">البيانات الأساسية</th>
-                <th width="12%">أوقات وأنظمة العمل</th>
+                <th width="11%">أوقات وأنظمة العمل</th>
                 <th width="13%">الخدمات والتجهيزات</th>
                 <th width="7%">الأنظمة التقنية</th>
                 <th width="7%">عدد الأجهزة</th>
                 <th width="11%">العدادات</th>
-                <th width="9%">التقييم والجودة</th>
+                <th width="6%">التقييم والجودة</th>
                 <th width="5%">الأجهزة المعطلة</th>
-                <th width="2%">ملاحظات المقر</th>
+                <th width="9%">ملاحظات المقر</th>
             </tr>
         </thead>
         <tbody>
