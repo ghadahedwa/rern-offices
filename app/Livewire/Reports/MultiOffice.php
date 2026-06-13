@@ -33,6 +33,9 @@ class MultiOffice extends Component
 {
     use WithPagination;
 
+    /** أقصى عدد مقرات لتقرير الـ PDF (تقرير مقارنة) — الأعداد الأكبر تُصدَّر Excel */
+    private const MAX_PDF_OFFICES = 150;
+
     public bool $showAdvanced = false;
 
     /** المحددات المُطبَّقة فعلياً (snapshot وقت الضغط على "بحث") — الاستعلام يقرأ منها فقط */
@@ -189,44 +192,17 @@ class MultiOffice extends Component
             return;
         }
 
-        // خزّن معرّفات نتائج البحث + العنوان ثم افتح التقرير في تاب جديدة (inline)
         $ids = $this->buildQuery($this->allowedGovIds())->pluck('id')->all();
-        session([
-            'report_office_ids' => $ids,
-            'report_title'      => $this->buildReportTitle(),
-        ]);
 
+        // حد أقصى لتقرير الـ PDF (تقرير مقارنة — الأعداد الكبيرة تُصدَّر Excel)
+        if (count($ids) > self::MAX_PDF_OFFICES) {
+            Flux::toast(variant: 'warning', text: __('home.report_pdf_max_exceeded', ['max' => self::MAX_PDF_OFFICES]));
+            return;
+        }
+
+        // خزّن معرّفات نتائج البحث ثم افتح التقرير في تاب جديدة (inline)
+        session(['report_office_ids' => $ids]);
         $this->js("window.open('" . route('reports.multi-office.pdf') . "', '_blank')");
-    }
-
-    /** يبني عنوان التقرير من أبرز محددات البحث المطبّقة */
-    protected function buildReportTitle(): string
-    {
-        $f     = $this->applied;
-        $parts = [];
-
-        if (! empty($f['governorateIds'])) {
-            $parts[] = 'محافظة ' . Governorate::whereIn('id', $f['governorateIds'])->pluck('name')->implode('، ');
-        }
-        if (! empty($f['typeIds'])) {
-            $parts[] = OfficeType::whereIn('id', $f['typeIds'])->pluck('name')->implode('، ');
-        }
-        if (! empty($f['connectionTypeIds'])) {
-            $parts[] = 'اتصال ' . ConnectionType::whereIn('id', $f['connectionTypeIds'])->pluck('name')->implode('، ');
-        }
-        if (! empty($f['structuralConditionIds'])) {
-            $parts[] = StructuralCondition::whereIn('id', $f['structuralConditionIds'])->pluck('name')->implode('، ');
-        }
-        if (! empty($f['contractualStatusIds'])) {
-            $parts[] = ContractualStatus::whereIn('id', $f['contractualStatusIds'])->pluck('name')->implode('، ');
-        }
-        if (! empty($f['neverVisited']) || ! empty($f['notVisitedMonths'])) {
-            $parts[] = 'مقرات تحتاج زيارة';
-        }
-
-        return empty($parts)
-            ? 'تقرير جميع المقرات'
-            : 'تقرير المقرات: ' . implode(' — ', $parts);
     }
 
     /** يبني الاستعلام من المحددات المُطبَّقة ($applied) فقط */

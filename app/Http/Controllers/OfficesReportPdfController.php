@@ -21,6 +21,12 @@ class OfficesReportPdfController extends Controller
         $ids = session('report_office_ids', []);
         abort_if(empty($ids), 404, 'لا توجد نتائج للعرض');
 
+        // تقارير كبيرة: رفع حدود الـ PCRE/الذاكرة/الوقت (mPDF يفشل لو الـ HTML تجاوز pcre.backtrack_limit)
+        ini_set('pcre.backtrack_limit', '100000000');
+        ini_set('pcre.recursion_limit', '100000000');
+        ini_set('memory_limit', '1024M');
+        @set_time_limit(300);
+
         $isSuperAdmin  = $user->hasRole('super-admin');
         $allowedGovIds = $isSuperAdmin ? null : $user->governorates()->pluck('governorates.id')->all();
 
@@ -41,9 +47,7 @@ class OfficesReportPdfController extends Controller
             ? 'data:image/png;base64,' . base64_encode(file_get_contents($logoPath))
             : null;
 
-        $reportTitle = session('report_title', 'تقرير المقرات');
-
-        $html = view('print.multi-office-pdf', compact('offices', 'logoBase64', 'reportTitle'))->render();
+        $html = view('print.multi-office-pdf', compact('offices', 'logoBase64'))->render();
 
         $fontDirs = (new ConfigVariables())->getDefaults()['fontDir'];
         $fontData = (new FontVariables())->getDefaults()['fontdata'];

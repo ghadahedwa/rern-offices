@@ -89,6 +89,7 @@ return [
     'report_search_prompt'      => 'حدّد محددات البحث بالأعلى ثم اضغط "بحث" لعرض النتائج',
     'report_export_excel'       => 'تصدير Excel',
     'report_export_pdf'         => 'تصدير PDF',
+    'report_pdf_max_exceeded'   => 'لا يمكن عرض أكثر من :max مقر في تقرير PDF — ضيّق نطاق البحث أو استخدم تصدير Excel للأعداد الكبيرة.',
     'report_select_hint'        => '— الكل —',
     'report_selected'           => 'محدد',
     'report_clear_selection'    => 'مسح التحديد',

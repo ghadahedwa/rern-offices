@@ -15,9 +15,6 @@
         .app-subtitle { font-size: 8px; color: #666; margin-top: 1px; }
         .meta-cell { text-align: left; font-size: 8px; color: #666; line-height: 1.6; }
 
-        /* ── Report Title (centered) ── */
-        .report-title { text-align: center; font-size: 12px; font-weight: bold; color: #333; margin-bottom: 8px; padding: 4px 0; background-color: #faf6ea; border: 1px solid #ecd9a0; border-radius: 3px; }
-
         /* ── Report Table ── */
         .rt { width: 100%; border-collapse: collapse; table-layout: fixed; }
         .rt td, .rt th { word-wrap: break-word; overflow-wrap: break-word; }
@@ -87,9 +84,6 @@
             </td>
         </tr>
     </table>
-
-    {{-- ── عنوان التقرير (من محددات البحث) ── --}}
-    <div class="report-title">{{ $reportTitle ?? 'تقرير المقرات' }}</div>
 
     <table class="rt">
         <thead>
