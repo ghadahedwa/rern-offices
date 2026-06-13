@@ -78,7 +78,11 @@
         $brailleLabels   = ['available' => 'متوفر', 'not_available' => 'غير متوفر'];
         $queueLabels     = ['working' => 'يعمل', 'not_working' => 'لا يعمل', 'not_available' => 'غير متوفر'];
         $cameraLabels    = ['available' => 'تعمل', 'not_available' => 'غير متوفرة', 'broken' => 'معطلة'];
-        $meterTypeLabels = ['prepaid' => 'كارت', 'invoice' => 'فاتورة', 'entity_meter' => 'عداد جهة'];
+        $meterTypeLabels = [
+            'prepaid'      => __('home.meter_type_prepaid'),
+            'invoice'      => __('home.meter_type_invoice'),
+            'entity_meter' => __('home.meter_type_entity'),
+        ];
         $meterDebtLabels = ['yes' => 'يوجد', 'no' => 'لا يوجد'];
         $months = [1=>'يناير',2=>'فبراير',3=>'مارس',4=>'أبريل',5=>'مايو',6=>'يونيو',
                    7=>'يوليو',8=>'أغسطس',9=>'سبتمبر',10=>'أكتوبر',11=>'نوفمبر',12=>'ديسمبر'];

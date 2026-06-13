@@ -19,7 +19,8 @@
         .report-title { text-align: center; font-size: 12px; font-weight: bold; color: #333; margin-bottom: 8px; padding: 4px 0; background-color: #faf6ea; border: 1px solid #ecd9a0; border-radius: 3px; }
 
         /* ── Report Table ── */
-        .rt { width: 100%; border-collapse: collapse; }
+        .rt { width: 100%; border-collapse: collapse; table-layout: fixed; }
+        .rt td, .rt th { word-wrap: break-word; overflow-wrap: break-word; }
         .rt th {
             background-color: #c9a847; color: #fff; font-size: 8px; font-weight: bold;
             padding: 4px 3px; border: 1px solid #b8962e; text-align: center; vertical-align: middle;
@@ -57,7 +58,11 @@
         $brailleLabels   = ['available' => 'متوفر', 'not_available' => 'غير متوفر'];
         $queueLabels     = ['working' => 'يعمل', 'not_working' => 'لا يعمل', 'not_available' => 'غير متوفر'];
         $cameraLabels    = ['available' => 'تعمل', 'not_available' => 'غير متوفرة', 'broken' => 'معطلة'];
-        $meterTypeLabels = ['prepaid' => 'كارت', 'invoice' => 'فاتورة', 'entity_meter' => 'عداد جهة'];
+        $meterTypeLabels = [
+            'prepaid'      => __('home.meter_type_prepaid'),
+            'invoice'      => __('home.meter_type_invoice'),
+            'entity_meter' => __('home.meter_type_entity'),
+        ];
         $meterDebtLabels = ['yes' => 'يوجد', 'no' => 'لا يوجد'];
 
         $pair = function ($a, $b) use ($dash) {
@@ -87,24 +92,19 @@
     <div class="report-title">{{ $reportTitle ?? 'تقرير المقرات' }}</div>
 
     <table class="rt">
-        <colgroup>
-            <col style="width:9%"><col style="width:9%"><col style="width:13%"><col style="width:12%">
-            <col style="width:11%"><col style="width:7%"><col style="width:9%"><col style="width:11%">
-            <col style="width:9%"><col style="width:6%"><col style="width:4%">
-        </colgroup>
         <thead>
             <tr>
-                <th>المقر</th>
-                <th>المحافظة</th>
-                <th>البيانات الأساسية</th>
-                <th>أوقات وأنظمة العمل</th>
-                <th>الخدمات والتجهيزات</th>
-                <th>الأنظمة التقنية</th>
-                <th>عدد الأجهزة</th>
-                <th>العدادات</th>
-                <th>التقييم والجودة</th>
-                <th>الأجهزة المعطلة</th>
-                <th>ملاحظات المقر</th>
+                <th width="9%">المقر</th>
+                <th width="10%">المحافظة</th>
+                <th width="15%">البيانات الأساسية</th>
+                <th width="12%">أوقات وأنظمة العمل</th>
+                <th width="13%">الخدمات والتجهيزات</th>
+                <th width="7%">الأنظمة التقنية</th>
+                <th width="7%">عدد الأجهزة</th>
+                <th width="11%">العدادات</th>
+                <th width="9%">التقييم والجودة</th>
+                <th width="5%">الأجهزة المعطلة</th>
+                <th width="2%">ملاحظات المقر</th>
             </tr>
         </thead>
         <tbody>

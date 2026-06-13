@@ -40,7 +40,7 @@ class OfficesExport implements FromCollection, WithHeadings, WithMapping, WithEv
     private array $brailleLabels   = ['available' => 'متوفر', 'not_available' => 'غير متوفر'];
     private array $queueLabels     = ['working' => 'يعمل', 'not_working' => 'لا يعمل', 'not_available' => 'غير متوفر'];
     private array $cameraLabels    = ['available' => 'تعمل', 'not_available' => 'غير متوفرة', 'broken' => 'معطلة'];
-    private array $meterTypeLabels = ['prepaid' => 'كارت', 'invoice' => 'فاتورة', 'entity_meter' => 'عداد جهة'];
+    private array $meterTypeLabels = ['prepaid' => 'مسبق الدفع', 'invoice' => 'فاتورة', 'entity_meter' => 'عداد خاص بالجهة التابع لها المقر'];
     private array $meterDebtLabels = ['yes' => 'يوجد', 'no' => 'لا يوجد'];
 
     public function __construct(protected Collection $offices) {}

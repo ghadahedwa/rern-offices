@@ -69,6 +69,8 @@ class OfficesReportPdfController extends Controller
         return response($mpdf->Output('', 'S'), 200, [
             'Content-Type'        => 'application/pdf',
             'Content-Disposition' => 'inline; filename="' . $filename . '"',
+            'Cache-Control'       => 'no-store, no-cache, must-revalidate, max-age=0',
+            'Pragma'              => 'no-cache',
         ]);
     }
 }
