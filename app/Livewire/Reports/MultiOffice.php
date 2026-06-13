@@ -17,12 +17,15 @@ use App\Models\OfficeType;
 use App\Models\StructuralCondition;
 use App\Models\WorkingHour;
 use App\Models\WorkSystem;
+use App\Exports\OfficesExport;
+use Flux\Flux;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Pagination\Paginator;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 use Livewire\Component;
 use Livewire\WithPagination;
+use Maatwebsite\Excel\Facades\Excel;
 
 #[Layout('layouts.app')]
 #[Title('تقرير بحث متقدم')]
@@ -150,6 +153,80 @@ class MultiOffice extends Component
         $this->hasSearched = false;
         $this->resetPage();
         $this->dispatch('filters-reset');
+    }
+
+    /** مجموعة المقرات المطابقة (بكل العلاقات) — للتصدير، بلا ترقيم صفحات */
+    protected function exportOffices()
+    {
+        return $this->buildQuery($this->allowedGovIds())
+            ->with([
+                'locationDescription', 'workSystem', 'workingHour',
+                'contractualStatus',
+                'MicrofilmOption', 'DisabilitieAccess', 'FireSafety',
+                'DocumentPhotocopyingService', 'BuffetService', 'CleanlinessContract',
+                'brokenDevices.deviceType',
+            ])
+            ->get();
+    }
+
+    public function exportExcel()
+    {
+        if (! $this->hasSearched) {
+            Flux::toast(variant: 'warning', text: __('home.report_search_prompt'));
+            return;
+        }
+
+        return Excel::download(
+            new OfficesExport($this->exportOffices()),
+            'offices-report-' . now()->format('Ymd-His') . '.xlsx'
+        );
+    }
+
+    public function exportPdf()
+    {
+        if (! $this->hasSearched) {
+            Flux::toast(variant: 'warning', text: __('home.report_search_prompt'));
+            return;
+        }
+
+        // خزّن معرّفات نتائج البحث + العنوان ثم افتح التقرير في تاب جديدة (inline)
+        $ids = $this->buildQuery($this->allowedGovIds())->pluck('id')->all();
+        session([
+            'report_office_ids' => $ids,
+            'report_title'      => $this->buildReportTitle(),
+        ]);
+
+        $this->js("window.open('" . route('reports.multi-office.pdf') . "', '_blank')");
+    }
+
+    /** يبني عنوان التقرير من أبرز محددات البحث المطبّقة */
+    protected function buildReportTitle(): string
+    {
+        $f     = $this->applied;
+        $parts = [];
+
+        if (! empty($f['governorateIds'])) {
+            $parts[] = 'محافظة ' . Governorate::whereIn('id', $f['governorateIds'])->pluck('name')->implode('، ');
+        }
+        if (! empty($f['typeIds'])) {
+            $parts[] = OfficeType::whereIn('id', $f['typeIds'])->pluck('name')->implode('، ');
+        }
+        if (! empty($f['connectionTypeIds'])) {
+            $parts[] = 'اتصال ' . ConnectionType::whereIn('id', $f['connectionTypeIds'])->pluck('name')->implode('، ');
+        }
+        if (! empty($f['structuralConditionIds'])) {
+            $parts[] = StructuralCondition::whereIn('id', $f['structuralConditionIds'])->pluck('name')->implode('، ');
+        }
+        if (! empty($f['contractualStatusIds'])) {
+            $parts[] = ContractualStatus::whereIn('id', $f['contractualStatusIds'])->pluck('name')->implode('، ');
+        }
+        if (! empty($f['neverVisited']) || ! empty($f['notVisitedMonths'])) {
+            $parts[] = 'مقرات تحتاج زيارة';
+        }
+
+        return empty($parts)
+            ? 'تقرير جميع المقرات'
+            : 'تقرير المقرات: ' . implode(' — ', $parts);
     }
 
     /** يبني الاستعلام من المحددات المُطبَّقة ($applied) فقط */

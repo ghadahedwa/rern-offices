@@ -16,6 +16,7 @@
         "laravel/tinker": "^3.0",
         "livewire/flux": "^2.13.1",
         "livewire/livewire": "^4.1",
+        "maatwebsite/excel": "*",
         "mpdf/mpdf": "*",
         "spatie/laravel-activitylog": "*",
         "spatie/laravel-permission": "*"
