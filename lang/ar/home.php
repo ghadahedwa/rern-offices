@@ -95,6 +95,17 @@ return [
     'report_clear_selection'    => 'مسح التحديد',
     'report_select_all'         => 'اختر الكل',
     'report_office_multi'       => 'المقر (للمقارنة بين مقرات محددة)',
+
+    // ── التقريران: شامل / مخصّص ──
+    'report_comprehensive_title' => 'تقرير شامل',
+    'report_comprehensive_hint'  => 'كل بيانات المقرات في تقرير واحد',
+    'report_custom_title'        => 'تقرير مخصّص',
+    'report_custom_hint'         => 'اختر الأعمدة التي تريد عرضها (تظهر تلقائياً أعمدة الفلاتر المستخدَمة)',
+    'report_custom_columns'      => 'الأعمدة المعروضة',
+    'report_custom_column_locked' => 'عمود ثابت — لا يمكن إلغاؤه',
+    'report_custom_pdf_cols_exceeded' => 'لا يمكن عرض أكثر من :max أعمدة في تقرير PDF على ورق A4 — استخدم تصدير Excel للأعمدة الكثيرة.',
+    'report_column_unit'         => 'عمود مختار',
+    'report_custom_pdf_note'     => 'أكثر من :max عمود — الـ PDF غير متاح لهذا العدد، استخدم Excel.',
     'option_yes'                => 'نعم',
     'option_no'                 => 'لا',
 

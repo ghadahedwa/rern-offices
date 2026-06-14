@@ -18,6 +18,7 @@ use App\Models\StructuralCondition;
 use App\Models\WorkingHour;
 use App\Models\WorkSystem;
 use App\Exports\OfficesExport;
+use App\Reports\OfficeColumns;
 use Flux\Flux;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Pagination\Paginator;
@@ -33,14 +34,20 @@ class MultiOffice extends Component
 {
     use WithPagination;
 
-    /** أقصى عدد مقرات لتقرير الـ PDF (تقرير مقارنة) — الأعداد الأكبر تُصدَّر Excel */
+    /** أقصى عدد مقرات لتقرير الـ PDF الشامل (تقرير مقارنة) — الأعداد الأكبر تُصدَّر Excel */
     private const MAX_PDF_OFFICES = 150;
+
+    /** أقصى عدد أعمدة لتقرير الـ PDF المخصّص (A4 خط 10pt: ≤8 عمودي · 9-12 عرضي · >12 → Excel) */
+    private const MAX_CUSTOM_PDF_COLS = 12;
 
     public bool $showAdvanced = false;
 
     /** المحددات المُطبَّقة فعلياً (snapshot وقت الضغط على "بحث") — الاستعلام يقرأ منها فقط */
     public array $applied = [];
     public bool $hasSearched = false;
+
+    /** أعمدة التقرير المخصّص المختارة (تُملأ تلقائياً عند البحث = ثابتة + فلاتر مستخدَمة) */
+    public array $selectedColumns = [];
 
     // ── الفلاتر الأساسية (Step 1) ──
     public array $governorateIds = [];
@@ -124,6 +131,10 @@ class MultiOffice extends Component
         }
         $this->applied     = $snapshot;
         $this->hasSearched = true;
+
+        // أعمدة التقرير المخصّص الافتراضية: الثابتة + الأعمدة المقابلة للفلاتر المستخدَمة
+        $this->selectedColumns = OfficeColumns::defaultKeysForFilters($snapshot);
+
         $this->resetPage();
     }
 
@@ -152,8 +163,9 @@ class MultiOffice extends Component
     public function resetFilters(): void
     {
         $this->reset($this->filterKeys);
-        $this->applied     = [];
-        $this->hasSearched = false;
+        $this->applied         = [];
+        $this->hasSearched     = false;
+        $this->selectedColumns = [];
         $this->resetPage();
         $this->dispatch('filters-reset');
     }
@@ -203,6 +215,71 @@ class MultiOffice extends Component
         // خزّن معرّفات نتائج البحث ثم افتح التقرير في تاب جديدة (inline)
         session(['report_office_ids' => $ids]);
         $this->js("window.open('" . route('reports.multi-office.pdf') . "', '_blank')");
+    }
+
+    /**
+     * الأعمدة المتاحة للتقرير المخصّص = الثابتة + المقابلة للفلاتر المستخدَمة.
+     * المنتقي لا يعرض غيرها (طلب: لا تُضاف فلاتر لم يُبحث بها).
+     *
+     * @return array<string>
+     */
+    protected function availableCustomColumns(): array
+    {
+        return OfficeColumns::defaultKeysForFilters($this->applied);
+    }
+
+    /** الأعمدة النهائية للتصدير المخصّص: الثابتة دائماً + المختارة، ضمن المتاح، بترتيب الكتالوج */
+    protected function resolvedCustomKeys(): array
+    {
+        $available = $this->availableCustomColumns();
+        $fixed     = OfficeColumns::fixedKeys();
+
+        return array_values(array_filter(
+            $available,
+            fn ($key) => in_array($key, $fixed, true) || in_array($key, $this->selectedColumns, true)
+        ));
+    }
+
+    public function exportCustomExcel()
+    {
+        if (! $this->hasSearched) {
+            Flux::toast(variant: 'warning', text: __('home.report_search_prompt'));
+            return;
+        }
+
+        return Excel::download(
+            new OfficesExport($this->exportOffices(), $this->resolvedCustomKeys()),
+            'offices-custom-' . now()->format('Ymd-His') . '.xlsx'
+        );
+    }
+
+    public function exportCustomPdf()
+    {
+        if (! $this->hasSearched) {
+            Flux::toast(variant: 'warning', text: __('home.report_search_prompt'));
+            return;
+        }
+
+        // أعمدة الـ PDF تستبعد النصوص الطويلة (Excel فقط)
+        $catalog = OfficeColumns::all();
+        $keys    = array_values(array_filter(
+            $this->resolvedCustomKeys(),
+            fn ($key) => ! ($catalog[$key]['excelOnly'] ?? false)
+        ));
+
+        // حد الأعمدة على A4 (خط 10pt ثابت) — الأكثر يُصدَّر Excel
+        if (count($keys) > self::MAX_CUSTOM_PDF_COLS) {
+            Flux::toast(variant: 'warning', text: __('home.report_custom_pdf_cols_exceeded', ['max' => self::MAX_CUSTOM_PDF_COLS]));
+            return;
+        }
+
+        $ids = $this->buildQuery($this->allowedGovIds())->pluck('id')->all();
+
+        session([
+            'report_office_ids'     => $ids,
+            'report_custom_columns' => $keys,
+        ]);
+        $this->js("window.open('" . route('reports.multi-office.custom-pdf') . "', '_blank')");
     }
 
     /** يبني الاستعلام من المحددات المُطبَّقة ($applied) فقط */
@@ -286,7 +363,23 @@ class MultiOffice extends Component
         $officeOptions = $this->scopedOffices($allowedGovIds)
             ->orderBy('name')->get(['id', 'name']);
 
+        // أعمدة التقرير المخصّص — مجمّعة حسب القسم للمنتقي (بعد البحث فقط)
+        $customColumnGroups = [];
+        if ($this->hasSearched) {
+            $catalog = OfficeColumns::all();
+            $fixed   = OfficeColumns::fixedKeys();
+            foreach ($this->availableCustomColumns() as $key) {
+                $def = $catalog[$key];
+                $customColumnGroups[$def['group']][] = [
+                    'key'   => $key,
+                    'label' => $def['label'],
+                    'fixed' => in_array($key, $fixed, true),
+                ];
+            }
+        }
+
         return view('livewire.reports.multi-office', [
+            'customColumnGroups' => $customColumnGroups,
             'offices'              => $offices,
             'officeOptions'        => $officeOptions,
             'governorates'         => $governorates,
