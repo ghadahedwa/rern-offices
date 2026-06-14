@@ -41,35 +41,38 @@ class Create extends Component
     public bool $isEditing = false;
 
     // Step 1 — Basic Info
+    // FK select properties are intentionally untyped (not ?int): a select with an
+    // empty <option value=""> sends "" which can't be assigned to a typed ?int and
+    // trips Livewire's type guard. Untyped tolerates ""/numeric-string; saved via ?: null.
     #[Url]
-    public ?int $governorate_id = null;
-    public ?int $parent_office_id = null;
+    public $governorate_id = null;
+    public $parent_office_id = null;
     public string $name = '';
     public string $established_at = '';
     public string $mechanization_at = '';
-    public ?int $type_id = null;
-    public ?int $location_description_id = null;
-    public ?int $work_system_id = null;
+    public $type_id = null;
+    public $location_description_id = null;
+    public $work_system_id = null;
     public string $address = '';
     public string $google_maps_link = '';
     public string $floors_description = '';
-    public ?int $connection_type_id = null;
-    public ?int $working_hours_id = null;
+    public $connection_type_id = null;
+    public $working_hours_id = null;
     public string $working_days = '';
     public string $avg_daily_transactions = '';
-    public ?int $contractual_status_id = null;
+    public $contractual_status_id = null;
 
-    public ?int $structural_condition_id = null;
+    public $structural_condition_id = null;
     public string $office_area = '';
     public string $district_court = '';
 
     // Step 2 — Services & Equipment
-    public ?int $microfilm_option_id = null;
-    public ?int $disabilities_access_id = null;
-    public ?int $fire_safety_id = null;
-    public ?int $document_photocopying_service_id = null;
-    public ?int $buffet_service_id = null;
-    public ?int $cleanliness_contract_id = null;
+    public $microfilm_option_id = null;
+    public $disabilities_access_id = null;
+    public $fire_safety_id = null;
+    public $document_photocopying_service_id = null;
+    public $buffet_service_id = null;
+    public $cleanliness_contract_id = null;
     public string $Braille_sign_device = '';
     public string $queue_management_system = '';
     public string $payment_machine_count = '';
