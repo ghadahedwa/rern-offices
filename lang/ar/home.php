@@ -111,6 +111,15 @@ return [
     'report_by_type_title'       => 'المقرات حسب المحافظة والنوع',
     'report_by_type_hint'        => 'جدول متقاطع: عدد المقرات في كل محافظة موزّعاً على الأنواع',
     'report_total'               => 'الإجمالي',
+
+    // ── بيان الأجهزة العددي ──
+    'report_devices_title'         => 'بيان الأجهزة العددي',
+    'report_devices_hint'          => 'مجاميع الأجهزة لكل محافظة (شغالة ومعطلة) بالنوع',
+    'report_devices_all_hint'      => 'بدون تحديد يعرض كل المحافظات والأنواع المتاحة لك.',
+    'report_devices_working_filter' => 'أنواع الأجهزة الشغالة',
+    'report_devices_broken_filter'  => 'أنواع الأجهزة المعطلة',
+    'report_devices_working'        => 'الأجهزة الشغالة',
+    'report_devices_broken_group'   => 'الأجهزة المعطلة',
     'option_yes'                => 'نعم',
     'option_no'                 => 'لا',
 

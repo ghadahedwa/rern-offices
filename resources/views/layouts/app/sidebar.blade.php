@@ -57,6 +57,9 @@
                             <flux:sidebar.item icon="table-cells" :href="route('reports.offices-by-type')" :current="request()->routeIs('reports.offices-by-type')" wire:navigate>
                                 {{ __('home.report_by_type_title') }}
                             </flux:sidebar.item>
+                            <flux:sidebar.item icon="computer-desktop" :href="route('reports.device-count')" :current="request()->routeIs('reports.device-count')" wire:navigate>
+                                {{ __('home.report_devices_title') }}
+                            </flux:sidebar.item>
                         </div>
                     </div>
                     @endif
