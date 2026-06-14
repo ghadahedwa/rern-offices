@@ -22,6 +22,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::livewire('reports/multi-office', \App\Livewire\Reports\MultiOffice::class)->name('reports.multi-office');
     Route::get('reports/multi-office/pdf', \App\Http\Controllers\OfficesReportPdfController::class)->name('reports.multi-office.pdf');
     Route::get('reports/multi-office/custom-pdf', \App\Http\Controllers\MultiOfficeCustomPdfController::class)->name('reports.multi-office.custom-pdf');
+    Route::livewire('reports/offices-by-type', \App\Livewire\Reports\OfficesByType::class)->name('reports.offices-by-type');
+    Route::get('reports/offices-by-type/pdf', \App\Http\Controllers\OfficesByTypePdfController::class)->name('reports.offices-by-type.pdf');
     Route::get('offices/{office}/pdf', [\App\Http\Controllers\OfficePdfController::class, '__invoke'])->name('offices.pdf');
 
     Route::middleware('role:super-admin')->group(function () {

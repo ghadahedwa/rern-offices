@@ -54,6 +54,9 @@
                             <flux:sidebar.item icon="document-duplicate" :href="route('reports.multi-office')" :current="request()->routeIs('reports.multi-office')" wire:navigate>
                                 {{ __('home.report_multi_title') }}
                             </flux:sidebar.item>
+                            <flux:sidebar.item icon="table-cells" :href="route('reports.offices-by-type')" :current="request()->routeIs('reports.offices-by-type')" wire:navigate>
+                                {{ __('home.report_by_type_title') }}
+                            </flux:sidebar.item>
                         </div>
                     </div>
                     @endif

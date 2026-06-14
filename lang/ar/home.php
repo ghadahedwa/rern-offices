@@ -106,6 +106,11 @@ return [
     'report_custom_pdf_cols_exceeded' => 'لا يمكن عرض أكثر من :max أعمدة في تقرير PDF على ورق A4 — استخدم تصدير Excel للأعمدة الكثيرة.',
     'report_column_unit'         => 'عمود مختار',
     'report_custom_pdf_note'     => 'أكثر من :max عمود — الـ PDF غير متاح لهذا العدد، استخدم Excel.',
+
+    // ── تقرير المقرات حسب المحافظة والنوع ──
+    'report_by_type_title'       => 'المقرات حسب المحافظة والنوع',
+    'report_by_type_hint'        => 'جدول متقاطع: عدد المقرات في كل محافظة موزّعاً على الأنواع',
+    'report_total'               => 'الإجمالي',
     'option_yes'                => 'نعم',
     'option_no'                 => 'لا',
 
