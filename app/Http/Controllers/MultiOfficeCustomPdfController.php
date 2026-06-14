@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Governorate;
 use App\Models\Office;
 use App\Reports\OfficeColumns;
 use Illuminate\Http\Request;
@@ -44,6 +45,8 @@ class MultiOfficeCustomPdfController extends Controller
                 'DocumentPhotocopyingService', 'BuffetService', 'CleanlinessContract',
                 'brokenDevices.deviceType',
             ])
+            ->orderBy(Governorate::select('order')->whereColumn('governorates.id', 'offices.governorate_id'))
+            ->orderBy('governorate_id')
             ->orderBy('name')
             ->get();
 
@@ -69,11 +72,12 @@ class MultiOfficeCustomPdfController extends Controller
         $fontData = (new FontVariables())->getDefaults()['fontdata'];
 
         $mpdf = new Mpdf([
-            'mode'          => 'utf-8',
-            'format'        => $format,
-            'orientation'   => $orientation,
-            'default_font'  => 'dejavusans',
-            'margin_top'    => 8,
+            'mode'             => 'utf-8',
+            'format'           => $format,
+            'orientation'      => $orientation,
+            'default_font'     => 'dejavusans',
+            'default_font_size' => 10, // الخط الأساسي 10pt على مستوى المحرّك (مضمون)
+            'margin_top'       => 8,
             'margin_bottom' => 8,
             'margin_left'   => 4,
             'margin_right'  => 4,

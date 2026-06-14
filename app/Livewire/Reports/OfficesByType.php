@@ -4,6 +4,7 @@ namespace App\Livewire\Reports;
 
 use App\Exports\OfficesByTypeExport;
 use App\Models\Governorate;
+use App\Models\LocationDescription;
 use App\Models\Office;
 use App\Models\OfficeType;
 use Flux\Flux;
@@ -13,18 +14,23 @@ use Livewire\Component;
 use Maatwebsite\Excel\Facades\Excel;
 
 #[Layout('layouts.app')]
-#[Title('تقرير المقرات حسب المحافظة والنوع')]
+#[Title('تقرير المقرات حسب المحافظة والنوع والوصف')]
 class OfficesByType extends Component
 {
     // ── الفلاتر ──
     public array $governorateIds = [];
     public array $typeIds = [];
+    public array $locationIds = [];
+
+    // ── إظهار مجموعات الأعمدة ──
+    public bool $showTypes = true;
+    public bool $showLocations = true;
 
     /** snapshot وقت الضغط على "بحث" — العرض يقرأ منه فقط */
     public array $applied = [];
     public bool $hasSearched = false;
 
-    protected array $filterKeys = ['governorateIds', 'typeIds'];
+    protected array $filterKeys = ['governorateIds', 'typeIds', 'locationIds'];
 
     public function mount(): void
     {
@@ -40,6 +46,9 @@ class OfficesByType extends Component
         $this->applied = [
             'governorateIds' => $this->governorateIds,
             'typeIds'        => $this->typeIds,
+            'locationIds'    => $this->locationIds,
+            'showTypes'      => $this->showTypes,
+            'showLocations'  => $this->showLocations,
         ];
         $this->hasSearched = true;
     }
@@ -47,8 +56,10 @@ class OfficesByType extends Component
     public function resetFilters(): void
     {
         $this->reset($this->filterKeys);
-        $this->applied     = [];
-        $this->hasSearched = false;
+        $this->showTypes     = true;
+        $this->showLocations = true;
+        $this->applied       = [];
+        $this->hasSearched   = false;
         $this->dispatch('filters-reset');
     }
 
@@ -63,42 +74,68 @@ class OfficesByType extends Component
     }
 
     /**
-     * يبني المصفوفة المتقاطعة: صفوف = محافظات، أعمدة = أنواع، خلايا = عدد المقرات.
+     * يبني المصفوفة: صفوف = محافظات، مجموعتا أعمدة (نوع + وصف الموقع) + إجمالي مقرات المحافظة.
+     * الفلاتر تختار أي أعمدة تظهر؛ المحافظة تختار الصفوف. الخلايا = عدد المقرات.
      *
-     * @return array{governorates:\Illuminate\Support\Collection, types:\Illuminate\Support\Collection, map:array}
+     * @return array{governorates:\Illuminate\Support\Collection, types:\Illuminate\Support\Collection, locations:\Illuminate\Support\Collection, typeCounts:array, locationCounts:array}
      */
     public function buildMatrix(?array $allowedGovIds): array
     {
-        $f = $this->applied;
+        $f      = $this->applied;
+        $govIds = $f['governorateIds'] ?? [];
 
-        // صفوف: المحافظات (مقيّدة بالنطاق + المختارة)
         $governorates = Governorate::query()
             ->when($allowedGovIds, fn ($q) => $q->whereIn('id', $allowedGovIds))
-            ->when($f['governorateIds'] ?? [], fn ($q) => $q->whereIn('id', $f['governorateIds']))
+            ->when($govIds, fn ($q) => $q->whereIn('id', $govIds))
             ->orderBy('order')->orderBy('id')
             ->get(['id', 'name']);
 
-        // أعمدة: أنواع المقرات (المختارة أو الكل)
-        $types = OfficeType::query()
-            ->when($f['typeIds'] ?? [], fn ($q) => $q->whereIn('id', $f['typeIds']))
-            ->orderBy('name')
-            ->get(['id', 'name']);
+        $showTypes     = $f['showTypes'] ?? true;
+        $showLocations = $f['showLocations'] ?? true;
 
-        // العدّ المجمّع لكل (محافظة، نوع)
-        $counts = Office::query()
-            ->when($allowedGovIds, fn ($q) => $q->whereIn('governorate_id', $allowedGovIds))
-            ->when($f['governorateIds'] ?? [], fn ($q) => $q->whereIn('governorate_id', $f['governorateIds']))
-            ->when($f['typeIds'] ?? [], fn ($q) => $q->whereIn('type_id', $f['typeIds']))
-            ->selectRaw('governorate_id, type_id, COUNT(*) as cnt')
-            ->groupBy('governorate_id', 'type_id')
-            ->get();
+        // أعمدة النوع (المختارة أو الكل) — فقط لو مفعّل عرض النوع
+        $types = $showTypes
+            ? OfficeType::query()
+                ->when($f['typeIds'] ?? [], fn ($q) => $q->whereIn('id', $f['typeIds']))
+                ->orderBy('name')->get(['id', 'name'])
+            : collect();
 
-        $map = [];
-        foreach ($counts as $c) {
-            $map[$c->governorate_id][$c->type_id] = (int) $c->cnt;
+        // أعمدة وصف الموقع (المختارة أو الكل) — فقط لو مفعّل عرض الوصف
+        $locations = $showLocations
+            ? LocationDescription::query()
+                ->when($f['locationIds'] ?? [], fn ($q) => $q->whereIn('id', $f['locationIds']))
+                ->orderBy('name')->get(['id', 'name'])
+            : collect();
+
+        // عدّ حسب النوع
+        $typeCounts = [];
+        if ($types->isNotEmpty()) {
+            $typeRows = Office::query()
+                ->when($allowedGovIds, fn ($q) => $q->whereIn('governorate_id', $allowedGovIds))
+                ->when($govIds, fn ($q) => $q->whereIn('governorate_id', $govIds))
+                ->selectRaw('governorate_id, type_id, COUNT(*) as cnt')
+                ->groupBy('governorate_id', 'type_id')
+                ->get();
+            foreach ($typeRows as $r) {
+                $typeCounts[$r->governorate_id][$r->type_id] = (int) $r->cnt;
+            }
         }
 
-        return compact('governorates', 'types', 'map');
+        // عدّ حسب وصف الموقع
+        $locationCounts = [];
+        if ($locations->isNotEmpty()) {
+            $locRows = Office::query()
+                ->when($allowedGovIds, fn ($q) => $q->whereIn('governorate_id', $allowedGovIds))
+                ->when($govIds, fn ($q) => $q->whereIn('governorate_id', $govIds))
+                ->selectRaw('governorate_id, location_description_id, COUNT(*) as cnt')
+                ->groupBy('governorate_id', 'location_description_id')
+                ->get();
+            foreach ($locRows as $r) {
+                $locationCounts[$r->governorate_id][$r->location_description_id] = (int) $r->cnt;
+            }
+        }
+
+        return compact('governorates', 'types', 'locations', 'typeCounts', 'locationCounts');
     }
 
     public function exportExcel()
@@ -111,7 +148,7 @@ class OfficesByType extends Component
         $m = $this->buildMatrix($this->allowedGovIds());
 
         return Excel::download(
-            new OfficesByTypeExport($m['governorates'], $m['types'], $m['map']),
+            new OfficesByTypeExport($m['governorates'], $m['types'], $m['locations'], $m['typeCounts'], $m['locationCounts']),
             'offices-by-type-' . now()->format('Ymd-His') . '.xlsx'
         );
     }
@@ -140,12 +177,13 @@ class OfficesByType extends Component
 
         $matrix = $this->hasSearched
             ? $this->buildMatrix($allowedGovIds)
-            : ['governorates' => collect(), 'types' => collect(), 'map' => []];
+            : ['governorates' => collect(), 'types' => collect(), 'locations' => collect(), 'typeCounts' => [], 'locationCounts' => []];
 
         return view('livewire.reports.offices-by-type', [
-            'matrix'        => $matrix,
-            'governorates'  => $governorates,
-            'officeTypes'   => OfficeType::orderBy('name')->get(),
+            'matrix'       => $matrix,
+            'governorates' => $governorates,
+            'officeTypes'  => OfficeType::orderBy('name')->get(),
+            'locations'    => LocationDescription::orderBy('name')->get(),
         ]);
     }
 }

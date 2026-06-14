@@ -33,6 +33,10 @@ class DeviceCount extends Component
     public array $workingDevices = [];   // مفاتيح الأجهزة الشغالة المختارة (فارغ = الكل)
     public array $brokenTypeIds  = [];    // أنواع المعطلة المختارة (فارغ = الكل)
 
+    // ── إظهار مجموعات الأعمدة ──
+    public bool $showWorking = true;
+    public bool $showBroken  = true;
+
     public array $applied = [];
     public bool $hasSearched = false;
 
@@ -53,6 +57,8 @@ class DeviceCount extends Component
             'governorateIds' => $this->governorateIds,
             'workingDevices' => $this->workingDevices,
             'brokenTypeIds'  => $this->brokenTypeIds,
+            'showWorking'    => $this->showWorking,
+            'showBroken'     => $this->showBroken,
         ];
         $this->hasSearched = true;
     }
@@ -60,6 +66,8 @@ class DeviceCount extends Component
     public function resetFilters(): void
     {
         $this->reset($this->filterKeys);
+        $this->showWorking = true;
+        $this->showBroken  = true;
         $this->applied     = [];
         $this->hasSearched = false;
         $this->dispatch('filters-reset');

@@ -28,6 +28,7 @@
             text-align: center; vertical-align: middle;
         }
         .rt td.name { font-weight: bold; color: #111; text-align: right; }
+        a.maplink { color: #1a5fb4; text-decoration: underline; }
         .rt tbody tr:nth-child(even) td { background-color: #fafafa; }
 
         .page-footer { margin-top: 8px; padding-top: 4px; border-top: 1px solid #e4e4e4; text-align: center; font-size: 8pt; color: #aaa; }

@@ -2,10 +2,10 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>تقرير المقرات حسب المحافظة والنوع</title>
+    <title>تقرير المقرات حسب المحافظة والنوع والوصف</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: dejavusans, sans-serif; direction: rtl; font-size: 10pt; color: #1a1a1a; }
+        body { font-family: dejavusans, sans-serif; direction: rtl; font-size: 9pt; color: #1a1a1a; }
 
         .header-table { width: 100%; border-collapse: collapse; border-bottom: 2px solid #c9a847; padding-bottom: 5px; margin-bottom: 10px; }
         .header-table td { vertical-align: middle; padding: 2px; }
@@ -14,18 +14,19 @@
         .app-subtitle { font-size: 9pt; color: #666; margin-top: 1px; }
         .meta-cell { text-align: left; font-size: 9pt; color: #666; line-height: 1.6; }
 
-        .rt { width: 100%; border-collapse: collapse; table-layout: fixed; }
+        .rt { width: 100%; border-collapse: collapse; }
         .rt th, .rt td { word-wrap: break-word; overflow-wrap: break-word; }
         .rt th {
-            background-color: #c9a847; color: #fff; font-size: 10pt; font-weight: bold;
-            padding: 6px 4px; border: 1px solid #b8962e; text-align: center; vertical-align: middle;
+            background-color: #c9a847; color: #fff; font-size: 9pt; font-weight: bold;
+            padding: 5px 3px; border: 1px solid #b8962e; text-align: center; vertical-align: middle;
         }
-        .rt td { border: 1px solid #ddd; padding: 6px 4px; font-size: 10pt; text-align: center; vertical-align: middle; }
+        .rt th.grp-loc { background-color: #a85; }
+        .rt td { border: 1px solid #ddd; padding: 5px 3px; font-size: 9pt; text-align: center; vertical-align: middle; }
         .rt td.gov { text-align: right; font-weight: bold; color: #222; background-color: #faf6ea; }
+        .rt td.total-col { font-weight: bold; background-color: #faf6ea; }
         .rt tbody tr:nth-child(even) td { background-color: #fafafa; }
-        .rt tbody tr:nth-child(even) td.gov { background-color: #f5efdc; }
-        .rt .total-col { font-weight: bold; background-color: #faf6ea; }
-        .rt tfoot td { font-weight: bold; background-color: #ede3c2; border: 1px solid #c9a847; padding: 6px 4px; }
+        .rt tbody tr:nth-child(even) td.gov, .rt tbody tr:nth-child(even) td.total-col { background-color: #f5efdc; }
+        .rt tfoot td { font-weight: bold; background-color: #ede3c2; border: 1px solid #c9a847; padding: 5px 3px; }
 
         .page-footer { margin-top: 10px; padding-top: 4px; border-top: 1px solid #e4e4e4; text-align: center; font-size: 8pt; color: #aaa; }
     </style>
@@ -33,13 +34,11 @@
 <body>
 
     @php
-        $grandTotal = 0;
-        $colTotals  = [];
-        foreach ($types as $t) { $colTotals[$t->id] = 0; }
-        // عرض عمود المحافظة أوسع، الباقي بالتساوي
-        $colCount  = $types->count() + 1; // أنواع + إجمالي
-        $govWidth  = 18;
-        $cellWidth = $colCount > 0 ? round((100 - $govWidth) / $colCount, 2) : 0;
+        $hasTypes      = $types->isNotEmpty();
+        $hasLocations  = $locations->isNotEmpty();
+        $typeColTotals = array_fill_keys($types->pluck('id')->all(), 0);
+        $locColTotals  = array_fill_keys($locations->pluck('id')->all(), 0);
+        $totalCols     = 1 + $types->count() + ($hasTypes ? 1 : 0) + $locations->count() + ($hasLocations ? 1 : 0);
     @endphp
 
     <table class="header-table">
@@ -47,7 +46,7 @@
             @if($logoBase64)<td style="width:44px;"><img class="logo-img" src="{{ $logoBase64 }}" alt=""></td>@endif
             <td>
                 <div class="app-title">قطاع الشهر العقاري</div>
-                <div class="app-subtitle">تقرير المقرات حسب المحافظة والنوع</div>
+                <div class="app-subtitle">تقرير المقرات حسب المحافظة والنوع والوصف</div>
             </td>
             <td class="meta-cell">
                 <div>تاريخ الطباعة: {{ now()->format('Y-m-d') }}</div>
@@ -58,37 +57,45 @@
     <table class="rt">
         <thead>
             <tr>
-                <th width="{{ $govWidth }}%">المحافظة</th>
-                @foreach($types as $type)
-                    <th width="{{ $cellWidth }}%">{{ $type->name }}</th>
-                @endforeach
-                <th width="{{ $cellWidth }}%">الإجمالي</th>
+                <th rowspan="2">المحافظة</th>
+                @if($hasTypes)<th colspan="{{ $types->count() + 1 }}">نوع المقر</th>@endif
+                @if($hasLocations)<th colspan="{{ $locations->count() + 1 }}" class="grp-loc">وصف الموقع</th>@endif
+            </tr>
+            <tr>
+                @foreach($types as $type)<th>{{ $type->name }}</th>@endforeach
+                @if($hasTypes)<th>الإجمالي</th>@endif
+                @foreach($locations as $loc)<th class="grp-loc">{{ $loc->name }}</th>@endforeach
+                @if($hasLocations)<th class="grp-loc">الإجمالي</th>@endif
             </tr>
         </thead>
         <tbody>
             @forelse($governorates as $gov)
-                @php $rowTotal = 0; @endphp
                 <tr>
                     <td class="gov">{{ $gov->name }}</td>
+                    @php $typeRowTotal = 0; $locRowTotal = 0; @endphp
                     @foreach($types as $type)
-                        @php $cnt = $map[$gov->id][$type->id] ?? 0; $rowTotal += $cnt; $colTotals[$type->id] += $cnt; @endphp
-                        <td>{{ $cnt }}</td>
+                        @php $v = $typeCounts[$gov->id][$type->id] ?? 0; $typeColTotals[$type->id] += $v; $typeRowTotal += $v; @endphp
+                        <td>{{ $v }}</td>
                     @endforeach
-                    <td class="total-col">{{ $rowTotal }}</td>
+                    @if($hasTypes)<td class="total-col">{{ $typeRowTotal }}</td>@endif
+                    @foreach($locations as $loc)
+                        @php $v = $locationCounts[$gov->id][$loc->id] ?? 0; $locColTotals[$loc->id] += $v; $locRowTotal += $v; @endphp
+                        <td>{{ $v }}</td>
+                    @endforeach
+                    @if($hasLocations)<td class="total-col">{{ $locRowTotal }}</td>@endif
                 </tr>
-                @php $grandTotal += $rowTotal; @endphp
             @empty
-                <tr><td colspan="{{ $types->count() + 2 }}" style="text-align:center; color:#999; padding:30px;">لا توجد بيانات</td></tr>
+                <tr><td colspan="{{ $totalCols }}" style="text-align:center; color:#999; padding:30px;">لا توجد بيانات</td></tr>
             @endforelse
         </tbody>
         @if($governorates->isNotEmpty())
         <tfoot>
             <tr>
                 <td style="text-align:right;">الإجمالي</td>
-                @foreach($types as $type)
-                    <td>{{ $colTotals[$type->id] }}</td>
-                @endforeach
-                <td>{{ $grandTotal }}</td>
+                @foreach($types as $type)<td>{{ $typeColTotals[$type->id] }}</td>@endforeach
+                @if($hasTypes)<td>{{ array_sum($typeColTotals) }}</td>@endif
+                @foreach($locations as $loc)<td>{{ $locColTotals[$loc->id] }}</td>@endforeach
+                @if($hasLocations)<td>{{ array_sum($locColTotals) }}</td>@endif
             </tr>
         </tfoot>
         @endif

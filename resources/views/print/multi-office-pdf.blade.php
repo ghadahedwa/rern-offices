@@ -124,7 +124,6 @@
                     <div class="f"><span class="k">المحكمة:</span> <span class="v">{{ $office->district_court ?: $dash }}</span></div>
                     <div class="f"><span class="k">المساحة والطوابق:</span> <span class="v">{{ $pair($office->office_area ? $office->office_area.' م²' : null, $office->floors_description) }}</span></div>
                     <div class="f"><span class="k">التعاقدي والإنشائية:</span> <span class="v">{{ $pair($office->contractualStatus->name ?? null, $office->structuralCondition->name ?? null) }}</span></div>
-                    <div class="f"><span class="k">رابط الخريطة:</span> @if($office->google_maps_link)<a class="maplink" href="{{ $office->google_maps_link }}">رابط الخريطة</a>@else<span class="v">{{ $dash }}</span>@endif</div>
                 </td>
 
                 {{-- أوقات وأنظمة العمل --}}

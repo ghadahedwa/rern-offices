@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Governorate;
 use App\Models\Office;
 use Illuminate\Http\Request;
 use Mpdf\Config\ConfigVariables;
@@ -39,6 +40,8 @@ class OfficesReportPdfController extends Controller
                 'DocumentPhotocopyingService', 'BuffetService', 'CleanlinessContract',
                 'brokenDevices.deviceType',
             ])
+            ->orderBy(Governorate::select('order')->whereColumn('governorates.id', 'offices.governorate_id'))
+            ->orderBy('governorate_id')
             ->orderBy('name')
             ->get();
 

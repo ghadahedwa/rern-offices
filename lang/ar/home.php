@@ -106,20 +106,26 @@ return [
     'report_custom_pdf_cols_exceeded' => 'لا يمكن عرض أكثر من :max أعمدة في تقرير PDF على ورق A4 — استخدم تصدير Excel للأعمدة الكثيرة.',
     'report_column_unit'         => 'عمود مختار',
     'report_custom_pdf_note'     => 'أكثر من :max عمود — الـ PDF غير متاح لهذا العدد، استخدم Excel.',
+    'report_custom_extra_group'  => 'بيانات إضافية',
 
     // ── تقرير المقرات حسب المحافظة والنوع ──
-    'report_by_type_title'       => 'المقرات حسب المحافظة والنوع',
-    'report_by_type_hint'        => 'جدول متقاطع: عدد المقرات في كل محافظة موزّعاً على الأنواع',
+    'report_by_type_title'       => 'المقرات حسب المحافظة والنوع والوصف',
+    'report_by_type_hint'        => 'جدول متقاطع: عدد المقرات في كل محافظة موزّعاً على الأنواع ووصف الموقع',
     'report_total'               => 'الإجمالي',
+    'report_show_groups'         => 'الأعمدة المعروضة',
+    'report_show_types'          => 'عرض نوع المقر',
+    'report_show_locations'      => 'عرض وصف المقر',
 
     // ── بيان الأجهزة العددي ──
     'report_devices_title'         => 'بيان الأجهزة العددي',
-    'report_devices_hint'          => 'مجاميع الأجهزة لكل محافظة (شغالة ومعطلة) بالنوع',
+    'report_devices_hint'          => 'مجموع الأجهزة لكل محافظة (شغالة ومعطلة) بالنوع',
     'report_devices_all_hint'      => 'بدون تحديد يعرض كل المحافظات والأنواع المتاحة لك.',
-    'report_devices_working_filter' => 'أنواع الأجهزة الشغالة',
+    'report_devices_working_filter' => 'أنواع الأجهزة التى تعمل',
     'report_devices_broken_filter'  => 'أنواع الأجهزة المعطلة',
-    'report_devices_working'        => 'الأجهزة الشغالة',
+    'report_devices_working'        => 'الأجهزة التى تعمل',
     'report_devices_broken_group'   => 'الأجهزة المعطلة',
+    'report_devices_show_working'   => 'عرض الأجهزة التى تعمل',
+    'report_devices_show_broken'    => 'عرض الأجهزة المعطلة',
     'option_yes'                => 'نعم',
     'option_no'                 => 'لا',
 

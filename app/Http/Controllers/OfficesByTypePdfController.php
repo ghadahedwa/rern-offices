@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Governorate;
+use App\Models\LocationDescription;
 use App\Models\Office;
 use App\Models\OfficeType;
 use Illuminate\Http\Request;
@@ -34,22 +35,44 @@ class OfficesByTypePdfController extends Controller
             ->orderBy('order')->orderBy('id')
             ->get(['id', 'name']);
 
-        $types = OfficeType::query()
-            ->when($f['typeIds'] ?? [], fn ($q) => $q->whereIn('id', $f['typeIds']))
-            ->orderBy('name')
-            ->get(['id', 'name']);
+        $showTypes     = $f['showTypes'] ?? true;
+        $showLocations = $f['showLocations'] ?? true;
+        $govIds        = $f['governorateIds'] ?? [];
 
-        $counts = Office::query()
-            ->when($allowedGovIds, fn ($q) => $q->whereIn('governorate_id', $allowedGovIds))
-            ->when($f['governorateIds'] ?? [], fn ($q) => $q->whereIn('governorate_id', $f['governorateIds']))
-            ->when($f['typeIds'] ?? [], fn ($q) => $q->whereIn('type_id', $f['typeIds']))
-            ->selectRaw('governorate_id, type_id, COUNT(*) as cnt')
-            ->groupBy('governorate_id', 'type_id')
-            ->get();
+        $types = $showTypes
+            ? OfficeType::query()
+                ->when($f['typeIds'] ?? [], fn ($q) => $q->whereIn('id', $f['typeIds']))
+                ->orderBy('name')->get(['id', 'name'])
+            : collect();
 
-        $map = [];
-        foreach ($counts as $c) {
-            $map[$c->governorate_id][$c->type_id] = (int) $c->cnt;
+        $locations = $showLocations
+            ? LocationDescription::query()
+                ->when($f['locationIds'] ?? [], fn ($q) => $q->whereIn('id', $f['locationIds']))
+                ->orderBy('name')->get(['id', 'name'])
+            : collect();
+
+        $typeCounts = [];
+        if ($types->isNotEmpty()) {
+            $typeRows = Office::query()
+                ->when($allowedGovIds, fn ($q) => $q->whereIn('governorate_id', $allowedGovIds))
+                ->when($govIds, fn ($q) => $q->whereIn('governorate_id', $govIds))
+                ->selectRaw('governorate_id, type_id, COUNT(*) as cnt')
+                ->groupBy('governorate_id', 'type_id')->get();
+            foreach ($typeRows as $r) {
+                $typeCounts[$r->governorate_id][$r->type_id] = (int) $r->cnt;
+            }
+        }
+
+        $locationCounts = [];
+        if ($locations->isNotEmpty()) {
+            $locRows = Office::query()
+                ->when($allowedGovIds, fn ($q) => $q->whereIn('governorate_id', $allowedGovIds))
+                ->when($govIds, fn ($q) => $q->whereIn('governorate_id', $govIds))
+                ->selectRaw('governorate_id, location_description_id, COUNT(*) as cnt')
+                ->groupBy('governorate_id', 'location_description_id')->get();
+            foreach ($locRows as $r) {
+                $locationCounts[$r->governorate_id][$r->location_description_id] = (int) $r->cnt;
+            }
         }
 
         $logoPath   = public_path('images/logo3.png');
@@ -57,12 +80,14 @@ class OfficesByTypePdfController extends Controller
             ? 'data:image/png;base64,' . base64_encode(file_get_contents($logoPath))
             : null;
 
-        // الاتجاه حسب عدد الأنواع (الأعمدة): أكثر من 6 نوع → عرضي
-        $landscape   = $types->count() > 6;
+        // عدد الأعمدة (نوع + وصف موقع): أكثر من 6 → عرضي
+        $landscape   = ($types->count() + $locations->count()) > 6;
         $format      = $landscape ? 'A4-L' : 'A4';
         $orientation = $landscape ? 'L' : 'P';
 
-        $html = view('print.offices-by-type-pdf', compact('governorates', 'types', 'map', 'logoBase64'))->render();
+        $html = view('print.offices-by-type-pdf', compact(
+            'governorates', 'types', 'locations', 'typeCounts', 'locationCounts', 'logoBase64'
+        ))->render();
 
         $fontDirs = (new ConfigVariables())->getDefaults()['fontDir'];
         $fontData = (new FontVariables())->getDefaults()['fontdata'];

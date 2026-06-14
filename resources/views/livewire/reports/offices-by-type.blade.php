@@ -1,4 +1,4 @@
-<div class="max-w-5xl mx-auto p-6 space-y-6">
+<div class="max-w-7xl mx-auto p-6 space-y-6">
 
     {{-- Header --}}
     <div class="flex items-center justify-between gap-4">
@@ -29,9 +29,23 @@
             <h3 class="text-sm font-semibold text-zinc-600 dark:text-zinc-400 uppercase tracking-wide">{{ __('home.report_basic_filters') }}</h3>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
             @include('livewire.reports.includes.checkbox-group', ['field' => 'governorateIds', 'options' => $governorates->pluck('name', 'id')->all(), 'label' => __('home.governorate_name')])
             @include('livewire.reports.includes.checkbox-group', ['field' => 'typeIds', 'options' => $officeTypes->pluck('name', 'id')->all(), 'label' => __('home.office_type')])
+            @include('livewire.reports.includes.checkbox-group', ['field' => 'locationIds', 'options' => $locations->pluck('name', 'id')->all(), 'label' => __('home.location_description')])
+        </div>
+
+        {{-- اختيار مجموعات الأعمدة المعروضة --}}
+        <div class="flex flex-wrap items-center gap-5 pt-1">
+            <span class="text-xs font-medium text-zinc-500 dark:text-zinc-400">{{ __('home.report_show_groups') }}:</span>
+            <label class="flex items-center gap-2 text-sm text-zinc-700 dark:text-zinc-200 cursor-pointer">
+                <input type="checkbox" wire:model="showTypes" class="rounded border-zinc-300 dark:border-zinc-600 text-[#c9a847] focus:ring-[#c9a847]" />
+                <span>{{ __('home.report_show_types') }}</span>
+            </label>
+            <label class="flex items-center gap-2 text-sm text-zinc-700 dark:text-zinc-200 cursor-pointer">
+                <input type="checkbox" wire:model="showLocations" class="rounded border-zinc-300 dark:border-zinc-600 text-[#c9a847] focus:ring-[#c9a847]" />
+                <span>{{ __('home.report_show_locations') }}</span>
+            </label>
         </div>
     </div>
 
@@ -50,18 +64,21 @@
         </button>
     </div>
 
-    {{-- النتائج: الجدول المتقاطع --}}
+    {{-- النتائج --}}
     @if($hasSearched)
     @php
-        $governoratesRows = $matrix['governorates'];
-        $types            = $matrix['types'];
-        $map              = $matrix['map'];
-        $colTotals        = [];
-        foreach ($types as $t) { $colTotals[$t->id] = 0; }
-        $grandTotal = 0;
+        $rows           = $matrix['governorates'];
+        $types          = $matrix['types'];
+        $locations      = $matrix['locations'];
+        $typeCounts     = $matrix['typeCounts'];
+        $locationCounts = $matrix['locationCounts'];
+        $hasTypes       = $types->isNotEmpty();
+        $hasLocations   = $locations->isNotEmpty();
+        $typeColTotals  = array_fill_keys($types->pluck('id')->all(), 0);
+        $locColTotals   = array_fill_keys($locations->pluck('id')->all(), 0);
     @endphp
     <div class="space-y-3">
-        @if($governoratesRows->isNotEmpty() && $types->isNotEmpty())
+        @if($rows->isNotEmpty())
         <div class="flex items-center justify-end gap-2">
             <button type="button" wire:click="exportExcel" wire:loading.attr="disabled" wire:target="exportExcel"
                     class="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg border border-emerald-300 text-emerald-700 hover:bg-emerald-50 dark:border-emerald-700 dark:text-emerald-400 dark:hover:bg-emerald-900/20 transition disabled:opacity-50">
@@ -76,37 +93,45 @@
         </div>
 
         <div class="overflow-x-auto rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-sm">
-            <table class="w-full text-sm text-center">
-                <thead class="bg-[#c9a847] text-white text-xs">
-                    <tr>
-                        <th class="px-4 py-3 font-semibold text-right">{{ __('home.governorate_name') }}</th>
-                        @foreach($types as $type)
-                            <th class="px-3 py-3 font-semibold">{{ $type->name }}</th>
-                        @endforeach
-                        <th class="px-3 py-3 font-semibold bg-[#b8962e]">{{ __('home.report_total') }}</th>
+            <table class="w-full text-sm text-center whitespace-nowrap">
+                <thead class="text-xs">
+                    <tr class="bg-[#c9a847] text-white">
+                        <th class="px-4 py-2 font-semibold text-right" rowspan="2">{{ __('home.governorate_name') }}</th>
+                        @if($hasTypes)<th class="px-3 py-2 font-semibold" colspan="{{ $types->count() + 1 }}">{{ __('home.office_type') }}</th>@endif
+                        @if($hasLocations)<th class="px-3 py-2 font-semibold bg-[#a85]" colspan="{{ $locations->count() + 1 }}">{{ __('home.location_description') }}</th>@endif
+                    </tr>
+                    <tr class="bg-[#c9a847] text-white">
+                        @foreach($types as $type)<th class="px-2 py-2 font-medium">{{ $type->name }}</th>@endforeach
+                        @if($hasTypes)<th class="px-2 py-2 font-semibold bg-[#b8962e]">{{ __('home.report_total') }}</th>@endif
+                        @foreach($locations as $loc)<th class="px-2 py-2 font-medium bg-[#a85]">{{ $loc->name }}</th>@endforeach
+                        @if($hasLocations)<th class="px-2 py-2 font-semibold bg-[#b8962e]">{{ __('home.report_total') }}</th>@endif
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-zinc-100 dark:divide-zinc-700">
-                    @foreach($governoratesRows as $gov)
-                        @php $rowTotal = 0; @endphp
+                    @foreach($rows as $gov)
                         <tr class="hover:bg-zinc-50 dark:hover:bg-zinc-800 transition">
                             <td class="px-4 py-2.5 text-right font-medium text-zinc-800 dark:text-zinc-100 bg-[#c9a847]/5">{{ $gov->name }}</td>
+                            @php $typeRowTotal = 0; $locRowTotal = 0; @endphp
                             @foreach($types as $type)
-                                @php $cnt = $map[$gov->id][$type->id] ?? 0; $rowTotal += $cnt; $colTotals[$type->id] += $cnt; @endphp
-                                <td class="px-3 py-2.5 text-zinc-600 dark:text-zinc-300">{{ $cnt }}</td>
+                                @php $v = $typeCounts[$gov->id][$type->id] ?? 0; $typeColTotals[$type->id] += $v; $typeRowTotal += $v; @endphp
+                                <td class="px-2 py-2.5 text-zinc-600 dark:text-zinc-300">{{ $v }}</td>
                             @endforeach
-                            <td class="px-3 py-2.5 font-semibold text-[#b8962e] dark:text-[#c9a847] bg-[#c9a847]/5">{{ $rowTotal }}</td>
+                            @if($hasTypes)<td class="px-2 py-2.5 font-semibold text-[#b8962e] dark:text-[#c9a847] bg-[#c9a847]/5">{{ $typeRowTotal }}</td>@endif
+                            @foreach($locations as $loc)
+                                @php $v = $locationCounts[$gov->id][$loc->id] ?? 0; $locColTotals[$loc->id] += $v; $locRowTotal += $v; @endphp
+                                <td class="px-2 py-2.5 text-zinc-600 dark:text-zinc-300">{{ $v }}</td>
+                            @endforeach
+                            @if($hasLocations)<td class="px-2 py-2.5 font-semibold text-[#b8962e] dark:text-[#c9a847] bg-[#c9a847]/5">{{ $locRowTotal }}</td>@endif
                         </tr>
-                        @php $grandTotal += $rowTotal; @endphp
                     @endforeach
                 </tbody>
                 <tfoot>
                     <tr class="bg-[#c9a847]/15 font-semibold text-zinc-800 dark:text-zinc-100">
                         <td class="px-4 py-3 text-right">{{ __('home.report_total') }}</td>
-                        @foreach($types as $type)
-                            <td class="px-3 py-3">{{ $colTotals[$type->id] }}</td>
-                        @endforeach
-                        <td class="px-3 py-3 text-[#b8962e] dark:text-[#c9a847]">{{ $grandTotal }}</td>
+                        @foreach($types as $type)<td class="px-2 py-3">{{ $typeColTotals[$type->id] }}</td>@endforeach
+                        @if($hasTypes)<td class="px-2 py-3 text-[#b8962e] dark:text-[#c9a847]">{{ array_sum($typeColTotals) }}</td>@endif
+                        @foreach($locations as $loc)<td class="px-2 py-3">{{ $locColTotals[$loc->id] }}</td>@endforeach
+                        @if($hasLocations)<td class="px-2 py-3 text-[#b8962e] dark:text-[#c9a847]">{{ array_sum($locColTotals) }}</td>@endif
                     </tr>
                 </tfoot>
             </table>
@@ -126,6 +151,6 @@
     </div>
     @endif
 
-    {{-- keepalive: يجدد الـ snapshot والـ CSRF كل 10 دقائق --}}
+    {{-- keepalive --}}
     <div x-data x-init="setInterval(() => $wire.$refresh(), 600000)" class="hidden"></div>
 </div>

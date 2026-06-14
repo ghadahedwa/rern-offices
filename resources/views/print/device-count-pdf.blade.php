@@ -36,6 +36,7 @@
 
     @php
         $workingKeys = array_keys($workingCols);
+        $hasWorking  = ! empty($workingCols);
         $hasBroken   = $brokenTypes->isNotEmpty();
         $wColTotals  = array_fill_keys($workingKeys, 0);
         $bColTotals  = array_fill_keys($brokenTypes->pluck('id')->all(), 0);
@@ -58,7 +59,9 @@
         <thead>
             <tr>
                 <th rowspan="2">المحافظة</th>
-                <th colspan="{{ count($workingCols) }}">الأجهزة الشغالة</th>
+                @if($hasWorking)
+                    <th colspan="{{ count($workingCols) }}">الأجهزة التى تعمل</th>
+                @endif
                 @if($hasBroken)
                     <th colspan="{{ $brokenTypes->count() }}" class="grp-broken">الأجهزة المعطلة</th>
                 @endif

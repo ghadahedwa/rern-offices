@@ -49,6 +49,9 @@ class MultiOffice extends Component
     /** أعمدة التقرير المخصّص المختارة (تُملأ تلقائياً عند البحث = ثابتة + فلاتر مستخدَمة) */
     public array $selectedColumns = [];
 
+    /** كاش لإجمالي عدد خيارات كل فلتر متعدد (لاكتشاف "تحديد الكل" = بلا تقييد صفوف) */
+    private ?array $optionTotalsCache = null;
+
     // ── الفلاتر الأساسية (Step 1) ──
     public array $governorateIds = [];
     public array $officeIds = [];
@@ -218,14 +221,14 @@ class MultiOffice extends Component
     }
 
     /**
-     * الأعمدة المتاحة للتقرير المخصّص = الثابتة + المقابلة للفلاتر المستخدَمة.
-     * المنتقي لا يعرض غيرها (طلب: لا تُضاف فلاتر لم يُبحث بها).
+     * الأعمدة المتاحة في منتقي التقرير المخصّص = الثابتة + أعمدة الفلاتر المستخدَمة + الاختيارية.
+     * المعلّم تلقائياً منها = الثابتة + الفلاتر فقط (انظر search())؛ الاختيارية غير معلّمة.
      *
      * @return array<string>
      */
     protected function availableCustomColumns(): array
     {
-        return OfficeColumns::defaultKeysForFilters($this->applied);
+        return OfficeColumns::customPickerKeys($this->applied);
     }
 
     /** الأعمدة النهائية للتصدير المخصّص: الثابتة دائماً + المختارة، ضمن المتاح، بترتيب الكتالوج */
@@ -282,6 +285,60 @@ class MultiOffice extends Component
         $this->js("window.open('" . route('reports.multi-office.custom-pdf') . "', '_blank')");
     }
 
+    /** إجمالي عدد خيارات كل فلتر متعدد (لاكتشاف "تحديد الكل") — memoized */
+    protected function optionTotals(): array
+    {
+        if ($this->optionTotalsCache !== null) {
+            return $this->optionTotalsCache;
+        }
+
+        $allowed = $this->allowedGovIds();
+
+        return $this->optionTotalsCache = [
+            'governorateIds'         => $allowed === null ? Governorate::count() : count($allowed),
+            'officeIds'              => $this->scopedOffices($allowed)->count(),
+            'typeIds'                => OfficeType::count(),
+            'locationIds'            => LocationDescription::count(),
+            'workSystemIds'          => WorkSystem::count(),
+            'workingHoursIds'        => WorkingHour::count(),
+            'contractualStatusIds'   => ContractualStatus::count(),
+            'connectionTypeIds'      => ConnectionType::count(),
+            'structuralConditionIds' => StructuralCondition::count(),
+            'microfilmIds'           => MicrofilmOption::count(),
+            'disabilitiesAccessIds'  => DisabilitieAccess::count(),
+            'fireSafetyIds'          => FireSafety::count(),
+            'photocopyingIds'        => DocumentPhotocopyingService::count(),
+            'buffetIds'              => BuffetService::count(),
+            'cleanlinessContractIds' => CleanlinessContract::count(),
+            'workingDays'            => 6,
+            'queueSystem'            => 3,
+            'cameras'                => 3,
+            'electricityMeterType'   => 3,
+            'waterMeterType'         => 3,
+            'cleanlinessRating'      => count(Office::CLEANLINESS_RATINGS),
+            'archiveRating'          => count(Office::ARCHIVE_RATINGS),
+            'scheduleCommitment'     => count(Office::COMMITMENT_RATINGS),
+            'citizenCommitment'      => count(Office::COMMITMENT_RATINGS),
+        ];
+    }
+
+    /**
+     * هل الفلتر المتعدد يقيّد الصفوف فعلاً؟
+     * يقيّد فقط عند اختيار جزئي؛ "تحديد الكل" (أو لا شيء) = بلا تقييد (تظهر القيم الفاضية بشرطة).
+     */
+    protected function multiActive(string $key): bool
+    {
+        $selected = $this->applied[$key] ?? [];
+
+        if (empty($selected)) {
+            return false;
+        }
+
+        $total = $this->optionTotals()[$key] ?? PHP_INT_MAX;
+
+        return count($selected) < $total;
+    }
+
     /** يبني الاستعلام من المحددات المُطبَّقة ($applied) فقط */
     protected function buildQuery(?array $allowedGovIds)
     {
@@ -290,48 +347,51 @@ class MultiOffice extends Component
         return Office::query()
             ->with(['governorate', 'officeType', 'connectionType', 'structuralCondition'])
             ->when($allowedGovIds, fn ($q) => $q->whereIn('governorate_id', $allowedGovIds))
-            // ── أساسية ──
-            ->when($f['governorateIds'] ?? [], fn ($q) => $q->whereIn('governorate_id', $f['governorateIds']))
-            ->when($f['officeIds'] ?? [], fn ($q) => $q->whereIn('id', $f['officeIds']))
-            ->when($f['typeIds'] ?? [], fn ($q) => $q->whereIn('type_id', $f['typeIds']))
-            ->when($f['locationIds'] ?? [], fn ($q) => $q->whereIn('location_description_id', $f['locationIds']))
+            // ── أساسية ── (الفلاتر المتعددة: "تحديد الكل" = بلا تقييد صفوف، فتظهر القيم الفاضية بشرطة)
+            ->when($this->multiActive('governorateIds'), fn ($q) => $q->whereIn('governorate_id', $f['governorateIds']))
+            ->when($this->multiActive('officeIds'), fn ($q) => $q->whereIn('id', $f['officeIds']))
+            ->when($this->multiActive('typeIds'), fn ($q) => $q->whereIn('type_id', $f['typeIds']))
+            ->when($this->multiActive('locationIds'), fn ($q) => $q->whereIn('location_description_id', $f['locationIds']))
             ->when($f['establishedFrom'] ?? null, fn ($q) => $q->whereDate('established_at', '>=', $f['establishedFrom']))
             ->when($f['establishedTo'] ?? null, fn ($q) => $q->whereDate('established_at', '<=', $f['establishedTo']))
-            ->when($f['workSystemIds'] ?? [], fn ($q) => $q->whereIn('work_system_id', $f['workSystemIds']))
-            ->when($f['workingHoursIds'] ?? [], fn ($q) => $q->whereIn('working_hours_id', $f['workingHoursIds']))
-            ->when($f['workingDays'] ?? [], fn ($q) => $q->whereIn('working_days', $f['workingDays']))
+            ->when($this->multiActive('workSystemIds'), fn ($q) => $q->whereIn('work_system_id', $f['workSystemIds']))
+            ->when($this->multiActive('workingHoursIds'), fn ($q) => $q->whereIn('working_hours_id', $f['workingHoursIds']))
+            ->when($this->multiActive('workingDays'), fn ($q) => $q->whereIn('working_days', $f['workingDays']))
             ->when($f['mechanizationFrom'] ?? null, fn ($q) => $q->whereDate('mechanization_at', '>=', $f['mechanizationFrom']))
             ->when($f['mechanizationTo'] ?? null, fn ($q) => $q->whereDate('mechanization_at', '<=', $f['mechanizationTo']))
-            ->when($f['contractualStatusIds'] ?? [], fn ($q) => $q->whereIn('contractual_status_id', $f['contractualStatusIds']))
+            ->when($this->multiActive('contractualStatusIds'), fn ($q) => $q->whereIn('contractual_status_id', $f['contractualStatusIds']))
             ->when($f['districtCourt'] ?? '', fn ($q) => $q->where('district_court', 'like', "%{$f['districtCourt']}%"))
-            ->when($f['connectionTypeIds'] ?? [], fn ($q) => $q->whereIn('connection_type_id', $f['connectionTypeIds']))
+            ->when($this->multiActive('connectionTypeIds'), fn ($q) => $q->whereIn('connection_type_id', $f['connectionTypeIds']))
             // ── متقدمة: المجموعة 3 ──
-            ->when($f['microfilmIds'] ?? [], fn ($q) => $q->whereIn('microfilm_option_id', $f['microfilmIds']))
-            ->when($f['disabilitiesAccessIds'] ?? [], fn ($q) => $q->whereIn('disabilities_access_id', $f['disabilitiesAccessIds']))
-            ->when($f['fireSafetyIds'] ?? [], fn ($q) => $q->whereIn('fire_safety_id', $f['fireSafetyIds']))
-            ->when($f['photocopyingIds'] ?? [], fn ($q) => $q->whereIn('document_photocopying_service_id', $f['photocopyingIds']))
-            ->when($f['buffetIds'] ?? [], fn ($q) => $q->whereIn('buffet_service_id', $f['buffetIds']))
-            ->when($f['cleanlinessContractIds'] ?? [], fn ($q) => $q->whereIn('cleanliness_contract_id', $f['cleanlinessContractIds']))
+            ->when($this->multiActive('microfilmIds'), fn ($q) => $q->whereIn('microfilm_option_id', $f['microfilmIds']))
+            ->when($this->multiActive('disabilitiesAccessIds'), fn ($q) => $q->whereIn('disabilities_access_id', $f['disabilitiesAccessIds']))
+            ->when($this->multiActive('fireSafetyIds'), fn ($q) => $q->whereIn('fire_safety_id', $f['fireSafetyIds']))
+            ->when($this->multiActive('photocopyingIds'), fn ($q) => $q->whereIn('document_photocopying_service_id', $f['photocopyingIds']))
+            ->when($this->multiActive('buffetIds'), fn ($q) => $q->whereIn('buffet_service_id', $f['buffetIds']))
+            ->when($this->multiActive('cleanlinessContractIds'), fn ($q) => $q->whereIn('cleanliness_contract_id', $f['cleanlinessContractIds']))
             // ── متقدمة: المجموعة 4 ──
             ->when($f['braille'] ?? '', fn ($q) => $q->where('Braille_sign_device', $f['braille']))
-            ->when($f['queueSystem'] ?? [], fn ($q) => $q->whereIn('queue_management_system', $f['queueSystem']))
-            ->when($f['cameras'] ?? [], fn ($q) => $q->whereIn('surveillance_cameras', $f['cameras']))
-            ->when($f['electricityMeterType'] ?? [], fn ($q) => $q->whereIn('electricity_meter_type', $f['electricityMeterType']))
+            ->when($this->multiActive('queueSystem'), fn ($q) => $q->whereIn('queue_management_system', $f['queueSystem']))
+            ->when($this->multiActive('cameras'), fn ($q) => $q->whereIn('surveillance_cameras', $f['cameras']))
+            ->when($this->multiActive('electricityMeterType'), fn ($q) => $q->whereIn('electricity_meter_type', $f['electricityMeterType']))
             ->when($f['electricityMeterDebt'] ?? '', fn ($q) => $q->where('electricity_meter_debt', $f['electricityMeterDebt']))
-            ->when($f['waterMeterType'] ?? [], fn ($q) => $q->whereIn('water_meter_type', $f['waterMeterType']))
+            ->when($this->multiActive('waterMeterType'), fn ($q) => $q->whereIn('water_meter_type', $f['waterMeterType']))
             ->when($f['waterMeterDebt'] ?? '', fn ($q) => $q->where('water_meter_debt', $f['waterMeterDebt']))
             // ── متقدمة: المجموعة 5 ──
-            ->when($f['cleanlinessRating'] ?? [], fn ($q) => $q->whereIn('cleanliness_rating', $f['cleanlinessRating']))
-            ->when($f['archiveRating'] ?? [], fn ($q) => $q->whereIn('archive_rating', $f['archiveRating']))
-            ->when($f['scheduleCommitment'] ?? [], fn ($q) => $q->whereIn('work_schedule_commitment', $f['scheduleCommitment']))
-            ->when($f['citizenCommitment'] ?? [], fn ($q) => $q->whereIn('citizen_treatment_commitment', $f['citizenCommitment']))
-            ->when($f['structuralConditionIds'] ?? [], fn ($q) => $q->whereIn('structural_condition_id', $f['structuralConditionIds']))
+            ->when($this->multiActive('cleanlinessRating'), fn ($q) => $q->whereIn('cleanliness_rating', $f['cleanlinessRating']))
+            ->when($this->multiActive('archiveRating'), fn ($q) => $q->whereIn('archive_rating', $f['archiveRating']))
+            ->when($this->multiActive('scheduleCommitment'), fn ($q) => $q->whereIn('work_schedule_commitment', $f['scheduleCommitment']))
+            ->when($this->multiActive('citizenCommitment'), fn ($q) => $q->whereIn('citizen_treatment_commitment', $f['citizenCommitment']))
+            ->when($this->multiActive('structuralConditionIds'), fn ($q) => $q->whereIn('structural_condition_id', $f['structuralConditionIds']))
             // ── متقدمة: المجموعة 6 ──
             ->when($f['neverVisited'] ?? false, fn ($q) => $q->whereNull('visited_at'))
             ->when($f['notVisitedMonths'] ?? null, fn ($q) => $q->where(fn ($w) => $w
                 ->whereNull('visited_at')
                 ->orWhere('visited_at', '<', now()->subMonths($f['notVisitedMonths']))
             ))
+            // الترتيب حسب المحافظة (ترتيبها) ثم اسم المقر داخلها
+            ->orderBy(Governorate::select('order')->whereColumn('governorates.id', 'offices.governorate_id'))
+            ->orderBy('governorate_id')
             ->orderBy('name');
     }
 
@@ -366,15 +426,27 @@ class MultiOffice extends Component
         // أعمدة التقرير المخصّص — مجمّعة حسب القسم للمنتقي (بعد البحث فقط)
         $customColumnGroups = [];
         if ($this->hasSearched) {
-            $catalog = OfficeColumns::all();
-            $fixed   = OfficeColumns::fixedKeys();
+            $catalog    = OfficeColumns::all();
+            $fixed      = OfficeColumns::fixedKeys();
+            $optional   = array_flip(OfficeColumns::optionalCustomKeys());
+            $extraLabel = __('home.report_custom_extra_group');
+
             foreach ($this->availableCustomColumns() as $key) {
-                $def = $catalog[$key];
-                $customColumnGroups[$def['group']][] = [
+                $def   = $catalog[$key];
+                // الأعمدة الاختيارية تُجمَّع تحت "بيانات إضافية" في المنتقي فقط (الكتالوج بلا تغيير)
+                $group = isset($optional[$key]) ? $extraLabel : $def['group'];
+                $customColumnGroups[$group][] = [
                     'key'   => $key,
                     'label' => $def['label'],
                     'fixed' => in_array($key, $fixed, true),
                 ];
+            }
+
+            // "بيانات إضافية" دائماً آخر قسم
+            if (isset($customColumnGroups[$extraLabel])) {
+                $extra = $customColumnGroups[$extraLabel];
+                unset($customColumnGroups[$extraLabel]);
+                $customColumnGroups[$extraLabel] = $extra;
             }
         }
 

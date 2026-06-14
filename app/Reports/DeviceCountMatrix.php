@@ -23,20 +23,26 @@ class DeviceCountMatrix
      */
     public static function build(?array $allowedGovIds, array $f): array
     {
-        $govIds     = $f['governorateIds'] ?? [];
-        $workingSel = $f['workingDevices'] ?? [];
-        $brokenSel  = $f['brokenTypeIds'] ?? [];
+        $govIds      = $f['governorateIds'] ?? [];
+        $workingSel  = $f['workingDevices'] ?? [];
+        $brokenSel   = $f['brokenTypeIds'] ?? [];
+        $showWorking = $f['showWorking'] ?? true;
+        $showBroken  = $f['showBroken'] ?? true;
 
-        // الأعمدة الشغالة المعروضة (المختارة أو الكل) — بترتيب التعريف
-        $workingCols = $workingSel
-            ? array_filter(DeviceCount::DEVICES, fn ($k) => in_array($k, $workingSel, true), ARRAY_FILTER_USE_KEY)
-            : DeviceCount::DEVICES;
+        // الأعمدة الشغالة المعروضة (المختارة أو الكل) — بترتيب التعريف — فقط لو مفعّل عرضها
+        $workingCols = ! $showWorking
+            ? []
+            : ($workingSel
+                ? array_filter(DeviceCount::DEVICES, fn ($k) => in_array($k, $workingSel, true), ARRAY_FILTER_USE_KEY)
+                : DeviceCount::DEVICES);
 
-        // أنواع المعطلة المعروضة (المختارة أو الكل)
-        $brokenTypes = DeviceType::query()
-            ->when($brokenSel, fn ($q) => $q->whereIn('id', $brokenSel))
-            ->orderBy('name')
-            ->get(['id', 'name']);
+        // أنواع المعطلة المعروضة (المختارة أو الكل) — فقط لو مفعّل عرضها
+        $brokenTypes = $showBroken
+            ? DeviceType::query()
+                ->when($brokenSel, fn ($q) => $q->whereIn('id', $brokenSel))
+                ->orderBy('name')
+                ->get(['id', 'name'])
+            : collect();
 
         $governorates = Governorate::query()
             ->when($allowedGovIds, fn ($q) => $q->whereIn('id', $allowedGovIds))
@@ -68,17 +74,19 @@ class DeviceCountMatrix
 
         // مجاميع المعطلة لكل (محافظة، نوع)
         $brokenSums = [];
-        $brokenRows = OfficeBrokenDevice::query()
-            ->join('offices', 'offices.id', '=', 'office_broken_devices.office_id')
-            ->when($allowedGovIds, fn ($q) => $q->whereIn('offices.governorate_id', $allowedGovIds))
-            ->when($govIds, fn ($q) => $q->whereIn('offices.governorate_id', $govIds))
-            ->when($brokenSel, fn ($q) => $q->whereIn('office_broken_devices.device_type_id', $brokenSel))
-            ->selectRaw('offices.governorate_id as gid, office_broken_devices.device_type_id as tid, COALESCE(SUM(office_broken_devices.count),0) as cnt')
-            ->groupBy('offices.governorate_id', 'office_broken_devices.device_type_id')
-            ->get();
+        if ($brokenTypes->isNotEmpty()) {
+            $brokenRows = OfficeBrokenDevice::query()
+                ->join('offices', 'offices.id', '=', 'office_broken_devices.office_id')
+                ->when($allowedGovIds, fn ($q) => $q->whereIn('offices.governorate_id', $allowedGovIds))
+                ->when($govIds, fn ($q) => $q->whereIn('offices.governorate_id', $govIds))
+                ->when($brokenSel, fn ($q) => $q->whereIn('office_broken_devices.device_type_id', $brokenSel))
+                ->selectRaw('offices.governorate_id as gid, office_broken_devices.device_type_id as tid, COALESCE(SUM(office_broken_devices.count),0) as cnt')
+                ->groupBy('offices.governorate_id', 'office_broken_devices.device_type_id')
+                ->get();
 
-        foreach ($brokenRows as $b) {
-            $brokenSums[$b->gid][$b->tid] = (int) $b->cnt;
+            foreach ($brokenRows as $b) {
+                $brokenSums[$b->gid][$b->tid] = (int) $b->cnt;
+            }
         }
 
         return compact('governorates', 'workingCols', 'brokenTypes', 'sums', 'brokenSums');

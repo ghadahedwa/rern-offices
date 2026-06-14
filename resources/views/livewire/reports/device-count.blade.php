@@ -35,6 +35,19 @@
             @include('livewire.reports.includes.checkbox-group', ['field' => 'brokenTypeIds', 'options' => $brokenTypeOptions->pluck('name', 'id')->all(), 'label' => __('home.report_devices_broken_filter')])
         </div>
         <p class="text-xs text-zinc-400 dark:text-zinc-500">{{ __('home.report_devices_all_hint') }}</p>
+
+        {{-- اختيار مجموعات الأعمدة المعروضة --}}
+        <div class="flex flex-wrap items-center gap-5 pt-1">
+            <span class="text-xs font-medium text-zinc-500 dark:text-zinc-400">{{ __('home.report_show_groups') }}:</span>
+            <label class="flex items-center gap-2 text-sm text-zinc-700 dark:text-zinc-200 cursor-pointer">
+                <input type="checkbox" wire:model="showWorking" class="rounded border-zinc-300 dark:border-zinc-600 text-[#c9a847] focus:ring-[#c9a847]" />
+                <span>{{ __('home.report_devices_show_working') }}</span>
+            </label>
+            <label class="flex items-center gap-2 text-sm text-zinc-700 dark:text-zinc-200 cursor-pointer">
+                <input type="checkbox" wire:model="showBroken" class="rounded border-zinc-300 dark:border-zinc-600 text-[#c9a847] focus:ring-[#c9a847]" />
+                <span>{{ __('home.report_devices_show_broken') }}</span>
+            </label>
+        </div>
     </div>
 
     {{-- زر البحث --}}
@@ -61,6 +74,7 @@
         $sums        = $matrix['sums'];
         $brokenSums  = $matrix['brokenSums'];
         $workingKeys = array_keys($workingCols);
+        $hasWorking  = ! empty($workingCols);
         $hasBroken   = $brokenTypes->isNotEmpty();
         $wColTotals  = array_fill_keys($workingKeys, 0);
         $bColTotals  = array_fill_keys($brokenTypes->pluck('id')->all(), 0);
@@ -85,7 +99,9 @@
                 <thead class="text-xs">
                     <tr class="bg-[#c9a847] text-white">
                         <th class="px-4 py-2 font-semibold text-right" rowspan="2">{{ __('home.governorate_name') }}</th>
-                        <th class="px-3 py-2 font-semibold" colspan="{{ count($workingCols) }}">{{ __('home.report_devices_working') }}</th>
+                        @if($hasWorking)
+                            <th class="px-3 py-2 font-semibold" colspan="{{ count($workingCols) }}">{{ __('home.report_devices_working') }}</th>
+                        @endif
                         @if($hasBroken)
                             <th class="px-3 py-2 font-semibold bg-[#a85]" colspan="{{ $brokenTypes->count() }}">{{ __('home.report_devices_broken_group') }}</th>
                         @endif

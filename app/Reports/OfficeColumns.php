@@ -100,8 +100,9 @@ class OfficeColumns
                 'value' => fn (Office $o) => $o->structuralCondition->name ?? $dash,
             ],
             'google_maps_link' => [
+                // إكسل فقط — الرابط لا فائدة منه في PDF مطبوع، وURL الطويل يكسر عرض الجدول
                 'label' => 'رابط الخريطة', 'group' => 'البيانات الأساسية',
-                'filter' => null, 'fixed' => false, 'excelOnly' => false,
+                'filter' => null, 'fixed' => false, 'excelOnly' => true,
                 'value' => fn (Office $o) => $o->google_maps_link ?: $dash,
             ],
             'visited_at' => [
@@ -232,6 +233,31 @@ class OfficeColumns
                 'filter' => null, 'fixed' => false, 'excelOnly' => false,
                 'value' => fn (Office $o) => $o->ups_count ?? 0,
             ],
+            // عمود مجمّع للتقرير المخصّص فقط (customOnly) — كل الأجهزة الشغالة في خلية واحدة
+            'working_devices' => [
+                'label' => 'الأجهزة التي تعمل', 'group' => 'عدد الأجهزة',
+                'filter' => null, 'fixed' => false, 'excelOnly' => false, 'customOnly' => true,
+                'value' => function (Office $o) use ($dash) {
+                    $devices = [
+                        'كمبيوتر'      => $o->computers_count,
+                        'شاشات العرض'  => $o->monitors_count,
+                        'طابعات'       => $o->printers_count,
+                        'ماسحات'       => $o->scanners_count,
+                        'بصمة'         => $o->fingerprints_count,
+                        'ماكينات دفع'  => $o->payment_machine_count,
+                        'مكيفات'       => $o->air_conditioners_count,
+                        'UPS'          => $o->ups_count,
+                    ];
+                    $parts = [];
+                    foreach ($devices as $label => $cnt) {
+                        if ((int) $cnt > 0) {
+                            $parts[] = $label . ': ' . (int) $cnt;
+                        }
+                    }
+
+                    return $parts ? implode('، ', $parts) : $dash;
+                },
+            ],
 
             // ── العدادات ──
             'electricity_meter_type' => [
@@ -326,8 +352,9 @@ class OfficeColumns
     {
         $all = self::all();
 
+        // التقرير الشامل (null) لا يشمل الأعمدة المخصّصة فقط (مثل العمود المجمّع)
         if ($keys === null) {
-            return $all;
+            return array_filter($all, fn ($def) => empty($def['customOnly']));
         }
 
         $wanted = array_flip($keys);
@@ -340,7 +367,7 @@ class OfficeColumns
     }
 
     /**
-     * أعمدة التقرير المخصّص الافتراضية = الثابتة + الأعمدة المقابلة لفلاتر مُطبَّقة فعلاً.
+     * أعمدة التقرير المخصّص الافتراضية (المعلّمة تلقائياً) = الثابتة + المقابلة لفلاتر مُطبَّقة.
      * مرتّبة حسب ترتيب الكتالوج.
      *
      * @param  array  $applied  snapshot الفلاتر ($this->applied)
@@ -352,6 +379,36 @@ class OfficeColumns
 
         foreach (self::all() as $key => $def) {
             if ($def['fixed'] || self::filterActive($def['filter'], $applied)) {
+                $keys[] = $key;
+            }
+        }
+
+        return $keys;
+    }
+
+    /** أعمدة اختيارية تظهر في منتقي التقرير المخصّص بلا فلتر (غير معلّمة افتراضياً) */
+    public static function optionalCustomKeys(): array
+    {
+        return [
+            'supervising_counselor', 'address', 'office_area',
+            'floors_description', 'windows_count',
+            'working_devices', 'broken_devices',
+        ];
+    }
+
+    /**
+     * كل الأعمدة المتاحة في منتقي التقرير المخصّص = الثابتة + أعمدة الفلاتر المستخدَمة + الاختيارية.
+     * مرتّبة حسب ترتيب الكتالوج. (الملاحظات النصية والأعمدة المنفصلة للأجهزة لا تظهر)
+     *
+     * @return array<string>
+     */
+    public static function customPickerKeys(array $applied): array
+    {
+        $optional = array_flip(self::optionalCustomKeys());
+        $keys     = [];
+
+        foreach (self::all() as $key => $def) {
+            if ($def['fixed'] || self::filterActive($def['filter'], $applied) || isset($optional[$key])) {
                 $keys[] = $key;
             }
         }
