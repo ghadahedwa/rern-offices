@@ -65,6 +65,9 @@
                             <flux:sidebar.item icon="computer-desktop" :href="route('reports.device-count')" :current="request()->routeIs('reports.device-count')" wire:navigate>
                                 {{ __('home.report_devices_title') }}
                             </flux:sidebar.item>
+                            <flux:sidebar.item icon="chart-bar" :href="route('reports.stats-comparison')" :current="request()->routeIs('reports.stats-comparison')" wire:navigate>
+                                {{ __('home.report_stats_menu') }}
+                            </flux:sidebar.item>
                         </div>
                     </div>
                     @endif

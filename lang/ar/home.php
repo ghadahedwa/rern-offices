@@ -127,6 +127,18 @@ return [
     'report_devices_broken_group'   => 'الأجهزة المعطلة',
     'report_devices_show_working'   => 'عرض الأجهزة التى تعمل',
     'report_devices_show_broken'    => 'عرض الأجهزة المعطلة',
+
+    // ── مقارنة الإحصائيات بين المحافظات ──
+    'report_stats_title'           => 'مقارنة الإحصائيات بين المحافظات',
+    'report_stats_menu'            => 'مقارنة الإحصائيات',
+    'report_stats_hint'            => 'مقارنة المجموعات الإحصائية بين سنتين لكل محافظة مع نسبة التغيير',
+    'report_stats_group'           => 'المجموعات الإحصائية',
+    'report_stats_all_hint'        => 'بدون تحديد للمجموعات يعرض كل المجموعات الإحصائية.',
+    'report_stats_year1'           => 'السنة الأولى',
+    'report_stats_year2'           => 'السنة الثانية',
+    'report_stats_change'          => 'نسبة التغيير',
+    'report_stats_year_order'      => 'السنة الثانية يجب أن تكون أكبر من السنة الأولى.',
+
     'option_yes'                => 'نعم',
     'option_no'                 => 'لا',
 
