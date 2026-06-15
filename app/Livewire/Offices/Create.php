@@ -48,6 +48,7 @@ class Create extends Component
     public $governorate_id = null;
     public $parent_office_id = null;
     public string $name = '';
+    public string $head_name = '';
     public string $head_mobile = '';
     public string $established_at = '';
     public string $mechanization_at = '';
@@ -149,6 +150,7 @@ class Create extends Component
         $this->governorate_id          = $office->governorate_id;
         $this->parent_office_id        = $office->parent_office_id;
         $this->name                    = $office->name ?? '';
+        $this->head_name               = $office->head_name ?? '';
         $this->head_mobile             = $office->head_mobile ?? '';
         $this->established_at          = $office->established_at?->format('Y-m-d') ?? '';
         $this->mechanization_at        = $office->mechanization_at?->format('Y-m-d') ?? '';
@@ -224,6 +226,7 @@ class Create extends Component
         $this->validate([
             'governorate_id'  => 'required|exists:governorates,id',
             'name'            => 'required|string|max:255',
+            'head_name'       => 'nullable|string|max:255',
             'head_mobile'     => ['nullable', 'regex:/^01[0-9]{9}$/'],
             'type_id'         => 'required|exists:office_types,id',
             'location_description_id' => 'required|exists:location_descriptions,id',
@@ -370,6 +373,7 @@ $existing = OfficeMedia::where('office_id', $this->office_id)->where('type', 'do
             'governorate_id'         => $this->governorate_id,
             'parent_office_id'       => $this->parent_office_id ?: null,
             'name'                   => $this->name,
+            'head_name'              => $this->head_name ?: null,
             'head_mobile'            => $this->head_mobile ?: null,
             'established_at'         => $this->established_at ?: null,
             'mechanization_at'       => $this->mechanization_at ?: null,

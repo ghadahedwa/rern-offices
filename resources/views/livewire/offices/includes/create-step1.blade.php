@@ -29,6 +29,15 @@
                         @error('name') <p class="mt-1 text-xs text-red-500">{{ $message }}</p> @enderror
                     </div>
                     <div>
+                        <label class="{{ $lbl }}">{{ __('home.established_at') }}</label>
+                        <input wire:model="established_at" type="date" class="{{ $inp }}" />
+                    </div>
+                    <div>
+                        <label class="{{ $lbl }}">{{ __('home.head_name') }}</label>
+                        <input wire:model="head_name" type="text" placeholder="{{ __('home.placeholder_head_name') }}" class="{{ $inp }}" />
+                        @error('head_name') <p class="mt-1 text-xs text-red-500">{{ $message }}</p> @enderror
+                    </div>
+                    <div>
                         <label class="{{ $lbl }}">{{ __('home.head_mobile') }}</label>
                         <input wire:model="head_mobile" type="tel" inputmode="numeric" maxlength="11"
                                x-on:input="$event.target.value = $event.target.value.replace(/[^0-9]/g, '')"
@@ -65,10 +74,6 @@
                             @endforeach
                         </select>
                         @error('location_description_id') <p class="mt-1 text-xs text-red-500">{{ $message }}</p> @enderror
-                    </div>
-                    <div>
-                        <label class="{{ $lbl }}">{{ __('home.established_at') }}</label>
-                        <input wire:model="established_at" type="date" class="{{ $inp }}" />
                     </div>
                 </div>
             </div>

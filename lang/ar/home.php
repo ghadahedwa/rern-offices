@@ -199,6 +199,8 @@ return [
     'offices'                  => 'المقرات',
     'office'                   => 'مقر',
     'office_name'              => 'اسم المقر',
+    'head_name'                => 'اسم رئيس المقر',
+    'placeholder_head_name'    => 'اسم رئيس المقر',
     'head_mobile'              => 'رقم موبيل رئيس المقر',
     'placeholder_head_mobile'  => 'مثال: 01012345678',
     'head_mobile_invalid'      => 'رقم الموبيل غير صحيح (11 رقماً يبدأ بـ 01)',
