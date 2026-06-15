@@ -134,6 +134,10 @@
                 <td><div class="lbl">نوع المقر</div><div class="val">{{ $office->officeType->name ?? $dash }}</div></td>
             </tr>
             <tr>
+                <td><div class="lbl">رقم موبيل رئيس المقر</div><div class="val">{{ $office->head_mobile ?: $dash }}</div></td>
+                <td></td>
+            </tr>
+            <tr>
                 <td><div class="lbl">وصف الموقع</div><div class="val">{{ $office->locationDescription->name ?? $dash }}</div></td>
                 <td><div class="lbl">تاريخ الإنشاء</div><div class="val">{{ $office->established_at?->format('Y-m-d') ?? $dash }}</div></td>
             </tr>

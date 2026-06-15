@@ -49,6 +49,11 @@ class OfficeColumns
                 'filter' => 'governorateIds', 'fixed' => true, 'excelOnly' => false,
                 'value' => fn (Office $o) => $o->governorate->name ?? $dash,
             ],
+            'head_mobile' => [
+                'label' => 'رقم موبيل رئيس المقر', 'group' => 'البيانات الأساسية',
+                'filter' => null, 'fixed' => false, 'excelOnly' => false,
+                'value' => fn (Office $o) => $o->head_mobile ?: $dash,
+            ],
             'supervising_counselor' => [
                 'label' => 'المستشار المشرف', 'group' => 'البيانات الأساسية',
                 'filter' => null, 'fixed' => false, 'excelOnly' => false,
@@ -390,7 +395,7 @@ class OfficeColumns
     public static function optionalCustomKeys(): array
     {
         return [
-            'supervising_counselor', 'address', 'office_area',
+            'head_mobile', 'supervising_counselor', 'address', 'office_area',
             'floors_description', 'windows_count',
             'working_devices', 'broken_devices',
         ];
