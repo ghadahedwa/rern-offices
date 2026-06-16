@@ -18,6 +18,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::livewire('offices/{office}/edit', \App\Livewire\Offices\Create::class)->name('offices.edit');
     Route::livewire('offices/{office}/statistics', \App\Livewire\Offices\Statistics::class)->name('offices.statistics');
 
+    // دليل الهاتف للمقرات — متاح لكل المستخدمين بلا صلاحيات
+    Route::livewire('offices-phone-directory', \App\Livewire\Reports\PhoneDirectory::class)->name('offices.phone-directory');
+
     Route::livewire('reports/office-pdf', \App\Livewire\Reports\OfficePdf::class)->name('reports.office-pdf');
     Route::livewire('reports/multi-office', \App\Livewire\Reports\MultiOffice::class)->name('reports.multi-office');
     Route::get('reports/multi-office/pdf', \App\Http\Controllers\OfficesReportPdfController::class)->name('reports.multi-office.pdf');

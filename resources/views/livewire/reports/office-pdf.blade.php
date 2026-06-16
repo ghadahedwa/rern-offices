@@ -26,32 +26,34 @@
             $lbl = 'block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1.5';
         @endphp
 
-        {{-- Governorate --}}
-        <div>
-            <label class="{{ $lbl }}">المحافظة <span class="text-red-500">*</span></label>
-            <select wire:model.live="selectedGovernorateId" class="{{ $inp }}">
-                <option value="">— اختر المحافظة —</option>
-                @foreach($governorates as $gov)
-                    <option value="{{ $gov->id }}">{{ $gov->name }}</option>
-                @endforeach
-            </select>
-        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+            {{-- Governorate --}}
+            <div>
+                <label class="{{ $lbl }}">المحافظة <span class="text-red-500">*</span></label>
+                <select wire:model.live="selectedGovernorateId" class="{{ $inp }}">
+                    <option value="">— اختر المحافظة —</option>
+                    @foreach($governorates as $gov)
+                        <option value="{{ $gov->id }}">{{ $gov->name }}</option>
+                    @endforeach
+                </select>
+            </div>
 
-        {{-- Office --}}
-        <div>
-            <label class="{{ $lbl }}">المقر <span class="text-red-500">*</span></label>
-            <select wire:model.live="selectedOfficeId" class="{{ $inp }}"
-                    @disabled(!$selectedGovernorateId)>
-                <option value="">
-                    {{ $selectedGovernorateId ? '— اختر المقر —' : '— اختر المحافظة أولاً —' }}
-                </option>
-                @foreach($offices as $office)
-                    <option value="{{ $office->id }}">{{ $office->name }}</option>
-                @endforeach
-            </select>
-            @if($selectedGovernorateId && $offices->isEmpty())
-            <p class="text-xs text-zinc-400 mt-1.5">لا توجد مقرات في هذه المحافظة</p>
-            @endif
+            {{-- Office --}}
+            <div>
+                <label class="{{ $lbl }}">المقر <span class="text-red-500">*</span></label>
+                <select wire:model.live="selectedOfficeId" class="{{ $inp }}"
+                        @disabled(!$selectedGovernorateId)>
+                    <option value="">
+                        {{ $selectedGovernorateId ? '— اختر المقر —' : '— اختر المحافظة أولاً —' }}
+                    </option>
+                    @foreach($offices as $office)
+                        <option value="{{ $office->id }}">{{ $office->name }}</option>
+                    @endforeach
+                </select>
+                @if($selectedGovernorateId && $offices->isEmpty())
+                <p class="text-xs text-zinc-400 mt-1.5">لا توجد مقرات في هذه المحافظة</p>
+                @endif
+            </div>
         </div>
 
         {{-- Button --}}

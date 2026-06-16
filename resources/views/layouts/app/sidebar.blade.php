@@ -37,8 +37,11 @@
                     <flux:sidebar.item icon="map-pin" :href="route('governorates.index')" :current="request()->routeIs('governorates.*')" wire:navigate>
                         {{ __('home.governorates') }}
                     </flux:sidebar.item>
-                    <flux:sidebar.item icon="building-office-2" :href="route('offices.index')" :current="request()->routeIs('offices.*')" wire:navigate>
+                    <flux:sidebar.item icon="building-office-2" :href="route('offices.index')" :current="request()->routeIs('offices.index') || request()->routeIs('offices.create') || request()->routeIs('offices.show') || request()->routeIs('offices.edit') || request()->routeIs('offices.statistics')" wire:navigate>
                         {{ __('home.offices') }}
+                    </flux:sidebar.item>
+                    <flux:sidebar.item icon="phone" :href="route('offices.phone-directory')" :current="request()->routeIs('offices.phone-directory')" wire:navigate>
+                        {{ __('home.phone_directory_title') }}
                     </flux:sidebar.item>
                     @if(auth()->user()?->hasRole('super-admin') || auth()->user()?->can('offices.export'))
                     <div x-data="{ open: true }">

@@ -96,6 +96,15 @@ return [
     'report_select_all'         => 'اختر الكل',
     'report_office_multi'       => 'المقر (للمقارنة بين مقرات محددة)',
 
+    // دليل الهاتف للمقرات (متاح لكل المستخدمين)
+    'phone_directory_title'     => 'دليل الهاتف للمقرات',
+    'phone_directory_desc'      => 'اختر المحافظة والمقر ثم اضغط عرض لإظهار أرقام هواتف رؤساء المقرات',
+    'phone_directory_show'      => 'عرض',
+    'phone_directory_prompt'    => 'اختر المحافظة والمقر بالأعلى ثم اضغط "عرض" لإظهار النتائج',
+    'phone_directory_select_required' => 'يجب اختيار المحافظة والمقر لإظهار النتيجة',
+    'phone_directory_select_gov_first' => 'اختر المحافظة أولاً',
+    'phone_directory_select_section' => 'تحديد المقر',
+
     // ── التقريران: شامل / مخصّص ──
     'report_comprehensive_title' => 'تقرير شامل',
     'report_comprehensive_hint'  => 'كل بيانات المقرات في تقرير واحد',
