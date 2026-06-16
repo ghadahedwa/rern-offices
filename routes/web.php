@@ -72,6 +72,30 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::livewire('structural-conditions', \App\Livewire\StructuralConditions\Index::class)->name('structural-conditions.index');
         Route::livewire('structural-conditions/create', \App\Livewire\StructuralConditions\Create::class)->name('structural-conditions.create');
         Route::livewire('structural-conditions/{structuralCondition}/edit', \App\Livewire\StructuralConditions\Create::class)->name('structural-conditions.edit');
+
+        Route::livewire('disabilities-access', \App\Livewire\DisabilitiesAccess\Index::class)->name('disabilities-access.index');
+        Route::livewire('disabilities-access/create', \App\Livewire\DisabilitiesAccess\Create::class)->name('disabilities-access.create');
+        Route::livewire('disabilities-access/{disabilitiesAccess}/edit', \App\Livewire\DisabilitiesAccess\Create::class)->name('disabilities-access.edit');
+
+        Route::livewire('fire-safety', \App\Livewire\FireSafety\Index::class)->name('fire-safety.index');
+        Route::livewire('fire-safety/create', \App\Livewire\FireSafety\Create::class)->name('fire-safety.create');
+        Route::livewire('fire-safety/{fireSafety}/edit', \App\Livewire\FireSafety\Create::class)->name('fire-safety.edit');
+
+        Route::livewire('document-photocopying-services', \App\Livewire\DocumentPhotocopyingServices\Index::class)->name('document-photocopying-services.index');
+        Route::livewire('document-photocopying-services/create', \App\Livewire\DocumentPhotocopyingServices\Create::class)->name('document-photocopying-services.create');
+        Route::livewire('document-photocopying-services/{documentPhotocopyingService}/edit', \App\Livewire\DocumentPhotocopyingServices\Create::class)->name('document-photocopying-services.edit');
+
+        Route::livewire('buffet-services', \App\Livewire\BuffetServices\Index::class)->name('buffet-services.index');
+        Route::livewire('buffet-services/create', \App\Livewire\BuffetServices\Create::class)->name('buffet-services.create');
+        Route::livewire('buffet-services/{buffetService}/edit', \App\Livewire\BuffetServices\Create::class)->name('buffet-services.edit');
+
+        Route::livewire('cleanliness-contracts', \App\Livewire\CleanlinessContracts\Index::class)->name('cleanliness-contracts.index');
+        Route::livewire('cleanliness-contracts/create', \App\Livewire\CleanlinessContracts\Create::class)->name('cleanliness-contracts.create');
+        Route::livewire('cleanliness-contracts/{cleanlinessContract}/edit', \App\Livewire\CleanlinessContracts\Create::class)->name('cleanliness-contracts.edit');
+
+        Route::livewire('microfilm-options', \App\Livewire\MicrofilmOptions\Index::class)->name('microfilm-options.index');
+        Route::livewire('microfilm-options/create', \App\Livewire\MicrofilmOptions\Create::class)->name('microfilm-options.create');
+        Route::livewire('microfilm-options/{microfilmOption}/edit', \App\Livewire\MicrofilmOptions\Create::class)->name('microfilm-options.edit');
     });
 });
 

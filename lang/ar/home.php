@@ -327,8 +327,58 @@ return [
     'disabilities_access_label'        => 'تجهيزات ذوى الهمم',
     'fire_safety_label'                => 'الحماية المدنية',
     'document_photocopying_service'    => 'خدمة تصوير المستندات',
+
+    // إدارة: تجهيزات ذوي الهمم
+    'disabilities_access_title'        => 'تجهيزات ذوي الهمم',
+    'add_disabilities_access'          => 'إضافة تجهيز ذوي الهمم',
+    'edit_disabilities_access'         => 'تعديل تجهيز ذوي الهمم',
+    'disabilities_access_created'      => 'تم إضافة التجهيز بنجاح',
+    'disabilities_access_updated'      => 'تم تحديث التجهيز بنجاح',
+    'disabilities_access_deleted'      => 'تم حذف التجهيز بنجاح',
+
+    // إدارة: الحماية المدنية
+    'fire_safety_title'                => 'الحماية المدنية',
+    'add_fire_safety'                  => 'إضافة بند حماية مدنية',
+    'edit_fire_safety'                 => 'تعديل بند الحماية المدنية',
+    'fire_safety_created'              => 'تم إضافة البند بنجاح',
+    'fire_safety_updated'              => 'تم تحديث البند بنجاح',
+    'fire_safety_deleted'              => 'تم حذف البند بنجاح',
+
+    // إدارة: خدمة تصوير المستندات
+    'document_photocopying_title'      => 'خدمة تصوير المستندات',
+    'add_document_photocopying'        => 'إضافة خدمة تصوير',
+    'edit_document_photocopying'       => 'تعديل خدمة التصوير',
+    'document_photocopying_created'    => 'تم إضافة الخدمة بنجاح',
+    'document_photocopying_updated'    => 'تم تحديث الخدمة بنجاح',
+    'document_photocopying_deleted'    => 'تم حذف الخدمة بنجاح',
+
     'buffet_service'                   => 'البوفيه',
     'cleanliness_contract'             => 'عقد النظافة',
+
+    // إدارة: خدمة البوفيه
+    'buffet_service_title'             => 'خدمة البوفيه',
+    'add_buffet_service'               => 'إضافة خدمة بوفيه',
+    'edit_buffet_service'              => 'تعديل خدمة البوفيه',
+    'buffet_service_created'           => 'تم إضافة الخدمة بنجاح',
+    'buffet_service_updated'           => 'تم تحديث الخدمة بنجاح',
+    'buffet_service_deleted'           => 'تم حذف الخدمة بنجاح',
+
+    // إدارة: عقد النظافة
+    'cleanliness_contract_title'       => 'عقد النظافة',
+    'add_cleanliness_contract'         => 'إضافة عقد نظافة',
+    'edit_cleanliness_contract'        => 'تعديل عقد النظافة',
+    'cleanliness_contract_created'     => 'تم إضافة العقد بنجاح',
+    'cleanliness_contract_updated'     => 'تم تحديث العقد بنجاح',
+    'cleanliness_contract_deleted'     => 'تم حذف العقد بنجاح',
+
+    // إدارة: خيارات الميكروفيلم
+    'microfilm_option_title'           => 'خيارات الميكروفيلم',
+    'add_microfilm_option'             => 'إضافة خيار ميكروفيلم',
+    'edit_microfilm_option'            => 'تعديل خيار الميكروفيلم',
+    'microfilm_option_created'         => 'تم إضافة الخيار بنجاح',
+    'microfilm_option_updated'         => 'تم تحديث الخيار بنجاح',
+    'microfilm_option_deleted'         => 'تم حذف الخيار بنجاح',
+
     'braille_sign_device'              => 'جهاز برايل لغة الإشارة',
     'queue_management_system'          => 'منظم الدور كيوسيستم',
     'payment_machine_count'            => 'عدد ماكينات التحصيل',

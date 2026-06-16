@@ -73,7 +73,7 @@
                     @endif
 
                     @if(auth()->user()?->hasRole('super-admin'))
-                    <div x-data="{ open: {{ request()->routeIs('office-types.*') || request()->routeIs('location-descriptions.*') || request()->routeIs('work-systems.*') || request()->routeIs('working-hours.*') || request()->routeIs('connection-types.*') || request()->routeIs('device-types.*') || request()->routeIs('contractual-statuses.*') || request()->routeIs('structural-conditions.*') ? 'true' : 'false' }} }">
+                    <div x-data="{ open: {{ request()->routeIs('office-types.*') || request()->routeIs('location-descriptions.*') || request()->routeIs('work-systems.*') || request()->routeIs('working-hours.*') || request()->routeIs('connection-types.*') || request()->routeIs('device-types.*') || request()->routeIs('contractual-statuses.*') || request()->routeIs('structural-conditions.*') || request()->routeIs('disabilities-access.*') || request()->routeIs('fire-safety.*') || request()->routeIs('document-photocopying-services.*') || request()->routeIs('buffet-services.*') || request()->routeIs('cleanliness-contracts.*') || request()->routeIs('microfilm-options.*') ? 'true' : 'false' }} }">
                         <button @click="open = !open"
                             class="nested-menu-btn flex items-center w-full px-3 py-2 font-medium rounded text-zinc-600 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-zinc-900 dark:hover:text-white transition-colors">
                             <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-gray-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
@@ -110,6 +110,24 @@
                             </flux:sidebar.item>
                             <flux:sidebar.item icon="building-office-2" :href="route('structural-conditions.index')" :current="request()->routeIs('structural-conditions.*')" wire:navigate>
                                 {{ __('home.structural_conditions') }}
+                            </flux:sidebar.item>
+                            <flux:sidebar.item icon="user-group" :href="route('disabilities-access.index')" :current="request()->routeIs('disabilities-access.*')" wire:navigate>
+                                {{ __('home.disabilities_access_title') }}
+                            </flux:sidebar.item>
+                            <flux:sidebar.item icon="fire" :href="route('fire-safety.index')" :current="request()->routeIs('fire-safety.*')" wire:navigate>
+                                {{ __('home.fire_safety_title') }}
+                            </flux:sidebar.item>
+                            <flux:sidebar.item icon="document-duplicate" :href="route('document-photocopying-services.index')" :current="request()->routeIs('document-photocopying-services.*')" wire:navigate>
+                                {{ __('home.document_photocopying_title') }}
+                            </flux:sidebar.item>
+                            <flux:sidebar.item icon="cake" :href="route('buffet-services.index')" :current="request()->routeIs('buffet-services.*')" wire:navigate>
+                                {{ __('home.buffet_service_title') }}
+                            </flux:sidebar.item>
+                            <flux:sidebar.item icon="sparkles" :href="route('cleanliness-contracts.index')" :current="request()->routeIs('cleanliness-contracts.*')" wire:navigate>
+                                {{ __('home.cleanliness_contract_title') }}
+                            </flux:sidebar.item>
+                            <flux:sidebar.item icon="film" :href="route('microfilm-options.index')" :current="request()->routeIs('microfilm-options.*')" wire:navigate>
+                                {{ __('home.microfilm_option_title') }}
                             </flux:sidebar.item>
                         </div>
                     </div>
