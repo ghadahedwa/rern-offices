@@ -5,6 +5,7 @@ namespace App\Livewire\Reports;
 use App\Exports\StatsComparisonExport;
 use App\Models\Governorate;
 use App\Models\OfficeStat;
+use App\Models\StatType;
 use Flux\Flux;
 use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\Layout;
@@ -25,6 +26,9 @@ class StatsComparison extends Component
         'registry_requests'   => 'home.stat_group_registry',
         'forms_folders'       => 'home.stat_group_forms_folders',
     ];
+
+    /** مجموعات تُعرض مقسّمة لأعمدة فرعية حسب نوع الإحصائية (نماذج/حوافظ) تحت كل سنة */
+    public const BREAKDOWN_GROUPS = ['forms_folders'];
 
     // ── الفلاتر ──
     public array $groupKeys = [];   // مجموعات مختارة (فارغ = الكل)
@@ -105,7 +109,10 @@ class StatsComparison extends Component
     }
 
     /**
-     * يبني المصفوفة: صفوف = محافظات · لكل مجموعة إحصائية مجموع السنة الأولى + الثانية.
+     * يبني المصفوفة: صفوف = محافظات · لكل عمود إحصائي مجموع السنة الأولى + الثانية.
+     *
+     * مجموعات BREAKDOWN_GROUPS تُوسَّع لعدّة أعمدة مستقلة (نماذج/حوافظ)، كلٌّ يتصرّف
+     * كمجموعة عادية بمفتاح مركّب "group_key::stat_type_id".
      *
      * @return array{governorates:\Illuminate\Support\Collection, groups:array, data:array, y1:int, y2:int}
      */
@@ -117,13 +124,37 @@ class StatsComparison extends Component
         $y1       = (int) $f['year1'];
         $y2       = (int) $f['year2'];
 
-        // المجموعات المعروضة (المختارة أو الكل) — بترتيب التعريف · group_key => التسمية
+        // المجموعات الفعلية المعروضة (المختارة أو الكل) — بترتيب التعريف
         $groupKeys = $selected
             ? array_values(array_filter(array_keys(self::GROUPS), fn ($k) => in_array($k, $selected, true)))
             : array_keys(self::GROUPS);
-        $groups = [];
+
+        // أنواع المجموعات المقسّمة المعروضة: group_key => [stat_type_id => name]
+        $breakdownKeys = array_values(array_intersect(self::BREAKDOWN_GROUPS, $groupKeys));
+        $subTypes      = [];
+        if ($breakdownKeys) {
+            $subTypes = StatType::query()
+                ->whereIn('group_key', $breakdownKeys)
+                ->orderBy('order')->orderBy('id')
+                ->get(['id', 'name', 'group_key'])
+                ->groupBy('group_key')
+                ->map(fn ($rows) => $rows->pluck('name', 'id')->all())
+                ->all();
+        }
+
+        // أعمدة العرض: عادية = group_key · مقسّمة = "group_key::stat_type_id" لكل نوع
+        $groups = [];                  // display_key => التسمية
+        $colKeyFor = function ($gk, $stid) use ($breakdownKeys) {
+            return in_array($gk, $breakdownKeys, true) ? "{$gk}::{$stid}" : $gk;
+        };
         foreach ($groupKeys as $k) {
-            $groups[$k] = __(self::GROUPS[$k]);
+            if (in_array($k, $breakdownKeys, true)) {
+                foreach ($subTypes[$k] as $stid => $name) {
+                    $groups["{$k}::{$stid}"] = $name;
+                }
+            } else {
+                $groups[$k] = __(self::GROUPS[$k]);
+            }
         }
 
         $governorates = Governorate::query()
@@ -134,7 +165,7 @@ class StatsComparison extends Component
 
         $years = array_values(array_unique([$y1, $y2]));
 
-        // مجموع القيم لكل (محافظة، مجموعة، سنة) — يجمع كل أنواع المجموعة وكل الشهور
+        // مجموع القيم لكل (محافظة، مجموعة، نوع، سنة) — كل الشهور
         $rows = DB::table('office_statistics')
             ->join('stat_types', 'office_statistics.stat_type_id', '=', 'stat_types.id')
             ->join('offices', 'office_statistics.office_id', '=', 'offices.id')
@@ -142,13 +173,15 @@ class StatsComparison extends Component
             ->whereIn('office_statistics.year', $years)
             ->when($allowedGovIds, fn ($q) => $q->whereIn('offices.governorate_id', $allowedGovIds))
             ->when($govIds, fn ($q) => $q->whereIn('offices.governorate_id', $govIds))
-            ->selectRaw('offices.governorate_id as gid, stat_types.group_key as gk, office_statistics.year as yr, COALESCE(SUM(office_statistics.value),0) as total')
-            ->groupBy('offices.governorate_id', 'stat_types.group_key', 'office_statistics.year')
+            ->selectRaw('offices.governorate_id as gid, stat_types.group_key as gk, stat_types.id as stid, office_statistics.year as yr, COALESCE(SUM(office_statistics.value),0) as total')
+            ->groupBy('offices.governorate_id', 'stat_types.group_key', 'stat_types.id', 'office_statistics.year')
             ->get();
 
-        $data = []; // [gov_id][group_key][year] = total
+        $data = []; // [gov_id][display_key][year] = مجموع
         foreach ($rows as $r) {
-            $data[$r->gid][$r->gk][(int) $r->yr] = (int) $r->total;
+            $yr = (int) $r->yr;
+            $dk = $colKeyFor($r->gk, $r->stid);
+            $data[$r->gid][$dk][$yr] = ($data[$r->gid][$dk][$yr] ?? 0) + (int) $r->total;
         }
 
         return compact('governorates', 'groups', 'data', 'y1', 'y2');

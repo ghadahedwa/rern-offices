@@ -14,15 +14,15 @@ use PhpOffice\PhpSpreadsheet\Style\Border;
 use PhpOffice\PhpSpreadsheet\Style\Fill;
 
 /**
- * مقارنة الإحصائيات بين المحافظات: محافظة × (لكل مجموعة: سنة 1 · سنة 2 · نسبة التغيير).
- * رأس بصفّين: اسم المجموعة (مدموج فوق 3 أعمدة) ثم السنتان + نسبة التغيير.
+ * مقارنة الإحصائيات بين المحافظات: محافظة × (لكل عمود: سنة 1 · سنة 2 · نسبة التغيير).
+ * رأس بصفّين: اسم العمود (مدموج فوق 3 أعمدة) ثم السنتان + نسبة التغيير.
  */
 class StatsComparisonExport implements FromArray, WithEvents, WithTitle, ShouldAutoSize
 {
     /**
      * @param  Collection  $governorates  صفوف (id, name)
-     * @param  array        $groups       group_key => التسمية (مرتّبة)
-     * @param  array        $data         data[gov_id][group_key][year] = مجموع
+     * @param  array        $groups       display_key => التسمية (مرتّبة)
+     * @param  array        $data         data[gov_id][display_key][year] = مجموع
      */
     public function __construct(
         protected Collection $governorates,
@@ -41,7 +41,7 @@ class StatsComparisonExport implements FromArray, WithEvents, WithTitle, ShouldA
     {
         $keys = array_keys($this->groups);
 
-        // صف الرأس العلوي: المحافظة + اسم كل مجموعة (يُدمج لاحقاً فوق 3 أعمدة)
+        // صف الرأس العلوي: المحافظة + اسم كل عمود (يُدمج لاحقاً فوق 3 أعمدة)
         $row1 = ['المحافظة'];
         foreach ($this->groups as $label) {
             $row1[] = $label;
@@ -49,7 +49,7 @@ class StatsComparisonExport implements FromArray, WithEvents, WithTitle, ShouldA
             $row1[] = '';
         }
 
-        // صف الرأس السفلي: سنة1 · سنة2 · نسبة التغيير لكل مجموعة
+        // صف الرأس السفلي: سنة1 · سنة2 · نسبة التغيير لكل عمود
         $row2 = [''];
         foreach ($keys as $k) {
             $row2[] = (string) $this->year1;
@@ -114,7 +114,7 @@ class StatsComparisonExport implements FromArray, WithEvents, WithTitle, ShouldA
                 // دمج خلية المحافظة عبر صفّي الرأس
                 $sheet->mergeCells('A1:A2');
 
-                // دمج اسم كل مجموعة فوق أعمدتها الثلاثة في الصف الأول
+                // دمج اسم كل عمود فوق أعمدته الثلاثة في الصف الأول
                 for ($i = 0; $i < $groupCount; $i++) {
                     $start = Coordinate::stringFromColumnIndex(2 + 3 * $i);
                     $end   = Coordinate::stringFromColumnIndex(4 + 3 * $i);
