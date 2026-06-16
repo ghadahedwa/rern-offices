@@ -2,10 +2,14 @@
 
     @include('livewire.dashboard.welcome')
     @include('livewire.dashboard.kpi-cards')
-    @include('livewire.dashboard.needs-visit')
+    @if($canViewOfficeStats)
+        @include('livewire.dashboard.needs-visit')
+    @endif
     @include('livewire.dashboard.chart-governorates')
-    @include('livewire.dashboard.charts-type-structure')
-    @include('livewire.dashboard.stats-summary')
+    @if($canViewOfficeStats)
+        @include('livewire.dashboard.charts-type-structure')
+        @include('livewire.dashboard.stats-summary')
+    @endif
     @include('livewire.dashboard.online-users')
     @include('livewire.dashboard.activity-log')
 

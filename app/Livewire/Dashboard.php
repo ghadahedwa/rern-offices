@@ -65,6 +65,9 @@ class Dashboard extends Component
         $isSuperAdmin = $user->hasRole('super-admin');
         $canView      = $isSuperAdmin || $user->can('offices.view');
         $canEdit      = $isSuperAdmin || $user->can('offices.edit');
+        // أقسام تجميع بيانات المقرات (جديد هذا الشهر، تحتاج زيارة، رسما النوع/الحالة، ملخص الإحصائيات)
+        // تُحجب عمّن لا يملك صلاحية استعراض المقرات — المتصلون الآن وسجل النشاط يظلّان للجميع
+        $canViewOfficeStats = $isSuperAdmin || $user->can('offices.index');
 
         // مستوى المستخدم = أعلى مستوى بين أدواره (مفتش=1 افتراضياً)
         $myLevel      = (int) ($user->roles()->max('level') ?: 1);
@@ -84,17 +87,22 @@ class Dashboard extends Component
             ? Governorate::count()
             : $user->governorates()->count();
         $totalUsers     = $isSuperAdmin ? User::count() : null;
-        $addedThisMonth = (clone $officesQuery)
-            ->whereMonth('created_at', now()->month)
-            ->whereYear('created_at', now()->year)
-            ->count();
 
-        $needsVisitCount = (clone $officesQuery)
-            ->where(fn ($q) => $q
-                ->whereNull('visited_at')
-                ->orWhere('visited_at', '<', now()->subMonths(6))
-            )
-            ->count();
+        $addedThisMonth  = 0;
+        $needsVisitCount = 0;
+        if ($canViewOfficeStats) {
+            $addedThisMonth = (clone $officesQuery)
+                ->whereMonth('created_at', now()->month)
+                ->whereYear('created_at', now()->year)
+                ->count();
+
+            $needsVisitCount = (clone $officesQuery)
+                ->where(fn ($q) => $q
+                    ->whereNull('visited_at')
+                    ->orWhere('visited_at', '<', now()->subMonths(6))
+                )
+                ->count();
+        }
 
         // Bar chart: توزيع المقرات على المحافظات (مرتبة حسب order)
         $officesByGovRaw = (clone $officesQuery)
@@ -112,8 +120,9 @@ class Dashboard extends Component
             'registry_requests'   => 'السجل',
         ];
 
+        // tooltip الإحصائيات على رسم المحافظات — محجوب عمّن لا يملك offices.index (يبقى العدد فقط)
         $tooltipStatsByGov = []; // governorate_id => [groupKey => [label, years => [[year, total]]]]
-        foreach ($tooltipGroups as $groupKey => $label) {
+        foreach ($canViewOfficeStats ? $tooltipGroups : [] as $groupKey => $label) {
             $years = \App\Models\OfficeStat::whereHas('statType', fn ($q) => $q->where('group_key', $groupKey))
                 ->where('value', '>', 0)
                 ->distinct()
@@ -154,29 +163,34 @@ class Dashboard extends Component
             'total' => $r->total,
         ]);
 
-        // Horizontal bar chart: توزيع المقرات حسب الحالة الإنشائية
-        $officesByStructure = (clone $officesQuery)
-            ->select('structural_condition_id', DB::raw('count(*) as total'))
-            ->with('structuralCondition:id,name')
-            ->groupBy('structural_condition_id')
-            ->orderByDesc('total')
-            ->get()
-            ->map(fn ($r) => [
-                'name'  => $r->structuralCondition?->name ?? 'غير محدد',
-                'total' => $r->total,
-            ]);
+        // رسما النوع والحالة الإنشائية — محجوبان عمّن لا يملك offices.index
+        $officesByStructure = collect();
+        $officesByType      = collect();
+        if ($canViewOfficeStats) {
+            // Horizontal bar chart: توزيع المقرات حسب الحالة الإنشائية
+            $officesByStructure = (clone $officesQuery)
+                ->select('structural_condition_id', DB::raw('count(*) as total'))
+                ->with('structuralCondition:id,name')
+                ->groupBy('structural_condition_id')
+                ->orderByDesc('total')
+                ->get()
+                ->map(fn ($r) => [
+                    'name'  => $r->structuralCondition?->name ?? 'غير محدد',
+                    'total' => $r->total,
+                ]);
 
-        // Donut chart: توزيع المقرات حسب النوع
-        $officesByType = (clone $officesQuery)
-            ->select('type_id', DB::raw('count(*) as total'))
-            ->with('officeType:id,name')
-            ->groupBy('type_id')
-            ->orderByDesc('total')
-            ->get()
-            ->map(fn ($r) => [
-                'name'  => $r->officeType?->name ?? 'غير محدد',
-                'total' => $r->total,
-            ]);
+            // Donut chart: توزيع المقرات حسب النوع
+            $officesByType = (clone $officesQuery)
+                ->select('type_id', DB::raw('count(*) as total'))
+                ->with('officeType:id,name')
+                ->groupBy('type_id')
+                ->orderByDesc('total')
+                ->get()
+                ->map(fn ($r) => [
+                    'name'  => $r->officeType?->name ?? 'غير محدد',
+                    'total' => $r->total,
+                ]);
+        }
 
         // ملخص إحصائيات — 3 مجموعات سنوية
         $statGroups = [
@@ -196,6 +210,9 @@ class Dashboard extends Component
         // مجموعات تُعرض مفصّلة حسب النوع (بدل مقارنة السنوات)
         $statGroupBreakdown = ['forms_folders'];
 
+        // ملخص الإحصائيات السنوية — محجوب عمّن لا يملك offices.index
+        $statsSummary = collect();
+        if ($canViewOfficeStats) {
         $statsSummary = collect($statGroups)->map(function ($langKey, $groupKey) use ($isSuperAdmin, $govIds, $statGroupMinYear, $statGroupBreakdown) {
             $minYear = $statGroupMinYear[$groupKey] ?? null;
 
@@ -264,6 +281,7 @@ class Dashboard extends Component
                 'breakdown'   => null,
             ];
         });
+        }
 
         // بيانات نطاق المشرف (level >= 2)
         $teamUserIds   = collect(); // مستخدمو الفريق (يشاركون محافظة)
@@ -332,7 +350,7 @@ class Dashboard extends Component
             'addedThisMonth', 'needsVisitCount', 'onlineUsers', 'activities', 'isSuperAdmin',
             'officesByGov', 'officesByType', 'officesByStructure',
             'user', 'statsSummary', 'govTooltipData',
-            'canView', 'canEdit', 'isSupervisor'
+            'canView', 'canEdit', 'isSupervisor', 'canViewOfficeStats'
         ));
     }
 }

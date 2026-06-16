@@ -1,8 +1,10 @@
-{{-- KPI Cards --}}
+{{-- KPI Cards — عدد الأعمدة حسب البطاقات الظاهرة (مقرات + محافظات + [مستخدمون: super-admin] + [جديد هذا الشهر: من يملك offices.index]) --}}
 @if($isSuperAdmin)
 <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-@else
+@elseif($canViewOfficeStats)
 <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+@else
+<div class="grid grid-cols-2 gap-4">
 @endif
 
     <div class="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-sm p-5">
@@ -37,6 +39,7 @@
     </div>
     @endif
 
+    @if($canViewOfficeStats)
     <div class="rounded-xl border border-[#c9a847]/40 bg-[#c9a847]/5 dark:bg-[#c9a847]/10 shadow-sm p-5">
         <div class="flex items-start justify-between mb-3">
             <p class="text-xs text-[#b8962e] dark:text-[#c9a847]">{{ __('home.kpi_added_this_month') }}</p>
@@ -46,5 +49,6 @@
         </div>
         <p class="text-3xl font-bold text-[#b8962e] dark:text-[#c9a847]">{{ number_format($addedThisMonth) }}</p>
     </div>
+    @endif
 
 </div>

@@ -44,13 +44,27 @@ class PhoneDirectory extends Component
         $this->reset(['selectedGovernorateId', 'selectedOfficeId', 'appliedOfficeId', 'hasSearched']);
     }
 
+    /** المحافظات المسموح بها للمستخدم (null = super-admin يرى الكل) */
+    protected function allowedGovIds(): ?array
+    {
+        $user = auth()->user();
+
+        return $user?->hasRole('super-admin')
+            ? null
+            : $user->governorates()->pluck('governorates.id')->all();
+    }
+
     public function render()
     {
-        $governorates = Governorate::orderBy('order')->orderBy('id')->get();
+        $allowedGovIds = $this->allowedGovIds(); // null = super-admin (الكل) · [] = لا شيء
 
-        // خيارات المقرات — مقيّدة بالمحافظة المختارة حالياً
+        $governorates = Governorate::query()
+            ->when($allowedGovIds !== null, fn ($q) => $q->whereIn('id', $allowedGovIds))
+            ->orderBy('order')->orderBy('id')->get();
+
+        // خيارات المقرات — مقيّدة بالمحافظة المختارة حالياً + نطاق المستخدم
         $offices = collect();
-        if ($this->selectedGovernorateId) {
+        if ($this->selectedGovernorateId && ($allowedGovIds === null || in_array($this->selectedGovernorateId, $allowedGovIds))) {
             $offices = Office::where('governorate_id', $this->selectedGovernorateId)
                 ->orderBy('name')
                 ->get(['id', 'name']);
@@ -60,6 +74,7 @@ class PhoneDirectory extends Component
         if ($this->hasSearched && $this->appliedOfficeId) {
             $results = Office::query()
                 ->where('id', $this->appliedOfficeId)
+                ->when($allowedGovIds !== null, fn ($q) => $q->whereIn('governorate_id', $allowedGovIds))
                 ->get(['id', 'name', 'head_name', 'head_mobile']);
         }
 

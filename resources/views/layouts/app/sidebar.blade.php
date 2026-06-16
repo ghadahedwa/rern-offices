@@ -37,14 +37,16 @@
                     <flux:sidebar.item icon="map-pin" :href="route('governorates.index')" :current="request()->routeIs('governorates.*')" wire:navigate>
                         {{ __('home.governorates') }}
                     </flux:sidebar.item>
+                    @if(auth()->user()?->hasRole('super-admin') || auth()->user()?->can('offices.index'))
                     <flux:sidebar.item icon="building-office-2" :href="route('offices.index')" :current="request()->routeIs('offices.index') || request()->routeIs('offices.create') || request()->routeIs('offices.show') || request()->routeIs('offices.edit') || request()->routeIs('offices.statistics')" wire:navigate>
                         {{ __('home.offices') }}
                     </flux:sidebar.item>
+                    @endif
                     <flux:sidebar.item icon="phone" :href="route('offices.phone-directory')" :current="request()->routeIs('offices.phone-directory')" wire:navigate>
                         {{ __('home.phone_directory_title') }}
                     </flux:sidebar.item>
                     @if(auth()->user()?->hasRole('super-admin') || auth()->user()?->can('offices.export'))
-                    <div x-data="{ open: true }">
+                    <div x-data="{ open: {{ request()->routeIs('reports.*') ? 'true' : 'false' }} }">
                         <button @click="open = !open"
                             class="nested-menu-btn flex items-center w-full px-3 py-2 font-medium rounded text-zinc-600 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-zinc-900 dark:hover:text-white transition-colors">
                             <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-gray-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
