@@ -321,7 +321,7 @@ class Dashboard extends Component
 
         if ($isSupervisor) {
             // المشرف: نشاطه + نشاط المقرات في محافظاته + دخول/خروج فريقه — كلها لمستوى ≤ مستواه
-            $activitiesQuery->where(function ($q) use ($user, $myOfficeIds, $teamUserIds, $usersAboveMe) {
+            $activitiesQuery->where(function ($q) use ($user, $myOfficeIds, $teamUserIds, $usersAboveMe, $govIds) {
                 // نشاطه هو
                 $q->where(fn ($w) => $w->where('causer_id', $user->id)->where('causer_type', User::class));
 
@@ -329,6 +329,12 @@ class Dashboard extends Component
                 $q->orWhere(fn ($w) => $w
                     ->where('subject_type', Office::class)
                     ->whereIn('subject_id', $myOfficeIds)
+                    ->whereNotIn('causer_id', $usersAboveMe));
+
+                // نشاط المطالبات/المحصل في محافظاته (المحافظة مخزّنة في خصائص السجل)
+                $q->orWhere(fn ($w) => $w
+                    ->whereIn('subject_type', [\App\Models\GovernorateDemand::class, \App\Models\GovernorateClaim::class])
+                    ->whereIn('properties->governorate_id', $govIds)
                     ->whereNotIn('causer_id', $usersAboveMe));
 
                 // دخول/خروج أعضاء فريقه (من مستوى ≤ مستواه)
@@ -345,11 +351,14 @@ class Dashboard extends Component
 
         $activities = $activitiesQuery->paginate(10);
 
+        // أسماء المحافظات (lookup لعرض عنصر سجلات المطالبات في سجل النشاط)
+        $govNames = Governorate::pluck('name', 'id');
+
         return view('livewire.dashboard', compact(
             'totalOffices', 'totalGovernorates', 'totalUsers',
             'addedThisMonth', 'needsVisitCount', 'onlineUsers', 'activities', 'isSuperAdmin',
             'officesByGov', 'officesByType', 'officesByStructure',
-            'user', 'statsSummary', 'govTooltipData',
+            'user', 'statsSummary', 'govTooltipData', 'govNames',
             'canView', 'canEdit', 'isSupervisor', 'canViewOfficeStats'
         ));
     }

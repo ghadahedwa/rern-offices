@@ -123,13 +123,22 @@
             <form wire:submit="save" class="space-y-5">
                 <div class="flex flex-col gap-1">
                     <label class="text-sm font-medium text-zinc-700 dark:text-zinc-300">{{ __('home.claims_governorate') }} <span class="text-red-500">*</span></label>
-                    <select wire:model="formGov" class="{{ $inp }}">
+                    <select wire:model.live="formGov" class="{{ $inp }}">
                         <option value="">— {{ __('home.claims_governorate') }} —</option>
                         @foreach($allGovernorates as $gov)
                             <option value="{{ $gov->id }}">{{ $gov->name }}</option>
                         @endforeach
                     </select>
                     @error('formGov') <p class="text-red-500 text-xs">{{ $message }}</p> @enderror
+                    @if($formGov && $formGovDebt !== null)
+                        <div class="mt-1 flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-medium
+                            {{ $formGovDebt <= 0 ? 'bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400' : 'bg-[#c9a847]/10 text-[#b8962e]' }}">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                            <span>{{ __('home.claims_current_debt') }}: {{ number_format($formGovDebt, 2) }} {{ __('home.claims_currency') }}</span>
+                        </div>
+                    @endif
                 </div>
 
                 <div class="flex flex-col gap-1">

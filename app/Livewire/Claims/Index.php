@@ -43,6 +43,7 @@ class Index extends Component
     public string $formYear = '';
     public string $formMonth = '';
     public string $formValue = '';
+    public ?float $formGovDebt = null; // المديونية الحالية للمحافظة المختارة (تنبيه عند الإدخال)
     public ?int $deletingId = null;
     public string $deletingLabel = '';
 
@@ -174,7 +175,8 @@ class Index extends Component
         ];
 
         if ($this->editingDemandId) {
-            $this->scopedDemands()->where('id', $this->editingDemandId)->update($data);
+            // instance بدل bulk update عشان event الموديل يتسجّل في سجل النشاط
+            $this->scopedDemands()->findOrFail($this->editingDemandId)->update($data);
             $msg = __('home.claims_updated');
         } else {
             GovernorateDemand::create($data);
@@ -201,7 +203,8 @@ class Index extends Component
         abort_unless($this->canEdit(), 403);
 
         if ($this->deletingDemandId) {
-            $this->scopedDemands()->where('id', $this->deletingDemandId)->delete();
+            // instance بدل bulk delete عشان event الحذف يتسجّل في سجل النشاط
+            $this->scopedDemands()->findOrFail($this->deletingDemandId)->delete();
             $this->deletingDemandId = null;
             $this->deletingDemandLabel = '';
             $this->showDeleteDemand = false;
@@ -210,6 +213,25 @@ class Index extends Component
     }
 
     // ── المحصل (الشهري) ──
+
+    /** المديونية الحالية لمحافظة = إجمالي المطالبات − إجمالي المحصل */
+    private function governorateDebt(?int $govId): ?float
+    {
+        if (! $govId || ! $this->allowedGovernorates()->contains('id', $govId)) {
+            return null;
+        }
+
+        $demands   = (float) GovernorateDemand::where('governorate_id', $govId)->sum('amount');
+        $collected = (float) GovernorateClaim::where('governorate_id', $govId)->sum('value');
+
+        return $demands - $collected;
+    }
+
+    public function updatedFormGov($value): void
+    {
+        $this->formGovDebt = $this->governorateDebt($value !== '' && $value !== null ? (int) $value : null);
+    }
+
     public function openAdd(): void
     {
         abort_unless($this->canEdit(), 403);
@@ -219,6 +241,7 @@ class Index extends Component
         $this->formYear  = '';
         $this->formMonth = '';
         $this->formValue = '';
+        $this->formGovDebt = $this->governorateDebt($this->formGov);
         $this->resetValidation();
         $this->showForm = true;
     }
@@ -234,6 +257,7 @@ class Index extends Component
         $this->formYear  = (string) $claim->year;
         $this->formMonth = (string) $claim->month;
         $this->formValue = (string) (0 + $claim->value);
+        $this->formGovDebt = $this->governorateDebt($this->formGov);
         $this->resetValidation();
         $this->showForm = true;
     }
@@ -275,7 +299,8 @@ class Index extends Component
         ];
 
         if ($this->editingId) {
-            $this->scopedClaims()->where('id', $this->editingId)->update($data);
+            // instance بدل bulk update عشان event الموديل يتسجّل في سجل النشاط
+            $this->scopedClaims()->findOrFail($this->editingId)->update($data);
             $msg = __('home.claims_updated');
         } else {
             GovernorateClaim::create($data);
@@ -303,7 +328,8 @@ class Index extends Component
         abort_unless($this->canEdit(), 403);
 
         if ($this->deletingId) {
-            $this->scopedClaims()->where('id', $this->deletingId)->delete();
+            // instance بدل bulk delete عشان event الحذف يتسجّل في سجل النشاط
+            $this->scopedClaims()->findOrFail($this->deletingId)->delete();
             $this->deletingId = null;
             $this->deletingLabel = '';
             $this->showDelete = false;

@@ -592,6 +592,7 @@ return [
     'claims_date'                => 'التاريخ',
     'claims_demand_add'          => 'إضافة مطالبة',
     'claims_demand_word'         => 'مطالبة',
+    'claims_current_debt'        => 'المديونية الحالية لهذه المحافظة',
     'claims_select_governorate'  => 'اختر المحافظة',
     'claims_governorate'         => 'المحافظة',
     'claims_all_governorates'    => 'كل المحافظات',
