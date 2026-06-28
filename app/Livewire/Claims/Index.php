@@ -4,6 +4,7 @@ namespace App\Livewire\Claims;
 
 use App\Models\Governorate;
 use App\Models\GovernorateClaim;
+use App\Models\GovernorateDemand;
 use Flux\Flux;
 use Livewire\Attributes\Url;
 use Livewire\Component;
@@ -16,20 +17,23 @@ class Index extends Component
     #[Url]
     public string $tab = 'debt';
 
-    // فلتر مشترك بالمحافظة
+    // فلتر مشترك
     public ?int $filterGovernorate = null;
-    // فلتر السنة (تاب المحصل فقط)
     public string $filterYear = '';
 
-    // ترتيب جدول المديونية: name | debt | collected | remaining
+    // ترتيب جدول المديونية: name | demands | collected | debt
     public string $sortField = 'name';
     public string $sortDir = 'asc';
 
-    // ── modal المديونية ──
-    public bool $showDebt = false;
-    public ?int $editGovId = null;
-    public string $editGovName = '';
-    public string $debtAmount = '';
+    // ── modals المطالبات ──
+    public bool $showDemand = false;
+    public bool $showDeleteDemand = false;
+    public ?int $editingDemandId = null;
+    public ?int $demandGov = null;
+    public string $demandDate = '';
+    public string $demandAmount = '';
+    public ?int $deletingDemandId = null;
+    public string $deletingDemandLabel = '';
 
     // ── modals المحصل ──
     public bool $showForm = false;
@@ -68,6 +72,16 @@ class Index extends Component
             : $user->governorates()->orderBy('order')->orderBy('id')->get();
     }
 
+    private function scopedDemands()
+    {
+        return GovernorateDemand::whereIn('governorate_id', $this->allowedGovernorates()->pluck('id'));
+    }
+
+    private function scopedClaims()
+    {
+        return GovernorateClaim::whereIn('governorate_id', $this->allowedGovernorates()->pluck('id'));
+    }
+
     private function months(): array
     {
         return [
@@ -79,16 +93,26 @@ class Index extends Component
 
     public function setTab(string $tab): void
     {
-        $this->tab = in_array($tab, ['debt', 'collection'], true) ? $tab : 'debt';
-        $this->resetPage();
+        $this->tab = in_array($tab, ['debt', 'demands', 'collection'], true) ? $tab : 'debt';
+        $this->resetPage('demandsPage');
+        $this->resetPage('collectionPage');
     }
 
-    public function updatedFilterGovernorate(): void { $this->resetPage(); }
-    public function updatedFilterYear(): void { $this->resetPage(); }
+    public function updatedFilterGovernorate(): void
+    {
+        $this->resetPage('demandsPage');
+        $this->resetPage('collectionPage');
+    }
+
+    public function updatedFilterYear(): void
+    {
+        $this->resetPage('demandsPage');
+        $this->resetPage('collectionPage');
+    }
 
     public function sortBy(string $field): void
     {
-        if (! in_array($field, ['name', 'debt', 'collected', 'remaining'], true)) {
+        if (! in_array($field, ['name', 'demands', 'collected', 'debt'], true)) {
             return;
         }
 
@@ -100,38 +124,89 @@ class Index extends Component
         }
     }
 
-    // ── المديونية ──
-    public function openDebt(int $govId): void
+    // ── المطالبات ──
+    public function openAddDemand(): void
     {
         abort_unless($this->canEdit(), 403);
 
-        $gov = $this->allowedGovernorates()->firstWhere('id', $govId);
-        abort_unless($gov, 403);
-
-        $this->editGovId   = $gov->id;
-        $this->editGovName = $gov->name;
-        $this->debtAmount  = $gov->debt_amount !== null ? (string) (0 + $gov->debt_amount) : '';
+        $this->editingDemandId = null;
+        $this->demandGov   = $this->filterGovernorate;
+        $this->demandDate  = '';
+        $this->demandAmount = '';
         $this->resetValidation();
-        $this->showDebt = true;
+        $this->showDemand = true;
     }
 
-    public function saveDebt(): void
+    public function openEditDemand(int $demandId): void
     {
         abort_unless($this->canEdit(), 403);
 
-        $gov = $this->allowedGovernorates()->firstWhere('id', $this->editGovId);
-        abort_unless($gov, 403);
+        $demand = $this->scopedDemands()->findOrFail($demandId);
 
-        $this->validate(
-            ['debtAmount' => 'nullable|numeric|min:0'],
-            [],
-            ['debtAmount' => __('home.claims_debt_amount')]
-        );
+        $this->editingDemandId = $demand->id;
+        $this->demandGov    = $demand->governorate_id;
+        $this->demandDate   = $demand->date->format('Y-m-d');
+        $this->demandAmount = (string) (0 + $demand->amount);
+        $this->resetValidation();
+        $this->showDemand = true;
+    }
 
-        $gov->update(['debt_amount' => $this->debtAmount !== '' ? $this->debtAmount : null]);
+    public function saveDemand(): void
+    {
+        abort_unless($this->canEdit(), 403);
 
-        $this->showDebt = false;
-        Flux::toast(variant: 'success', text: __('home.claims_debt_saved'));
+        $allowedIds = $this->allowedGovernorates()->pluck('id')->all();
+
+        $this->validate([
+            'demandGov'    => ['required', 'integer', 'in:' . implode(',', $allowedIds)],
+            'demandDate'   => 'required|date',
+            'demandAmount' => 'required|numeric|min:0',
+        ], [], [
+            'demandGov'    => __('home.claims_governorate'),
+            'demandDate'   => __('home.claims_date'),
+            'demandAmount' => __('home.claims_value'),
+        ]);
+
+        $data = [
+            'governorate_id' => $this->demandGov,
+            'date'           => $this->demandDate,
+            'amount'         => $this->demandAmount,
+        ];
+
+        if ($this->editingDemandId) {
+            $this->scopedDemands()->where('id', $this->editingDemandId)->update($data);
+            $msg = __('home.claims_updated');
+        } else {
+            GovernorateDemand::create($data);
+            $msg = __('home.claims_added');
+        }
+
+        $this->showDemand = false;
+        Flux::toast(variant: 'success', text: $msg);
+    }
+
+    public function askDeleteDemand(int $demandId): void
+    {
+        abort_unless($this->canEdit(), 403);
+
+        $demand = $this->scopedDemands()->with('governorate')->findOrFail($demandId);
+
+        $this->deletingDemandId    = $demand->id;
+        $this->deletingDemandLabel = $demand->governorate->name . ' — ' . $demand->date->format('Y-m-d');
+        $this->showDeleteDemand = true;
+    }
+
+    public function deleteDemand(): void
+    {
+        abort_unless($this->canEdit(), 403);
+
+        if ($this->deletingDemandId) {
+            $this->scopedDemands()->where('id', $this->deletingDemandId)->delete();
+            $this->deletingDemandId = null;
+            $this->deletingDemandLabel = '';
+            $this->showDeleteDemand = false;
+            Flux::toast(variant: 'success', text: __('home.claims_deleted'));
+        }
     }
 
     // ── المحصل (الشهري) ──
@@ -140,7 +215,7 @@ class Index extends Component
         abort_unless($this->canEdit(), 403);
 
         $this->editingId = null;
-        $this->formGov   = $this->filterGovernorate; // يفضّل المحافظة المفلترة إن وجدت
+        $this->formGov   = $this->filterGovernorate;
         $this->formYear  = '';
         $this->formMonth = '';
         $this->formValue = '';
@@ -236,50 +311,62 @@ class Index extends Component
         }
     }
 
-    /** استعلام المحصل مقيّد بمحافظات المستخدم المسموحة */
-    private function scopedClaims()
-    {
-        return GovernorateClaim::whereIn('governorate_id', $this->allowedGovernorates()->pluck('id'));
-    }
-
     public function render()
     {
-        $all = $this->allowedGovernorates();
+        $all    = $this->allowedGovernorates();
+        $govIds = $all->pluck('id');
 
-        // تاب المديونية: المحافظات + إجمالي المحصّل لكل محافظة
-        $debtRows = $this->filterGovernorate
-            ? $all->where('id', $this->filterGovernorate)->values()
-            : $all;
+        // إجماليات لكل محافظة
+        $demandsTotals = GovernorateDemand::whereIn('governorate_id', $govIds)
+            ->selectRaw('governorate_id, SUM(amount) as total')
+            ->groupBy('governorate_id')
+            ->pluck('total', 'governorate_id');
 
-        $collectedTotals = GovernorateClaim::whereIn('governorate_id', $all->pluck('id'))
+        $collectedTotals = GovernorateClaim::whereIn('governorate_id', $govIds)
             ->selectRaw('governorate_id, SUM(value) as total')
             ->groupBy('governorate_id')
             ->pluck('total', 'governorate_id');
 
-        // ترتيب صفوف المديونية حسب العمود المختار
-        $debtRows = $debtRows->sortBy(function ($gov) use ($collectedTotals) {
-            $collected = (float) ($collectedTotals[$gov->id] ?? 0);
-            return match ($this->sortField) {
-                'debt'      => $gov->debt_amount !== null ? (float) $gov->debt_amount : -INF,
-                'collected' => $collected,
-                'remaining' => $gov->debt_amount !== null ? (float) $gov->debt_amount - $collected : -INF,
-                default     => $gov->order, // ترتيب المحافظة بـ order مش بالاسم
-            };
-        }, SORT_REGULAR, $this->sortDir === 'desc')->values();
+        // تاب المديونية: صفوف المحافظات + الإجماليات، مرتّبة
+        $debtRows = ($this->filterGovernorate
+            ? $all->where('id', $this->filterGovernorate)->values()
+            : $all)
+            ->sortBy(function ($gov) use ($demandsTotals, $collectedTotals) {
+                $d = (float) ($demandsTotals[$gov->id] ?? 0);
+                $c = (float) ($collectedTotals[$gov->id] ?? 0);
+                return match ($this->sortField) {
+                    'demands'   => $d,
+                    'collected' => $c,
+                    'debt'      => $d - $c,
+                    default     => $gov->order,
+                };
+            }, SORT_REGULAR, $this->sortDir === 'desc')
+            ->values();
 
-        // تاب المحصل: جدول شهري مفلتر
+        // تاب المطالبات
+        $demands = $this->scopedDemands()
+            ->with('governorate')
+            ->when($this->filterGovernorate, fn($q) => $q->where('governorate_id', $this->filterGovernorate))
+            ->when($this->filterYear !== '', fn($q) => $q->whereYear('date', $this->filterYear))
+            ->orderByDesc('date')
+            ->orderByDesc('id')
+            ->paginate(10, ['*'], 'demandsPage');
+
+        // تاب المحصل
         $collection = $this->scopedClaims()
             ->with('governorate')
             ->when($this->filterGovernorate, fn($q) => $q->where('governorate_id', $this->filterGovernorate))
             ->when($this->filterYear !== '', fn($q) => $q->where('year', $this->filterYear))
             ->orderByDesc('year')
             ->orderByDesc('month')
-            ->paginate(10);
+            ->paginate(10, ['*'], 'collectionPage');
 
         return view('livewire.claims.index', [
             'allGovernorates' => $all,
             'debtRows'        => $debtRows,
+            'demandsTotals'   => $demandsTotals,
             'collectedTotals' => $collectedTotals,
+            'demands'         => $demands,
             'collection'      => $collection,
             'years'           => range((int) date('Y'), 2024),
             'months'          => $this->months(),

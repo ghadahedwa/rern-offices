@@ -1,6 +1,6 @@
 <div class="max-w-4xl mx-auto p-6 space-y-6"
      x-data
-     @keydown.escape.window="$wire.showDebt = false; $wire.showForm = false; $wire.showDelete = false">
+     @keydown.escape.window="$wire.showDemand = false; $wire.showDeleteDemand = false; $wire.showForm = false; $wire.showDelete = false">
 
     @php
         $inp = 'w-full border border-zinc-300 dark:border-zinc-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-[#c9a847]';
@@ -21,6 +21,11 @@
                 {{ $tab === 'debt' ? 'border-[#c9a847] text-[#c9a847]' : 'border-transparent text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300' }}">
                 {{ __('home.claims_tab_debt') }}
             </button>
+            <button type="button" wire:click="setTab('demands')"
+                class="px-4 py-2.5 text-sm font-medium border-b-2 transition cursor-pointer
+                {{ $tab === 'demands' ? 'border-[#c9a847] text-[#c9a847]' : 'border-transparent text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300' }}">
+                {{ __('home.claims_tab_demands') }}
+            </button>
             <button type="button" wire:click="setTab('collection')"
                 class="px-4 py-2.5 text-sm font-medium border-b-2 transition cursor-pointer
                 {{ $tab === 'collection' ? 'border-[#c9a847] text-[#c9a847]' : 'border-transparent text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300' }}">
@@ -31,6 +36,8 @@
 
     @if($tab === 'debt')
         @include('livewire.claims.includes.debt-tab')
+    @elseif($tab === 'demands')
+        @include('livewire.claims.includes.demands-tab')
     @else
         @include('livewire.claims.includes.collection-tab')
     @endif
