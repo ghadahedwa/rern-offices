@@ -107,12 +107,18 @@ class OfficesByType extends Component
                 ->orderBy('name')->get(['id', 'name'])
             : collect();
 
-        // عدّ حسب النوع
+        // ── الربط المتقاطع (cross-filter) بين النوع والوصف ──
+        // عدّ النوع يحترم الأوصاف المختارة، وعدّ الوصف يحترم الأنواع المختارة.
+        $selectedTypeIds     = $f['typeIds'] ?? [];
+        $selectedLocationIds = $f['locationIds'] ?? [];
+
+        // عدّ حسب النوع — محصور على المقرات ذات الأوصاف المختارة (إن وُجدت)
         $typeCounts = [];
         if ($types->isNotEmpty()) {
             $typeRows = Office::query()
                 ->when($allowedGovIds, fn ($q) => $q->whereIn('governorate_id', $allowedGovIds))
                 ->when($govIds, fn ($q) => $q->whereIn('governorate_id', $govIds))
+                ->when($selectedLocationIds, fn ($q) => $q->whereIn('location_description_id', $selectedLocationIds))
                 ->selectRaw('governorate_id, type_id, COUNT(*) as cnt')
                 ->groupBy('governorate_id', 'type_id')
                 ->get();
@@ -121,12 +127,13 @@ class OfficesByType extends Component
             }
         }
 
-        // عدّ حسب وصف الموقع
+        // عدّ حسب وصف الموقع — محصور على المقرات ذات الأنواع المختارة (إن وُجدت)
         $locationCounts = [];
         if ($locations->isNotEmpty()) {
             $locRows = Office::query()
                 ->when($allowedGovIds, fn ($q) => $q->whereIn('governorate_id', $allowedGovIds))
                 ->when($govIds, fn ($q) => $q->whereIn('governorate_id', $govIds))
+                ->when($selectedTypeIds, fn ($q) => $q->whereIn('type_id', $selectedTypeIds))
                 ->selectRaw('governorate_id, location_description_id, COUNT(*) as cnt')
                 ->groupBy('governorate_id', 'location_description_id')
                 ->get();

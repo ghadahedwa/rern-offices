@@ -51,11 +51,16 @@ class OfficesByTypePdfController extends Controller
                 ->orderBy('name')->get(['id', 'name'])
             : collect();
 
+        // ── الربط المتقاطع (cross-filter) بين النوع والوصف ──
+        $selectedTypeIds     = $f['typeIds'] ?? [];
+        $selectedLocationIds = $f['locationIds'] ?? [];
+
         $typeCounts = [];
         if ($types->isNotEmpty()) {
             $typeRows = Office::query()
                 ->when($allowedGovIds, fn ($q) => $q->whereIn('governorate_id', $allowedGovIds))
                 ->when($govIds, fn ($q) => $q->whereIn('governorate_id', $govIds))
+                ->when($selectedLocationIds, fn ($q) => $q->whereIn('location_description_id', $selectedLocationIds))
                 ->selectRaw('governorate_id, type_id, COUNT(*) as cnt')
                 ->groupBy('governorate_id', 'type_id')->get();
             foreach ($typeRows as $r) {
@@ -68,6 +73,7 @@ class OfficesByTypePdfController extends Controller
             $locRows = Office::query()
                 ->when($allowedGovIds, fn ($q) => $q->whereIn('governorate_id', $allowedGovIds))
                 ->when($govIds, fn ($q) => $q->whereIn('governorate_id', $govIds))
+                ->when($selectedTypeIds, fn ($q) => $q->whereIn('type_id', $selectedTypeIds))
                 ->selectRaw('governorate_id, location_description_id, COUNT(*) as cnt')
                 ->groupBy('governorate_id', 'location_description_id')->get();
             foreach ($locRows as $r) {
