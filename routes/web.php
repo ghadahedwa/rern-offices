@@ -11,6 +11,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // All authenticated users can view governorates list
     Route::livewire('governorates', \App\Livewire\Governorates\Index::class)->name('governorates.index');
 
+    // المطالبات على مستوى المحافظة — متاح لكل المستخدمين حالياً (مفلتر بمحافظات اليوزر داخل المكوّن)
+    Route::livewire('claims', \App\Livewire\Claims\Index::class)->name('claims.index');
+
     // Offices — access controlled per-permission inside component mount()
     Route::livewire('offices', \App\Livewire\Offices\Index::class)->name('offices.index');
     Route::livewire('offices/create', \App\Livewire\Offices\Create::class)->name('offices.create');

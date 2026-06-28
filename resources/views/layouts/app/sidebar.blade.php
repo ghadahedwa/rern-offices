@@ -37,6 +37,11 @@
                     <flux:sidebar.item icon="map-pin" :href="route('governorates.index')" :current="request()->routeIs('governorates.*')" wire:navigate>
                         {{ __('home.governorates') }}
                     </flux:sidebar.item>
+                    @if(auth()->user()?->hasRole('super-admin') || auth()->user()?->can('claims.index'))
+                    <flux:sidebar.item icon="banknotes" :href="route('claims.index')" :current="request()->routeIs('claims.*')" wire:navigate>
+                        {{ __('home.claims_title') }}
+                    </flux:sidebar.item>
+                    @endif
                     @if(auth()->user()?->hasRole('super-admin') || auth()->user()?->can('offices.index'))
                     <flux:sidebar.item icon="building-office-2" :href="route('offices.index')" :current="request()->routeIs('offices.index') || request()->routeIs('offices.create') || request()->routeIs('offices.show') || request()->routeIs('offices.edit') || request()->routeIs('offices.statistics')" wire:navigate>
                         {{ __('home.offices') }}

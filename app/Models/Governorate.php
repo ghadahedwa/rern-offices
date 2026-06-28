@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Governorate extends Model
 {
-    protected $fillable = ['name', 'order', 'supervising_counselor', 'latitude', 'longitude'];
+    protected $fillable = ['name', 'order', 'supervising_counselor', 'latitude', 'longitude', 'debt_amount'];
 
     public function users(): BelongsToMany
     {
@@ -18,5 +18,10 @@ class Governorate extends Model
     public function offices(): HasMany
     {
         return $this->hasMany(Office::class);
+    }
+
+    public function claims(): HasMany
+    {
+        return $this->hasMany(GovernorateClaim::class);
     }
 }

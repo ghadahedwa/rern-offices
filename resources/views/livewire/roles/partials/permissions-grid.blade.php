@@ -14,11 +14,14 @@
         'offices.edit'   => 'تعديل مقر',
         'offices.delete' => 'حذف مقر',
         'offices.export' => 'تصدير بيانات المقرات',
+        'claims.index'   => 'عرض المطالبات',
+        'claims.edit'    => 'تعديل المطالبات',
     ];
 
     $groups = [
-        'عام'      => $permissions->filter(fn($p) => !str_contains($p->name, '.')),
-        'المقرات'  => $permissions->filter(fn($p) => str_starts_with($p->name, 'offices.')),
+        'عام'       => $permissions->filter(fn($p) => !str_contains($p->name, '.')),
+        'المقرات'   => $permissions->filter(fn($p) => str_starts_with($p->name, 'offices.')),
+        'المطالبات' => $permissions->filter(fn($p) => str_starts_with($p->name, 'claims.')),
     ];
 @endphp
 
