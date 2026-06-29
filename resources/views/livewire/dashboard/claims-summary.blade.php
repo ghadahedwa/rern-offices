@@ -8,7 +8,7 @@
     </div>
 
     <div class="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-sm p-5">
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
 
             {{-- إجمالي المطالبات --}}
             <div class="flex items-start gap-2">
@@ -18,6 +18,18 @@
                 <div>
                     <p class="text-xs text-zinc-400 mb-0.5">{{ __('home.claims_demands_total') }}</p>
                     <p class="text-xl font-bold text-zinc-800 dark:text-zinc-100">{{ number_format($claimsDemands, 2) }}</p>
+                    <p class="text-[11px] text-zinc-400">{{ __('home.claims_currency') }}</p>
+                </div>
+            </div>
+
+            {{-- المطالبات الملغاة --}}
+            <div class="flex items-start gap-2">
+                <div class="w-8 h-8 rounded-lg bg-amber-50 dark:bg-amber-900/20 flex items-center justify-center shrink-0 mt-0.5">
+                    <flux:icon.x-circle variant="outline" class="w-4 h-4 text-amber-500" />
+                </div>
+                <div>
+                    <p class="text-xs text-zinc-400 mb-0.5">{{ __('home.claims_tab_cancelled') }}</p>
+                    <p class="text-xl font-bold text-amber-600 dark:text-amber-400">{{ number_format($claimsCancelled, 2) }}</p>
                     <p class="text-[11px] text-zinc-400">{{ __('home.claims_currency') }}</p>
                 </div>
             </div>

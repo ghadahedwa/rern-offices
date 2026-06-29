@@ -3,6 +3,7 @@
 namespace App\Livewire\Claims;
 
 use App\Models\Governorate;
+use App\Models\GovernorateCancelledDemand;
 use App\Models\GovernorateClaim;
 use App\Models\GovernorateDemand;
 use Flux\Flux;
@@ -21,7 +22,7 @@ class Index extends Component
     public ?int $filterGovernorate = null;
     public string $filterYear = '';
 
-    // ترتيب جدول المديونية: name | demands | collected | debt
+    // ترتيب جدول المديونية: name | demands | cancelled | collected | debt
     public string $sortField = 'name';
     public string $sortDir = 'asc';
 
@@ -47,6 +48,18 @@ class Index extends Component
     public ?float $formGovDebt = null; // المديونية الحالية للمحافظة المختارة (تنبيه عند الإدخال)
     public ?int $deletingId = null;
     public string $deletingLabel = '';
+
+    // ── modals المطالبات الملغاة ──
+    public bool $showCancelled = false;
+    public bool $showDeleteCancelled = false;
+    public ?int $editingCancelledId = null;
+    public ?int $cancGov = null;
+    public string $cancYear = '';
+    public string $cancMonth = '';
+    public string $cancAmount = '';
+    public string $cancReason = '';
+    public ?int $deletingCancelledId = null;
+    public string $deletingCancelledLabel = '';
 
     public function mount(): void
     {
@@ -84,6 +97,11 @@ class Index extends Component
         return GovernorateClaim::whereIn('governorate_id', $this->allowedGovernorates()->pluck('id'));
     }
 
+    private function scopedCancelled()
+    {
+        return GovernorateCancelledDemand::whereIn('governorate_id', $this->allowedGovernorates()->pluck('id'));
+    }
+
     private function months(): array
     {
         return [
@@ -95,26 +113,29 @@ class Index extends Component
 
     public function setTab(string $tab): void
     {
-        $this->tab = in_array($tab, ['debt', 'demands', 'collection'], true) ? $tab : 'debt';
+        $this->tab = in_array($tab, ['debt', 'demands', 'cancelled', 'collection'], true) ? $tab : 'debt';
         $this->resetPage('demandsPage');
+        $this->resetPage('cancelledPage');
         $this->resetPage('collectionPage');
     }
 
     public function updatedFilterGovernorate(): void
     {
         $this->resetPage('demandsPage');
+        $this->resetPage('cancelledPage');
         $this->resetPage('collectionPage');
     }
 
     public function updatedFilterYear(): void
     {
         $this->resetPage('demandsPage');
+        $this->resetPage('cancelledPage');
         $this->resetPage('collectionPage');
     }
 
     public function sortBy(string $field): void
     {
-        if (! in_array($field, ['name', 'demands', 'collected', 'debt'], true)) {
+        if (! in_array($field, ['name', 'demands', 'cancelled', 'collected', 'debt'], true)) {
             return;
         }
 
@@ -192,7 +213,6 @@ class Index extends Component
         ];
 
         if ($this->editingDemandId) {
-            // instance بدل bulk update عشان event الموديل يتسجّل في سجل النشاط
             $this->scopedDemands()->findOrFail($this->editingDemandId)->update($data);
             $msg = __('home.claims_updated');
         } else {
@@ -221,7 +241,6 @@ class Index extends Component
         abort_unless($this->canEdit(), 403);
 
         if ($this->deletingDemandId) {
-            // instance بدل bulk delete عشان event الحذف يتسجّل في سجل النشاط
             $this->scopedDemands()->findOrFail($this->deletingDemandId)->delete();
             $this->deletingDemandId = null;
             $this->deletingDemandLabel = '';
@@ -230,9 +249,105 @@ class Index extends Component
         }
     }
 
+    // ── المطالبات الملغاة ──
+    public function openAddCancelled(): void
+    {
+        abort_unless($this->canEdit(), 403);
+
+        $this->editingCancelledId = null;
+        $this->cancGov    = $this->filterGovernorate;
+        $this->cancYear   = '';
+        $this->cancMonth  = '';
+        $this->cancAmount = '';
+        $this->cancReason = '';
+        $this->resetValidation();
+        $this->showCancelled = true;
+    }
+
+    public function openEditCancelled(int $id): void
+    {
+        abort_unless($this->canEdit(), 403);
+
+        $row = $this->scopedCancelled()->findOrFail($id);
+
+        $this->editingCancelledId = $row->id;
+        $this->cancGov    = $row->governorate_id;
+        $this->cancYear   = (string) $row->year;
+        $this->cancMonth  = (string) $row->month;
+        $this->cancAmount = (string) (0 + $row->amount);
+        $this->cancReason = (string) $row->reason;
+        $this->resetValidation();
+        $this->showCancelled = true;
+    }
+
+    public function saveCancelled(): void
+    {
+        abort_unless($this->canEdit(), 403);
+
+        $allowedIds = $this->allowedGovernorates()->pluck('id')->all();
+
+        $this->validate([
+            'cancGov'    => ['required', 'integer', 'in:' . implode(',', $allowedIds)],
+            'cancYear'   => 'required|integer|min:2000',
+            'cancMonth'  => 'required|integer|between:1,12',
+            'cancAmount' => 'required|numeric|min:0',
+            'cancReason' => 'nullable|string|max:1000',
+        ], [], [
+            'cancGov'    => __('home.claims_governorate'),
+            'cancYear'   => __('home.claims_year'),
+            'cancMonth'  => __('home.claims_month'),
+            'cancAmount' => __('home.claims_value'),
+            'cancReason' => __('home.claims_cancel_reason'),
+        ]);
+
+        $data = [
+            'governorate_id' => $this->cancGov,
+            'year'           => $this->cancYear,
+            'month'          => $this->cancMonth,
+            'amount'         => $this->cancAmount,
+            'reason'         => $this->cancReason !== '' ? $this->cancReason : null,
+        ];
+
+        if ($this->editingCancelledId) {
+            $this->scopedCancelled()->findOrFail($this->editingCancelledId)->update($data);
+            $msg = __('home.claims_updated');
+        } else {
+            GovernorateCancelledDemand::create($data);
+            $msg = __('home.claims_added');
+        }
+
+        $this->showCancelled = false;
+        Flux::toast(variant: 'success', text: $msg);
+    }
+
+    public function askDeleteCancelled(int $id): void
+    {
+        abort_unless($this->canEdit(), 403);
+
+        $row    = $this->scopedCancelled()->with('governorate')->findOrFail($id);
+        $months = $this->months();
+
+        $this->deletingCancelledId    = $row->id;
+        $this->deletingCancelledLabel = $row->governorate->name . ' — ' . ($months[$row->month] ?? $row->month) . ' ' . $row->year;
+        $this->showDeleteCancelled = true;
+    }
+
+    public function deleteCancelled(): void
+    {
+        abort_unless($this->canEdit(), 403);
+
+        if ($this->deletingCancelledId) {
+            $this->scopedCancelled()->findOrFail($this->deletingCancelledId)->delete();
+            $this->deletingCancelledId = null;
+            $this->deletingCancelledLabel = '';
+            $this->showDeleteCancelled = false;
+            Flux::toast(variant: 'success', text: __('home.claims_deleted'));
+        }
+    }
+
     // ── المحصل (الشهري) ──
 
-    /** المديونية الحالية لمحافظة = إجمالي المطالبات − إجمالي المحصل */
+    /** المديونية الحالية لمحافظة = المطالبات − الملغاة − المحصل */
     private function governorateDebt(?int $govId): ?float
     {
         if (! $govId || ! $this->allowedGovernorates()->contains('id', $govId)) {
@@ -240,9 +355,10 @@ class Index extends Component
         }
 
         $demands   = (float) GovernorateDemand::where('governorate_id', $govId)->sum('amount');
+        $cancelled = (float) GovernorateCancelledDemand::where('governorate_id', $govId)->sum('amount');
         $collected = (float) GovernorateClaim::where('governorate_id', $govId)->sum('value');
 
-        return $demands - $collected;
+        return $demands - $cancelled - $collected;
     }
 
     public function updatedFormGov($value): void
@@ -317,7 +433,6 @@ class Index extends Component
         ];
 
         if ($this->editingId) {
-            // instance بدل bulk update عشان event الموديل يتسجّل في سجل النشاط
             $this->scopedClaims()->findOrFail($this->editingId)->update($data);
             $msg = __('home.claims_updated');
         } else {
@@ -346,7 +461,6 @@ class Index extends Component
         abort_unless($this->canEdit(), 403);
 
         if ($this->deletingId) {
-            // instance بدل bulk delete عشان event الحذف يتسجّل في سجل النشاط
             $this->scopedClaims()->findOrFail($this->deletingId)->delete();
             $this->deletingId = null;
             $this->deletingLabel = '';
@@ -366,22 +480,29 @@ class Index extends Component
             ->groupBy('governorate_id')
             ->pluck('total', 'governorate_id');
 
+        $cancelledTotals = GovernorateCancelledDemand::whereIn('governorate_id', $govIds)
+            ->selectRaw('governorate_id, SUM(amount) as total')
+            ->groupBy('governorate_id')
+            ->pluck('total', 'governorate_id');
+
         $collectedTotals = GovernorateClaim::whereIn('governorate_id', $govIds)
             ->selectRaw('governorate_id, SUM(value) as total')
             ->groupBy('governorate_id')
             ->pluck('total', 'governorate_id');
 
-        // تاب المديونية: صفوف المحافظات + الإجماليات، مرتّبة
+        // تاب المديونية: المديونية = المطالبات − الملغاة − المحصل
         $debtRows = ($this->filterGovernorate
             ? $all->where('id', $this->filterGovernorate)->values()
             : $all)
-            ->sortBy(function ($gov) use ($demandsTotals, $collectedTotals) {
+            ->sortBy(function ($gov) use ($demandsTotals, $cancelledTotals, $collectedTotals) {
                 $d = (float) ($demandsTotals[$gov->id] ?? 0);
+                $x = (float) ($cancelledTotals[$gov->id] ?? 0);
                 $c = (float) ($collectedTotals[$gov->id] ?? 0);
                 return match ($this->sortField) {
                     'demands'   => $d,
+                    'cancelled' => $x,
                     'collected' => $c,
-                    'debt'      => $d - $c,
+                    'debt'      => $d - $x - $c,
                     default     => $gov->order,
                 };
             }, SORT_REGULAR, $this->sortDir === 'desc')
@@ -396,6 +517,15 @@ class Index extends Component
             ->orderByDesc('month')
             ->paginate(10, ['*'], 'demandsPage');
 
+        // تاب المطالبات الملغاة
+        $cancelled = $this->scopedCancelled()
+            ->with('governorate')
+            ->when($this->filterGovernorate, fn($q) => $q->where('governorate_id', $this->filterGovernorate))
+            ->when($this->filterYear !== '', fn($q) => $q->where('year', $this->filterYear))
+            ->orderByDesc('year')
+            ->orderByDesc('month')
+            ->paginate(10, ['*'], 'cancelledPage');
+
         // تاب المحصل
         $collection = $this->scopedClaims()
             ->with('governorate')
@@ -409,8 +539,10 @@ class Index extends Component
             'allGovernorates' => $all,
             'debtRows'        => $debtRows,
             'demandsTotals'   => $demandsTotals,
+            'cancelledTotals' => $cancelledTotals,
             'collectedTotals' => $collectedTotals,
             'demands'         => $demands,
+            'cancelled'       => $cancelled,
             'collection'      => $collection,
             'years'           => range((int) date('Y'), 2024),
             'months'          => $this->months(),

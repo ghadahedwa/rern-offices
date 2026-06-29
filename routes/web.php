@@ -33,6 +33,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::livewire('reports/devices', \App\Livewire\Reports\DeviceCount::class)->name('reports.device-count');
     Route::get('reports/devices/pdf', \App\Http\Controllers\DeviceCountPdfController::class)->name('reports.device-count.pdf');
     Route::livewire('reports/stats-comparison', \App\Livewire\Reports\StatsComparison::class)->name('reports.stats-comparison');
+    Route::livewire('reports/claims-statement', \App\Livewire\Reports\ClaimsStatement::class)->name('reports.claims-statement');
+    Route::get('reports/claims-statement/pdf', \App\Http\Controllers\ClaimsStatementPdfController::class)->name('reports.claims-statement.pdf');
     Route::get('offices/{office}/pdf', [\App\Http\Controllers\OfficePdfController::class, '__invoke'])->name('offices.pdf');
 
     Route::middleware('role:super-admin')->group(function () {

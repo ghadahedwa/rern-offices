@@ -111,7 +111,7 @@
                                     @else
                                         <span class="text-xs text-zinc-600 dark:text-zinc-300">{{ $activity->subject->name ?? '#' . $activity->subject_id }}</span>
                                     @endif
-                                @elseif(in_array($activity->subject_type, [\App\Models\GovernorateDemand::class, \App\Models\GovernorateClaim::class]))
+                                @elseif(in_array($activity->subject_type, [\App\Models\GovernorateDemand::class, \App\Models\GovernorateClaim::class, \App\Models\GovernorateCancelledDemand::class]))
                                     @php $gid = $activity->getExtraProperty('governorate_id'); @endphp
                                     <span class="text-xs text-zinc-600 dark:text-zinc-300">{{ $govNames[$gid] ?? '—' }}</span>
                                 @else

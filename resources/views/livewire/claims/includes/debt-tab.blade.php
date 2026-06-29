@@ -30,6 +30,7 @@
                         $sortCols = [
                             'name'      => __('home.claims_governorate'),
                             'demands'   => __('home.claims_demands_total') . ' (' . $cur . ')',
+                            'cancelled' => __('home.claims_cancelled_total') . ' (' . $cur . ')',
                             'collected' => __('home.claims_collected') . ' (' . $cur . ')',
                             'debt'      => __('home.claims_debt_total') . ' (' . $cur . ')',
                         ];
@@ -52,13 +53,15 @@
             <tbody class="divide-y divide-zinc-100 dark:divide-zinc-700">
                 @foreach($debtRows as $gov)
                 @php
-                    $demandsT = $demandsTotals[$gov->id] ?? 0;
+                    $demandsT  = $demandsTotals[$gov->id] ?? 0;
+                    $cancelledT = $cancelledTotals[$gov->id] ?? 0;
                     $collected = $collectedTotals[$gov->id] ?? 0;
-                    $debt = $demandsT - $collected;
+                    $debt = $demandsT - $cancelledT - $collected;
                 @endphp
                 <tr class="hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition">
                     <td class="px-4 py-2.5 text-zinc-700 dark:text-zinc-300">{{ $gov->name }}</td>
                     <td class="px-4 py-2.5 font-medium text-zinc-800 dark:text-zinc-100">{{ number_format($demandsT, 2) }}</td>
+                    <td class="px-4 py-2.5 font-medium text-amber-600 dark:text-amber-400">{{ number_format($cancelledT, 2) }}</td>
                     <td class="px-4 py-2.5 font-medium text-emerald-600 dark:text-emerald-400">{{ number_format($collected, 2) }}</td>
                     <td class="px-4 py-2.5 font-bold {{ $debt < 0 ? 'text-red-600 dark:text-red-400' : 'text-zinc-800 dark:text-zinc-100' }}">
                         {{ number_format($debt, 2) }}

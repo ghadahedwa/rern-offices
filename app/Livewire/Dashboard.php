@@ -286,6 +286,7 @@ class Dashboard extends Component
         // ملخص المطالبات المالي — محجوب بصلاحية claims.index، مجمّع حسب محافظات المستخدم
         $canViewClaims   = $isSuperAdmin || $user->can('claims.index');
         $claimsDemands   = 0.0;
+        $claimsCancelled = 0.0;
         $claimsCollected = 0.0;
         $claimsDebt      = 0.0;
         $claimsRate      = null;
@@ -293,17 +294,24 @@ class Dashboard extends Component
         if ($canViewClaims) {
             $demandsByGov = \App\Models\GovernorateDemand::when(! $isSuperAdmin, fn ($q) => $q->whereIn('governorate_id', $govIds))
                 ->selectRaw('governorate_id, SUM(amount) as total')->groupBy('governorate_id')->pluck('total', 'governorate_id');
+            $cancelledByGov = \App\Models\GovernorateCancelledDemand::when(! $isSuperAdmin, fn ($q) => $q->whereIn('governorate_id', $govIds))
+                ->selectRaw('governorate_id, SUM(amount) as total')->groupBy('governorate_id')->pluck('total', 'governorate_id');
             $collectedByGov = \App\Models\GovernorateClaim::when(! $isSuperAdmin, fn ($q) => $q->whereIn('governorate_id', $govIds))
                 ->selectRaw('governorate_id, SUM(value) as total')->groupBy('governorate_id')->pluck('total', 'governorate_id');
 
             $claimsDemands   = (float) $demandsByGov->sum();
+            $claimsCancelled = (float) $cancelledByGov->sum();
             $claimsCollected = (float) $collectedByGov->sum();
-            $claimsDebt      = $claimsDemands - $claimsCollected;
-            $claimsRate      = $claimsDemands > 0 ? round($claimsCollected / $claimsDemands * 100, 1) : null;
+            $claimsDebt      = $claimsDemands - $claimsCancelled - $claimsCollected;
+            // نسبة التحصيل من صافي المطالبات (بعد خصم الملغاة)
+            $netDemands      = $claimsDemands - $claimsCancelled;
+            $claimsRate      = $netDemands > 0 ? round($claimsCollected / $netDemands * 100, 1) : null;
 
             // مديونية كل محافظة بنفس ترتيب رسم المحافظات (للـ tooltip)
             $govDebtTooltip = $officesByGovRaw->values()->map(
-                fn ($r) => (float) ($demandsByGov[$r->governorate_id] ?? 0) - (float) ($collectedByGov[$r->governorate_id] ?? 0)
+                fn ($r) => (float) ($demandsByGov[$r->governorate_id] ?? 0)
+                    - (float) ($cancelledByGov[$r->governorate_id] ?? 0)
+                    - (float) ($collectedByGov[$r->governorate_id] ?? 0)
             )->values();
         }
 
@@ -357,7 +365,7 @@ class Dashboard extends Component
 
                 // نشاط المطالبات/المحصل في محافظاته (المحافظة مخزّنة في خصائص السجل)
                 $q->orWhere(fn ($w) => $w
-                    ->whereIn('subject_type', [\App\Models\GovernorateDemand::class, \App\Models\GovernorateClaim::class])
+                    ->whereIn('subject_type', [\App\Models\GovernorateDemand::class, \App\Models\GovernorateClaim::class, \App\Models\GovernorateCancelledDemand::class])
                     ->whereIn('properties->governorate_id', $govIds)
                     ->whereNotIn('causer_id', $usersAboveMe));
 
@@ -384,7 +392,7 @@ class Dashboard extends Component
             'officesByGov', 'officesByType', 'officesByStructure',
             'user', 'statsSummary', 'govTooltipData', 'govNames',
             'canView', 'canEdit', 'isSupervisor', 'canViewOfficeStats',
-            'canViewClaims', 'claimsDemands', 'claimsCollected', 'claimsDebt', 'claimsRate', 'govDebtTooltip'
+            'canViewClaims', 'claimsDemands', 'claimsCancelled', 'claimsCollected', 'claimsDebt', 'claimsRate', 'govDebtTooltip'
         ));
     }
 }

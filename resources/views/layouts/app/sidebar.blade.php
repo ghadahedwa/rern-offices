@@ -50,7 +50,11 @@
                     <flux:sidebar.item icon="phone" :href="route('offices.phone-directory')" :current="request()->routeIs('offices.phone-directory')" wire:navigate>
                         {{ __('home.phone_directory_title') }}
                     </flux:sidebar.item>
-                    @if(auth()->user()?->hasRole('super-admin') || auth()->user()?->can('offices.export'))
+                    @php
+                        $canOfficeReports = auth()->user()?->hasRole('super-admin') || auth()->user()?->can('offices.export');
+                        $canClaimsReports = auth()->user()?->hasRole('super-admin') || auth()->user()?->can('claims.index');
+                    @endphp
+                    @if($canOfficeReports || $canClaimsReports)
                     <div x-data="{ open: {{ request()->routeIs('reports.*') ? 'true' : 'false' }} }">
                         <button @click="open = !open"
                             class="nested-menu-btn flex items-center w-full px-3 py-2 font-medium rounded text-zinc-600 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-zinc-900 dark:hover:text-white transition-colors">
@@ -63,6 +67,7 @@
                             </svg>
                         </button>
                         <div x-show="open" x-transition class="ml-6 mt-1 space-y-1">
+                            @if($canOfficeReports)
                             <flux:sidebar.item icon="document-text" :href="route('reports.office-pdf')" :current="request()->routeIs('reports.office-pdf')" wire:navigate>
                                 {{ __('home.report_office_pdf_title') }}
                             </flux:sidebar.item>
@@ -78,6 +83,12 @@
                             <flux:sidebar.item icon="chart-bar" :href="route('reports.stats-comparison')" :current="request()->routeIs('reports.stats-comparison')" wire:navigate>
                                 {{ __('home.report_stats_menu') }}
                             </flux:sidebar.item>
+                            @endif
+                            @if($canClaimsReports)
+                            <flux:sidebar.item icon="banknotes" :href="route('reports.claims-statement')" :current="request()->routeIs('reports.claims-statement')" wire:navigate>
+                                {{ __('home.claims_statement_title') }}
+                            </flux:sidebar.item>
+                            @endif
                         </div>
                     </div>
                     @endif

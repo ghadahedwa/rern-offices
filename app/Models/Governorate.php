@@ -29,4 +29,9 @@ class Governorate extends Model
     {
         return $this->hasMany(GovernorateDemand::class);
     }
+
+    public function cancelledDemands(): HasMany
+    {
+        return $this->hasMany(GovernorateCancelledDemand::class);
+    }
 }

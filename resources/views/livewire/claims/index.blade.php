@@ -26,6 +26,11 @@
                 {{ $tab === 'demands' ? 'border-[#c9a847] text-[#c9a847]' : 'border-transparent text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300' }}">
                 {{ __('home.claims_tab_demands') }}
             </button>
+            <button type="button" wire:click="setTab('cancelled')"
+                class="px-4 py-2.5 text-sm font-medium border-b-2 transition cursor-pointer
+                {{ $tab === 'cancelled' ? 'border-[#c9a847] text-[#c9a847]' : 'border-transparent text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300' }}">
+                {{ __('home.claims_tab_cancelled') }}
+            </button>
             <button type="button" wire:click="setTab('collection')"
                 class="px-4 py-2.5 text-sm font-medium border-b-2 transition cursor-pointer
                 {{ $tab === 'collection' ? 'border-[#c9a847] text-[#c9a847]' : 'border-transparent text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300' }}">
@@ -38,6 +43,8 @@
         @include('livewire.claims.includes.debt-tab')
     @elseif($tab === 'demands')
         @include('livewire.claims.includes.demands-tab')
+    @elseif($tab === 'cancelled')
+        @include('livewire.claims.includes.cancelled-tab')
     @else
         @include('livewire.claims.includes.collection-tab')
     @endif
