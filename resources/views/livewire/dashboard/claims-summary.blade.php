@@ -8,7 +8,7 @@
     </div>
 
     <div class="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-sm p-5">
-        <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
+        <div class="grid gap-4" style="grid-template-columns: repeat(5, minmax(0, 1fr));">
 
             {{-- إجمالي المطالبات --}}
             <div class="flex items-start gap-2">
