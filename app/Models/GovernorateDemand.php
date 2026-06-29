@@ -12,10 +12,11 @@ class GovernorateDemand extends Model
 {
     use LogsActivity;
 
-    protected $fillable = ['governorate_id', 'date', 'amount'];
+    protected $fillable = ['governorate_id', 'year', 'month', 'amount'];
 
     protected $casts = [
-        'date'   => 'date',
+        'year'   => 'integer',
+        'month'  => 'integer',
         'amount' => 'decimal:2',
     ];
 

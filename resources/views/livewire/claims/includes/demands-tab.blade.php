@@ -44,7 +44,8 @@
             <thead class="bg-zinc-50 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 text-xs">
                 <tr>
                     <th class="px-4 py-2.5 font-medium">{{ __('home.claims_governorate') }}</th>
-                    <th class="px-4 py-2.5 font-medium">{{ __('home.claims_date') }}</th>
+                    <th class="px-4 py-2.5 font-medium">{{ __('home.claims_year') }}</th>
+                    <th class="px-4 py-2.5 font-medium">{{ __('home.claims_month') }}</th>
                     <th class="px-4 py-2.5 font-medium">{{ __('home.claims_amount_egp') }}</th>
                     <th class="px-4 py-2.5 font-medium w-24 text-center">{{ __('home.claims_actions') }}</th>
                 </tr>
@@ -53,7 +54,8 @@
                 @foreach($demands as $demand)
                 <tr class="hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition">
                     <td class="px-4 py-2.5 text-zinc-700 dark:text-zinc-300">{{ $demand->governorate->name }}</td>
-                    <td class="px-4 py-2.5 text-zinc-700 dark:text-zinc-300">{{ $demand->date->format('Y-m-d') }}</td>
+                    <td class="px-4 py-2.5 text-zinc-700 dark:text-zinc-300">{{ $demand->year }}</td>
+                    <td class="px-4 py-2.5 text-zinc-700 dark:text-zinc-300">{{ $months[$demand->month] ?? $demand->month }}</td>
                     <td class="px-4 py-2.5 font-medium text-zinc-800 dark:text-zinc-100">{{ number_format($demand->amount, 2) }}</td>
                     <td class="px-4 py-2.5">
                         <div class="flex items-center justify-center gap-1">
@@ -131,9 +133,25 @@
                 </div>
 
                 <div class="flex flex-col gap-1">
-                    <label class="text-sm font-medium text-zinc-700 dark:text-zinc-300">{{ __('home.claims_date') }} <span class="text-red-500">*</span></label>
-                    <input type="date" wire:model="demandDate" class="{{ $inp }}" />
-                    @error('demandDate') <p class="text-red-500 text-xs">{{ $message }}</p> @enderror
+                    <label class="text-sm font-medium text-zinc-700 dark:text-zinc-300">{{ __('home.claims_year') }} <span class="text-red-500">*</span></label>
+                    <select wire:model="demandYear" class="{{ $inp }}">
+                        <option value="">— {{ __('home.claims_year') }} —</option>
+                        @foreach($years as $y)
+                            <option value="{{ $y }}">{{ $y }}</option>
+                        @endforeach
+                    </select>
+                    @error('demandYear') <p class="text-red-500 text-xs">{{ $message }}</p> @enderror
+                </div>
+
+                <div class="flex flex-col gap-1">
+                    <label class="text-sm font-medium text-zinc-700 dark:text-zinc-300">{{ __('home.claims_month') }} <span class="text-red-500">*</span></label>
+                    <select wire:model="demandMonth" class="{{ $inp }}">
+                        <option value="">— {{ __('home.claims_month') }} —</option>
+                        @foreach($months as $num => $name)
+                            <option value="{{ $num }}">{{ $name }}</option>
+                        @endforeach
+                    </select>
+                    @error('demandMonth') <p class="text-red-500 text-xs">{{ $message }}</p> @enderror
                 </div>
 
                 <div class="flex flex-col gap-1">

@@ -30,7 +30,8 @@ class Index extends Component
     public bool $showDeleteDemand = false;
     public ?int $editingDemandId = null;
     public ?int $demandGov = null;
-    public string $demandDate = '';
+    public string $demandYear = '';
+    public string $demandMonth = '';
     public string $demandAmount = '';
     public ?int $deletingDemandId = null;
     public string $deletingDemandLabel = '';
@@ -132,7 +133,8 @@ class Index extends Component
 
         $this->editingDemandId = null;
         $this->demandGov   = $this->filterGovernorate;
-        $this->demandDate  = '';
+        $this->demandYear  = '';
+        $this->demandMonth = '';
         $this->demandAmount = '';
         $this->resetValidation();
         $this->showDemand = true;
@@ -146,7 +148,8 @@ class Index extends Component
 
         $this->editingDemandId = $demand->id;
         $this->demandGov    = $demand->governorate_id;
-        $this->demandDate   = $demand->date->format('Y-m-d');
+        $this->demandYear   = (string) $demand->year;
+        $this->demandMonth  = (string) $demand->month;
         $this->demandAmount = (string) (0 + $demand->amount);
         $this->resetValidation();
         $this->showDemand = true;
@@ -160,17 +163,31 @@ class Index extends Component
 
         $this->validate([
             'demandGov'    => ['required', 'integer', 'in:' . implode(',', $allowedIds)],
-            'demandDate'   => 'required|date',
+            'demandYear'   => 'required|integer|min:2000',
+            'demandMonth'  => 'required|integer|between:1,12',
             'demandAmount' => 'required|numeric|min:0',
         ], [], [
             'demandGov'    => __('home.claims_governorate'),
-            'demandDate'   => __('home.claims_date'),
+            'demandYear'   => __('home.claims_year'),
+            'demandMonth'  => __('home.claims_month'),
             'demandAmount' => __('home.claims_value'),
         ]);
 
+        $dup = GovernorateDemand::where('governorate_id', $this->demandGov)
+            ->where('year', $this->demandYear)
+            ->where('month', $this->demandMonth)
+            ->when($this->editingDemandId, fn($q) => $q->where('id', '!=', $this->editingDemandId))
+            ->exists();
+
+        if ($dup) {
+            $this->addError('demandYear', __('home.claims_duplicate'));
+            return;
+        }
+
         $data = [
             'governorate_id' => $this->demandGov,
-            'date'           => $this->demandDate,
+            'year'           => $this->demandYear,
+            'month'          => $this->demandMonth,
             'amount'         => $this->demandAmount,
         ];
 
@@ -192,9 +209,10 @@ class Index extends Component
         abort_unless($this->canEdit(), 403);
 
         $demand = $this->scopedDemands()->with('governorate')->findOrFail($demandId);
+        $months = $this->months();
 
         $this->deletingDemandId    = $demand->id;
-        $this->deletingDemandLabel = $demand->governorate->name . ' — ' . $demand->date->format('Y-m-d');
+        $this->deletingDemandLabel = $demand->governorate->name . ' — ' . ($months[$demand->month] ?? $demand->month) . ' ' . $demand->year;
         $this->showDeleteDemand = true;
     }
 
@@ -373,9 +391,9 @@ class Index extends Component
         $demands = $this->scopedDemands()
             ->with('governorate')
             ->when($this->filterGovernorate, fn($q) => $q->where('governorate_id', $this->filterGovernorate))
-            ->when($this->filterYear !== '', fn($q) => $q->whereYear('date', $this->filterYear))
-            ->orderByDesc('date')
-            ->orderByDesc('id')
+            ->when($this->filterYear !== '', fn($q) => $q->where('year', $this->filterYear))
+            ->orderByDesc('year')
+            ->orderByDesc('month')
             ->paginate(10, ['*'], 'demandsPage');
 
         // تاب المحصل
