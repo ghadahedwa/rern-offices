@@ -44,7 +44,9 @@ class Create extends Component
     // FK select properties are intentionally untyped (not ?int): a select with an
     // empty <option value=""> sends "" which can't be assigned to a typed ?int and
     // trips Livewire's type guard. Untyped tolerates ""/numeric-string; saved via ?: null.
-    #[Url]
+    // ⚠️ governorate_id هي بيانات المقر (تحدد مالكه) — لا يجب أبداً أن تكون #[Url].
+    // وضعها في الـ URL يسرّب قيمة محافظة من رابط/snapshot قديم (نفس المفتاح فلتر في Index)
+    // عبر wire:navigate فتظهر بيانات مقر تحت محافظة خاطئة وتُحفظ خارج نطاق المستخدم.
     public $governorate_id = null;
     public $parent_office_id = null;
     public string $name = '';
@@ -126,6 +128,7 @@ class Create extends Component
 
         if ($office) {
             abort_unless($user?->hasRole('super-admin') || $user?->can('offices.edit'), 403);
+            $this->assertOfficeInScope($office);
             $this->isEditing = true;
             $this->office_id = $office->id;
             $this->loadOffice($office);
@@ -134,6 +137,7 @@ class Create extends Component
             $existing = Office::find($this->office_id);
             if ($existing) {
                 abort_unless($user?->hasRole('super-admin') || $user?->can('offices.create') || $user?->can('offices.edit'), 403);
+                $this->assertOfficeInScope($existing);
                 $this->loadOffice($existing);
             } else {
                 $this->office_id = null;
@@ -142,6 +146,28 @@ class Create extends Component
         } else {
             abort_unless($user?->hasRole('super-admin') || $user?->can('offices.create'), 403);
         }
+    }
+
+    /**
+     * يمنع المستخدم العادي من فتح/تعديل مقر خارج محافظاته (super-admin مستثنى).
+     * حارس جانب الخادم — لا يكفي قصر الـ select على محافظات المستخدم في الواجهة.
+     */
+    private function assertOfficeInScope(Office $office): void
+    {
+        $user = auth()->user();
+        if ($user?->hasRole('super-admin')) {
+            return;
+        }
+        abort_unless(
+            in_array($office->governorate_id, $this->allowedGovernorateIds(), true),
+            403
+        );
+    }
+
+    /** معرّفات محافظات المستخدم الحالي (فارغة لـ super-admin = بلا قيد). */
+    private function allowedGovernorateIds(): array
+    {
+        return auth()->user()?->governorates()->pluck('id')->all() ?? [];
     }
 
     private function loadOffice(Office $office): void
@@ -223,8 +249,14 @@ class Create extends Component
 
     private function step1Validation(): void
     {
+        // المستخدم العادي لا يستطيع حفظ مقر في محافظة خارج نطاقه (يمنع نقل المقر خارج رؤيته).
+        $governorateRule = ['required', 'exists:governorates,id'];
+        if (! auth()->user()?->hasRole('super-admin')) {
+            $governorateRule[] = \Illuminate\Validation\Rule::in($this->allowedGovernorateIds());
+        }
+
         $this->validate([
-            'governorate_id'  => 'required|exists:governorates,id',
+            'governorate_id'  => $governorateRule,
             'name'            => 'required|string|max:255',
             'head_name'       => 'nullable|string|max:255',
             'head_mobile'     => ['nullable', 'regex:/^01[0-9]{9}$/'],
@@ -233,6 +265,7 @@ class Create extends Component
             'working_hours_id' => 'nullable|exists:working_hours,id',
         ], [
             'governorate_id.required'   => 'يرجى اختيار المحافظة',
+            'governorate_id.in'         => 'لا يمكنك حفظ مقر في محافظة خارج نطاقك',
             'name.required'             => 'يرجى إدخال اسم المقر',
             'head_mobile.regex'         => __('home.head_mobile_invalid'),
             'type_id.required'          => 'يرجى اختيار نوع المقر',
