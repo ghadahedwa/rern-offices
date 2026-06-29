@@ -283,6 +283,30 @@ class Dashboard extends Component
         });
         }
 
+        // ملخص المطالبات المالي — محجوب بصلاحية claims.index، مجمّع حسب محافظات المستخدم
+        $canViewClaims   = $isSuperAdmin || $user->can('claims.index');
+        $claimsDemands   = 0.0;
+        $claimsCollected = 0.0;
+        $claimsDebt      = 0.0;
+        $claimsRate      = null;
+        $govDebtTooltip = collect();
+        if ($canViewClaims) {
+            $demandsByGov = \App\Models\GovernorateDemand::when(! $isSuperAdmin, fn ($q) => $q->whereIn('governorate_id', $govIds))
+                ->selectRaw('governorate_id, SUM(amount) as total')->groupBy('governorate_id')->pluck('total', 'governorate_id');
+            $collectedByGov = \App\Models\GovernorateClaim::when(! $isSuperAdmin, fn ($q) => $q->whereIn('governorate_id', $govIds))
+                ->selectRaw('governorate_id, SUM(value) as total')->groupBy('governorate_id')->pluck('total', 'governorate_id');
+
+            $claimsDemands   = (float) $demandsByGov->sum();
+            $claimsCollected = (float) $collectedByGov->sum();
+            $claimsDebt      = $claimsDemands - $claimsCollected;
+            $claimsRate      = $claimsDemands > 0 ? round($claimsCollected / $claimsDemands * 100, 1) : null;
+
+            // مديونية كل محافظة بنفس ترتيب رسم المحافظات (للـ tooltip)
+            $govDebtTooltip = $officesByGovRaw->values()->map(
+                fn ($r) => (float) ($demandsByGov[$r->governorate_id] ?? 0) - (float) ($collectedByGov[$r->governorate_id] ?? 0)
+            )->values();
+        }
+
         // بيانات نطاق المشرف (level >= 2)
         $teamUserIds   = collect(); // مستخدمو الفريق (يشاركون محافظة)
         $usersAboveMe  = collect(); // مستخدمون مستواهم أعلى مني (لا أراهم)
@@ -359,7 +383,8 @@ class Dashboard extends Component
             'addedThisMonth', 'needsVisitCount', 'onlineUsers', 'activities', 'isSuperAdmin',
             'officesByGov', 'officesByType', 'officesByStructure',
             'user', 'statsSummary', 'govTooltipData', 'govNames',
-            'canView', 'canEdit', 'isSupervisor', 'canViewOfficeStats'
+            'canView', 'canEdit', 'isSupervisor', 'canViewOfficeStats',
+            'canViewClaims', 'claimsDemands', 'claimsCollected', 'claimsDebt', 'claimsRate', 'govDebtTooltip'
         ));
     }
 }

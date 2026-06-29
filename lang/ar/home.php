@@ -593,6 +593,8 @@ return [
     'claims_demand_add'          => 'إضافة مطالبة',
     'claims_demand_word'         => 'مطالبة',
     'claims_current_debt'        => 'المديونية الحالية لهذه المحافظة',
+    'claims_dashboard_title'     => 'الموقف المالي للمطالبات',
+    'claims_collection_rate'     => 'نسبة التحصيل',
     'claims_select_governorate'  => 'اختر المحافظة',
     'claims_governorate'         => 'المحافظة',
     'claims_all_governorates'    => 'كل المحافظات',

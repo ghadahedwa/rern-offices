@@ -9,6 +9,9 @@
     </div>
     <div wire:ignore x-data x-init="
         const tooltipData = {{ Js::from($govTooltipData) }};
+        const debtData = {{ Js::from($govDebtTooltip) }};
+        const debtLabel = {{ Js::from(__('home.claims_debt_total')) }};
+        const curLabel = {{ Js::from(__('home.claims_currency')) }};
         new Chart($refs.barChart, {
             type: 'bar',
             data: {
@@ -36,15 +39,21 @@
                                 return 'عدد المقرات: ' + item.parsed.y;
                             },
                             afterBody: function(items) {
-                                const d = tooltipData[items[0].dataIndex];
-                                if (!d || !Object.keys(d).length) return [];
+                                const idx = items[0].dataIndex;
                                 const lines = [];
-                                Object.values(d).forEach(function(s) {
-                                    lines.push('— ' + s.label + ' —');
-                                    s.years.forEach(function(y) {
-                                        lines.push('  ' + y.year + ': ' + y.total.toLocaleString('ar-EG'));
+                                const d = tooltipData[idx];
+                                if (d && Object.keys(d).length) {
+                                    Object.values(d).forEach(function(s) {
+                                        lines.push('— ' + s.label + ' —');
+                                        s.years.forEach(function(y) {
+                                            lines.push('  ' + y.year + ': ' + y.total.toLocaleString('ar-EG'));
+                                        });
                                     });
-                                });
+                                }
+                                if (debtData.length && debtData[idx] !== undefined && debtData[idx] !== null) {
+                                    lines.push('— ' + debtLabel + ' —');
+                                    lines.push('  ' + Number(debtData[idx]).toLocaleString('ar-EG') + ' ' + curLabel);
+                                }
                                 return lines;
                             }
                         }
