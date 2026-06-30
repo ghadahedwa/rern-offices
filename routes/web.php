@@ -35,6 +35,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::livewire('reports/stats-comparison', \App\Livewire\Reports\StatsComparison::class)->name('reports.stats-comparison');
     Route::livewire('reports/claims-statement', \App\Livewire\Reports\ClaimsStatement::class)->name('reports.claims-statement');
     Route::get('reports/claims-statement/pdf', \App\Http\Controllers\ClaimsStatementPdfController::class)->name('reports.claims-statement.pdf');
+    Route::livewire('reports/claims-summary', \App\Livewire\Reports\ClaimsSummary::class)->name('reports.claims-summary');
+    Route::get('reports/claims-summary/pdf', \App\Http\Controllers\ClaimsSummaryPdfController::class)->name('reports.claims-summary.pdf');
     Route::get('offices/{office}/pdf', [\App\Http\Controllers\OfficePdfController::class, '__invoke'])->name('offices.pdf');
 
     Route::middleware('role:super-admin')->group(function () {

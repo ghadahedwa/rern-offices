@@ -610,6 +610,8 @@ return [
     'claims_statement_period_net' => 'صافي مديونية الفترة',
     'claims_select_gov_required' => 'يجب اختيار محافظة',
     'claims_select_placeholder'  => 'اختر',
+    'claims_summary_title'       => 'ملخص المديونية',
+    'claims_summary_note'        => 'الأرقام تراكمية لكل محافظة. المديونية = المطالبات − الملغاة − المحصل، ونسبة التحصيل = المحصل ÷ صافي المطالبات.',
     'claims_select_governorate'  => 'اختر المحافظة',
     'claims_governorate'         => 'المحافظة',
     'claims_all_governorates'    => 'كل المحافظات',

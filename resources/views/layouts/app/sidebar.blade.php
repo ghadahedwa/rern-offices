@@ -88,6 +88,9 @@
                             <flux:sidebar.item icon="banknotes" :href="route('reports.claims-statement')" :current="request()->routeIs('reports.claims-statement')" wire:navigate>
                                 {{ __('home.claims_statement_title') }}
                             </flux:sidebar.item>
+                            <flux:sidebar.item icon="scale" :href="route('reports.claims-summary')" :current="request()->routeIs('reports.claims-summary')" wire:navigate>
+                                {{ __('home.claims_summary_title') }}
+                            </flux:sidebar.item>
                             @endif
                         </div>
                     </div>
