@@ -6,6 +6,7 @@
                     <h3 class="text-sm font-semibold text-zinc-600 dark:text-zinc-400 uppercase tracking-wide">{{ __('home.section_basic_data') }}</h3>
                 </div>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    {{-- صف 1: المحافظة | المستشار المشرف --}}
                     <div>
                         <label class="{{ $lbl }}">{{ __('home.governorate') }} <span class="text-red-500">*</span></label>
                         <select wire:model.live="governorate_id" class="{{ $inp }}">
@@ -23,11 +24,15 @@
                             {{ $counselor }}
                         </div>
                     </div>
-                    <div>
+
+                    {{-- صف 2: اسم المقر (عرض كامل) --}}
+                    <div class="md:col-span-2">
                         <label class="{{ $lbl }}">{{ __('home.office_name') }} <span class="text-red-500">*</span></label>
                         <input wire:model="name" type="text" placeholder="{{ __('home.placeholder_office_name') }}" class="{{ $inp }}" />
                         @error('name') <p class="mt-1 text-xs text-red-500">{{ $message }}</p> @enderror
                     </div>
+
+                    {{-- صف 3: تاريخ الإنشاء | تاريخ التشغيل الفعلي --}}
                     <div>
                         <label class="{{ $lbl }}">{{ __('home.established_at') }}</label>
                         <input wire:model="established_at" type="date" class="{{ $inp }}" />
@@ -36,6 +41,8 @@
                         <label class="{{ $lbl }}">{{ __('home.opened_at') }}</label>
                         <input wire:model="opened_at" type="date" class="{{ $inp }}" />
                     </div>
+
+                    {{-- صف 4: اسم رئيس المقر | تليفون رئيس المقر --}}
                     <div>
                         <label class="{{ $lbl }}">{{ __('home.head_name') }}</label>
                         <input wire:model="head_name" type="text" placeholder="{{ __('home.placeholder_head_name') }}" class="{{ $inp }}" />
@@ -48,6 +55,8 @@
                                placeholder="{{ __('home.placeholder_head_mobile') }}" dir="ltr" class="{{ $inp }} text-right" />
                         @error('head_mobile') <p class="mt-1 text-xs text-red-500">{{ $message }}</p> @enderror
                     </div>
+
+                    {{-- صف 5: نوع المقر | وصف الموقع --}}
                     <div>
                         <label class="{{ $lbl }}">{{ __('home.office_type') }} <span class="text-red-500">*</span></label>
                         <select wire:model="type_id" class="{{ $inp }}">

@@ -79,13 +79,21 @@
         </div>
 
         {{-- نطاقات التواريخ --}}
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+        <div class="flex flex-col gap-4">
             <div>
                 <label class="{{ $lbl }}">{{ __('home.established_at') }}</label>
                 <div class="flex items-center gap-2">
                     <input wire:model="establishedFrom" type="date" class="{{ $inp }}" aria-label="{{ __('home.report_from') }}" />
                     <span class="text-xs text-zinc-400 shrink-0">{{ __('home.report_to') }}</span>
                     <input wire:model="establishedTo" type="date" class="{{ $inp }}" aria-label="{{ __('home.report_to') }}" />
+                </div>
+            </div>
+            <div>
+                <label class="{{ $lbl }}">{{ __('home.opened_at') }}</label>
+                <div class="flex items-center gap-2">
+                    <input wire:model="openedFrom" type="date" class="{{ $inp }}" aria-label="{{ __('home.report_from') }}" />
+                    <span class="text-xs text-zinc-400 shrink-0">{{ __('home.report_to') }}</span>
+                    <input wire:model="openedTo" type="date" class="{{ $inp }}" aria-label="{{ __('home.report_to') }}" />
                 </div>
             </div>
             <div>

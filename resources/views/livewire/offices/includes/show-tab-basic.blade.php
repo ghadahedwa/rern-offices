@@ -6,6 +6,7 @@
                     <h3 class="text-sm font-semibold text-zinc-600 dark:text-zinc-400 uppercase tracking-wide">{{ __('home.section_basic_data') }}</h3>
                 </div>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {{-- صف 1: المحافظة | المستشار المشرف --}}
                     <div>
                         <p class="text-xs text-zinc-400 dark:text-zinc-500 mb-0.5">{{ __('home.governorate') }}</p>
                         <p class="text-sm font-medium text-zinc-800 dark:text-zinc-100">{{ $office->governorate->name ?? __('home.no_data') }}</p>
@@ -14,10 +15,14 @@
                         <p class="text-xs text-zinc-400 dark:text-zinc-500 mb-0.5">{{ __('home.supervising_counselor') }}</p>
                         <p class="text-sm font-medium text-zinc-800 dark:text-zinc-100">{{ $office->governorate->supervising_counselor ?? __('home.no_data') }}</p>
                     </div>
-                    <div>
+
+                    {{-- صف 2: اسم المقر (عرض كامل) --}}
+                    <div class="md:col-span-2">
                         <p class="text-xs text-zinc-400 dark:text-zinc-500 mb-0.5">{{ __('home.office_name') }}</p>
                         <p class="text-sm font-medium text-zinc-800 dark:text-zinc-100">{{ $office->name }}</p>
                     </div>
+
+                    {{-- صف 3: تاريخ الإنشاء | تاريخ التشغيل الفعلي --}}
                     <div>
                         <p class="text-xs text-zinc-400 dark:text-zinc-500 mb-0.5">{{ __('home.established_at') }}</p>
                         <p class="text-sm font-medium text-zinc-800 dark:text-zinc-100">{{ $office->established_at?->format('Y-m-d') ?? __('home.no_data') }}</p>
@@ -26,6 +31,8 @@
                         <p class="text-xs text-zinc-400 dark:text-zinc-500 mb-0.5">{{ __('home.opened_at') }}</p>
                         <p class="text-sm font-medium text-zinc-800 dark:text-zinc-100">{{ $office->opened_at?->format('Y-m-d') ?? __('home.no_data') }}</p>
                     </div>
+
+                    {{-- صف 4: اسم رئيس المقر | تليفون رئيس المقر --}}
                     <div>
                         <p class="text-xs text-zinc-400 dark:text-zinc-500 mb-0.5">{{ __('home.head_name') }}</p>
                         <p class="text-sm font-medium text-zinc-800 dark:text-zinc-100">{{ $office->head_name ?: __('home.no_data') }}</p>
@@ -34,6 +41,8 @@
                         <p class="text-xs text-zinc-400 dark:text-zinc-500 mb-0.5">{{ __('home.head_mobile') }}</p>
                         <p class="text-sm font-medium text-zinc-800 dark:text-zinc-100" dir="ltr" style="text-align:right">{{ $office->head_mobile ?: __('home.no_data') }}</p>
                     </div>
+
+                    {{-- صف 5: نوع المقر | وصف الموقع --}}
                     <div>
                         <p class="text-xs text-zinc-400 dark:text-zinc-500 mb-0.5">{{ __('home.office_type') }}</p>
                         <p class="text-sm font-medium text-zinc-800 dark:text-zinc-100">{{ $office->officeType->name ?? __('home.no_data') }}</p>

@@ -59,6 +59,8 @@ class MultiOffice extends Component
     public array $locationIds = [];
     public ?string $establishedFrom = null;
     public ?string $establishedTo = null;
+    public ?string $openedFrom = null;
+    public ?string $openedTo = null;
 
     public array $workSystemIds = [];
     public array $workingHoursIds = [];
@@ -103,6 +105,7 @@ class MultiOffice extends Component
     protected array $filterKeys = [
         'governorateIds', 'officeIds', 'typeIds', 'locationIds',
         'establishedFrom', 'establishedTo',
+        'openedFrom', 'openedTo',
         'workSystemIds', 'workingHoursIds', 'workingDays',
         'mechanizationFrom', 'mechanizationTo',
         'contractualStatusIds', 'districtCourt', 'connectionTypeIds',
@@ -354,6 +357,8 @@ class MultiOffice extends Component
             ->when($this->multiActive('locationIds'), fn ($q) => $q->whereIn('location_description_id', $f['locationIds']))
             ->when($f['establishedFrom'] ?? null, fn ($q) => $q->whereDate('established_at', '>=', $f['establishedFrom']))
             ->when($f['establishedTo'] ?? null, fn ($q) => $q->whereDate('established_at', '<=', $f['establishedTo']))
+            ->when($f['openedFrom'] ?? null, fn ($q) => $q->whereDate('opened_at', '>=', $f['openedFrom']))
+            ->when($f['openedTo'] ?? null, fn ($q) => $q->whereDate('opened_at', '<=', $f['openedTo']))
             ->when($this->multiActive('workSystemIds'), fn ($q) => $q->whereIn('work_system_id', $f['workSystemIds']))
             ->when($this->multiActive('workingHoursIds'), fn ($q) => $q->whereIn('working_hours_id', $f['workingHoursIds']))
             ->when($this->multiActive('workingDays'), fn ($q) => $q->whereIn('working_days', $f['workingDays']))

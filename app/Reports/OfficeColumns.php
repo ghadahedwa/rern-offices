@@ -78,6 +78,11 @@ class OfficeColumns
                 'filter' => ['establishedFrom', 'establishedTo'], 'fixed' => false, 'excelOnly' => false,
                 'value' => fn (Office $o) => $o->established_at?->format('Y-m-d') ?? $dash,
             ],
+            'opened_at' => [
+                'label' => 'تاريخ التشغيل الفعلي', 'group' => 'البيانات الأساسية',
+                'filter' => ['openedFrom', 'openedTo'], 'fixed' => false, 'excelOnly' => false,
+                'value' => fn (Office $o) => $o->opened_at?->format('Y-m-d') ?? $dash,
+            ],
             'district_court' => [
                 'label' => 'المحكمة الابتدائية', 'group' => 'البيانات الأساسية',
                 'filter' => 'districtCourt', 'fixed' => false, 'excelOnly' => false,
