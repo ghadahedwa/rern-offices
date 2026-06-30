@@ -53,6 +53,7 @@ class Create extends Component
     public string $head_name = '';
     public string $head_mobile = '';
     public string $established_at = '';
+    public string $opened_at = '';
     public string $mechanization_at = '';
     public $type_id = null;
     public $location_description_id = null;
@@ -179,6 +180,7 @@ class Create extends Component
         $this->head_name               = $office->head_name ?? '';
         $this->head_mobile             = $office->head_mobile ?? '';
         $this->established_at          = $office->established_at?->format('Y-m-d') ?? '';
+        $this->opened_at               = $office->opened_at?->format('Y-m-d') ?? '';
         $this->mechanization_at        = $office->mechanization_at?->format('Y-m-d') ?? '';
         $this->type_id                 = $office->type_id;
         $this->location_description_id = $office->location_description_id;
@@ -409,6 +411,7 @@ $existing = OfficeMedia::where('office_id', $this->office_id)->where('type', 'do
             'head_name'              => $this->head_name ?: null,
             'head_mobile'            => $this->head_mobile ?: null,
             'established_at'         => $this->established_at ?: null,
+            'opened_at'              => $this->opened_at ?: null,
             'mechanization_at'       => $this->mechanization_at ?: null,
             'type_id'                => $this->type_id,
             'location_description_id' => $this->location_description_id ?: null,

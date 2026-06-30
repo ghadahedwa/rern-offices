@@ -33,6 +33,10 @@
                         <input wire:model="established_at" type="date" class="{{ $inp }}" />
                     </div>
                     <div>
+                        <label class="{{ $lbl }}">{{ __('home.opened_at') }}</label>
+                        <input wire:model="opened_at" type="date" class="{{ $inp }}" />
+                    </div>
+                    <div>
                         <label class="{{ $lbl }}">{{ __('home.head_name') }}</label>
                         <input wire:model="head_name" type="text" placeholder="{{ __('home.placeholder_head_name') }}" class="{{ $inp }}" />
                         @error('head_name') <p class="mt-1 text-xs text-red-500">{{ $message }}</p> @enderror

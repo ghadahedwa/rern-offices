@@ -243,6 +243,7 @@ return [
 
     // Office create — field labels
     'established_at'           => 'تاريخ الإنشاء',
+    'opened_at'                => 'تاريخ التشغيل الفعلي (تاريخ الافتتاح)',
     'parent_office'            => 'المقر الرئيسي (إن وجد)',
     'location_description'             => 'وصف المقر',
     'add_location_description'         => 'إضافة وصف مقر',

@@ -23,6 +23,10 @@
                         <p class="text-sm font-medium text-zinc-800 dark:text-zinc-100">{{ $office->established_at?->format('Y-m-d') ?? __('home.no_data') }}</p>
                     </div>
                     <div>
+                        <p class="text-xs text-zinc-400 dark:text-zinc-500 mb-0.5">{{ __('home.opened_at') }}</p>
+                        <p class="text-sm font-medium text-zinc-800 dark:text-zinc-100">{{ $office->opened_at?->format('Y-m-d') ?? __('home.no_data') }}</p>
+                    </div>
+                    <div>
                         <p class="text-xs text-zinc-400 dark:text-zinc-500 mb-0.5">{{ __('home.head_name') }}</p>
                         <p class="text-sm font-medium text-zinc-800 dark:text-zinc-100">{{ $office->head_name ?: __('home.no_data') }}</p>
                     </div>
