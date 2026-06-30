@@ -2,7 +2,7 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>ملخص المديونية</title>
+    <title>كشف حساب إجمالي المطالبات</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: dejavusans, sans-serif; direction: rtl; font-size: 9pt; color: #1a1a1a; }

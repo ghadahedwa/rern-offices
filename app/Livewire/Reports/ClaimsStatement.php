@@ -10,7 +10,7 @@ use Livewire\Attributes\Title;
 use Livewire\Component;
 
 #[Layout('layouts.app')]
-#[Title('كشف حساب محافظة')]
+#[Title('كشف حساب المطالبات')]
 class ClaimsStatement extends Component
 {
     public ?int $governorateId = null;

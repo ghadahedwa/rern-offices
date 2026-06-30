@@ -9,7 +9,7 @@ use Livewire\Attributes\Title;
 use Livewire\Component;
 
 #[Layout('layouts.app')]
-#[Title('ملخص المديونية')]
+#[Title('كشف حساب إجمالي المطالبات')]
 class ClaimsSummary extends Component
 {
     public function mount(): void
