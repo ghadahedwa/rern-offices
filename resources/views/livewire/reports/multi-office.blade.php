@@ -60,14 +60,29 @@
         </div>
         --}}
 
-        {{-- الصف الأول: المحافظة والمقر --}}
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-            @include('livewire.reports.includes.checkbox-group', ['field' => 'governorateIds', 'options' => $governorates->pluck('name', 'id')->all(), 'label' => __('home.governorate_name'), 'live' => true])
-            @include('livewire.reports.includes.checkbox-group', ['field' => 'officeIds', 'options' => $officeOptions->pluck('name', 'id')->all(), 'label' => __('home.report_office_multi'), 'wireKey' => 'officeIds-' . md5($officeOptions->pluck('id')->implode(','))])
+        {{-- الصف الأول: المحافظة والمقر + VIP --}}
+        <div class="flex gap-5 items-end">
+            <div style="flex: 2; min-width: 0;">
+                @include('livewire.reports.includes.checkbox-group', ['field' => 'governorateIds', 'options' => $governorates->pluck('name', 'id')->all(), 'label' => __('home.governorate_name'), 'live' => true])
+            </div>
+            <div style="flex: 2; min-width: 0;">
+                @include('livewire.reports.includes.checkbox-group', ['field' => 'officeIds', 'options' => $officeOptions->pluck('name', 'id')->all(), 'label' => __('home.report_office_multi'), 'wireKey' => 'officeIds-' . md5($officeOptions->pluck('id')->implode(','))])
+            </div>
+            <div style="flex: 1; min-width: 0;">
+                <p class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">{{ __('home.is_vip') }}</p>
+                <label class="inline-flex items-center justify-center gap-2 w-full py-2 rounded-lg border cursor-pointer select-none transition
+                              {{ $isVip ? 'bg-[#c9a847] text-white border-[#c9a847] shadow-sm' : 'border-zinc-300 dark:border-zinc-600 text-zinc-500 dark:text-zinc-400' }}">
+                    <input type="checkbox" wire:model.live="isVip" class="sr-only" />
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                    </svg>
+                    <span class="text-sm font-bold tracking-widest">VIP</span>
+                </label>
+            </div>
         </div>
 
         {{-- باقي الفلاتر الأساسية: 4 في الصف --}}
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-5">
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-5 items-start">
             @include('livewire.reports.includes.checkbox-group', ['field' => 'typeIds', 'options' => $officeTypes->pluck('name', 'id')->all(), 'label' => __('home.office_type')])
             @include('livewire.reports.includes.checkbox-group', ['field' => 'locationIds', 'options' => $locations->pluck('name', 'id')->all(), 'label' => __('home.location_description')])
             @include('livewire.reports.includes.checkbox-group', ['field' => 'workSystemIds', 'options' => $workSystems->pluck('name', 'id')->all(), 'label' => __('home.work_system')])

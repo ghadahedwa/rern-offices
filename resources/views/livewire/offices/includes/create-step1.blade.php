@@ -25,11 +25,27 @@
                         </div>
                     </div>
 
-                    {{-- صف 2: اسم المقر (عرض كامل) --}}
-                    <div class="md:col-span-2">
-                        <label class="{{ $lbl }}">{{ __('home.office_name') }} <span class="text-red-500">*</span></label>
-                        <input wire:model="name" type="text" placeholder="{{ __('home.placeholder_office_name') }}" class="{{ $inp }}" />
-                        @error('name') <p class="mt-1 text-xs text-red-500">{{ $message }}</p> @enderror
+                    {{-- صف 2: اسم المقر ٣/٤ + VIP ١/٤ --}}
+                    <div class="md:col-span-2 flex items-end gap-3">
+                        <div style="flex: 3; min-width: 0;">
+                            <label class="{{ $lbl }}">{{ __('home.office_name') }} <span class="text-red-500">*</span></label>
+                            <input wire:model="name" type="text" placeholder="{{ __('home.placeholder_office_name') }}" class="{{ $inp }}" />
+                            @error('name') <p class="mt-1 text-xs text-red-500">{{ $message }}</p> @enderror
+                        </div>
+                        <div style="flex: 1; min-width: 0;">
+                            <label class="{{ $lbl }}">{{ __('home.is_vip') }}</label>
+                            <label x-data="{ checked: @entangle('is_vip') }"
+                                   x-bind:class="checked
+                                       ? 'bg-[#c9a847] border-[#c9a847] text-white shadow'
+                                       : 'bg-white dark:bg-zinc-800 border-zinc-300 dark:border-zinc-600 text-zinc-400 dark:text-zinc-500 hover:border-[#c9a847]'"
+                                   class="flex flex-row items-center justify-center gap-1.5 w-full py-2 rounded-lg border cursor-pointer select-none transition">
+                                <input x-model="checked" wire:model="is_vip" type="checkbox" class="sr-only" />
+                                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                                </svg>
+                                <span class="text-xs font-bold tracking-widest leading-none">VIP</span>
+                            </label>
+                        </div>
                     </div>
 
                     {{-- صف 3: تاريخ الإنشاء | تاريخ التشغيل الفعلي --}}

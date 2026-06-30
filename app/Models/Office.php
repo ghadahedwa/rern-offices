@@ -29,7 +29,7 @@ class Office extends Model
 
     protected $fillable = [
         'governorate_id', 'parent_office_id',
-        'name', 'head_name', 'head_mobile', 'established_at', 'opened_at', 'visited_at',
+        'name', 'is_vip', 'head_name', 'head_mobile', 'established_at', 'opened_at', 'visited_at',
         'type_id', 'location_description_id', 'work_system_id',
         'address', 'google_maps_link', 'floors_description',
         'connection_type_id', 'working_hours_id', 'avg_daily_transactions',
@@ -49,6 +49,7 @@ class Office extends Model
     ];
 
     protected $casts = [
+        'is_vip'          => 'boolean',
         'established_at'  => 'date',
         'opened_at'       => 'date',
         'visited_at'      => 'date',

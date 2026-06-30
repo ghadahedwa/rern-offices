@@ -44,6 +44,11 @@ class OfficeColumns
                 'filter' => 'officeIds', 'fixed' => true, 'excelOnly' => false,
                 'value' => fn (Office $o) => $o->name,
             ],
+            'is_vip' => [
+                'label' => 'VIP', 'group' => 'البيانات الأساسية',
+                'filter' => 'isVip', 'fixed' => false, 'excelOnly' => false,
+                'value' => fn (Office $o) => $o->is_vip ? 'نعم' : 'لا',
+            ],
             'governorate' => [
                 'label' => 'المحافظة', 'group' => 'البيانات الأساسية',
                 'filter' => 'governorateIds', 'fixed' => true, 'excelOnly' => false,

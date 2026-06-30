@@ -42,6 +42,9 @@ class Index extends Component
     #[Url]
     public bool $needs_visit = false;
 
+    #[Url]
+    public bool $is_vip = false;
+
     /** لوحة البحث المتقدم — مقفولة افتراضياً، خياراتها لا تُحمَّل إلا عند فتحها */
     public bool $showAdvanced = false;
 
@@ -154,6 +157,7 @@ class Index extends Component
                 ->whereNull('visited_at')
                 ->orWhere('visited_at', '<', now()->subMonths(6))
             ))
+            ->when($this->is_vip, fn($q) => $q->where('is_vip', true))
             // ── فلاتر البحث المتقدم ──
             ->when($this->work_system_id, fn($q) => $q->where('work_system_id', $this->work_system_id))
             ->when($this->working_hours_id, fn($q) => $q->where('working_hours_id', $this->working_hours_id))

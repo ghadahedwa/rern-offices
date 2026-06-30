@@ -50,6 +50,7 @@ class Create extends Component
     public $governorate_id = null;
     public $parent_office_id = null;
     public string $name = '';
+    public bool $is_vip = false;
     public string $head_name = '';
     public string $head_mobile = '';
     public string $established_at = '';
@@ -177,6 +178,7 @@ class Create extends Component
         $this->governorate_id          = $office->governorate_id;
         $this->parent_office_id        = $office->parent_office_id;
         $this->name                    = $office->name ?? '';
+        $this->is_vip                  = (bool) $office->is_vip;
         $this->head_name               = $office->head_name ?? '';
         $this->head_mobile             = $office->head_mobile ?? '';
         $this->established_at          = $office->established_at?->format('Y-m-d') ?? '';
@@ -408,6 +410,7 @@ $existing = OfficeMedia::where('office_id', $this->office_id)->where('type', 'do
             'governorate_id'         => $this->governorate_id,
             'parent_office_id'       => $this->parent_office_id ?: null,
             'name'                   => $this->name,
+            'is_vip'                 => $this->is_vip,
             'head_name'              => $this->head_name ?: null,
             'head_mobile'            => $this->head_mobile ?: null,
             'established_at'         => $this->established_at ?: null,

@@ -54,6 +54,20 @@
                 @endif
             </button>
 
+            <button wire:click="$toggle('is_vip')"
+                class="inline-flex items-center gap-2 text-sm px-4 py-2 rounded-lg border transition
+                    {{ $is_vip
+                        ? 'bg-[#c9a847] border-[#c9a847] text-white shadow-sm'
+                        : 'bg-white border-zinc-300 text-zinc-600 dark:bg-zinc-800 dark:border-zinc-600 dark:text-zinc-400 hover:border-[#c9a847] hover:text-[#b8962e]' }}">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                </svg>
+                {{ __('home.is_vip') }}
+                @if($is_vip)
+                    <span class="w-2 h-2 rounded-full bg-white"></span>
+                @endif
+            </button>
+
             {{-- زر البحث المتقدم: خياراته لا تُحمَّل إلا عند الفتح --}}
             <button wire:click="toggleAdvanced"
                 class="inline-flex items-center gap-2 text-sm px-4 py-2 rounded-lg border transition

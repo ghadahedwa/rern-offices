@@ -16,10 +16,15 @@
                         <p class="text-sm font-medium text-zinc-800 dark:text-zinc-100">{{ $office->governorate->supervising_counselor ?? __('home.no_data') }}</p>
                     </div>
 
-                    {{-- صف 2: اسم المقر (عرض كامل) --}}
+                    {{-- صف 2: اسم المقر (عرض كامل) + VIP --}}
                     <div class="md:col-span-2">
                         <p class="text-xs text-zinc-400 dark:text-zinc-500 mb-0.5">{{ __('home.office_name') }}</p>
-                        <p class="text-sm font-medium text-zinc-800 dark:text-zinc-100">{{ $office->name }}</p>
+                        <div class="flex items-center gap-2">
+                            <p class="text-sm font-medium text-zinc-800 dark:text-zinc-100">{{ $office->name }}</p>
+                            @if($office->is_vip)
+                                <span class="text-xs font-bold tracking-widest text-[#c9a847] border border-[#c9a847] rounded px-1.5 py-0.5">VIP</span>
+                            @endif
+                        </div>
                     </div>
 
                     {{-- صف 3: تاريخ الإنشاء | تاريخ التشغيل الفعلي --}}

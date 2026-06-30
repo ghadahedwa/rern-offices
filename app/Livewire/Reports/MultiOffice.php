@@ -100,6 +100,7 @@ class MultiOffice extends Component
     // المجموعة 6: المتابعة والزيارات
     public bool $neverVisited = false;
     public ?int $notVisitedMonths = null;
+    public bool $isVip = false;
 
     /** كل أسماء خصائص الفلاتر — تُستخدم في snapshot الـ "بحث" والتصفير */
     protected array $filterKeys = [
@@ -116,7 +117,7 @@ class MultiOffice extends Component
         'waterMeterType', 'waterMeterDebt',
         'cleanlinessRating', 'archiveRating',
         'scheduleCommitment', 'citizenCommitment', 'structuralConditionIds',
-        'neverVisited', 'notVisitedMonths',
+        'neverVisited', 'notVisitedMonths', 'isVip',
     ];
 
     public function mount(): void
@@ -389,6 +390,7 @@ class MultiOffice extends Component
             ->when($this->multiActive('citizenCommitment'), fn ($q) => $q->whereIn('citizen_treatment_commitment', $f['citizenCommitment']))
             ->when($this->multiActive('structuralConditionIds'), fn ($q) => $q->whereIn('structural_condition_id', $f['structuralConditionIds']))
             // ── متقدمة: المجموعة 6 ──
+            ->when($f['isVip'] ?? false, fn ($q) => $q->where('is_vip', true))
             ->when($f['neverVisited'] ?? false, fn ($q) => $q->whereNull('visited_at'))
             ->when($f['notVisitedMonths'] ?? null, fn ($q) => $q->where(fn ($w) => $w
                 ->whereNull('visited_at')
