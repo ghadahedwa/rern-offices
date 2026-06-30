@@ -49,6 +49,7 @@
                 <th>المحافظة</th>
                 <th>المطالبات (ج)</th>
                 <th>الملغاة (ج)</th>
+                <th>صافي المطالبات (ج)</th>
                 <th>المحصل (ج)</th>
                 <th>المديونية (ج)</th>
                 <th>نسبة التحصيل</th>
@@ -60,12 +61,13 @@
                 <td class="gov">{{ $row['name'] }}</td>
                 <td>{{ number_format($row['demands'], 2) }}</td>
                 <td class="col-cancelled">{{ number_format($row['cancelled'], 2) }}</td>
+                <td>{{ number_format($row['net'], 2) }}</td>
                 <td class="col-collected">{{ number_format($row['collected'], 2) }}</td>
                 <td class="{{ $row['debt'] < 0 ? 'neg' : '' }}">{{ number_format($row['debt'], 2) }}</td>
                 <td>{{ $row['rate'] !== null ? $row['rate'] . '%' : '—' }}</td>
             </tr>
             @empty
-            <tr><td colspan="6" style="padding:25px; color:#999;">لا توجد بيانات</td></tr>
+            <tr><td colspan="7" style="padding:25px; color:#999;">لا توجد بيانات</td></tr>
             @endforelse
         </tbody>
         @if(count($summary['rows']))
@@ -74,6 +76,7 @@
                 <td style="text-align:right;">الإجمالي</td>
                 <td>{{ number_format($summary['totalDemands'], 2) }}</td>
                 <td>{{ number_format($summary['totalCancelled'], 2) }}</td>
+                <td>{{ number_format($summary['totalNet'], 2) }}</td>
                 <td>{{ number_format($summary['totalCollected'], 2) }}</td>
                 <td class="{{ $summary['totalDebt'] < 0 ? 'neg' : '' }}">{{ number_format($summary['totalDebt'], 2) }}</td>
                 <td>{{ $summary['rate'] !== null ? $summary['rate'] . '%' : '—' }}</td>
@@ -81,6 +84,10 @@
         </tfoot>
         @endif
     </table>
+
+    <div style="margin-top:8px; font-size:8pt; color:#888;">
+        الأرقام تراكمية لكل محافظة. صافي المطالبات = المطالبات − الملغاة، والمديونية = صافي المطالبات − المحصل، ونسبة التحصيل = المحصل ÷ صافي المطالبات.
+    </div>
 
     <div class="page-footer">
         نظام مقرات التوثيق والشهر العقاري — طُبع بتاريخ {{ now()->format('Y-m-d H:i') }}

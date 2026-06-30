@@ -85,6 +85,7 @@ class ClaimsStatement
                 'month'     => $m['month'],
                 'demand'    => $m['demand'],
                 'cancelled' => $m['cancelled'],
+                'net'       => $m['demand'] - $m['cancelled'],
                 'collected' => $m['collected'],
                 'balance'   => $running,
             ];
@@ -96,6 +97,7 @@ class ClaimsStatement
             'rows'           => $rows,
             'totalDemand'    => $totalDemand,
             'totalCancelled' => $totalCancelled,
+            'totalNet'       => $totalDemand - $totalCancelled, // صافي المطالبات (مطالبات − ملغاة)
             'totalCollected' => $totalCollected,
             'periodNet'      => $totalDemand - $totalCancelled - $totalCollected, // صافي مديونية الفترة (بدون ما قبلها)
             'closing'        => $running,

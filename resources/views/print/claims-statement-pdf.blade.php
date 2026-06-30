@@ -58,13 +58,14 @@
                 <th>الشهر</th>
                 <th>المطالبات (ج)</th>
                 <th>الملغاة (ج)</th>
+                <th>صافي المطالبات (ج)</th>
                 <th>المحصل (ج)</th>
                 <th>المديونية (ج)</th>
             </tr>
         </thead>
         <tbody>
             <tr class="opening">
-                <td class="txt" colspan="5">مديونية ما قبل الفترة</td>
+                <td class="txt" colspan="6">مديونية ما قبل الفترة</td>
                 <td class="{{ $statement['opening'] < 0 ? 'neg' : '' }}">{{ number_format($statement['opening'], 2) }}</td>
             </tr>
             @forelse($statement['rows'] as $row)
@@ -73,11 +74,12 @@
                 <td>{{ $months[$row['month']] ?? $row['month'] }}</td>
                 <td>{{ $row['demand'] ? number_format($row['demand'], 2) : '—' }}</td>
                 <td class="col-cancelled">{{ $row['cancelled'] ? number_format($row['cancelled'], 2) : '—' }}</td>
+                <td>{{ number_format($row['net'], 2) }}</td>
                 <td class="col-collected">{{ $row['collected'] ? number_format($row['collected'], 2) : '—' }}</td>
                 <td class="{{ $row['balance'] < 0 ? 'neg' : '' }}">{{ number_format($row['balance'], 2) }}</td>
             </tr>
             @empty
-            <tr><td colspan="6" style="padding:25px; color:#999;">لا توجد حركات خلال الفترة</td></tr>
+            <tr><td colspan="7" style="padding:25px; color:#999;">لا توجد حركات خلال الفترة</td></tr>
             @endforelse
         </tbody>
         <tfoot>
@@ -85,6 +87,7 @@
                 <td colspan="2" class="txt">الإجمالي</td>
                 <td>{{ number_format($statement['totalDemand'], 2) }}</td>
                 <td>{{ number_format($statement['totalCancelled'], 2) }}</td>
+                <td>{{ number_format($statement['totalNet'], 2) }}</td>
                 <td>{{ number_format($statement['totalCollected'], 2) }}</td>
                 <td class="{{ $statement['closing'] < 0 ? 'neg' : '' }}">{{ number_format($statement['closing'], 2) }}</td>
             </tr>

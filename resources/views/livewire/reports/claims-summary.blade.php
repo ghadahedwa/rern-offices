@@ -32,6 +32,7 @@
                         <th class="px-4 py-2.5 font-medium">{{ __('home.claims_governorate') }}</th>
                         <th class="px-4 py-2.5 font-medium">{{ __('home.claims_demands_total') }}</th>
                         <th class="px-4 py-2.5 font-medium">{{ __('home.claims_cancelled_total') }}</th>
+                        <th class="px-4 py-2.5 font-medium">{{ __('home.claims_net_demands') }}</th>
                         <th class="px-4 py-2.5 font-medium">{{ __('home.claims_collected') }}</th>
                         <th class="px-4 py-2.5 font-medium">{{ __('home.claims_debt_total') }}</th>
                         <th class="px-4 py-2.5 font-medium">{{ __('home.claims_collection_rate') }}</th>
@@ -43,12 +44,13 @@
                         <td class="px-4 py-2.5 text-zinc-700 dark:text-zinc-300">{{ $row['name'] }}</td>
                         <td class="px-4 py-2.5 text-zinc-800 dark:text-zinc-100">{{ number_format($row['demands'], 2) }}</td>
                         <td class="px-4 py-2.5 text-amber-600 dark:text-amber-400">{{ number_format($row['cancelled'], 2) }}</td>
+                        <td class="px-4 py-2.5 text-zinc-800 dark:text-zinc-100">{{ number_format($row['net'], 2) }}</td>
                         <td class="px-4 py-2.5 text-emerald-600 dark:text-emerald-400">{{ number_format($row['collected'], 2) }}</td>
                         <td class="px-4 py-2.5 font-bold {{ $row['debt'] < 0 ? 'text-red-600 dark:text-red-400' : 'text-zinc-800 dark:text-zinc-100' }}">{{ number_format($row['debt'], 2) }}</td>
                         <td class="px-4 py-2.5 font-semibold {{ $rateClasses($row['rate']) }}">{{ $row['rate'] !== null ? $row['rate'] . '%' : '—' }}</td>
                     </tr>
                     @empty
-                    <tr><td colspan="6" class="px-4 py-8 text-center text-zinc-400">{{ __('home.claims_no_governorates') }}</td></tr>
+                    <tr><td colspan="7" class="px-4 py-8 text-center text-zinc-400">{{ __('home.claims_no_governorates') }}</td></tr>
                     @endforelse
                 </tbody>
                 @if(count($summary['rows']))
@@ -57,6 +59,7 @@
                         <td class="px-4 py-2.5">{{ __('home.report_total') }}</td>
                         <td class="px-4 py-2.5">{{ number_format($summary['totalDemands'], 2) }}</td>
                         <td class="px-4 py-2.5 text-amber-700 dark:text-amber-400">{{ number_format($summary['totalCancelled'], 2) }}</td>
+                        <td class="px-4 py-2.5">{{ number_format($summary['totalNet'], 2) }}</td>
                         <td class="px-4 py-2.5 text-emerald-700 dark:text-emerald-400">{{ number_format($summary['totalCollected'], 2) }}</td>
                         <td class="px-4 py-2.5 {{ $summary['totalDebt'] < 0 ? 'text-red-600 dark:text-red-400' : '' }}">{{ number_format($summary['totalDebt'], 2) }}</td>
                         <td class="px-4 py-2.5 {{ $rateClasses($summary['rate']) }}">{{ $summary['rate'] !== null ? $summary['rate'] . '%' : '—' }}</td>

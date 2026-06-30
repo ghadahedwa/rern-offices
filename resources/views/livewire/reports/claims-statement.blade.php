@@ -97,6 +97,7 @@
                         <th class="px-4 py-2.5 font-medium">{{ __('home.claims_month') }}</th>
                         <th class="px-4 py-2.5 font-medium">{{ __('home.claims_demands_total') }}</th>
                         <th class="px-4 py-2.5 font-medium">{{ __('home.claims_cancelled_total') }}</th>
+                        <th class="px-4 py-2.5 font-medium">{{ __('home.claims_net_demands') }}</th>
                         <th class="px-4 py-2.5 font-medium">{{ __('home.claims_collected') }}</th>
                         <th class="px-4 py-2.5 font-medium">{{ __('home.claims_statement_balance') }}</th>
                     </tr>
@@ -104,7 +105,7 @@
                 <tbody class="divide-y divide-zinc-100 dark:divide-zinc-700">
                     {{-- رصيد افتتاحي --}}
                     <tr class="bg-zinc-50/60 dark:bg-zinc-800/40">
-                        <td colspan="5" class="px-4 py-2.5 text-zinc-500 dark:text-zinc-400 font-medium">{{ __('home.claims_statement_opening') }}</td>
+                        <td colspan="6" class="px-4 py-2.5 text-zinc-500 dark:text-zinc-400 font-medium">{{ __('home.claims_statement_opening') }}</td>
                         <td class="px-4 py-2.5 font-semibold {{ $statement['opening'] < 0 ? 'text-red-600 dark:text-red-400' : 'text-zinc-800 dark:text-zinc-100' }}">{{ number_format($statement['opening'], 2) }}</td>
                     </tr>
                     @forelse($statement['rows'] as $row)
@@ -113,11 +114,12 @@
                         <td class="px-4 py-2.5 text-zinc-700 dark:text-zinc-300">{{ $months[$row['month']] ?? $row['month'] }}</td>
                         <td class="px-4 py-2.5 text-zinc-800 dark:text-zinc-100">{{ $row['demand'] ? number_format($row['demand'], 2) : '—' }}</td>
                         <td class="px-4 py-2.5 text-amber-600 dark:text-amber-400">{{ $row['cancelled'] ? number_format($row['cancelled'], 2) : '—' }}</td>
+                        <td class="px-4 py-2.5 text-zinc-800 dark:text-zinc-100">{{ number_format($row['net'], 2) }}</td>
                         <td class="px-4 py-2.5 text-emerald-600 dark:text-emerald-400">{{ $row['collected'] ? number_format($row['collected'], 2) : '—' }}</td>
                         <td class="px-4 py-2.5 font-semibold {{ $row['balance'] < 0 ? 'text-red-600 dark:text-red-400' : 'text-zinc-800 dark:text-zinc-100' }}">{{ number_format($row['balance'], 2) }}</td>
                     </tr>
                     @empty
-                    <tr><td colspan="6" class="px-4 py-8 text-center text-zinc-400">{{ __('home.claims_empty') }}</td></tr>
+                    <tr><td colspan="7" class="px-4 py-8 text-center text-zinc-400">{{ __('home.claims_empty') }}</td></tr>
                     @endforelse
                 </tbody>
                 <tfoot class="bg-[#c9a847]/10 text-zinc-800 dark:text-zinc-100 font-semibold">
@@ -125,6 +127,7 @@
                         <td colspan="2" class="px-4 py-2.5">{{ __('home.report_total') }}</td>
                         <td class="px-4 py-2.5">{{ number_format($statement['totalDemand'], 2) }}</td>
                         <td class="px-4 py-2.5 text-amber-700 dark:text-amber-400">{{ number_format($statement['totalCancelled'], 2) }}</td>
+                        <td class="px-4 py-2.5">{{ number_format($statement['totalNet'], 2) }}</td>
                         <td class="px-4 py-2.5 text-emerald-700 dark:text-emerald-400">{{ number_format($statement['totalCollected'], 2) }}</td>
                         <td class="px-4 py-2.5 {{ $statement['closing'] < 0 ? 'text-red-600 dark:text-red-400' : '' }}">{{ number_format($statement['closing'], 2) }}</td>
                     </tr>
