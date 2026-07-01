@@ -40,14 +40,29 @@
                 @endforeach
             </select>
         </div>
-        <div class="grid grid-cols-4 gap-3">
-            <select wire:model.live="status" class="{{ $filterCls }}">
-                <option value="">— {{ __('home.vehicle_status') }} —</option>
-                @foreach(\App\Models\Vehicle::STATUSES as $val => $label)
-                    <option value="{{ $val }}">{{ $label }}</option>
-                @endforeach
-            </select>
+
+        <div class="flex items-center gap-3">
+            <button wire:click="toggleAdvanced"
+                    class="inline-flex items-center gap-2 text-sm px-4 py-2 rounded-lg border transition
+                        {{ $showAdvanced
+                            ? 'bg-[#c9a847]/10 border-[#c9a847] text-[#b8962e] dark:text-[#c9a847]'
+                            : 'bg-white border-zinc-300 text-zinc-600 dark:bg-zinc-800 dark:border-zinc-600 dark:text-zinc-400 hover:border-[#c9a847] hover:text-[#b8962e]' }}">
+                <flux:icon.adjustments-horizontal variant="outline" class="w-4 h-4" />
+                {{ __('home.advanced_search') }}
+                <flux:icon.chevron-down variant="micro" class="w-3.5 h-3.5 transition {{ $showAdvanced ? 'rotate-180' : '' }}" />
+            </button>
         </div>
+
+        @if($showAdvanced)
+            <div class="grid grid-cols-4 gap-3 pt-3 border-t border-zinc-200 dark:border-zinc-700">
+                <select wire:model.live="status" class="{{ $filterCls }}">
+                    <option value="">— {{ __('home.vehicle_status') }} —</option>
+                    @foreach(\App\Models\Vehicle::STATUSES as $val => $label)
+                        <option value="{{ $val }}">{{ $label }}</option>
+                    @endforeach
+                </select>
+            </div>
+        @endif
     </div>
 
     {{-- Table --}}

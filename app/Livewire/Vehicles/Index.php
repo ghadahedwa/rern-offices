@@ -33,6 +33,17 @@ class Index extends Component
     #[Url]
     public string $status = '';
 
+    public bool $showAdvanced  = false;
+
+    public function toggleAdvanced(): void
+    {
+        $this->showAdvanced = ! $this->showAdvanced;
+        if (! $this->showAdvanced) {
+            $this->reset(['status']);
+            $this->resetPage();
+        }
+    }
+
     public bool $showDelete    = false;
     public ?int  $deletingId   = null;
     public string $deletingLabel = '';
