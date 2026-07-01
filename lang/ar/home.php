@@ -647,4 +647,55 @@ return [
     'claims_deleted'             => 'تم الحذف',
     'claims_delete_confirm_title' => 'تأكيد الحذف',
     'claims_delete_confirm_text' => 'هل أنت متأكد من حذف هذا السجل؟',
+
+    // ── السيارات المتنقلة ──
+    'vehicles_title'                => 'السيارات المتنقلة',
+    'add_vehicle'                   => 'إضافة سيارة',
+    'edit_vehicle'                  => 'تعديل السيارة',
+    'vehicle_created'               => 'تم إضافة السيارة بنجاح',
+    'vehicle_updated'               => 'تم تحديث السيارة بنجاح',
+    'vehicle_deleted'               => 'تم حذف السيارة بنجاح',
+    'no_vehicles'                   => 'لا توجد سيارات مسجلة',
+
+    // Tabs
+    'tab_basic_data'                => 'البيانات الأساسية',
+    'tab_workers'                   => 'العاملون',
+    'tab_equipment'                 => 'التجهيزات',
+    'tab_media'                     => 'الوسائط',
+    'tab_statistics'                => 'الإحصائيات',
+
+    // Fields
+    'vehicle_name'                  => 'اسم السيارة',
+    'vehicle_name_placeholder'      => 'مثال: سيارة متنقلة رقم 1',
+    'vehicle_type'                  => 'نوع السيارة',
+    'vehicle_work_system'           => 'نظام العمل',
+    'vehicle_brand'                 => 'الماركة',
+    'vehicle_status'                => 'حالة السيارة',
+    'manufacture_year'              => 'سنة الصنع',
+    'license_plate'                 => 'رقم اللوحة',
+    'license_plate_placeholder'     => 'مثال: أ ب ج 1234',
+    'chassis_number'                => 'رقم الشاسية',
+    'chassis_number_placeholder'    => 'رقم الشاسية',
+    'license_expiry_date'           => 'تاريخ انتهاء الترخيص',
+    'overnight_address'             => 'عنوان المبيت',
+    'overnight_address_placeholder' => 'عنوان المبيت',
+    'storage_room_location'         => 'مكان غرفة الحفظ',
+    'storage_room_placeholder'      => 'مكان غرفة الحفظ',
+    'notes'                         => 'الملاحظات',
+    'notes_placeholder'             => 'أي ملاحظات إضافية...',
+    'saving'                        => 'جاري الحفظ...',
+
+    // Dropdowns
+    'select_type'                   => '— اختر النوع —',
+    'select_work_system'            => '— اختر نظام العمل —',
+    'select_brand'                  => '— اختر الماركة —',
+    'select_status'                 => '— اختر الحالة —',
+    'select_working_hours'          => '— اختر أوقات العمل —',
+    'select_day'                    => '— اليوم —',
+
+    // Sections
+    'vehicle_locations'             => 'مواقع التمركز',
+    'vehicle_extra_data'            => 'بيانات إضافية',
+    'add_location'                  => 'إضافة موقع',
+    'location_address_placeholder'  => 'عنوان موقع التمركز',
 ];

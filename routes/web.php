@@ -21,6 +21,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::livewire('offices/{office}/edit', \App\Livewire\Offices\Create::class)->name('offices.edit');
     Route::livewire('offices/{office}/statistics', \App\Livewire\Offices\Statistics::class)->name('offices.statistics');
 
+    // Vehicles — access controlled per-permission inside component mount()
+    Route::livewire('vehicles', \App\Livewire\Vehicles\Index::class)->name('vehicles.index');
+    Route::livewire('vehicles/create', \App\Livewire\Vehicles\Create::class)->name('vehicles.create');
+    Route::livewire('vehicles/{vehicle}/edit', \App\Livewire\Vehicles\Create::class)->name('vehicles.edit');
+
     // دليل الهاتف للمقرات — متاح لكل المستخدمين بلا صلاحيات
     Route::livewire('offices-phone-directory', \App\Livewire\Reports\PhoneDirectory::class)->name('offices.phone-directory');
 
