@@ -51,7 +51,15 @@ class Edit extends Component
 
     public function render()
     {
+        $this->ensurePermissions();
         $permissions = Permission::all();
         return view('livewire.roles.edit', compact('permissions'));
+    }
+
+    private function ensurePermissions(): void
+    {
+        foreach (['vehicles.view', 'vehicles.create', 'vehicles.edit', 'vehicles.delete'] as $name) {
+            Permission::firstOrCreate(['name' => $name, 'guard_name' => 'web']);
+        }
     }
 }
