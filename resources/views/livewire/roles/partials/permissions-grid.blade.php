@@ -17,17 +17,19 @@
         'claims.index'   => 'عرض المطالبات',
         'claims.edit'    => 'تعديل المطالبات',
 
+        'vehicles.index'  => 'عرض قائمة السيارات',
         'vehicles.view'   => 'عرض تفاصيل السيارة',
         'vehicles.create' => 'إضافة سيارة',
         'vehicles.edit'   => 'تعديل سيارة',
         'vehicles.delete' => 'حذف سيارة',
+        'vehicles.export' => 'تصدير بيانات السيارات',
     ];
 
     $groups = [
         'عام'               => $permissions->filter(fn($p) => !str_contains($p->name, '.')),
         'المقرات'           => $permissions->filter(fn($p) => str_starts_with($p->name, 'offices.')),
-        'المطالبات'         => $permissions->filter(fn($p) => str_starts_with($p->name, 'claims.')),
         'السيارات المتنقلة' => $permissions->filter(fn($p) => str_starts_with($p->name, 'vehicles.')),
+        'المطالبات'         => $permissions->filter(fn($p) => str_starts_with($p->name, 'claims.')),
     ];
 @endphp
 

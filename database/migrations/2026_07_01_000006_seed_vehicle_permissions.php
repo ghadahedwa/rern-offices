@@ -8,10 +8,12 @@ return new class extends Migration
     public function up(): void
     {
         $permissions = [
+            'vehicles.index',
             'vehicles.view',
             'vehicles.create',
             'vehicles.edit',
             'vehicles.delete',
+            'vehicles.export',
         ];
 
         foreach ($permissions as $name) {
@@ -22,10 +24,12 @@ return new class extends Migration
     public function down(): void
     {
         Permission::whereIn('name', [
+            'vehicles.index',
             'vehicles.view',
             'vehicles.create',
             'vehicles.edit',
             'vehicles.delete',
+            'vehicles.export',
         ])->delete();
     }
 };
