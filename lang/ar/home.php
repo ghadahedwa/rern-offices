@@ -686,16 +686,16 @@ return [
     'saving'                        => 'جاري الحفظ...',
 
     // Dropdowns
-    'select_type'                   => '— اختر النوع —',
-    'select_work_system'            => '— اختر نظام العمل —',
+    'vehicle_select_type'           => '— اختر النوع —',
+    'vehicle_select_work_system'    => '— اختر نظام العمل —',
     'select_brand'                  => '— اختر الماركة —',
     'select_status'                 => '— اختر الحالة —',
-    'select_working_hours'          => '— اختر أوقات العمل —',
+    'vehicle_select_working_hours'  => '— اختر أوقات العمل —',
     'select_day'                    => '— اليوم —',
 
     // Sections
-    'vehicle_locations'             => 'مواقع التمركز',
+    'vehicle_locations'             => 'أيام التمركز الأساسي',
     'vehicle_extra_data'            => 'بيانات إضافية',
-    'add_location'                  => 'إضافة موقع',
+    'add_location'                  => 'إضافة يوم',
     'location_address_placeholder'  => 'عنوان موقع التمركز',
 ];

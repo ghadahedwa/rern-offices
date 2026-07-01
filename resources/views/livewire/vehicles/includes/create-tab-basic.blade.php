@@ -44,7 +44,7 @@
             <div>
                 <label class="{{ $lbl }}">{{ __('home.vehicle_type') }}</label>
                 <select wire:model="type_id" class="{{ $inp }}">
-                    <option value="">{{ __('home.select_type') }}</option>
+                    <option value="">{{ __('home.vehicle_select_type') }}</option>
                     @foreach($types as $item)
                         <option value="{{ $item->id }}">{{ $item->name }}</option>
                     @endforeach
@@ -53,7 +53,7 @@
             <div>
                 <label class="{{ $lbl }}">{{ __('home.vehicle_work_system') }}</label>
                 <select wire:model="work_system_id" class="{{ $inp }}">
-                    <option value="">{{ __('home.select_work_system') }}</option>
+                    <option value="">{{ __('home.vehicle_select_work_system') }}</option>
                     @foreach($workSystems as $item)
                         <option value="{{ $item->id }}">{{ $item->name }}</option>
                     @endforeach
@@ -108,7 +108,7 @@
             <div>
                 <label class="{{ $lbl }}">{{ __('home.working_hours') }}</label>
                 <select wire:model="working_hours_id" class="{{ $inp }}">
-                    <option value="">{{ __('home.select_working_hours') }}</option>
+                    <option value="">{{ __('home.vehicle_select_working_hours') }}</option>
                     @foreach($workingHours as $item)
                         <option value="{{ $item->id }}">{{ $item->name }}</option>
                     @endforeach
