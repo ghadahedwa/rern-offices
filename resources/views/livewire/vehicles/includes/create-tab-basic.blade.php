@@ -131,14 +131,22 @@
             </button>
         </div>
 
+        @php
+            $selectedDays = collect($locations)->pluck('day')->filter()->values()->all();
+        @endphp
         <div class="space-y-3">
             @foreach($locations as $i => $loc)
+                @php
+                    $usedElsewhere = array_filter($selectedDays, fn($d) => $d !== ($loc['day'] ?? ''));
+                @endphp
                 <div class="flex items-start gap-3">
                     <div class="w-40 shrink-0">
-                        <select wire:model="locations.{{ $i }}.day" class="{{ $inp }}">
+                        <select wire:model.live="locations.{{ $i }}.day" class="{{ $inp }}">
                             <option value="">{{ __('home.select_day') }}</option>
                             @foreach(\App\Models\VehicleLocation::DAYS as $val => $label)
-                                <option value="{{ $val }}">{{ $label }}</option>
+                                @if(!in_array($val, $usedElsewhere))
+                                    <option value="{{ $val }}">{{ $label }}</option>
+                                @endif
                             @endforeach
                         </select>
                     </div>
