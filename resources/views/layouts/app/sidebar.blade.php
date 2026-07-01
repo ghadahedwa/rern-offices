@@ -47,6 +47,11 @@
                         {{ __('home.offices') }}
                     </flux:sidebar.item>
                     @endif
+                    @if(auth()->user()?->hasRole('super-admin') || auth()->user()?->can('vehicles.index'))
+                    <flux:sidebar.item icon="truck" :href="route('vehicles.index')" :current="request()->routeIs('vehicles.*')" wire:navigate>
+                        {{ __('home.vehicles_title') }}
+                    </flux:sidebar.item>
+                    @endif
                     <flux:sidebar.item icon="phone" :href="route('offices.phone-directory')" :current="request()->routeIs('offices.phone-directory')" wire:navigate>
                         {{ __('home.phone_directory_title') }}
                     </flux:sidebar.item>
