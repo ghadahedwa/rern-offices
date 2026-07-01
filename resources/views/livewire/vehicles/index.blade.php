@@ -16,34 +16,38 @@
 
     {{-- Filters --}}
     @php $filterCls = 'w-full border border-zinc-300 dark:border-zinc-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-[#c9a847]'; @endphp
-    <div class="grid grid-cols-2 md:grid-cols-5 gap-3">
-        <input wire:model.live.debounce.300ms="search" type="text"
-               placeholder="{{ __('home.search') }}"
-               class="{{ $filterCls }}" />
-        <select wire:model.live="governorate_id" class="{{ $filterCls }}">
-            <option value="">{{ __('home.all_governorates') }}</option>
-            @foreach($governorates as $gov)
-                <option value="{{ $gov->id }}">{{ $gov->name }}</option>
-            @endforeach
-        </select>
-        <select wire:model.live="type_id" class="{{ $filterCls }}">
-            <option value="">— {{ __('home.vehicle_type') }} —</option>
-            @foreach($types as $t)
-                <option value="{{ $t->id }}">{{ $t->name }}</option>
-            @endforeach
-        </select>
-        <select wire:model.live="work_system_id" class="{{ $filterCls }}">
-            <option value="">— {{ __('home.vehicle_work_system') }} —</option>
-            @foreach($workSystems as $ws)
-                <option value="{{ $ws->id }}">{{ $ws->name }}</option>
-            @endforeach
-        </select>
-        <select wire:model.live="status" class="{{ $filterCls }}">
-            <option value="">— {{ __('home.vehicle_status') }} —</option>
-            @foreach(\App\Models\Vehicle::STATUSES as $val => $label)
-                <option value="{{ $val }}">{{ $label }}</option>
-            @endforeach
-        </select>
+    <div class="space-y-3">
+        <div class="grid grid-cols-4 gap-3">
+            <input wire:model.live.debounce.300ms="search" type="text"
+                   placeholder="{{ __('home.search') }}"
+                   class="{{ $filterCls }}" />
+            <select wire:model.live="governorate_id" class="{{ $filterCls }}">
+                <option value="">{{ __('home.all_governorates') }}</option>
+                @foreach($governorates as $gov)
+                    <option value="{{ $gov->id }}">{{ $gov->name }}</option>
+                @endforeach
+            </select>
+            <select wire:model.live="type_id" class="{{ $filterCls }}">
+                <option value="">— {{ __('home.vehicle_type') }} —</option>
+                @foreach($types as $t)
+                    <option value="{{ $t->id }}">{{ $t->name }}</option>
+                @endforeach
+            </select>
+            <select wire:model.live="work_system_id" class="{{ $filterCls }}">
+                <option value="">— {{ __('home.vehicle_work_system') }} —</option>
+                @foreach($workSystems as $ws)
+                    <option value="{{ $ws->id }}">{{ $ws->name }}</option>
+                @endforeach
+            </select>
+        </div>
+        <div class="grid grid-cols-4 gap-3">
+            <select wire:model.live="status" class="{{ $filterCls }}">
+                <option value="">— {{ __('home.vehicle_status') }} —</option>
+                @foreach(\App\Models\Vehicle::STATUSES as $val => $label)
+                    <option value="{{ $val }}">{{ $label }}</option>
+                @endforeach
+            </select>
+        </div>
     </div>
 
     {{-- Table --}}
