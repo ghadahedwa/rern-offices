@@ -20,3 +20,15 @@ yarn-error.log
 /.nova
 /.vscode
 /.zed
+
+# IDE helper files (generated locally)
+_ide_helper.php
+_ide_helper_models.php
+.phpstorm.meta.php
+
+# mPDF temp files (generated at runtime)
+/storage/mpdf
+
+# Office temp/lock files
+~$*
+*.tmp
