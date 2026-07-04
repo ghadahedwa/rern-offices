@@ -102,7 +102,7 @@
                     @endif
 
                     @if(auth()->user()?->hasRole('super-admin'))
-                    <div x-data="{ open: {{ request()->routeIs('office-types.*') || request()->routeIs('location-descriptions.*') || request()->routeIs('work-systems.*') || request()->routeIs('working-hours.*') || request()->routeIs('connection-types.*') || request()->routeIs('device-types.*') || request()->routeIs('contractual-statuses.*') || request()->routeIs('structural-conditions.*') || request()->routeIs('disabilities-access.*') || request()->routeIs('fire-safety.*') || request()->routeIs('document-photocopying-services.*') || request()->routeIs('buffet-services.*') || request()->routeIs('cleanliness-contracts.*') || request()->routeIs('microfilm-options.*') ? 'true' : 'false' }} }">
+                    <div x-data="{ open: {{ request()->routeIs('office-types.*') || request()->routeIs('location-descriptions.*') || request()->routeIs('work-systems.*') || request()->routeIs('working-hours.*') || request()->routeIs('connection-types.*') || request()->routeIs('device-types.*') || request()->routeIs('contractual-statuses.*') || request()->routeIs('structural-conditions.*') || request()->routeIs('disabilities-access.*') || request()->routeIs('fire-safety.*') || request()->routeIs('document-photocopying-services.*') || request()->routeIs('buffet-services.*') || request()->routeIs('cleanliness-contracts.*') || request()->routeIs('microfilm-options.*') || request()->routeIs('vehicle-types.*') || request()->routeIs('vehicle-brands.*') || request()->routeIs('vehicle-work-systems.*') || request()->routeIs('vehicle-working-hours.*') || request()->routeIs('vehicle-device-types.*') ? 'true' : 'false' }} }">
                         <button @click="open = !open"
                             class="nested-menu-btn flex items-center w-full px-3 py-2 font-medium rounded text-zinc-600 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-zinc-900 dark:hover:text-white transition-colors">
                             <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-gray-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
@@ -157,6 +157,21 @@
                             </flux:sidebar.item>
                             <flux:sidebar.item icon="film" :href="route('microfilm-options.index')" :current="request()->routeIs('microfilm-options.*')" wire:navigate>
                                 {{ __('home.microfilm_option_title') }}
+                            </flux:sidebar.item>
+                            <flux:sidebar.item icon="truck" :href="route('vehicle-types.index')" :current="request()->routeIs('vehicle-types.*')" wire:navigate>
+                                {{ __('home.vehicle_types_title') }}
+                            </flux:sidebar.item>
+                            <flux:sidebar.item icon="tag" :href="route('vehicle-brands.index')" :current="request()->routeIs('vehicle-brands.*')" wire:navigate>
+                                {{ __('home.vehicle_brands_title') }}
+                            </flux:sidebar.item>
+                            <flux:sidebar.item icon="clock" :href="route('vehicle-work-systems.index')" :current="request()->routeIs('vehicle-work-systems.*')" wire:navigate>
+                                {{ __('home.vehicle_work_systems_title') }}
+                            </flux:sidebar.item>
+                            <flux:sidebar.item icon="calendar-days" :href="route('vehicle-working-hours.index')" :current="request()->routeIs('vehicle-working-hours.*')" wire:navigate>
+                                {{ __('home.vehicle_working_hours_title') }}
+                            </flux:sidebar.item>
+                            <flux:sidebar.item icon="computer-desktop" :href="route('vehicle-device-types.index')" :current="request()->routeIs('vehicle-device-types.*')" wire:navigate>
+                                {{ __('home.vehicle_device_types_title') }}
                             </flux:sidebar.item>
                         </div>
                     </div>

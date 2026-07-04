@@ -92,11 +92,11 @@ vehicles/{vehicle}/edit → Vehicles\Create (vehicles.edit)
 
 ### Lookup Tables — شاشات الإعدادات
 المطلوب إنشاء CRUD لكل من:
-- `vehicle_types` — أنواع السيارات
-- `vehicle_brands` — الماركات
-- `vehicle_work_systems` — أنظمة العمل
-- `vehicle_working_hours` — أوقات العمل
-- `vehicle_device_types` — أنواع الأجهزة المعطلة
+- `vehicle_types` — أنواع السيارات ✅ **منجزة** (`app/Livewire/VehicleTypes/`, نفس نمط `WorkSystems`، رابط في قسم "إعدادات البرنامج" بالـ sidebar)
+- `vehicle_brands` — الماركات ✅ **منجزة** (`app/Livewire/VehicleBrands/`)
+- `vehicle_work_systems` — أنظمة العمل ✅ **منجزة** (`app/Livewire/VehicleWorkSystems/`)
+- `vehicle_working_hours` — أوقات العمل ✅ **منجزة** (`app/Livewire/VehicleWorkingHours/`)
+- `vehicle_device_types` — أنواع الأجهزة المعطلة ✅ **منجزة** (`app/Livewire/VehicleDeviceTypes/` + تم إنشاء موديل `VehicleDeviceType` الناقص)
 
 ### صفحة Show (عرض)
 - مثل `offices/{id}` — صفحة قراءة فقط بـ tabs

@@ -111,6 +111,26 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::livewire('microfilm-options', \App\Livewire\MicrofilmOptions\Index::class)->name('microfilm-options.index');
         Route::livewire('microfilm-options/create', \App\Livewire\MicrofilmOptions\Create::class)->name('microfilm-options.create');
         Route::livewire('microfilm-options/{microfilmOption}/edit', \App\Livewire\MicrofilmOptions\Create::class)->name('microfilm-options.edit');
+
+        Route::livewire('vehicle-types', \App\Livewire\VehicleTypes\Index::class)->name('vehicle-types.index');
+        Route::livewire('vehicle-types/create', \App\Livewire\VehicleTypes\Create::class)->name('vehicle-types.create');
+        Route::livewire('vehicle-types/{vehicleType}/edit', \App\Livewire\VehicleTypes\Create::class)->name('vehicle-types.edit');
+
+        Route::livewire('vehicle-brands', \App\Livewire\VehicleBrands\Index::class)->name('vehicle-brands.index');
+        Route::livewire('vehicle-brands/create', \App\Livewire\VehicleBrands\Create::class)->name('vehicle-brands.create');
+        Route::livewire('vehicle-brands/{vehicleBrand}/edit', \App\Livewire\VehicleBrands\Create::class)->name('vehicle-brands.edit');
+
+        Route::livewire('vehicle-work-systems', \App\Livewire\VehicleWorkSystems\Index::class)->name('vehicle-work-systems.index');
+        Route::livewire('vehicle-work-systems/create', \App\Livewire\VehicleWorkSystems\Create::class)->name('vehicle-work-systems.create');
+        Route::livewire('vehicle-work-systems/{vehicleWorkSystem}/edit', \App\Livewire\VehicleWorkSystems\Create::class)->name('vehicle-work-systems.edit');
+
+        Route::livewire('vehicle-working-hours', \App\Livewire\VehicleWorkingHours\Index::class)->name('vehicle-working-hours.index');
+        Route::livewire('vehicle-working-hours/create', \App\Livewire\VehicleWorkingHours\Create::class)->name('vehicle-working-hours.create');
+        Route::livewire('vehicle-working-hours/{vehicleWorkingHour}/edit', \App\Livewire\VehicleWorkingHours\Create::class)->name('vehicle-working-hours.edit');
+
+        Route::livewire('vehicle-device-types', \App\Livewire\VehicleDeviceTypes\Index::class)->name('vehicle-device-types.index');
+        Route::livewire('vehicle-device-types/create', \App\Livewire\VehicleDeviceTypes\Create::class)->name('vehicle-device-types.create');
+        Route::livewire('vehicle-device-types/{vehicleDeviceType}/edit', \App\Livewire\VehicleDeviceTypes\Create::class)->name('vehicle-device-types.edit');
     });
 });
 

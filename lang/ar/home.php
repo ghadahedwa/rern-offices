@@ -698,4 +698,44 @@ return [
     'vehicle_extra_data'            => 'بيانات إضافية',
     'add_location'                  => 'إضافة يوم',
     'location_address_placeholder'  => 'عنوان موقع التمركز',
+
+    // Vehicle lookup tables — أنواع السيارات
+    'vehicle_types_title'           => 'أنواع السيارات',
+    'add_vehicle_type'              => 'إضافة نوع سيارة',
+    'edit_vehicle_type'             => 'تعديل نوع السيارة',
+    'vehicle_type_created'          => 'تم إضافة نوع السيارة بنجاح',
+    'vehicle_type_updated'          => 'تم تحديث نوع السيارة بنجاح',
+    'vehicle_type_deleted'          => 'تم حذف نوع السيارة بنجاح',
+
+    // Vehicle lookup tables — ماركات السيارات
+    'vehicle_brands_title'          => 'ماركات السيارات',
+    'add_vehicle_brand'             => 'إضافة ماركة',
+    'edit_vehicle_brand'            => 'تعديل الماركة',
+    'vehicle_brand_created'         => 'تم إضافة الماركة بنجاح',
+    'vehicle_brand_updated'         => 'تم تحديث الماركة بنجاح',
+    'vehicle_brand_deleted'         => 'تم حذف الماركة بنجاح',
+
+    // Vehicle lookup tables — أنظمة عمل السيارات
+    'vehicle_work_systems_title'    => 'أنظمة عمل السيارات',
+    'add_vehicle_work_system'       => 'إضافة نظام عمل',
+    'edit_vehicle_work_system'      => 'تعديل نظام العمل',
+    'vehicle_work_system_created'   => 'تم إضافة نظام العمل بنجاح',
+    'vehicle_work_system_updated'   => 'تم تحديث نظام العمل بنجاح',
+    'vehicle_work_system_deleted'   => 'تم حذف نظام العمل بنجاح',
+
+    // Vehicle lookup tables — أوقات عمل السيارات
+    'vehicle_working_hours_title'   => 'أوقات عمل السيارات',
+    'add_vehicle_working_hour'      => 'إضافة وقت عمل',
+    'edit_vehicle_working_hour'     => 'تعديل وقت العمل',
+    'vehicle_working_hour_created'  => 'تم إضافة وقت العمل بنجاح',
+    'vehicle_working_hour_updated'  => 'تم تحديث وقت العمل بنجاح',
+    'vehicle_working_hour_deleted'  => 'تم حذف وقت العمل بنجاح',
+
+    // Vehicle lookup tables — أنواع أجهزة السيارات
+    'vehicle_device_types_title'    => 'أنواع أجهزة السيارات',
+    'add_vehicle_device_type'       => 'إضافة نوع جهاز',
+    'edit_vehicle_device_type'      => 'تعديل نوع الجهاز',
+    'vehicle_device_type_created'   => 'تم إضافة نوع الجهاز بنجاح',
+    'vehicle_device_type_updated'   => 'تم تحديث نوع الجهاز بنجاح',
+    'vehicle_device_type_deleted'   => 'تم حذف نوع الجهاز بنجاح',
 ];
