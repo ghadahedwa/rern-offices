@@ -51,6 +51,13 @@ vehicles.delete   vehicles.export
 vehicles           → Vehicles\Index    (vehicles.index)
 vehicles/create    → Vehicles\Create  (vehicles.create)
 vehicles/{vehicle}/edit → Vehicles\Create (vehicles.edit)
+
+// Lookup tables (داخل مجموعة role:super-admin) — كل جدول له 3 routes: index / create / {id}/edit
+vehicle-types           → VehicleTypes\Index|Create
+vehicle-brands          → VehicleBrands\Index|Create
+vehicle-work-systems    → VehicleWorkSystems\Index|Create
+vehicle-working-hours   → VehicleWorkingHours\Index|Create
+vehicle-device-types    → VehicleDeviceTypes\Index|Create
 ```
 
 ### Livewire Components
@@ -74,6 +81,14 @@ vehicles/{vehicle}/edit → Vehicles\Create (vehicles.edit)
 - ظهور بين المقرات ودليل الهاتف
 - مقيّد بصلاحية `vehicles.index`
 
+### Lookup Tables — شاشات الإعدادات ✅
+CRUD كامل (Index + Create/Edit) لكل الجداول الخمسة، بنفس نمط `WorkSystems` (بحث، pagination، حذف بـ modal تأكيد، صلاحية `super-admin` فقط)، مع روابط في قسم "إعدادات البرنامج" بالـ sidebar ومفاتيح لغة `vehicle_*`:
+- `vehicle_types` → `app/Livewire/VehicleTypes/`
+- `vehicle_brands` → `app/Livewire/VehicleBrands/`
+- `vehicle_work_systems` → `app/Livewire/VehicleWorkSystems/`
+- `vehicle_working_hours` → `app/Livewire/VehicleWorkingHours/`
+- `vehicle_device_types` → `app/Livewire/VehicleDeviceTypes/` (تم أيضاً إنشاء موديل `VehicleDeviceType` الذي كان ناقصاً)
+
 ---
 
 ## ما لم يُنفَّذ بعد ⏳
@@ -89,14 +104,6 @@ vehicles/{vehicle}/edit → Vehicles\Create (vehicles.edit)
 ### بنود مؤجلة (تنتظر تأكيد العميل)
 - **أيام التمركز الإضافي**: المنطق المطلوب كان معقداً (أيام متبقية تفتح حقل إضافي ديناميكياً) — بانتظار توضيح العميل
 - **سجل تحركات الدعم**: عنوان + تاريخ — على الأرجح جدول منفصل (`vehicle_support_movements`) — بانتظار تأكيد العميل
-
-### Lookup Tables — شاشات الإعدادات
-المطلوب إنشاء CRUD لكل من:
-- `vehicle_types` — أنواع السيارات ✅ **منجزة** (`app/Livewire/VehicleTypes/`, نفس نمط `WorkSystems`، رابط في قسم "إعدادات البرنامج" بالـ sidebar)
-- `vehicle_brands` — الماركات ✅ **منجزة** (`app/Livewire/VehicleBrands/`)
-- `vehicle_work_systems` — أنظمة العمل ✅ **منجزة** (`app/Livewire/VehicleWorkSystems/`)
-- `vehicle_working_hours` — أوقات العمل ✅ **منجزة** (`app/Livewire/VehicleWorkingHours/`)
-- `vehicle_device_types` — أنواع الأجهزة المعطلة ✅ **منجزة** (`app/Livewire/VehicleDeviceTypes/` + تم إنشاء موديل `VehicleDeviceType` الناقص)
 
 ### صفحة Show (عرض)
 - مثل `offices/{id}` — صفحة قراءة فقط بـ tabs
@@ -130,6 +137,21 @@ app/
   Livewire/Vehicles/
     Index.php
     Create.php
+  Livewire/VehicleTypes/         ✅ CRUD lookup
+    Index.php
+    Create.php
+  Livewire/VehicleBrands/        ✅ CRUD lookup
+    Index.php
+    Create.php
+  Livewire/VehicleWorkSystems/   ✅ CRUD lookup
+    Index.php
+    Create.php
+  Livewire/VehicleWorkingHours/  ✅ CRUD lookup
+    Index.php
+    Create.php
+  Livewire/VehicleDeviceTypes/   ✅ CRUD lookup
+    Index.php
+    Create.php
 
 app/Models/
   Vehicle.php
@@ -138,13 +160,19 @@ app/Models/
   VehicleBrand.php
   VehicleWorkSystem.php
   VehicleWorkingHour.php
-  VehicleDeviceType.php        ← model موجود، لم يُستخدم بعد
+  VehicleDeviceType.php        ✅ تم إنشاؤه (كان ناقصاً) — مستخدم الآن في CRUD
 
 resources/views/livewire/vehicles/
   index.blade.php
   create.blade.php
   includes/
     create-tab-basic.blade.php  ✅
+
+resources/views/livewire/vehicle-types/         ✅ index.blade.php + create.blade.php
+resources/views/livewire/vehicle-brands/        ✅ index.blade.php + create.blade.php
+resources/views/livewire/vehicle-work-systems/  ✅ index.blade.php + create.blade.php
+resources/views/livewire/vehicle-working-hours/ ✅ index.blade.php + create.blade.php
+resources/views/livewire/vehicle-device-types/  ✅ index.blade.php + create.blade.php
 
 database/migrations/
   2026_07_01_000001  → vehicle_types
