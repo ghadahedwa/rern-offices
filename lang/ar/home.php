@@ -746,11 +746,19 @@ return [
     'section_vehicle_equipment'     => 'التجهيزات',
     'mobility_bag'                  => 'شنطة التنقلات',
     'laptops_count'                 => 'عدد أجهزة اللاب توب',
-    'fingerprints_count'            => 'عدد أجهزة البصمة',
-    'printers_count'                => 'عدد الطابعات',
     'collection_machines_count'     => 'عدد ماكينات التحصيل',
     'mifi_count'                    => 'عدد أجهزة MiFi',
     'generator_status'              => 'المولد الكهربائي',
+
+    // Tab 4 — الوسائط
+    'section_vehicle_photos'        => 'صور السيارة',
+    'section_vehicle_video'         => 'فيديو السيارة',
+    'section_establishment_decision' => 'قرار الإنشاء',
+    'add_establishment_decision'    => 'إضافة قرار الإنشاء',
+    'no_establishment_decision'     => 'لا يوجد قرار إنشاء مرفوع',
+    'section_license_photo'         => 'صورة الرخصة',
+    'add_license_photo'             => 'إضافة صورة الرخصة',
+    'no_license_photo'              => 'لا توجد صورة رخصة',
 
     // Vehicle lookup tables — أنواع أجهزة السيارات
     'vehicle_device_types_title'    => 'أنواع أجهزة السيارات',

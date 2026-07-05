@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\Storage;
 
 class Vehicle extends Model
 {
@@ -34,4 +35,15 @@ class Vehicle extends Model
     public function brand(): BelongsTo        { return $this->belongsTo(VehicleBrand::class); }
     public function locations(): HasMany      { return $this->hasMany(VehicleLocation::class); }
     public function brokenDevices(): HasMany  { return $this->hasMany(VehicleBrokenDevice::class); }
+    public function media(): HasMany          { return $this->hasMany(VehicleMedia::class); }
+
+    protected static function booted(): void
+    {
+        static::deleting(function (Vehicle $vehicle) {
+            $vehicle->media->each(function ($media) {
+                Storage::disk('public')->delete($media->path);
+            });
+            $vehicle->media()->delete();
+        });
+    }
 }

@@ -8,23 +8,28 @@ use App\Models\VehicleBrand;
 use App\Models\VehicleBrokenDevice;
 use App\Models\VehicleDeviceType;
 use App\Models\VehicleLocation;
+use App\Models\VehicleMedia;
 use App\Models\VehicleType;
 use App\Models\VehicleWorkingHour;
 use App\Models\VehicleWorkSystem;
 use Flux\Flux;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 use Livewire\Attributes\Url;
 use Livewire\Component;
+use Livewire\WithFileUploads;
 
 #[Layout('layouts.app')]
 #[Title('سيارة متنقلة')]
 class Create extends Component
 {
+    use WithFileUploads;
+
     #[Url]
     public int $activeTab  = 1;
-    public int $totalTabs  = 5; // التابات 4-5 لسه قيد التطوير (placeholder) — التنقل بينها متاح لكن بدون حفظ فعلي
+    public int $totalTabs  = 5; // التاب 5 لسه قيد التطوير (placeholder) — التنقل إليه متاح لكن بدون حفظ فعلي
 
     #[Url]
     public ?int $vehicle_id = null;
@@ -67,6 +72,12 @@ class Create extends Component
     public string $generator_status           = '';
     public string $surveillance_cameras       = '';
     public array $brokenDevices = []; // [device_type_id, count]
+
+    // Tab 4 — الوسائط (رفع فوري — منفصل عن حفظ التاب)
+    public array $newPhotos          = [];
+    public mixed $newVideo           = null;
+    public mixed $newDocument        = null; // قرار الإنشاء
+    public mixed $newLicensePhoto    = null; // صورة الرخصة
 
     public function mount(?Vehicle $vehicle = null): void
     {
@@ -124,6 +135,91 @@ class Create extends Component
     public function removeBrokenDevice(int $index): void
     {
         array_splice($this->brokenDevices, $index, 1);
+    }
+
+    public function uploadPhoto(): void
+    {
+        $this->validate(
+            ['newPhotos' => 'required|array', 'newPhotos.*' => 'image|max:5120'],
+            [
+                'newPhotos.required' => 'يرجى اختيار صورة على الأقل',
+                'newPhotos.*.image'  => 'يجب أن تكون الملفات صوراً',
+                'newPhotos.*.max'    => 'الحد الأقصى لحجم الصورة 5 ميجا',
+            ]
+        );
+
+        $existing  = VehicleMedia::where('vehicle_id', $this->vehicle_id)->where('type', 'photo')->count();
+        $remaining = max(0, 5 - $existing);
+
+        foreach (array_slice($this->newPhotos, 0, $remaining) as $photo) {
+            $path = $photo->store("vehicles/{$this->vehicle_id}/photos", 'public');
+            VehicleMedia::create([
+                'vehicle_id'    => $this->vehicle_id,
+                'type'          => 'photo',
+                'path'          => $path,
+                'original_name' => $photo->getClientOriginalName(),
+            ]);
+        }
+
+        $this->newPhotos = [];
+        $this->dispatch('mediaUploaded');
+    }
+
+    public function uploadVideo(): void
+    {
+        $this->validate(
+            ['newVideo' => 'required|mimetypes:video/mp4,video/avi,video/x-msvideo,video/quicktime,video/webm|max:102400'],
+            ['newVideo.required' => 'يرجى اختيار فيديو', 'newVideo.mimetypes' => 'نوع الفيديو غير مدعوم (MP4, AVI, MOV فقط)', 'newVideo.max' => 'الحد الأقصى 100 ميجا']
+        );
+
+        if (VehicleMedia::where('vehicle_id', $this->vehicle_id)->where('type', 'video')->exists()) return;
+
+        $path = $this->newVideo->store("vehicles/{$this->vehicle_id}/videos", 'public');
+        VehicleMedia::create(['vehicle_id' => $this->vehicle_id, 'type' => 'video', 'path' => $path, 'original_name' => $this->newVideo->getClientOriginalName()]);
+
+        $this->newVideo = null;
+        $this->dispatch('mediaUploaded');
+    }
+
+    public function uploadDocument(): void
+    {
+        $this->validate(
+            ['newDocument' => 'required|mimes:pdf|max:10240'],
+            ['newDocument.required' => 'يرجى اختيار ملف', 'newDocument.mimes' => 'يجب أن يكون الملف PDF', 'newDocument.max' => 'الحد الأقصى 10 ميجا']
+        );
+
+        if (VehicleMedia::where('vehicle_id', $this->vehicle_id)->where('type', 'document')->exists()) return;
+
+        $path = $this->newDocument->store("vehicles/{$this->vehicle_id}/documents", 'public');
+        VehicleMedia::create(['vehicle_id' => $this->vehicle_id, 'type' => 'document', 'path' => $path, 'original_name' => $this->newDocument->getClientOriginalName()]);
+
+        $this->newDocument = null;
+        $this->dispatch('mediaUploaded');
+    }
+
+    public function uploadLicensePhoto(): void
+    {
+        $this->validate(
+            ['newLicensePhoto' => 'required|image|max:5120'],
+            ['newLicensePhoto.required' => 'يرجى اختيار صورة', 'newLicensePhoto.image' => 'يجب أن يكون الملف صورة', 'newLicensePhoto.max' => 'الحد الأقصى لحجم الصورة 5 ميجا']
+        );
+
+        if (VehicleMedia::where('vehicle_id', $this->vehicle_id)->where('type', 'license_photo')->exists()) return;
+
+        $path = $this->newLicensePhoto->store("vehicles/{$this->vehicle_id}/license", 'public');
+        VehicleMedia::create(['vehicle_id' => $this->vehicle_id, 'type' => 'license_photo', 'path' => $path, 'original_name' => $this->newLicensePhoto->getClientOriginalName()]);
+
+        $this->newLicensePhoto = null;
+        $this->dispatch('mediaUploaded');
+    }
+
+    public function deleteMedia(int $id): void
+    {
+        $media = VehicleMedia::find($id);
+        if ($media && $media->vehicle_id === $this->vehicle_id) {
+            Storage::disk('public')->delete($media->path);
+            $media->delete();
+        }
     }
 
     public function saveAndExit(): void
@@ -383,6 +479,9 @@ class Create extends Component
             'workSystems'  => VehicleWorkSystem::orderBy('name')->get(),
             'workingHours' => VehicleWorkingHour::orderBy('name')->get(),
             'deviceTypes'  => VehicleDeviceType::orderBy('name')->get(),
+            'existingMedia' => $this->vehicle_id
+                ? VehicleMedia::where('vehicle_id', $this->vehicle_id)->get()->groupBy('type')
+                : collect(),
         ]);
     }
 }

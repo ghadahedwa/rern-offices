@@ -18,6 +18,7 @@
 | `vehicles` | الجدول الرئيسي |
 | `vehicle_locations` | أيام التمركز الأساسي (day + address لكل سيارة) |
 | `vehicle_broken_devices` | الأجهزة المعطلة (device_type_id + count لكل سيارة) |
+| `vehicle_media` | الوسائط (type: photo/video/document/license_photo + path) |
 
 **جدول `vehicles` — الحقول:**
 ```
@@ -41,6 +42,7 @@ vehicle_id (FK)    day (enum: saturday→friday)    address
 - `VehicleLocation` — مع `DAYS` constant
 - `VehicleType`, `VehicleBrand`, `VehicleWorkSystem`, `VehicleWorkingHour`, `VehicleDeviceType`
 - `VehicleBrokenDevice` — نفس نمط `OfficeBrokenDevice`
+- `VehicleMedia` — نفس نمط `OfficeMedia`
 
 ### Permissions
 ```
@@ -93,7 +95,13 @@ vehicle-device-types    → VehicleDeviceTypes\Index|Create
   - `laptops_count`, `fingerprints_count`, `printers_count`, `collection_machines_count`, `mifi_count` (أعداد nullable)
   - `generator_status`, `surveillance_cameras` (enum: available/not_available/broken — نفس enum كاميرا المراقبة في المقرات)
   - **الأجهزة المعطلة**: جدول جديد `vehicle_broken_devices` (`vehicle_id`, `device_type_id` → `vehicle_device_types`, `count`) + موديل `VehicleBrokenDevice` — نفس نمط `OfficeBrokenDevice` بالحرف (صفوف ديناميكية إضافة/حذف، منع تكرار نفس نوع الجهاز في أكتر من صف)
-- Tabs 4-5 (الوسائط / الإحصائيات): محتواها placeholder ("قيد التطوير") لكن التنقل إليها شغّال (nav + التالي/السابق) تمهيداً لبنائها لاحقاً
+- Tab 4 مُنجزة: **الوسائط** — **نفس أسلوب المقرات بالحرف** (رفع فوري لكل ملف، منفصل تماماً عن حفظ/تنقل التابات — مفيش validate/persist لتاب 4 في الـ dispatch، كل ملف بيتحفظ لحظة اختياره عبر method مخصص):
+  - جدول جديد `vehicle_media` (`vehicle_id`, `type`, `path`, `original_name`) + موديل `VehicleMedia` — نفس نمط `OfficeMedia` بالحرف
+  - `Vehicle::booted()` بيحذف ملفات الوسائط من `storage/public` تلقائياً عند حذف السيارة (نفس hook الموجود في `Office`)
+  - 4 أقسام: **صور السيارة** (حد أقصى 5 — بدل 10 في المقرات) / **فيديو السيارة** (1) / **قرار الإنشاء** (PDF، 1) / **صورة الرخصة** (صورة، 1 — قسم جديد مش موجود في المقرات)
+  - نفس Alpine.js pattern (modal رفع + modal معاينة + modal تأكيد حذف) من `create-step4.blade.php` بالمقرات، مُوسَّع لدعم نوع رابع (`license_photo`)
+  - `uploadPhoto/uploadVideo/uploadDocument/uploadLicensePhoto/deleteMedia` — نفس تسمية methods المقرات + واحدة إضافية لصورة الرخصة
+- Tab 5 (الإحصائيات): محتواها placeholder ("قيد التطوير") لكن التنقل إليه شغّال (nav + التالي/السابق) تمهيداً لبنائه لاحقاً
 - Keepalive مضاف
 
 ### الـ Sidebar
@@ -112,10 +120,9 @@ CRUD كامل (Index + Create/Edit) لكل الجداول الخمسة، بنف�
 
 ## ما لم يُنفَّذ بعد ⏳
 
-### Tabs المتبقية (Tab 4→5) في صفحة التعديل
+### Tabs المتبقية (Tab 5) في صفحة التعديل
 | التاب | المحتوى |
 |-------|---------|
-| **الوسائط** | فيديو واحد / 5 صور / قرار الإنشاء / صورة الرخصة |
 | **الإحصائيات** | متوسط معاملات يومي / عدد حوافظ شهري / عدد نماذج شهري |
 
 ### بنود مؤجلة (تنتظر تأكيد العميل)
@@ -179,6 +186,7 @@ app/Models/
   VehicleWorkingHour.php
   VehicleDeviceType.php        ✅ تم إنشاؤه (كان ناقصاً) — مستخدم الآن في CRUD
   VehicleBrokenDevice.php      ✅ (نفس نمط OfficeBrokenDevice)
+  VehicleMedia.php             ✅ (نفس نمط OfficeMedia)
 
 resources/views/livewire/vehicles/
   index.blade.php
@@ -187,7 +195,8 @@ resources/views/livewire/vehicles/
     create-tab-basic.blade.php       ✅
     create-tab-workers.blade.php     ✅
     create-tab-equipment.blade.php   ✅
-    create-tab-placeholder.blade.php ✅ (تابات 4-5 المؤقتة)
+    create-tab-media.blade.php       ✅
+    create-tab-placeholder.blade.php ✅ (تاب 5 المؤقت)
 
 resources/views/livewire/vehicle-types/         ✅ index.blade.php + create.blade.php
 resources/views/livewire/vehicle-brands/        ✅ index.blade.php + create.blade.php
@@ -207,4 +216,5 @@ database/migrations/
   2026_07_05_070735  → إضافة حقول العاملين (driver/notary/reviewer) لجدول vehicles
   2026_07_05_074356  → إضافة حقول التجهيزات الثابتة لجدول vehicles
   2026_07_05_074414  → vehicle_broken_devices
+  2026_07_05_080527  → vehicle_media
 ```

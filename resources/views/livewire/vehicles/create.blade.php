@@ -67,6 +67,8 @@
         @include('livewire.vehicles.includes.create-tab-workers')
     @elseif($activeTab === 3)
         @include('livewire.vehicles.includes.create-tab-equipment')
+    @elseif($activeTab === 4)
+        @include('livewire.vehicles.includes.create-tab-media')
     @else
         @include('livewire.vehicles.includes.create-tab-placeholder')
     @endif
