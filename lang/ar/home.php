@@ -731,6 +731,27 @@ return [
     'vehicle_working_hour_updated'  => 'تم تحديث وقت العمل بنجاح',
     'vehicle_working_hour_deleted'  => 'تم حذف وقت العمل بنجاح',
 
+    // Tab 2 — العاملون
+    'section_driver'                => 'بيانات السائق',
+    'driver_name'                   => 'اسم السائق',
+    'driver_phone'                  => 'هاتف السائق',
+    'section_notary'                => 'بيانات الموثق',
+    'notary_name'                   => 'اسم الموثق',
+    'notary_phone'                  => 'هاتف الموثق',
+    'section_reviewer'              => 'بيانات المراجع',
+    'reviewer_name'                 => 'اسم المراجع',
+    'reviewer_phone'                => 'هاتف المراجع',
+
+    // Tab 3 — التجهيزات
+    'section_vehicle_equipment'     => 'التجهيزات',
+    'mobility_bag'                  => 'شنطة التنقلات',
+    'laptops_count'                 => 'عدد أجهزة اللاب توب',
+    'fingerprints_count'            => 'عدد أجهزة البصمة',
+    'printers_count'                => 'عدد الطابعات',
+    'collection_machines_count'     => 'عدد ماكينات التحصيل',
+    'mifi_count'                    => 'عدد أجهزة MiFi',
+    'generator_status'              => 'المولد الكهربائي',
+
     // Vehicle lookup tables — أنواع أجهزة السيارات
     'vehicle_device_types_title'    => 'أنواع أجهزة السيارات',
     'add_vehicle_device_type'       => 'إضافة نوع جهاز',

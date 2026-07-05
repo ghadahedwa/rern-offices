@@ -18,6 +18,9 @@ class Vehicle extends Model
         'governorate_id', 'type_id', 'work_system_id', 'working_hours_id', 'brand_id',
         'name', 'license_plate', 'manufacture_year', 'chassis_number',
         'license_expiry_date', 'status', 'overnight_address', 'storage_room_location', 'notes',
+        'driver_name', 'driver_phone', 'notary_name', 'notary_phone', 'reviewer_name', 'reviewer_phone',
+        'mobility_bag', 'laptops_count', 'fingerprints_count', 'printers_count',
+        'collection_machines_count', 'mifi_count', 'generator_status', 'surveillance_cameras',
     ];
 
     protected $casts = [
@@ -30,4 +33,5 @@ class Vehicle extends Model
     public function workingHour(): BelongsTo  { return $this->belongsTo(VehicleWorkingHour::class); }
     public function brand(): BelongsTo        { return $this->belongsTo(VehicleBrand::class); }
     public function locations(): HasMany      { return $this->hasMany(VehicleLocation::class); }
+    public function brokenDevices(): HasMany  { return $this->hasMany(VehicleBrokenDevice::class); }
 }

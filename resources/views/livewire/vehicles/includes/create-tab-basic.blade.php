@@ -42,22 +42,24 @@
 
             {{-- نوع السيارة | نظام العمل --}}
             <div>
-                <label class="{{ $lbl }}">{{ __('home.vehicle_type') }}</label>
+                <label class="{{ $lbl }}">{{ __('home.vehicle_type') }} <span class="text-red-500">*</span></label>
                 <select wire:model="type_id" class="{{ $inp }}">
                     <option value="">{{ __('home.vehicle_select_type') }}</option>
                     @foreach($types as $item)
                         <option value="{{ $item->id }}">{{ $item->name }}</option>
                     @endforeach
                 </select>
+                @error('type_id') <p class="mt-1 text-xs text-red-500">{{ $message }}</p> @enderror
             </div>
             <div>
-                <label class="{{ $lbl }}">{{ __('home.vehicle_work_system') }}</label>
+                <label class="{{ $lbl }}">{{ __('home.vehicle_work_system') }} <span class="text-red-500">*</span></label>
                 <select wire:model="work_system_id" class="{{ $inp }}">
                     <option value="">{{ __('home.vehicle_select_work_system') }}</option>
                     @foreach($workSystems as $item)
                         <option value="{{ $item->id }}">{{ $item->name }}</option>
                     @endforeach
                 </select>
+                @error('work_system_id') <p class="mt-1 text-xs text-red-500">{{ $message }}</p> @enderror
             </div>
 
             {{-- الماركة | سنة الصنع --}}
@@ -188,15 +190,6 @@
                 <textarea wire:model="notes" rows="3" placeholder="{{ __('home.notes_placeholder') }}" class="{{ $inp }} resize-none"></textarea>
             </div>
         </div>
-    </div>
-
-    {{-- Save Button --}}
-    <div class="flex justify-start">
-        <button type="button" wire:click="save" wire:loading.attr="disabled"
-                class="px-6 py-2.5 bg-[#c9a847] hover:bg-[#b8962e] text-white text-sm font-medium rounded-lg transition disabled:opacity-60">
-            <span wire:loading.remove wire:target="save">{{ __('home.save') }}</span>
-            <span wire:loading wire:target="save">{{ __('home.saving') }}</span>
-        </button>
     </div>
 
 </div>
