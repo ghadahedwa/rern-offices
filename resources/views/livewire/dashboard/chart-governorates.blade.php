@@ -1,4 +1,4 @@
-{{-- Bar Chart: توزيع المقرات على المحافظات (صف مستقل) --}}
+{{-- Bar Chart: توزيع المقرات والسيارات على المحافظات (صف مستقل) --}}
 @if($officesByGov->isNotEmpty())
 <div class="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-sm p-5">
     <div class="flex items-center gap-3 mb-5">
@@ -16,19 +16,35 @@
             type: 'bar',
             data: {
                 labels: {{ Js::from($officesByGov->pluck('name')) }},
-                datasets: [{
-                    label: '{{ __('home.chart_offices_count') }}',
-                    data: {{ Js::from($officesByGov->pluck('total')) }},
-                    backgroundColor: 'rgba(201,168,71,0.75)',
-                    borderColor: '#b8962e',
-                    borderWidth: 1.5,
-                    borderRadius: 6,
-                }]
+                datasets: [
+                    {
+                        label: '{{ __('home.chart_offices_count') }}',
+                        data: {{ Js::from($officesByGov->pluck('total')) }},
+                        backgroundColor: 'rgba(201,168,71,0.75)',
+                        borderColor: '#b8962e',
+                        borderWidth: 1.5,
+                        borderRadius: 6,
+                    },
+                    @if($canViewVehicleStats)
+                    {
+                        label: '{{ __('home.chart_vehicles_count') }}',
+                        data: {{ Js::from($vehiclesByGov) }},
+                        backgroundColor: 'rgba(59,130,246,0.75)',
+                        borderColor: '#2563eb',
+                        borderWidth: 1.5,
+                        borderRadius: 6,
+                    },
+                    @endif
+                ]
             },
             options: {
                 responsive: true,
                 plugins: {
-                    legend: { display: false },
+                    legend: {
+                        display: {{ $canViewVehicleStats ? 'true' : 'false' }},
+                        rtl: true,
+                        labels: { color: '#9ca3af', font: { size: 11 } }
+                    },
                     tooltip: {
                         rtl: true,
                         callbacks: {
@@ -36,7 +52,7 @@
                                 return items[0].label;
                             },
                             label: function(item) {
-                                return 'عدد المقرات: ' + item.parsed.y;
+                                return item.dataset.label + ': ' + item.parsed.y;
                             },
                             afterBody: function(items) {
                                 const idx = items[0].dataIndex;
@@ -61,6 +77,7 @@
                 },
                 scales: {
                     x: {
+                        stacked: true,
                         ticks: {
                             font: { size: 11 }, color: '#9ca3af',
                             maxRotation: 90, minRotation: 90,
@@ -72,7 +89,7 @@
                         },
                         grid: { display: false }
                     },
-                    y: { ticks: { font: { size: 11 }, color: '#9ca3af' }, grid: { color: 'rgba(156,163,175,0.1)' }, beginAtZero: true }
+                    y: { stacked: true, ticks: { font: { size: 11 }, color: '#9ca3af' }, grid: { color: 'rgba(156,163,175,0.1)' }, beginAtZero: true }
                 }
             }
         })

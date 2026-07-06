@@ -6,9 +6,27 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\Storage;
+use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
 
 class Vehicle extends Model
 {
+    use LogsActivity;
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logFillable()
+            ->logOnlyDirty()
+            ->dontSubmitEmptyLogs()
+            ->setDescriptionForEvent(fn(string $eventName) => match($eventName) {
+                'created' => 'إضافة سيارة',
+                'updated' => 'تعديل سيارة',
+                'deleted' => 'حذف سيارة',
+                default    => $eventName,
+            });
+    }
+
     public const STATUSES = [
         'working'     => 'تعمل',
         'maintenance' => 'متوقفة للصيانة',

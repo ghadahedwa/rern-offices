@@ -2,6 +2,9 @@
 
     @include('livewire.dashboard.welcome')
     @include('livewire.dashboard.kpi-cards')
+    @if($canViewVehicleStats)
+        @include('livewire.dashboard.vehicles-summary')
+    @endif
     @if($canViewClaims)
         @include('livewire.dashboard.claims-summary')
     @endif

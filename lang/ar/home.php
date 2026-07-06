@@ -529,6 +529,7 @@ return [
     'kpi_total_governorates'     => 'المحافظات',
     'kpi_total_users'            => 'المستخدمون',
     'kpi_added_this_month'       => 'مقرات جديدة هذا الشهر',
+    'kpi_total_vehicles'         => 'إجمالي السيارات',
     'online_users_title'         => 'المستخدمون المتصلون الآن',
     'online_users_empty'         => 'لا يوجد مستخدمون متصلون حالياً',
     'activity_log_title'         => 'سجل النشاط',
@@ -562,10 +563,11 @@ return [
     'ip_address'                 => 'الـ IP',
 
     // Dashboard charts
-    'chart_offices_by_gov'        => 'توزيع المقرات على المحافظات',
+    'chart_offices_by_gov'        => 'التوزيع الجغرافي على المحافظات',
     'chart_offices_by_type'       => 'توزيع المقرات حسب النوع',
     'chart_offices_by_structure'  => 'توزيع المقرات حسب الحالة الإنشائية',
     'chart_offices_count'         => 'عدد المقرات',
+    'chart_vehicles_count'        => 'عدد السيارات',
     'welcome_back'               => 'مرحباً',
     'welcome_subtitle'           => 'إليك نظرة عامة على النظام اليوم',
     'needs_visit_label'          => 'مقرات تحتاج زيارة',

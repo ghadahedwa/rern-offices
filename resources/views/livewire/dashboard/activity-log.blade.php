@@ -111,6 +111,18 @@
                                     @else
                                         <span class="text-xs text-zinc-600 dark:text-zinc-300">{{ $activity->subject->name ?? '#' . $activity->subject_id }}</span>
                                     @endif
+                                @elseif($activity->subject_type === \App\Models\Vehicle::class && $activity->subject)
+                                    @php
+                                        $vehicleUrl = $canEditVehicles ? route('vehicles.edit', $activity->subject_id) : null;
+                                    @endphp
+                                    @if($vehicleUrl)
+                                        <a href="{{ $vehicleUrl }}" wire:navigate
+                                           class="text-[#c9a847] hover:underline text-xs">
+                                            {{ $activity->subject->name ?? '#' . $activity->subject_id }}
+                                        </a>
+                                    @else
+                                        <span class="text-xs text-zinc-600 dark:text-zinc-300">{{ $activity->subject->name ?? '#' . $activity->subject_id }}</span>
+                                    @endif
                                 @elseif(in_array($activity->subject_type, [\App\Models\GovernorateDemand::class, \App\Models\GovernorateClaim::class, \App\Models\GovernorateCancelledDemand::class]))
                                     @php $gid = $activity->getExtraProperty('governorate_id'); @endphp
                                     <span class="text-xs text-zinc-600 dark:text-zinc-300">{{ $govNames[$gid] ?? '—' }}</span>

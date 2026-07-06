@@ -5,6 +5,8 @@ namespace App\Livewire;
 use App\Models\Governorate;
 use App\Models\Office;
 use App\Models\User;
+use App\Models\Vehicle;
+use App\Models\VehicleStat;
 use Illuminate\Support\Facades\DB;
 use Livewire\Component;
 use Livewire\WithoutUrlPagination;
@@ -65,6 +67,7 @@ class Dashboard extends Component
         $isSuperAdmin = $user->hasRole('super-admin');
         $canView      = $isSuperAdmin || $user->can('offices.view');
         $canEdit      = $isSuperAdmin || $user->can('offices.edit');
+        $canEditVehicles = $isSuperAdmin || $user->can('vehicles.edit');
         // أقسام تجميع بيانات المقرات (جديد هذا الشهر، تحتاج زيارة، رسما النوع/الحالة، ملخص الإحصائيات)
         // تُحجب عمّن لا يملك صلاحية استعراض المقرات — المتصلون الآن وسجل النشاط يظلّان للجميع
         $canViewOfficeStats = $isSuperAdmin || $user->can('offices.index');
@@ -104,13 +107,76 @@ class Dashboard extends Component
                 ->count();
         }
 
-        // Bar chart: توزيع المقرات على المحافظات (مرتبة حسب order)
+        // ملخص السيارات المتنقلة — محجوب عمّن لا يملك vehicles.index، نفس نطاق المحافظات
+        $canViewVehicleStats  = $isSuperAdmin || $user->can('vehicles.index');
+        $totalVehicles        = 0;
+        $vehiclesWorking      = 0;
+        $vehiclesMaintenance  = 0;
+        $vehiclesStopped      = 0;
+        if ($canViewVehicleStats) {
+            $vehiclesQuery = Vehicle::query();
+            if (! $isSuperAdmin) {
+                $vehiclesQuery->whereIn('governorate_id', $govIds);
+            }
+
+            $totalVehicles = (clone $vehiclesQuery)->count();
+
+            $vehicleStatusCounts = (clone $vehiclesQuery)
+                ->select('status', DB::raw('count(*) as total'))
+                ->groupBy('status')
+                ->pluck('total', 'status');
+
+            $vehiclesWorking     = (int) ($vehicleStatusCounts['working'] ?? 0);
+            $vehiclesMaintenance = (int) ($vehicleStatusCounts['maintenance'] ?? 0);
+            $vehiclesStopped     = (int) ($vehicleStatusCounts['stopped'] ?? 0);
+        }
+
+        // ملخص إحصائيات التوثيق للسيارات (آخر سنة فقط، مفصولة لكل نوع) — نفس نطاق السيارات الظاهرة للمستخدم
+        // نفس تسميات vehicle_stat_* المستخدمة في Vehicles\StatTab\Documentation (بالـ id)
+        $vehicleStatTypeLabels = [
+            1 => 'vehicle_stat_transactions',
+            2 => 'vehicle_stat_form_sales',
+            3 => 'vehicle_stat_folder_sales',
+        ];
+        $vehicleStatsSummary = collect();
+        if ($canViewVehicleStats) {
+            $vehicleStatsSummary = collect($vehicleStatTypeLabels)->map(function ($langKey, $typeId) use ($isSuperAdmin, $govIds) {
+                $row = VehicleStat::where('stat_type_id', $typeId)
+                    ->when(! $isSuperAdmin, fn ($q) => $q->whereHas('vehicle', fn ($v) => $v->whereIn('governorate_id', $govIds)))
+                    ->where('value', '>', 0)
+                    ->selectRaw('year, sum(value) as total')
+                    ->groupBy('year')
+                    ->orderByDesc('year')
+                    ->first();
+
+                return [
+                    'label'       => __('home.' . $langKey),
+                    'latestYear'  => $row->year ?? null,
+                    'latestTotal' => $row->total ?? 0,
+                ];
+            });
+        }
+
+        // Bar chart: توزيع المقرات (والسيارات) على المحافظات (مرتبة حسب order)
         $officesByGovRaw = (clone $officesQuery)
             ->select('governorate_id', DB::raw('count(*) as total'))
             ->with('governorate:id,name,order')
             ->groupBy('governorate_id')
             ->get()
             ->sortBy('governorate.order');
+
+        // نفس محاور المحافظات بتاعة المقرات — بيضاف السيارات كـ dataset تاني بمحاذاتها
+        $vehiclesByGovCounts = collect();
+        if ($canViewVehicleStats) {
+            $vehiclesByGovCounts = Vehicle::query()
+                ->when(! $isSuperAdmin, fn ($q) => $q->whereIn('governorate_id', $govIds))
+                ->select('governorate_id', DB::raw('count(*) as total'))
+                ->groupBy('governorate_id')
+                ->pluck('total', 'governorate_id');
+        }
+        $vehiclesByGov = $officesByGovRaw->map(
+            fn ($r) => (int) ($vehiclesByGovCounts[$r->governorate_id] ?? 0)
+        )->values();
 
         // Tooltip: إحصائيات آخر عام لكل محافظة
         $tooltipGroups = [
@@ -319,6 +385,7 @@ class Dashboard extends Component
         $teamUserIds   = collect(); // مستخدمو الفريق (يشاركون محافظة)
         $usersAboveMe  = collect(); // مستخدمون مستواهم أعلى مني (لا أراهم)
         $myOfficeIds   = collect(); // مقرات محافظاتي (لنطاق نشاط المقرات)
+        $myVehicleIds  = collect(); // سيارات محافظاتي (لنطاق نشاط السيارات)
         if ($isSupervisor) {
             $teamUserIds = User::whereHas('governorates', fn ($q) => $q->whereIn('governorates.id', $govIds))
                 ->pluck('id');
@@ -327,7 +394,8 @@ class Dashboard extends Component
                     ->whereHas('roles', fn ($r) => $r->where('level', '>', $myLevel))
                     ->orWhereHas('roles', fn ($r) => $r->where('name', 'super-admin')))
                 ->pluck('id');
-            $myOfficeIds = Office::whereIn('governorate_id', $govIds)->pluck('id');
+            $myOfficeIds  = Office::whereIn('governorate_id', $govIds)->pluck('id');
+            $myVehicleIds = Vehicle::whereIn('governorate_id', $govIds)->pluck('id');
         }
 
         // المتصلون الآن: super-admin يرى الكل، المشرف يرى فريقه، المفتش يرى نفسه فقط
@@ -352,8 +420,8 @@ class Dashboard extends Component
             ->latest();
 
         if ($isSupervisor) {
-            // المشرف: نشاطه + نشاط المقرات في محافظاته + دخول/خروج فريقه — كلها لمستوى ≤ مستواه
-            $activitiesQuery->where(function ($q) use ($user, $myOfficeIds, $teamUserIds, $usersAboveMe, $govIds) {
+            // المشرف: نشاطه + نشاط المقرات/السيارات في محافظاته + دخول/خروج فريقه — كلها لمستوى ≤ مستواه
+            $activitiesQuery->where(function ($q) use ($user, $myOfficeIds, $myVehicleIds, $teamUserIds, $usersAboveMe, $govIds) {
                 // نشاطه هو
                 $q->where(fn ($w) => $w->where('causer_id', $user->id)->where('causer_type', User::class));
 
@@ -361,6 +429,12 @@ class Dashboard extends Component
                 $q->orWhere(fn ($w) => $w
                     ->where('subject_type', Office::class)
                     ->whereIn('subject_id', $myOfficeIds)
+                    ->whereNotIn('causer_id', $usersAboveMe));
+
+                // نشاط على سيارة داخل محافظاته (من مستوى ≤ مستواه)
+                $q->orWhere(fn ($w) => $w
+                    ->where('subject_type', Vehicle::class)
+                    ->whereIn('subject_id', $myVehicleIds)
                     ->whereNotIn('causer_id', $usersAboveMe));
 
                 // نشاط المطالبات/المحصل في محافظاته (المحافظة مخزّنة في خصائص السجل)
@@ -389,9 +463,11 @@ class Dashboard extends Component
         return view('livewire.dashboard', compact(
             'totalOffices', 'totalGovernorates', 'totalUsers',
             'addedThisMonth', 'needsVisitCount', 'onlineUsers', 'activities', 'isSuperAdmin',
-            'officesByGov', 'officesByType', 'officesByStructure',
+            'officesByGov', 'vehiclesByGov', 'officesByType', 'officesByStructure',
             'user', 'statsSummary', 'govTooltipData', 'govNames',
-            'canView', 'canEdit', 'isSupervisor', 'canViewOfficeStats',
+            'canView', 'canEdit', 'canEditVehicles', 'isSupervisor', 'canViewOfficeStats',
+            'canViewVehicleStats', 'totalVehicles', 'vehiclesWorking', 'vehiclesMaintenance', 'vehiclesStopped',
+            'vehicleStatsSummary',
             'canViewClaims', 'claimsDemands', 'claimsCancelled', 'claimsCollected', 'claimsDebt', 'claimsRate', 'govDebtTooltip'
         ));
     }

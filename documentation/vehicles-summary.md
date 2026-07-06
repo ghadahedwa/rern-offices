@@ -117,6 +117,26 @@ vehicle-device-types    → VehicleDeviceTypes\Index|Create
 - ظهور بين المقرات ودليل الهاتف
 - مقيّد بصلاحية `vehicles.index`
 
+### سجل النشاط (Activity Log) ✅
+`Vehicle` model بقى فيه `Spatie\Activitylog\Traits\LogsActivity` (نفس نمط `Office` بالحرف): `logFillable()` + `logOnlyDirty()` + `dontSubmitEmptyLogs()` + أوصاف عربية (إضافة/تعديل/حذف سيارة). التسجيل تلقائي بالكامل عبر Eloquent events — مفيش أي كود يدوي إضافي في `Vehicles\Create`/`Index`.
+- **نطاق المشرف بالداشبورد**: `app/Livewire/Dashboard.php` بقى فيه `$myVehicleIds` (سيارات محافظات المستخدم) + شرط `orWhere` إضافي في استعلام النشاط (`subject_type = Vehicle::class`) — بنفس منطق المقرات بالظبط (نشاط لمستوى ≤ مستوى المشرف، مش نشاط اللي فوقه)
+- **عمود "الموضوع" بجدول النشاط**: `activity-log.blade.php` بقى فيه فرع لـ `Vehicle::class` — لينك لـ `vehicles.edit` لو عند المستخدم صلاحية `vehicles.edit` (مفيش `vehicles.show` لسه)، وإلا اسم السيارة كنص عادي. مبني على متغيّر جديد `canEditVehicles` مُمرَّر من `Dashboard::render()`
+- super-admin والمفتش العادي (نشاطه الشخصي فقط) ما احتاجوش أي تعديل — الفلترة عندهم مش مبنية على subject_type أصلاً
+
+### ملخص السيارات بالداشبورد ✅
+قسم مستقل جديد `resources/views/livewire/dashboard/vehicles-summary.blade.php` (نفس نمط `claims-summary.blade.php` — كارت واحد بعنوان + عمود لكل رقم، مش الشبكة الديناميكية بتاعة `kpi-cards.blade.php` عشان منلمسش عدّ أعمدتها):
+- **4 أعمدة**: (إجمالي السيارات + توزيع الحالات في نفس العمود/الصف: تعمل أخضر، صيانة أصفر، متوقفة أحمر — كل حالة باسمها جنب رقمها) / معاملات التوثيق (آخر سنة فقط) / بيع النماذج (آخر سنة فقط) / بيع الحوافظ (آخر سنة فقط) — النماذج والحوافظ منفصلين مش مجموعين، وبدون نسبة تغيير
+- ألوان الحالات نفس badge الحالة في `Vehicles\Index`
+- **إحصائيات التوثيق**: `$vehicleStatsSummary` في `Dashboard::render()` — استعلام مستقل لكل `stat_type_id` (1=معاملات، 2=بيع نماذج، 3=بيع حوافظ، نفس تسميات `Vehicles\StatTab\Documentation`) بياخد آخر سنة بس (مفيش سنة سابقة/نسبة تغيير)
+- محجوب بصلاحية `vehicles.index` (`canViewVehicleStats`)، ومفلتر بمحافظات المستخدم لغير super-admin (السيارات عبر `governorate_id` مباشرة، الإحصائيات عبر `whereHas('vehicle', ...)`)
+- يظهر قبل قسم ملخص المطالبات وتنبيه "مقرات تحتاج زيارة"
+
+### رسم توزيع المقرات على المحافظات — بقى فيه السيارات كمان ✅
+`chart-governorates.blade.php` بقى فيه **dataset تاني** (لون أزرق، جنب الذهبي بتاع المقرات) لعدد السيارات في كل محافظة، بمحاذاة نفس ترتيب/محاور المحافظات الموجودة بالفعل (نفس القائمة اللي فيها مقرات — `$officesByGovRaw`):
+- `$vehiclesByGov` في `Dashboard::render()` — مصفوفة أعداد سيارات محاذية 1:1 لترتيب `$officesByGov`، محجوبة بـ `canViewVehicleStats` (لو مفيش صلاحية، الـ dataset مش بيتضاف خالص)
+- الـ legend بقى ظاهر بس لو dataset السيارات موجود (عشان يميّز بين اللونين)؛ تلميح الجدول (tooltip) بقى بياخد اسم الـ dataset ديناميكياً بدل ما كان مكتوب "عدد المقرات" ثابت
+- **العنوان اتغيّر** من "توزيع المقرات على المحافظات" لـ "التوزيع الجغرافي على المحافظات" (مفتاح `home.chart_offices_by_gov` نفسه، النص بس اتغيّر) — عشان يفضل صحيح حتى لو dataset السيارات مخفي لمستخدم بدون صلاحية `vehicles.index`
+
 ### Lookup Tables — شاشات الإعدادات ✅
 CRUD كامل (Index + Create/Edit) لكل الجداول الخمسة، بنفس نمط `WorkSystems` (بحث، pagination، حذف بـ modal تأكيد، صلاحية `super-admin` فقط)، مع روابط في قسم "إعدادات البرنامج" بالـ sidebar ومفاتيح لغة `vehicle_*`:
 - `vehicle_types` → `app/Livewire/VehicleTypes/`
