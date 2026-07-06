@@ -693,12 +693,12 @@ return [
     'select_brand'                  => '— اختر الماركة —',
     'select_status'                 => '— اختر الحالة —',
     'vehicle_select_working_hours'  => '— اختر أوقات العمل —',
-    'select_day'                    => '— اليوم —',
+    'select_days'                   => 'الأيام',
 
     // Sections
-    'vehicle_locations'             => 'أيام التمركز الأساسي',
+    'vehicle_locations'             => 'أيام التمركز',
     'vehicle_extra_data'            => 'بيانات إضافية',
-    'add_location'                  => 'إضافة يوم',
+    'add_location'                  => 'إضافة موقع',
     'location_address_placeholder'  => 'عنوان موقع التمركز',
 
     // Vehicle lookup tables — أنواع السيارات

@@ -5,7 +5,7 @@
 
 <div class="space-y-6">
 
-    {{-- ── Section 1: المحافظة والمستشار ── --}}
+    {{-- ── Section 1: المحافظة ── --}}
     <div class="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-sm p-5">
         <div class="flex items-center gap-3 mb-5">
             <div class="w-1 h-5 bg-[#c9a847] rounded-full"></div>
@@ -14,8 +14,8 @@
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
 
-            {{-- المحافظة | المستشار --}}
-            <div>
+            {{-- المحافظة --}}
+            <div class="md:col-span-2">
                 <label class="{{ $lbl }}">{{ __('home.governorate') }} <span class="text-red-500">*</span></label>
                 <select wire:model.live="governorate_id" class="{{ $inp }}">
                     <option value="">{{ __('home.select_governorate') }}</option>
@@ -24,13 +24,6 @@
                     @endforeach
                 </select>
                 @error('governorate_id') <p class="mt-1 text-xs text-red-500">{{ $message }}</p> @enderror
-            </div>
-            <div>
-                <label class="{{ $lbl }}">{{ __('home.supervising_counselor') }}</label>
-                @php $counselor = $governorate_id ? ($governorates->firstWhere('id', $governorate_id)?->supervising_counselor ?? '—') : '—'; @endphp
-                <div class="w-full border border-zinc-200 dark:border-zinc-700 rounded-lg px-3 py-2 text-sm bg-zinc-50 dark:bg-zinc-800/50 text-zinc-500 dark:text-zinc-400 min-h-[38px]">
-                    {{ $counselor }}
-                </div>
             </div>
 
             {{-- اسم السيارة --}}
@@ -133,37 +126,48 @@
             </button>
         </div>
 
-        @php
-            $selectedDays = collect($locations)->pluck('day')->filter()->values()->all();
-        @endphp
-        <div class="space-y-3">
+        <div class="space-y-4">
             @foreach($locations as $i => $loc)
                 @php
-                    $usedElsewhere = array_filter($selectedDays, fn($d) => $d !== ($loc['day'] ?? ''));
+                    // الأيام المُختارة في الصفوف التانية بس (عشان نمنع تكرار نفس اليوم في أكتر من موقع)
+                    $otherDays = [];
+                    foreach ($locations as $idx => $l) {
+                        if ($idx !== $i) {
+                            $otherDays = array_merge($otherDays, $l['days'] ?? []);
+                        }
+                    }
                 @endphp
-                <div class="flex items-start gap-3">
-                    <div class="w-40 shrink-0">
-                        <select wire:model.live="locations.{{ $i }}.day" class="{{ $inp }}">
-                            <option value="">{{ __('home.select_day') }}</option>
+                <div class="rounded-lg border border-zinc-200 dark:border-zinc-700 p-3 space-y-3">
+                    <div class="flex items-start gap-3">
+                        <div class="flex-1">
+                            <input wire:model="locations.{{ $i }}.address" type="text"
+                                   placeholder="{{ __('home.location_address_placeholder') }}" class="{{ $inp }}" />
+                        </div>
+                        @if(count($locations) > 1)
+                            <button type="button" wire:click="removeLocation({{ $i }})"
+                                    class="mt-0.5 w-9 h-9 flex items-center justify-center rounded-lg border border-red-200 dark:border-red-800 text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition shrink-0">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                </svg>
+                            </button>
+                        @endif
+                    </div>
+                    <div>
+                        <p class="text-xs text-zinc-400 mb-1.5">{{ __('home.select_days') }}</p>
+                        <div class="flex flex-wrap gap-x-4 gap-y-2">
                             @foreach(\App\Models\VehicleLocation::DAYS as $val => $label)
-                                @if(!in_array($val, $usedElsewhere))
-                                    <option value="{{ $val }}">{{ $label }}</option>
-                                @endif
+                                @php $disabled = in_array($val, $otherDays); @endphp
+                                <label class="inline-flex items-center gap-1.5 text-sm text-zinc-700 dark:text-zinc-300 {{ $disabled ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer' }}">
+                                    <input type="checkbox"
+                                           wire:model.live="locations.{{ $i }}.days"
+                                           value="{{ $val }}"
+                                           @disabled($disabled)
+                                           class="rounded border-zinc-300 dark:border-zinc-600 text-[#c9a847] focus:ring-[#c9a847]/40">
+                                    {{ $label }}
+                                </label>
                             @endforeach
-                        </select>
+                        </div>
                     </div>
-                    <div class="flex-1">
-                        <input wire:model="locations.{{ $i }}.address" type="text"
-                               placeholder="{{ __('home.location_address_placeholder') }}" class="{{ $inp }}" />
-                    </div>
-                    @if(count($locations) > 1)
-                        <button type="button" wire:click="removeLocation({{ $i }})"
-                                class="mt-0.5 w-8 h-9 flex items-center justify-center rounded-lg border border-red-200 dark:border-red-800 text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition shrink-0">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                            </svg>
-                        </button>
-                    @endif
                 </div>
             @endforeach
         </div>

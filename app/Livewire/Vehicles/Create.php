@@ -106,7 +106,7 @@ class Create extends Component
         }
 
         if (empty($this->locations)) {
-            $this->locations = [['day' => '', 'address' => '']];
+            $this->locations = [['days' => [], 'address' => '']];
         }
 
         if (!$this->vehicle_id || $this->activeTab > $this->totalTabs) {
@@ -116,14 +116,14 @@ class Create extends Component
 
     public function addLocation(): void
     {
-        $this->locations[] = ['day' => '', 'address' => ''];
+        $this->locations[] = ['days' => [], 'address' => ''];
     }
 
     public function removeLocation(int $index): void
     {
         array_splice($this->locations, $index, 1);
         if (empty($this->locations)) {
-            $this->locations = [['day' => '', 'address' => '']];
+            $this->locations = [['days' => [], 'address' => '']];
         }
     }
 
@@ -296,7 +296,8 @@ class Create extends Component
             'overnight_address'      => ['nullable', 'string', 'max:500'],
             'storage_room_location'  => ['nullable', 'string', 'max:500'],
             'notes'                  => ['nullable', 'string'],
-            'locations.*.day'        => ['nullable', Rule::in(array_keys(VehicleLocation::DAYS))],
+            'locations.*.days'       => ['nullable', 'array'],
+            'locations.*.days.*'     => ['nullable', Rule::in(array_keys(VehicleLocation::DAYS))],
             'locations.*.address'    => ['nullable', 'string', 'max:500'],
         ], [
             'governorate_id.required' => 'يرجى اختيار المحافظة',
@@ -352,11 +353,13 @@ class Create extends Component
             $this->isEditing  = true;
         }
 
-        // حفظ مواقع التمركز
+        // حفظ مواقع التمركز — كل يوم مُختار في الصف بينفصل لسجل مستقل بنفس العنوان
         $vehicle->locations()->delete();
         foreach ($this->locations as $loc) {
-            if (!empty($loc['day']) && !empty($loc['address'])) {
-                $vehicle->locations()->create($loc);
+            if (!empty($loc['address']) && !empty($loc['days'])) {
+                foreach ($loc['days'] as $day) {
+                    $vehicle->locations()->create(['day' => $day, 'address' => $loc['address']]);
+                }
             }
         }
     }
@@ -431,8 +434,14 @@ class Create extends Component
         $this->storage_room_location = $vehicle->storage_room_location ?? '';
         $this->notes                 = $vehicle->notes ?? '';
 
+        // تجميع الأيام اللي بتشترك في نفس العنوان في صف واجهة واحد
         $this->locations = $vehicle->locations
-            ->map(fn($l) => ['day' => $l->day, 'address' => $l->address])
+            ->groupBy('address')
+            ->map(fn($group, $address) => [
+                'days'    => $group->pluck('day')->values()->all(),
+                'address' => $address,
+            ])
+            ->values()
             ->toArray();
 
         $this->driver_name    = $vehicle->driver_name ?? '';
