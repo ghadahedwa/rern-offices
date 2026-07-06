@@ -39,6 +39,7 @@
             },
             options: {
                 responsive: true,
+                interaction: { mode: 'index', intersect: false },
                 plugins: {
                     legend: {
                         display: {{ $canViewVehicleStats ? 'true' : 'false' }},
@@ -47,6 +48,8 @@
                     },
                     tooltip: {
                         rtl: true,
+                        mode: 'index',
+                        intersect: false,
                         callbacks: {
                             title: function(items) {
                                 return items[0].label;
