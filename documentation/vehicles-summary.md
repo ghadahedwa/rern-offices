@@ -101,7 +101,16 @@ vehicle-device-types    → VehicleDeviceTypes\Index|Create
   - 4 أقسام: **صور السيارة** (حد أقصى 5 — بدل 10 في المقرات) / **فيديو السيارة** (1) / **قرار الإنشاء** (PDF، 1) / **صورة الرخصة** (صورة، 1 — قسم جديد مش موجود في المقرات)
   - نفس Alpine.js pattern (modal رفع + modal معاينة + modal تأكيد حذف) من `create-step4.blade.php` بالمقرات، مُوسَّع لدعم نوع رابع (`license_photo`)
   - `uploadPhoto/uploadVideo/uploadDocument/uploadLicensePhoto/deleteMedia` — نفس تسمية methods المقرات + واحدة إضافية لصورة الرخصة
-- Tab 5 (الإحصائيات): محتواها placeholder ("قيد التطوير") لكن التنقل إليه شغّال (nav + التالي/السابق) تمهيداً لبنائه لاحقاً
+- Tab 5 مُنجزة: **الإحصائيات** — مقصورة على "التوثيق" فقط (مش كل تابات إحصائيات المقرات الثمانية)، وجايه كتاب واحد يجمع القسمين (بعكس المقرات اللي بتفصلهم في تابين منفصلين):
+  - **جدول جديد** `vehicle_statistics` (`vehicle_id`, `stat_type_id`, `year`, `month`, `value`) — نفس شكل `office_statistics` بالحرف (بما فيها `decimal(12,2)` لعمود `value`) + موديل `VehicleStat`
+  - **بيعاد استخدام جدول `stat_types` وصفوفه الحالية** (id=1 معاملات، id=2 بيع نماذج، id=3 بيع حوافظ) كمرجع مشترك بين المقرات والسيارات — الجدول لم يتغيّر ولم تُعدَّل أسماء صفوفه
+  - **التسميات المعروضة مختلفة عن المقرات**: بدل عرض `$type->name` مباشرة، فيه mapping بالـ id لمفاتيح لغة جديدة (`vehicle_stat_transactions`, `vehicle_stat_form_sales`, `vehicle_stat_folder_sales`) في `Vehicles\StatTab\Documentation` — بيسمح للاسم يختلف حسب مكان العرض من غير ما يتغيّر شيء مشترك مع المقرات
+  - **حقل جديد** `avg_daily_transactions` على جدول `vehicles` (نفس نمط المقرات) يتحرر من نفس التاب
+  - **Component**: `App\Livewire\Vehicles\StatTab\Documentation` — دمج منطق `Offices\StatTab\TransactionsSales` + `Offices\StatTab\FormsAndFolders` في مكوّن واحد (نفس نظام الإضافة/تعديل/حذف بـ modals + فلاتر سنة/شهر + pagination لكل نوع)
+  - **بدون `canEdit`**: الوصول لـ wizard السيارة أصلاً محجوب بصلاحية `vehicles.create`/`vehicles.edit` في `Create::mount()`، فأزرار الإضافة/التعديل/الحذف تظهر دايماً
+  - الحفظ فوري (زي تاب الوسائط) — مش جزء من تدفق next/previous بالـ wizard؛ `validateCurrentTab`/`persistCurrentTab` بترجع `null` لتاب 5 زي تاب 4
+  - View: `resources/views/livewire/vehicles/stat-tab/documentation.blade.php` (مضمّن عبر `<livewire:vehicles.stat-tab.documentation>` في `create-tab-statistics.blade.php`)
+  - `create-tab-placeholder.blade.php` اتشال بعد ما بقى غير مُستخدم
 - Keepalive مضاف
 
 ### الـ Sidebar
@@ -119,11 +128,6 @@ CRUD كامل (Index + Create/Edit) لكل الجداول الخمسة، بنف�
 ---
 
 ## ما لم يُنفَّذ بعد ⏳
-
-### Tabs المتبقية (Tab 5) في صفحة التعديل
-| التاب | المحتوى |
-|-------|---------|
-| **الإحصائيات** | متوسط معاملات يومي / عدد حوافظ شهري / عدد نماذج شهري |
 
 ### بنود مؤجلة (تنتظر تأكيد العميل)
 - **أيام التمركز الإضافي**: المنطق المطلوب كان معقداً (أيام متبقية تفتح حقل إضافي ديناميكياً) — بانتظار توضيح العميل
@@ -161,6 +165,8 @@ app/
   Livewire/Vehicles/
     Index.php
     Create.php
+  Livewire/Vehicles/StatTab/     ✅ تاب 5
+    Documentation.php
   Livewire/VehicleTypes/         ✅ CRUD lookup
     Index.php
     Create.php
@@ -187,6 +193,7 @@ app/Models/
   VehicleDeviceType.php        ✅ تم إنشاؤه (كان ناقصاً) — مستخدم الآن في CRUD
   VehicleBrokenDevice.php      ✅ (نفس نمط OfficeBrokenDevice)
   VehicleMedia.php             ✅ (نفس نمط OfficeMedia)
+  VehicleStat.php              ✅ (نفس نمط OfficeStat) — جدول vehicle_statistics
 
 resources/views/livewire/vehicles/
   index.blade.php
@@ -196,7 +203,9 @@ resources/views/livewire/vehicles/
     create-tab-workers.blade.php     ✅
     create-tab-equipment.blade.php   ✅
     create-tab-media.blade.php       ✅
-    create-tab-placeholder.blade.php ✅ (تاب 5 المؤقت)
+    create-tab-statistics.blade.php  ✅ (يضمّن livewire:vehicles.stat-tab.documentation)
+  stat-tab/
+    documentation.blade.php          ✅
 
 resources/views/livewire/vehicle-types/         ✅ index.blade.php + create.blade.php
 resources/views/livewire/vehicle-brands/        ✅ index.blade.php + create.blade.php
@@ -217,4 +226,6 @@ database/migrations/
   2026_07_05_074356  → إضافة حقول التجهيزات الثابتة لجدول vehicles
   2026_07_05_074414  → vehicle_broken_devices
   2026_07_05_080527  → vehicle_media
+  2026_07_06_000001  → إضافة avg_daily_transactions لجدول vehicles
+  2026_07_06_000002  → vehicle_statistics (FK على stat_types المشترك مع المقرات)
 ```

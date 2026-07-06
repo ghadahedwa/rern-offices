@@ -29,7 +29,7 @@ class Create extends Component
 
     #[Url]
     public int $activeTab  = 1;
-    public int $totalTabs  = 5; // التاب 5 لسه قيد التطوير (placeholder) — التنقل إليه متاح لكن بدون حفظ فعلي
+    public int $totalTabs  = 5; // تاب 5: الإحصائيات (nested component بيحفظ فوراً، مش جزء من تدفق next/previous)
 
     #[Url]
     public ?int $vehicle_id = null;
@@ -482,6 +482,7 @@ class Create extends Component
             'existingMedia' => $this->vehicle_id
                 ? VehicleMedia::where('vehicle_id', $this->vehicle_id)->get()->groupBy('type')
                 : collect(),
+            'vehicle' => $this->vehicle_id ? Vehicle::find($this->vehicle_id) : null,
         ]);
     }
 }

@@ -22,6 +22,7 @@ class Vehicle extends Model
         'driver_name', 'driver_phone', 'notary_name', 'notary_phone', 'reviewer_name', 'reviewer_phone',
         'mobility_bag', 'laptops_count', 'fingerprints_count', 'printers_count',
         'collection_machines_count', 'mifi_count', 'generator_status', 'surveillance_cameras',
+        'avg_daily_transactions',
     ];
 
     protected $casts = [
@@ -36,6 +37,7 @@ class Vehicle extends Model
     public function locations(): HasMany      { return $this->hasMany(VehicleLocation::class); }
     public function brokenDevices(): HasMany  { return $this->hasMany(VehicleBrokenDevice::class); }
     public function media(): HasMany          { return $this->hasMany(VehicleMedia::class); }
+    public function statistics(): HasMany     { return $this->hasMany(VehicleStat::class); }
 
     protected static function booted(): void
     {

@@ -69,8 +69,8 @@
         @include('livewire.vehicles.includes.create-tab-equipment')
     @elseif($activeTab === 4)
         @include('livewire.vehicles.includes.create-tab-media')
-    @else
-        @include('livewire.vehicles.includes.create-tab-placeholder')
+    @elseif($activeTab === 5)
+        @include('livewire.vehicles.includes.create-tab-statistics')
     @endif
 
     {{-- Navigation Buttons --}}

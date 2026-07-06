@@ -760,6 +760,11 @@ return [
     'add_license_photo'             => 'إضافة صورة الرخصة',
     'no_license_photo'              => 'لا توجد صورة رخصة',
 
+    // Vehicle statistics — تاب الإحصائيات (التوثيق فقط)
+    'vehicle_stat_transactions'     => 'معاملات التوثيق',
+    'vehicle_stat_form_sales'       => 'بيع النماذج',
+    'vehicle_stat_folder_sales'     => 'بيع الحوافظ',
+
     // Vehicle lookup tables — أنواع أجهزة السيارات
     'vehicle_device_types_title'    => 'أنواع أجهزة السيارات',
     'add_vehicle_device_type'       => 'إضافة نوع جهاز',
