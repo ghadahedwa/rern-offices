@@ -492,6 +492,7 @@ class Create extends Component
                 ? VehicleMedia::where('vehicle_id', $this->vehicle_id)->get()->groupBy('type')
                 : collect(),
             'vehicle' => $this->vehicle_id ? Vehicle::find($this->vehicle_id) : null,
+            'canView' => $user?->hasRole('super-admin') || $user?->can('vehicles.view'),
         ]);
     }
 }

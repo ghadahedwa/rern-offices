@@ -108,6 +108,7 @@ class Index extends Component
             'types'        => VehicleType::orderBy('name')->get(),
             'workSystems'  => VehicleWorkSystem::orderBy('name')->get(),
             'canCreate'    => $isSuperAdmin || $user?->can('vehicles.create'),
+            'canView'      => $isSuperAdmin || $user?->can('vehicles.view'),
             'canEdit'      => $isSuperAdmin || $user?->can('vehicles.edit'),
             'canDelete'    => $isSuperAdmin || $user?->can('vehicles.delete'),
         ]);

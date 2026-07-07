@@ -163,6 +163,7 @@ return [
     'all_roles'           => 'كل الأدوار',
     'back'                => 'رجوع',
     'cancel'              => 'إلغاء',
+    'close'               => 'إغلاق',
     'confirm_delete'      => 'هل أنت متأكد من حذف هذا المستخدم؟',
     'no_users'            => 'لا يوجد مستخدمون',
     'user_created'        => 'تم إنشاء المستخدم بنجاح',
@@ -700,6 +701,8 @@ return [
     'vehicle_extra_data'            => 'بيانات إضافية',
     'add_location'                  => 'إضافة موقع',
     'location_address_placeholder'  => 'عنوان موقع التمركز',
+    'no_locations'                  => 'لا توجد أيام تمركز مسجلة',
+    'view_vehicle'                  => 'عرض',
 
     // Vehicle lookup tables — أنواع السيارات
     'vehicle_types_title'           => 'أنواع السيارات',

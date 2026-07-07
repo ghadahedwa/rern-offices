@@ -138,6 +138,21 @@ vehicle-device-types    → VehicleDeviceTypes\Index|Create
 - الـ legend بقى ظاهر بس لو dataset السيارات موجود (عشان يميّز بين اللونين)؛ تلميح الجدول (tooltip) بقى بياخد اسم الـ dataset ديناميكياً بدل ما كان مكتوب "عدد المقرات" ثابت
 - **العنوان اتغيّر** من "توزيع المقرات على المحافظات" لـ "التوزيع الجغرافي على المحافظات" (مفتاح `home.chart_offices_by_gov` نفسه، النص بس اتغيّر) — عشان يفضل صحيح حتى لو dataset السيارات مخفي لمستخدم بدون صلاحية `vehicles.index`
 
+### صفحة Show `/vehicles/{id}` ✅ **منجزة**
+`/vehicles/{id}` — view-only، بنفس نمط `Offices\Show` بالحرف (Card واحدة + tabs دائرية متصلة بخط أفقي):
+- صلاحية: `vehicles.view` أو `vehicles.edit` أو `super-admin` (فحص في `mount()`)
+- **5 تابات** (بعكس المقرات اللي عندها 4 + صفحة إحصائيات منفصلة — هنا الإحصائيات تاب خامس مدمج، لأن السيارات مفيهاش route مستقل للإحصائيات أصلاً، الإحصائيات تاب 5 في الـ wizard):
+  1. `basic` — البيانات الأساسية (محافظة/اسم/نوع/نظام عمل/ماركة/سنة صنع/لوحة/شاسيه/تاريخ ترخيص/حالة بـ badge ملوّن/أوقات عمل) + أيام التمركز (مجمّعة حسب العنوان) + بيانات إضافية
+  2. `workers` — السائق/الموثق/المراجع (اسم + هاتف لكل واحد)
+  3. `equipment` — التجهيزات الثابتة + جدول الأجهزة المعطلة (نفس نمط `show-tab-services` بتاع المقرات)
+  4. `media` — صور (slideshow) + فيديو + قرار الإنشاء + صورة الرخصة، كله read-only (نفس نمط `show-tab-media` بتاع المقرات + قسم رابع لصورة الرخصة)
+  5. `statistics` — **تاب جديد مستقل عن `Vehicles\StatTab\Documentation`** (بيعرض بس، من غير أزرار إضافة/تعديل/حذف) — متوسط المعاملات اليومية + جداول معاملات/بيع نماذج/بيع حوافظ، بنفس تسميات `vehicle_stat_*`
+- زر "تعديل" في الـ header يظهر فقط لمن لديه `vehicles.edit`
+- تسجيل نشاط `viewed` تلقائي عند فتح الصفحة (نفس نمط `Offices\Show`)
+- **زر "عرض" جديد** في `Vehicles\Index` (محجوب بـ `canView`) بجوار "تعديل"/"حذف"
+- **Dashboard**: `canViewVehicles` جديدة في `Dashboard::render()` — سجل النشاط بقى يفضّل لينك `vehicles.show` لمن عنده `vehicles.view`، ولو مفيش يرجع لـ `vehicles.edit` لمن عنده `vehicles.edit` (نفس منطق المقرات بالحرف)
+- Route: `vehicles/{vehicle}` بين `vehicles/create` و`vehicles/{vehicle}/edit` (نفس ترتيب المقرات، عشان `create` تتقرأ كـ literal path قبل الـ wildcard)
+
 ### Lookup Tables — شاشات الإعدادات ✅
 CRUD كامل (Index + Create/Edit) لكل الجداول الخمسة، بنفس نمط `WorkSystems` (بحث، pagination، حذف بـ modal تأكيد، صلاحية `super-admin` فقط)، مع روابط في قسم "إعدادات البرنامج" بالـ sidebar ومفاتيح لغة `vehicle_*`:
 - `vehicle_types` → `app/Livewire/VehicleTypes/`
@@ -154,10 +169,6 @@ CRUD كامل (Index + Create/Edit) لكل الجداول الخمسة، بنف�
 - **سجل تحركات الدعم**: عنوان + تاريخ — على الأرجح جدول منفصل (`vehicle_support_movements`) — بانتظار تأكيد العميل
 
 > ✅ **حُسم**: فكرة "أيام التمركز الإضافي" المنفصلة اتلغت — فضل قسم واحد بس "أيام التمركز" (نفس منطق الأساسي، من غير تقسيم أساسي/إضافي).
-
-### صفحة Show (عرض)
-- مثل `offices/{id}` — صفحة قراءة فقط بـ tabs
-- صلاحية: `vehicles.view`
 
 ### باقي الصلاحيات
 - `vehicles.index` وصلاحية `vehicles.export` موجودتان لكن بدون تنفيذ export بعد
@@ -187,6 +198,7 @@ app/
   Livewire/Vehicles/
     Index.php
     Create.php
+    Show.php                    ✅ صفحة العرض
   Livewire/Vehicles/StatTab/     ✅ تاب 5
     Documentation.php
   Livewire/VehicleTypes/         ✅ CRUD lookup
@@ -220,12 +232,18 @@ app/Models/
 resources/views/livewire/vehicles/
   index.blade.php
   create.blade.php
+  show.blade.php                      ✅ صفحة العرض (5 تابات)
   includes/
     create-tab-basic.blade.php       ✅
     create-tab-workers.blade.php     ✅
     create-tab-equipment.blade.php   ✅
     create-tab-media.blade.php       ✅
     create-tab-statistics.blade.php  ✅ (يضمّن livewire:vehicles.stat-tab.documentation)
+    show-tab-basic.blade.php         ✅
+    show-tab-workers.blade.php       ✅
+    show-tab-equipment.blade.php     ✅
+    show-tab-media.blade.php         ✅
+    show-tab-statistics.blade.php    ✅ (عرض فقط، مش nested component)
   stat-tab/
     documentation.blade.php          ✅
 

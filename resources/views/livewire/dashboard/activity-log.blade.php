@@ -113,7 +113,9 @@
                                     @endif
                                 @elseif($activity->subject_type === \App\Models\Vehicle::class && $activity->subject)
                                     @php
-                                        $vehicleUrl = $canEditVehicles ? route('vehicles.edit', $activity->subject_id) : null;
+                                        $vehicleUrl = $canViewVehicles
+                                            ? route('vehicles.show', $activity->subject_id)
+                                            : ($canEditVehicles ? route('vehicles.edit', $activity->subject_id) : null);
                                     @endphp
                                     @if($vehicleUrl)
                                         <a href="{{ $vehicleUrl }}" wire:navigate

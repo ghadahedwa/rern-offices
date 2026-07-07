@@ -24,6 +24,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Vehicles — access controlled per-permission inside component mount()
     Route::livewire('vehicles', \App\Livewire\Vehicles\Index::class)->name('vehicles.index');
     Route::livewire('vehicles/create', \App\Livewire\Vehicles\Create::class)->name('vehicles.create');
+    Route::livewire('vehicles/{vehicle}', \App\Livewire\Vehicles\Show::class)->name('vehicles.show');
     Route::livewire('vehicles/{vehicle}/edit', \App\Livewire\Vehicles\Create::class)->name('vehicles.edit');
 
     // دليل الهاتف للمقرات — متاح لكل المستخدمين بلا صلاحيات

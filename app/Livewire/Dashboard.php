@@ -68,6 +68,7 @@ class Dashboard extends Component
         $canView      = $isSuperAdmin || $user->can('offices.view');
         $canEdit      = $isSuperAdmin || $user->can('offices.edit');
         $canEditVehicles = $isSuperAdmin || $user->can('vehicles.edit');
+        $canViewVehicles = $isSuperAdmin || $user->can('vehicles.view');
         // أقسام تجميع بيانات المقرات (جديد هذا الشهر، تحتاج زيارة، رسما النوع/الحالة، ملخص الإحصائيات)
         // تُحجب عمّن لا يملك صلاحية استعراض المقرات — المتصلون الآن وسجل النشاط يظلّان للجميع
         $canViewOfficeStats = $isSuperAdmin || $user->can('offices.index');
@@ -465,7 +466,7 @@ class Dashboard extends Component
             'addedThisMonth', 'needsVisitCount', 'onlineUsers', 'activities', 'isSuperAdmin',
             'officesByGov', 'vehiclesByGov', 'officesByType', 'officesByStructure',
             'user', 'statsSummary', 'govTooltipData', 'govNames',
-            'canView', 'canEdit', 'canEditVehicles', 'isSupervisor', 'canViewOfficeStats',
+            'canView', 'canEdit', 'canEditVehicles', 'canViewVehicles', 'isSupervisor', 'canViewOfficeStats',
             'canViewVehicleStats', 'totalVehicles', 'vehiclesWorking', 'vehiclesMaintenance', 'vehiclesStopped',
             'vehicleStatsSummary',
             'canViewClaims', 'claimsDemands', 'claimsCancelled', 'claimsCollected', 'claimsDebt', 'claimsRate', 'govDebtTooltip'
