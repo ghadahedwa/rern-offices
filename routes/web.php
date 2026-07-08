@@ -42,6 +42,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::livewire('reports/multi-vehicle', \App\Livewire\Reports\MultiVehicle::class)->name('reports.multi-vehicle');
     Route::get('reports/multi-vehicle/pdf', \App\Http\Controllers\VehiclesReportPdfController::class)->name('reports.multi-vehicle.pdf');
     Route::get('reports/multi-vehicle/custom-pdf', \App\Http\Controllers\MultiVehicleCustomPdfController::class)->name('reports.multi-vehicle.custom-pdf');
+    Route::livewire('reports/vehicle-devices', \App\Livewire\Reports\VehicleDeviceCount::class)->name('reports.vehicle-device-count');
+    Route::get('reports/vehicle-devices/pdf', \App\Http\Controllers\VehicleDeviceCountPdfController::class)->name('reports.vehicle-device-count.pdf');
+    Route::livewire('reports/vehicle-status', \App\Livewire\Reports\VehicleStatus::class)->name('reports.vehicle-status');
+    Route::get('reports/vehicle-status/pdf', \App\Http\Controllers\VehicleStatusPdfController::class)->name('reports.vehicle-status.pdf');
+    Route::livewire('reports/vehicle-coverage', \App\Livewire\Reports\VehicleCoverage::class)->name('reports.vehicle-coverage');
+    Route::get('reports/vehicle-coverage/pdf', \App\Http\Controllers\VehicleCoveragePdfController::class)->name('reports.vehicle-coverage.pdf');
+    Route::livewire('reports/vehicle-licenses', \App\Livewire\Reports\VehicleLicenses::class)->name('reports.vehicle-licenses');
+    Route::get('reports/vehicle-licenses/pdf', \App\Http\Controllers\VehicleLicensesPdfController::class)->name('reports.vehicle-licenses.pdf');
     Route::livewire('reports/claims-statement', \App\Livewire\Reports\ClaimsStatement::class)->name('reports.claims-statement');
     Route::get('reports/claims-statement/pdf', \App\Http\Controllers\ClaimsStatementPdfController::class)->name('reports.claims-statement.pdf');
     Route::livewire('reports/claims-summary', \App\Livewire\Reports\ClaimsSummary::class)->name('reports.claims-summary');

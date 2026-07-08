@@ -39,14 +39,14 @@ class VehicleColumns
             ],
             'type' => [
                 'label' => 'نوع السيارة', 'group' => 'البيانات الأساسية',
-                'filter' => 'typeIds', 'fixed' => true, 'excelOnly' => false,
+                'filter' => 'typeIds', 'fixed' => false, 'excelOnly' => false,
                 'value' => fn (Vehicle $v) => $v->type->name ?? $dash,
             ],
 
             // ── البيانات الأساسية ──
             'work_system' => [
                 'label' => 'نظام العمل', 'group' => 'البيانات الأساسية',
-                'filter' => 'workSystemIds', 'fixed' => true, 'excelOnly' => false,
+                'filter' => 'workSystemIds', 'fixed' => false, 'excelOnly' => false,
                 'value' => fn (Vehicle $v) => $v->workSystem->name ?? $dash,
             ],
             'working_hours' => [

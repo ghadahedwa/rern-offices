@@ -787,4 +787,28 @@ return [
     'report_manufacture_year_range' => 'سنة الصنع (من - إلى)',
     'no_vehicles_matching'          => 'لا توجد سيارات مطابقة',
     'report_vehicle_custom_hint'    => 'اختر الأعمدة التي تريد عرضها (تُعلَّم تلقائياً أعمدة الفلاتر المستخدَمة)',
+
+    // بيان تجهيزات السيارات العددي — reports/vehicle-devices
+    'report_vehicle_devices_title'         => 'بيان تجهيزات السيارات العددي',
+    'report_vehicle_devices_hint'          => 'مجموع تجهيزات السيارات لكل محافظة (عاملة ومعطلة) بالنوع',
+    'report_vehicle_devices_working_filter' => 'أنواع التجهيزات التى تعمل',
+    'report_vehicle_devices_working'        => 'التجهيزات التى تعمل',
+    'report_vehicle_devices_show_working'   => 'عرض التجهيزات التى تعمل',
+
+    // تقرير الحالة التشغيلية للسيارات — reports/vehicle-status
+    'report_vehicle_status_title'   => 'تقرير الحالة التشغيلية للسيارات',
+    'report_vehicle_status_hint'    => 'عدد السيارات في كل حالة (تعمل / صيانة / متوقفة) لكل محافظة مع نسبة الجاهزية',
+    'report_readiness'              => 'نسبة الجاهزية',
+
+    // تقرير التغطية الجغرافية (جدول التمركز الأسبوعي) — reports/vehicle-coverage
+    'report_vehicle_coverage_title' => 'تقرير التغطية الجغرافية',
+    'report_vehicle_coverage_hint'  => 'جدول التمركز الأسبوعي: عنوان تمركز كل سيارة في كل يوم من أيام الأسبوع',
+
+    // تقرير تراخيص السيارات — reports/vehicle-licenses
+    'report_vehicle_licenses_title' => 'تقرير تراخيص السيارات',
+    'report_vehicle_licenses_hint'  => 'السيارات مرتّبة حسب قرب انتهاء الترخيص — لمتابعة الرخص المنتهية والقريبة الانتهاء',
+    'report_licenses_within_days'   => 'تنتهي خلال (يوم)',
+    'report_licenses_within_hint'   => 'اتركه فارغاً لعرض كل السيارات — أو حدّد عدد الأيام لعرض المنتهية والقريبة فقط',
+    'report_licenses_remaining'     => 'المتبقّي',
+    'report_licenses_status'        => 'الحالة',
 ];

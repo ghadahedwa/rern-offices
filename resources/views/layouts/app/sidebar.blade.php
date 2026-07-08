@@ -94,6 +94,18 @@
                             <flux:sidebar.item icon="truck" :href="route('reports.multi-vehicle')" :current="request()->routeIs('reports.multi-vehicle')" wire:navigate>
                                 {{ __('home.report_vehicle_multi_title') }}
                             </flux:sidebar.item>
+                            <flux:sidebar.item icon="wrench-screwdriver" :href="route('reports.vehicle-device-count')" :current="request()->routeIs('reports.vehicle-device-count')" wire:navigate>
+                                {{ __('home.report_vehicle_devices_title') }}
+                            </flux:sidebar.item>
+                            <flux:sidebar.item icon="chart-pie" :href="route('reports.vehicle-status')" :current="request()->routeIs('reports.vehicle-status')" wire:navigate>
+                                {{ __('home.report_vehicle_status_title') }}
+                            </flux:sidebar.item>
+                            <flux:sidebar.item icon="calendar-days" :href="route('reports.vehicle-coverage')" :current="request()->routeIs('reports.vehicle-coverage')" wire:navigate>
+                                {{ __('home.report_vehicle_coverage_title') }}
+                            </flux:sidebar.item>
+                            <flux:sidebar.item icon="identification" :href="route('reports.vehicle-licenses')" :current="request()->routeIs('reports.vehicle-licenses')" wire:navigate>
+                                {{ __('home.report_vehicle_licenses_title') }}
+                            </flux:sidebar.item>
                             @endif
                             @if($canClaimsReports)
                             <flux:sidebar.item icon="banknotes" :href="route('reports.claims-statement')" :current="request()->routeIs('reports.claims-statement')" wire:navigate>
