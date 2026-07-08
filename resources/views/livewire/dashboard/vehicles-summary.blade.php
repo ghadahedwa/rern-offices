@@ -17,17 +17,23 @@
                 </div>
                 <div>
                     <p class="text-xs text-zinc-400 mb-0.5">{{ __('home.kpi_total_vehicles') }}</p>
-                    <p class="text-xl font-bold text-zinc-800 dark:text-zinc-100 mb-1">{{ number_format($totalVehicles) }}</p>
-                    <div class="flex items-center gap-2.5">
-                        <span class="text-xs font-semibold text-green-600 dark:text-green-400">
-                            {{ \App\Models\Vehicle::STATUSES['working'] }}: {{ number_format($vehiclesWorking) }}
-                        </span>
-                        <span class="text-xs font-semibold text-amber-600 dark:text-amber-400">
-                            {{ \App\Models\Vehicle::STATUSES['maintenance'] }}: {{ number_format($vehiclesMaintenance) }}
-                        </span>
-                        <span class="text-xs font-semibold text-red-600 dark:text-red-400">
-                            {{ \App\Models\Vehicle::STATUSES['stopped'] }}: {{ number_format($vehiclesStopped) }}
-                        </span>
+                    <p class="text-xl font-bold text-zinc-800 dark:text-zinc-100 mb-1.5">{{ number_format($totalVehicles) }}</p>
+                    <div class="space-y-1">
+                        <div class="flex items-center gap-1.5 text-xs">
+                            <span class="w-1.5 h-1.5 rounded-full bg-green-500 shrink-0"></span>
+                            <span class="text-zinc-500 dark:text-zinc-400 truncate">{{ \App\Models\Vehicle::STATUSES['working'] }}</span>
+                            <span class="font-semibold text-zinc-700 dark:text-zinc-200 ms-auto">{{ number_format($vehiclesWorking) }}</span>
+                        </div>
+                        <div class="flex items-center gap-1.5 text-xs">
+                            <span class="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0"></span>
+                            <span class="text-zinc-500 dark:text-zinc-400 truncate">{{ \App\Models\Vehicle::STATUSES['maintenance'] }}</span>
+                            <span class="font-semibold text-zinc-700 dark:text-zinc-200 ms-auto">{{ number_format($vehiclesMaintenance) }}</span>
+                        </div>
+                        <div class="flex items-center gap-1.5 text-xs">
+                            <span class="w-1.5 h-1.5 rounded-full bg-red-500 shrink-0"></span>
+                            <span class="text-zinc-500 dark:text-zinc-400 truncate">{{ \App\Models\Vehicle::STATUSES['stopped'] }}</span>
+                            <span class="font-semibold text-zinc-700 dark:text-zinc-200 ms-auto">{{ number_format($vehiclesStopped) }}</span>
+                        </div>
                     </div>
                 </div>
             </div>
