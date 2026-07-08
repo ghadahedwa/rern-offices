@@ -24,8 +24,9 @@
 ```
 governorate_id (FK)     type_id (FK)           work_system_id (FK)
 working_hours_id (FK)   brand_id (FK)          name
-license_plate           manufacture_year        chassis_number
-license_expiry_date     status (enum)           overnight_address
+license_plate           manufacture_year        operated_at (تاريخ التشغيل)
+chassis_number          license_expiry_date     status (enum)
+overnight_address
 storage_room_location   notes
 driver_name / driver_phone   notary_name / notary_phone   reviewer_name / reviewer_phone
 mobility_bag (enum)  laptops_count  fingerprints_count  printers_count
@@ -142,7 +143,7 @@ vehicle-device-types    → VehicleDeviceTypes\Index|Create
 `/vehicles/{id}` — view-only، بنفس نمط `Offices\Show` بالحرف (Card واحدة + tabs دائرية متصلة بخط أفقي):
 - صلاحية: `vehicles.view` أو `vehicles.edit` أو `super-admin` (فحص في `mount()`)
 - **5 تابات** (بعكس المقرات اللي عندها 4 + صفحة إحصائيات منفصلة — هنا الإحصائيات تاب خامس مدمج، لأن السيارات مفيهاش route مستقل للإحصائيات أصلاً، الإحصائيات تاب 5 في الـ wizard):
-  1. `basic` — البيانات الأساسية (محافظة/اسم/نوع/نظام عمل/ماركة/سنة صنع/لوحة/شاسيه/تاريخ ترخيص/حالة بـ badge ملوّن/أوقات عمل) + أيام التمركز (مجمّعة حسب العنوان) + بيانات إضافية
+  1. `basic` — البيانات الأساسية (محافظة/اسم/نوع/نظام عمل/ماركة/سنة صنع/تاريخ تشغيل/لوحة/شاسيه/تاريخ ترخيص/حالة بـ badge ملوّن/أوقات عمل) + أيام التمركز (مجمّعة حسب العنوان) + بيانات إضافية
   2. `workers` — السائق/الموثق/المراجع (اسم + هاتف لكل واحد)
   3. `equipment` — التجهيزات الثابتة + جدول الأجهزة المعطلة (نفس نمط `show-tab-services` بتاع المقرات)
   4. `media` — صور (slideshow) + فيديو + قرار الإنشاء + صورة الرخصة، كله read-only (نفس نمط `show-tab-media` بتاع المقرات + قسم رابع لصورة الرخصة)

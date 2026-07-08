@@ -39,6 +39,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::livewire('reports/devices', \App\Livewire\Reports\DeviceCount::class)->name('reports.device-count');
     Route::get('reports/devices/pdf', \App\Http\Controllers\DeviceCountPdfController::class)->name('reports.device-count.pdf');
     Route::livewire('reports/stats-comparison', \App\Livewire\Reports\StatsComparison::class)->name('reports.stats-comparison');
+    Route::livewire('reports/multi-vehicle', \App\Livewire\Reports\MultiVehicle::class)->name('reports.multi-vehicle');
+    Route::get('reports/multi-vehicle/pdf', \App\Http\Controllers\VehiclesReportPdfController::class)->name('reports.multi-vehicle.pdf');
+    Route::get('reports/multi-vehicle/custom-pdf', \App\Http\Controllers\MultiVehicleCustomPdfController::class)->name('reports.multi-vehicle.custom-pdf');
     Route::livewire('reports/claims-statement', \App\Livewire\Reports\ClaimsStatement::class)->name('reports.claims-statement');
     Route::get('reports/claims-statement/pdf', \App\Http\Controllers\ClaimsStatementPdfController::class)->name('reports.claims-statement.pdf');
     Route::livewire('reports/claims-summary', \App\Livewire\Reports\ClaimsSummary::class)->name('reports.claims-summary');

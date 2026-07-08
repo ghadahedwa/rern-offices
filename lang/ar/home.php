@@ -778,4 +778,13 @@ return [
     'vehicle_device_type_created'   => 'تم إضافة نوع الجهاز بنجاح',
     'vehicle_device_type_updated'   => 'تم تحديث نوع الجهاز بنجاح',
     'vehicle_device_type_deleted'   => 'تم حذف نوع الجهاز بنجاح',
+
+    // تقرير بحث السيارات — reports/multi-vehicle
+    'report_vehicle_multi_title'    => 'تقرير بحث السيارات',
+    'report_vehicle_multi_hint'     => 'حدّد المحددات ثم اضغط "بحث" لعرض النتائج',
+    'report_vehicle_unit'           => 'سيارة',
+    'report_vehicle_multi'          => 'السيارة (للمقارنة بين سيارات محددة)',
+    'report_manufacture_year_range' => 'سنة الصنع (من - إلى)',
+    'no_vehicles_matching'          => 'لا توجد سيارات مطابقة',
+    'report_vehicle_custom_hint'    => 'اختر الأعمدة التي تريد عرضها (تُعلَّم تلقائياً أعمدة الفلاتر المستخدَمة)',
 ];

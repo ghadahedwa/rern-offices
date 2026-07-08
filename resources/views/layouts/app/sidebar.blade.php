@@ -56,10 +56,11 @@
                         {{ __('home.phone_directory_title') }}
                     </flux:sidebar.item>
                     @php
-                        $canOfficeReports = auth()->user()?->hasRole('super-admin') || auth()->user()?->can('offices.export');
-                        $canClaimsReports = auth()->user()?->hasRole('super-admin') || auth()->user()?->can('claims.index');
+                        $canOfficeReports  = auth()->user()?->hasRole('super-admin') || auth()->user()?->can('offices.export');
+                        $canVehicleReports = auth()->user()?->hasRole('super-admin') || auth()->user()?->can('vehicles.export');
+                        $canClaimsReports  = auth()->user()?->hasRole('super-admin') || auth()->user()?->can('claims.index');
                     @endphp
-                    @if($canOfficeReports || $canClaimsReports)
+                    @if($canOfficeReports || $canVehicleReports || $canClaimsReports)
                     <div x-data="{ open: {{ request()->routeIs('reports.*') ? 'true' : 'false' }} }">
                         <button @click="open = !open"
                             class="nested-menu-btn flex items-center w-full px-3 py-2 font-medium rounded text-zinc-600 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-zinc-900 dark:hover:text-white transition-colors">
@@ -87,6 +88,11 @@
                             </flux:sidebar.item>
                             <flux:sidebar.item icon="chart-bar" :href="route('reports.stats-comparison')" :current="request()->routeIs('reports.stats-comparison')" wire:navigate>
                                 {{ __('home.report_stats_menu') }}
+                            </flux:sidebar.item>
+                            @endif
+                            @if($canVehicleReports)
+                            <flux:sidebar.item icon="truck" :href="route('reports.multi-vehicle')" :current="request()->routeIs('reports.multi-vehicle')" wire:navigate>
+                                {{ __('home.report_vehicle_multi_title') }}
                             </flux:sidebar.item>
                             @endif
                             @if($canClaimsReports)
