@@ -72,6 +72,13 @@
                 @error('manufacture_year') <p class="mt-1 text-xs text-red-500">{{ $message }}</p> @enderror
             </div>
 
+            {{-- تاريخ التشغيل --}}
+            <div>
+                <label class="{{ $lbl }}">{{ __('home.vehicle_operated_at') }}</label>
+                <input wire:model="operated_at" type="date" class="{{ $inp }}" />
+                @error('operated_at') <p class="mt-1 text-xs text-red-500">{{ $message }}</p> @enderror
+            </div>
+
             {{-- رقم اللوحة | رقم الشاسية --}}
             <div>
                 <label class="{{ $lbl }}">{{ __('home.license_plate') }}</label>

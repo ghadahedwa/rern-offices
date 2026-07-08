@@ -39,6 +39,10 @@
             <p class="text-sm font-medium text-zinc-800 dark:text-zinc-100">{{ $vehicle->manufacture_year ?? __('home.no_data') }}</p>
         </div>
         <div>
+            <p class="text-xs text-zinc-400 dark:text-zinc-500 mb-0.5">{{ __('home.vehicle_operated_at') }}</p>
+            <p class="text-sm font-medium text-zinc-800 dark:text-zinc-100">{{ $vehicle->operated_at?->format('Y-m-d') ?? __('home.no_data') }}</p>
+        </div>
+        <div>
             <p class="text-xs text-zinc-400 dark:text-zinc-500 mb-0.5">{{ __('home.license_plate') }}</p>
             <p class="text-sm font-medium text-zinc-800 dark:text-zinc-100" dir="ltr" style="text-align:right">{{ $vehicle->license_plate ?: __('home.no_data') }}</p>
         </div>

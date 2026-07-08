@@ -44,6 +44,7 @@ class Create extends Component
     public $brand_id           = null;
     public string $license_plate         = '';
     public string $manufacture_year      = '';
+    public string $operated_at           = '';
     public string $chassis_number        = '';
     public string $license_expiry_date   = '';
     public string $status                = '';
@@ -290,6 +291,7 @@ class Create extends Component
             'brand_id'               => ['nullable', 'exists:vehicle_brands,id'],
             'license_plate'          => ['nullable', 'string', 'max:50'],
             'manufacture_year'       => ['nullable', 'integer', 'min:1980', 'max:' . (date('Y') + 1)],
+            'operated_at'            => ['nullable', 'date'],
             'chassis_number'         => ['nullable', 'string', 'max:100'],
             'license_expiry_date'    => ['nullable', 'date'],
             'status'                 => ['nullable', Rule::in(array_keys(Vehicle::STATUSES))],
@@ -336,6 +338,7 @@ class Create extends Component
             'brand_id'              => $this->brand_id ?: null,
             'license_plate'         => $this->license_plate ?: null,
             'manufacture_year'      => $this->manufacture_year ?: null,
+            'operated_at'           => $this->operated_at ?: null,
             'chassis_number'        => $this->chassis_number ?: null,
             'license_expiry_date'   => $this->license_expiry_date ?: null,
             'status'                => $this->status ?: null,
@@ -427,6 +430,7 @@ class Create extends Component
         $this->brand_id              = $vehicle->brand_id;
         $this->license_plate         = $vehicle->license_plate ?? '';
         $this->manufacture_year      = (string) ($vehicle->manufacture_year ?? '');
+        $this->operated_at           = $vehicle->operated_at?->format('Y-m-d') ?? '';
         $this->chassis_number        = $vehicle->chassis_number ?? '';
         $this->license_expiry_date   = $vehicle->license_expiry_date?->format('Y-m-d') ?? '';
         $this->status                = $vehicle->status ?? '';

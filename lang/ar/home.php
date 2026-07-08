@@ -675,6 +675,7 @@ return [
     'vehicle_brand'                 => 'الماركة',
     'vehicle_status'                => 'حالة السيارة',
     'manufacture_year'              => 'سنة الصنع',
+    'vehicle_operated_at'           => 'تاريخ التشغيل',
     'license_plate'                 => 'رقم اللوحة',
     'license_plate_placeholder'     => 'مثال: أ ب ج 1234',
     'chassis_number'                => 'رقم الشاسية',

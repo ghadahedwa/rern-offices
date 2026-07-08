@@ -35,7 +35,7 @@ class Vehicle extends Model
 
     protected $fillable = [
         'governorate_id', 'type_id', 'work_system_id', 'working_hours_id', 'brand_id',
-        'name', 'license_plate', 'manufacture_year', 'chassis_number',
+        'name', 'license_plate', 'manufacture_year', 'operated_at', 'chassis_number',
         'license_expiry_date', 'status', 'overnight_address', 'storage_room_location', 'notes',
         'driver_name', 'driver_phone', 'notary_name', 'notary_phone', 'reviewer_name', 'reviewer_phone',
         'mobility_bag', 'laptops_count', 'fingerprints_count', 'printers_count',
@@ -45,6 +45,7 @@ class Vehicle extends Model
 
     protected $casts = [
         'license_expiry_date' => 'date',
+        'operated_at'         => 'date',
     ];
 
     public function governorate(): BelongsTo  { return $this->belongsTo(Governorate::class); }
