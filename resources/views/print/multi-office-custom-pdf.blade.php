@@ -76,7 +76,13 @@
                 <tr>
                     <td>{{ $loop->iteration }}</td>
                     @foreach($columns as $key => $def)
-                        <td class="{{ $key === 'name' ? 'name' : '' }}">{{ $def['value']($office) }}</td>
+                        <td class="{{ $key === 'name' ? 'name' : '' }}">
+                            @if($key === 'google_maps_link' && $office->google_maps_link)
+                                <a class="maplink" href="{{ $office->google_maps_link }}">فتح الخريطة</a>
+                            @else
+                                {{ $def['value']($office) }}
+                            @endif
+                        </td>
                     @endforeach
                 </tr>
             @empty

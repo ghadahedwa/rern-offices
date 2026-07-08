@@ -119,9 +119,9 @@ class OfficeColumns
                 'value' => fn (Office $o) => $o->structuralCondition->name ?? $dash,
             ],
             'google_maps_link' => [
-                // إكسل فقط — الرابط لا فائدة منه في PDF مطبوع، وURL الطويل يكسر عرض الجدول
+                // القيمة رابط خام (تُستخدم كـ href/hyperlink target) — العرض الفعلي كرابط قابل للنقر يتم في طبقة العرض (Excel/PDF)
                 'label' => 'رابط الخريطة', 'group' => 'البيانات الأساسية',
-                'filter' => null, 'fixed' => false, 'excelOnly' => true,
+                'filter' => null, 'fixed' => false, 'excelOnly' => false,
                 'value' => fn (Office $o) => $o->google_maps_link ?: $dash,
             ],
             'visited_at' => [
@@ -410,7 +410,7 @@ class OfficeColumns
     {
         return [
             'head', 'supervising_counselor', 'address', 'office_area',
-            'floors_description', 'windows_count',
+            'floors_description', 'windows_count', 'opened_at', 'google_maps_link',
             'working_devices', 'broken_devices',
         ];
     }

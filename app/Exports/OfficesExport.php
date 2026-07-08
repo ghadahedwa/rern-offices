@@ -15,6 +15,7 @@ use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
 use PhpOffice\PhpSpreadsheet\Style\Border;
 use PhpOffice\PhpSpreadsheet\Style\Fill;
+use PhpOffice\PhpSpreadsheet\Style\Font;
 
 class OfficesExport implements FromCollection, WithHeadings, WithMapping, WithEvents, WithTitle, ShouldAutoSize
 {
@@ -114,6 +115,23 @@ class OfficesExport implements FromCollection, WithHeadings, WithMapping, WithEv
                     if ($row % 2 === 1) {
                         $sheet->getStyle("A{$row}:{$lastCol}{$row}")->getFill()
                             ->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB('FAFAFA');
+                    }
+                }
+
+                // رابط الخريطة كـ hyperlink فعلي (مش نص خام كما في الداتابيز)
+                $mapsColIndex = array_search('google_maps_link', array_keys($this->columns), true);
+                if ($mapsColIndex !== false) {
+                    $colLetter = Coordinate::stringFromColumnIndex($mapsColIndex + 1);
+                    $officesList = $this->offices->values();
+                    for ($row = 3; $row <= $lastRow; $row++) {
+                        $url = $officesList->get($row - 3)?->google_maps_link;
+                        if ($url) {
+                            $cell = "{$colLetter}{$row}";
+                            $sheet->getCell($cell)->getHyperlink()->setUrl($url);
+                            $sheet->getStyle($cell)->applyFromArray([
+                                'font' => ['color' => ['rgb' => '1155CC'], 'underline' => Font::UNDERLINE_SINGLE],
+                            ]);
+                        }
                     }
                 }
 
