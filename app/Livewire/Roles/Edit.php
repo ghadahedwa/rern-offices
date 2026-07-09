@@ -58,7 +58,7 @@ class Edit extends Component
 
     private function ensurePermissions(): void
     {
-        foreach (['vehicles.index', 'vehicles.view', 'vehicles.create', 'vehicles.edit', 'vehicles.delete', 'vehicles.export'] as $name) {
+        foreach (['vehicles.index', 'vehicles.view', 'vehicles.create', 'vehicles.edit', 'vehicles.delete', 'vehicles.export', 'offices.phone-directory'] as $name) {
             Permission::firstOrCreate(['name' => $name, 'guard_name' => 'web']);
         }
     }

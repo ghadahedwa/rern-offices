@@ -13,7 +13,14 @@ use Livewire\Component;
 #[Title('دليل الهاتف للمقرات')]
 class PhoneDirectory extends Component
 {
-    /** متاحة لكل المستخدمين — بلا أي صلاحيات */
+    /** الوصول: super-admin أو من يملك صلاحية offices.phone-directory */
+    public function mount(): void
+    {
+        abort_unless(
+            auth()->user()?->hasRole('super-admin') || auth()->user()?->can('offices.phone-directory'),
+            403
+        );
+    }
 
     public ?int $selectedGovernorateId = null;
     public ?int $selectedOfficeId = null;

@@ -27,7 +27,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::livewire('vehicles/{vehicle}', \App\Livewire\Vehicles\Show::class)->name('vehicles.show');
     Route::livewire('vehicles/{vehicle}/edit', \App\Livewire\Vehicles\Create::class)->name('vehicles.edit');
 
-    // دليل الهاتف للمقرات — متاح لكل المستخدمين بلا صلاحيات
+    // دليل الهاتف للمقرات — صلاحية offices.phone-directory (تُفحص داخل mount)
     Route::livewire('offices-phone-directory', \App\Livewire\Reports\PhoneDirectory::class)->name('offices.phone-directory');
 
     Route::livewire('reports/office-pdf', \App\Livewire\Reports\OfficePdf::class)->name('reports.office-pdf');

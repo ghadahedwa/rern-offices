@@ -52,9 +52,11 @@
                         {{ __('home.vehicles_title') }}
                     </flux:sidebar.item>
                     @endif
+                    @if(auth()->user()?->hasRole('super-admin') || auth()->user()?->can('offices.phone-directory'))
                     <flux:sidebar.item icon="phone" :href="route('offices.phone-directory')" :current="request()->routeIs('offices.phone-directory')" wire:navigate>
                         {{ __('home.phone_directory_title') }}
                     </flux:sidebar.item>
+                    @endif
                     @php
                         $canOfficeReports  = auth()->user()?->hasRole('super-admin') || auth()->user()?->can('offices.export');
                         $canVehicleReports = auth()->user()?->hasRole('super-admin') || auth()->user()?->can('vehicles.export');

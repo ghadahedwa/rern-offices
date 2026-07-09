@@ -14,6 +14,7 @@
         'offices.edit'   => 'تعديل مقر',
         'offices.delete' => 'حذف مقر',
         'offices.export' => 'تصدير بيانات المقرات',
+        'offices.phone-directory' => 'دليل الهاتف للمقرات',
         'claims.index'   => 'عرض المطالبات',
         'claims.edit'    => 'تعديل المطالبات',
 
