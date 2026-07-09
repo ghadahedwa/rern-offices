@@ -22,7 +22,10 @@ class Create extends Component
 
     public function mount(?Governorate $governorate = null): void
     {
-        abort_unless(auth()->user()?->hasRole('super-admin'), 403);
+        $user     = auth()->user();
+        $isEdit   = (bool) $governorate?->exists;
+        $required = $isEdit ? 'governorates.edit' : 'governorates.create';
+        abort_unless($user?->hasRole('super-admin') || $user?->can($required), 403);
 
         if ($governorate?->exists) {
             $this->governorate           = $governorate;

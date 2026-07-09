@@ -8,8 +8,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     //Route::view('dashboard', 'dashboard')->name('dashboard');
     Route::livewire('dashboard', \App\Livewire\Dashboard::class)->name('dashboard');
 
-    // All authenticated users can view governorates list
+    // Governorates — access controlled per-permission inside component mount()
     Route::livewire('governorates', \App\Livewire\Governorates\Index::class)->name('governorates.index');
+    Route::livewire('governorates/create', \App\Livewire\Governorates\Create::class)->name('governorates.create');
+    Route::livewire('governorates/{governorate}/edit', \App\Livewire\Governorates\Create::class)->name('governorates.edit');
 
     // المطالبات على مستوى المحافظة — متاح لكل المستخدمين حالياً (مفلتر بمحافظات اليوزر داخل المكوّن)
     Route::livewire('claims', \App\Livewire\Claims\Index::class)->name('claims.index');
@@ -64,9 +66,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::livewire('roles', \App\Livewire\Roles\Index::class)->name('roles.index');
         Route::livewire('roles/create', \App\Livewire\Roles\Create::class)->name('roles.create');
         Route::livewire('roles/{role}/edit', \App\Livewire\Roles\Edit::class)->name('roles.edit');
-
-        Route::livewire('governorates/create', \App\Livewire\Governorates\Create::class)->name('governorates.create');
-        Route::livewire('governorates/{governorate}/edit', \App\Livewire\Governorates\Create::class)->name('governorates.edit');
 
         Route::livewire('office-types', \App\Livewire\OfficeTypes\Index::class)->name('office-types.index');
         Route::livewire('office-types/create', \App\Livewire\OfficeTypes\Create::class)->name('office-types.create');

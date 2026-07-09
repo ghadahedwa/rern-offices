@@ -34,9 +34,11 @@
                     <flux:sidebar.item icon="home" :href="route('dashboard')" :current="request()->routeIs('dashboard')" wire:navigate>
                         {{ __('home.dashboard') }}
                     </flux:sidebar.item>
+                    @if(auth()->user()?->hasRole('super-admin') || auth()->user()?->can('governorates.index'))
                     <flux:sidebar.item icon="map-pin" :href="route('governorates.index')" :current="request()->routeIs('governorates.*')" wire:navigate>
                         {{ __('home.governorates') }}
                     </flux:sidebar.item>
+                    @endif
                     @if(auth()->user()?->hasRole('super-admin') || auth()->user()?->can('claims.index'))
                     <flux:sidebar.item icon="banknotes" :href="route('claims.index')" :current="request()->routeIs('claims.*')" wire:navigate>
                         {{ __('home.claims_title') }}

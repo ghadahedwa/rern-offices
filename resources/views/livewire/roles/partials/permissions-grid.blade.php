@@ -15,6 +15,10 @@
         'offices.delete' => 'حذف مقر',
         'offices.export' => 'تصدير بيانات المقرات',
         'offices.phone-directory' => 'دليل الهاتف للمقرات',
+        'governorates.index'  => 'عرض المحافظات',
+        'governorates.create' => 'إضافة محافظة',
+        'governorates.edit'   => 'تعديل محافظة',
+        'governorates.delete' => 'حذف محافظة',
         'claims.index'   => 'عرض المطالبات',
         'claims.edit'    => 'تعديل المطالبات',
 
@@ -27,7 +31,8 @@
     ];
 
     $groups = [
-        'عام'               => $permissions->filter(fn($p) => !str_contains($p->name, '.')),
+        // مجموعة "عام" (index/view/create/... بلا namespace) مخفية — صلاحيات ميتة لا يفحصها الكود
+        'المحافظات'         => $permissions->filter(fn($p) => str_starts_with($p->name, 'governorates.')),
         'المقرات'           => $permissions->filter(fn($p) => str_starts_with($p->name, 'offices.')),
         'السيارات المتنقلة' => $permissions->filter(fn($p) => str_starts_with($p->name, 'vehicles.')),
         'المطالبات'         => $permissions->filter(fn($p) => str_starts_with($p->name, 'claims.')),

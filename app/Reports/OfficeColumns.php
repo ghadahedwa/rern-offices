@@ -405,7 +405,7 @@ class OfficeColumns
         return $keys;
     }
 
-    /** أعمدة اختيارية تظهر في منتقي التقرير المخصّص بلا فلتر (غير معلّمة افتراضياً) */
+    /** أعمدة تُجمَّع تحت "بيانات إضافية" في منتقي التقرير المخصّص بدل قسمها الأصلي (غير معلّمة افتراضياً بلا فلتر) */
     public static function optionalCustomKeys(): array
     {
         return [
@@ -416,23 +416,14 @@ class OfficeColumns
     }
 
     /**
-     * كل الأعمدة المتاحة في منتقي التقرير المخصّص = الثابتة + أعمدة الفلاتر المستخدَمة + الاختيارية.
-     * مرتّبة حسب ترتيب الكتالوج. (الملاحظات النصية والأعمدة المنفصلة للأجهزة لا تظهر)
+     * كل أعمدة الكتالوج تظهر دائماً في منتقي التقرير المخصّص (نفس نهج VehicleColumns) —
+     * المعلّم منها تلقائياً فقط (انظر defaultKeysForFilters) هو الثابت أو المرتبط بفلتر مُطبَّق فعلاً.
      *
      * @return array<string>
      */
-    public static function customPickerKeys(array $applied): array
+    public static function customPickerKeys(): array
     {
-        $optional = array_flip(self::optionalCustomKeys());
-        $keys     = [];
-
-        foreach (self::all() as $key => $def) {
-            if ($def['fixed'] || self::filterActive($def['filter'], $applied) || isset($optional[$key])) {
-                $keys[] = $key;
-            }
-        }
-
-        return $keys;
+        return array_keys(self::all());
     }
 
     /** هل الفلتر المقابل للعمود مُطبَّق فعلاً؟ */

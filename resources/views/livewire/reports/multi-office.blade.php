@@ -291,7 +291,7 @@
                     </div>
                 </div>
 
-                {{-- منتقي الأعمدة (الثابتة + الفلاتر المستخدَمة فقط) --}}
+                {{-- منتقي الأعمدة (كل الكتالوج، مُجمَّع حسب القسم) --}}
                 <div class="rounded-lg border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/50 p-4" x-data>
                     <div class="flex items-center justify-between gap-3 mb-3">
                         <p class="text-xs font-medium text-zinc-500 dark:text-zinc-400">{{ __('home.report_custom_columns') }}</p>

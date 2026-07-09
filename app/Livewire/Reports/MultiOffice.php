@@ -225,14 +225,14 @@ class MultiOffice extends Component
     }
 
     /**
-     * الأعمدة المتاحة في منتقي التقرير المخصّص = الثابتة + أعمدة الفلاتر المستخدَمة + الاختيارية.
-     * المعلّم تلقائياً منها = الثابتة + الفلاتر فقط (انظر search())؛ الاختيارية غير معلّمة.
+     * كل أعمدة الكتالوج تظهر في منتقي التقرير المخصّص.
+     * المعلّم تلقائياً منها = الثابتة + الفلاتر فقط (انظر search())؛ الباقي اختياري غير معلّم.
      *
      * @return array<string>
      */
     protected function availableCustomColumns(): array
     {
-        return OfficeColumns::customPickerKeys($this->applied);
+        return OfficeColumns::customPickerKeys();
     }
 
     /** الأعمدة النهائية للتصدير المخصّص: الثابتة دائماً + المختارة، ضمن المتاح، بترتيب الكتالوج */
@@ -439,9 +439,14 @@ class MultiOffice extends Component
             $extraLabel = __('home.report_custom_extra_group');
 
             foreach ($this->availableCustomColumns() as $key) {
-                $def   = $catalog[$key];
-                // الأعمدة الاختيارية تُجمَّع تحت "بيانات إضافية" في المنتقي فقط (الكتالوج بلا تغيير)
-                $group = isset($optional[$key]) ? $extraLabel : $def['group'];
+                $def = $catalog[$key];
+                // الأعمدة الاختيارية تُجمَّع تحت "بيانات إضافية"، و"الأنظمة التقنية" تُدمَج بصريًا مع "الخدمات والتجهيزات" —
+                // في المنتقي فقط لتقليل عدد الأقسام؛ الكتالوج وعناوين التصدير (Excel/PDF) بلا تغيير
+                $group = match (true) {
+                    isset($optional[$key])               => $extraLabel,
+                    $def['group'] === 'الأنظمة التقنية'   => 'الخدمات والتجهيزات',
+                    default                                => $def['group'],
+                };
                 $customColumnGroups[$group][] = [
                     'key'   => $key,
                     'label' => $def['label'],
@@ -449,12 +454,16 @@ class MultiOffice extends Component
                 ];
             }
 
-            // "بيانات إضافية" دائماً آخر قسم
-            if (isset($customColumnGroups[$extraLabel])) {
-                $extra = $customColumnGroups[$extraLabel];
-                unset($customColumnGroups[$extraLabel]);
-                $customColumnGroups[$extraLabel] = $extra;
+            // ترتيب أقسام المنتقي: الأساسية، بيانات إضافية، عدد الأجهزة، الخدمات والتجهيزات (مدموج)، ثم الباقي كما هو
+            $priorityOrder = ['البيانات الأساسية', $extraLabel, 'عدد الأجهزة', 'الخدمات والتجهيزات'];
+            $reordered     = [];
+            foreach ($priorityOrder as $group) {
+                if (isset($customColumnGroups[$group])) {
+                    $reordered[$group] = $customColumnGroups[$group];
+                    unset($customColumnGroups[$group]);
+                }
             }
+            $customColumnGroups = $reordered + $customColumnGroups;
         }
 
         return view('livewire.reports.multi-office', [

@@ -48,7 +48,7 @@ class Create extends Component
 
     private function ensurePermissions(): void
     {
-        foreach (['vehicles.index', 'vehicles.view', 'vehicles.create', 'vehicles.edit', 'vehicles.delete', 'vehicles.export', 'offices.phone-directory'] as $name) {
+        foreach (['vehicles.index', 'vehicles.view', 'vehicles.create', 'vehicles.edit', 'vehicles.delete', 'vehicles.export', 'offices.phone-directory', 'governorates.index', 'governorates.create', 'governorates.edit', 'governorates.delete'] as $name) {
             Permission::firstOrCreate(['name' => $name, 'guard_name' => 'web']);
         }
     }
