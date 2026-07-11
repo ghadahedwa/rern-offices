@@ -12,7 +12,16 @@
             [data-flux-sidebar] .nested-menu-btn span { font-size: 0.85rem !important; }
             [data-flux-sidebar]:not([data-flux-sidebar-collapsed-desktop]) { width: 15rem; }
             [data-flux-sidebar] { z-index: 30 !important; }
-            [data-flux-sidebar] [data-flux-sidebar-nav] { overflow-x: hidden; }
+            /* اللوجو (الهيدر) يفضل ثابت فوق، والقائمة تتوسّع لتحت وتعمل scroll في منطقتها لوحدها
+               (نمط Slack/Notion) — بدل ما القائمة كلها تتحرّك وتعدّي فوق اللوجو. */
+            [data-flux-sidebar] { overflow: hidden !important; }
+            [data-flux-sidebar] [data-flux-sidebar-header] { flex-shrink: 0; }
+            [data-flux-sidebar] [data-flux-sidebar-nav] {
+                flex: 1 1 auto;
+                min-height: 0;
+                overflow-y: auto;
+                overflow-x: hidden;
+            }
             [data-flux-sidebar-item],
             [data-flux-sidebar-item] span,
             [data-flux-sidebar] .nested-menu-btn,
@@ -29,7 +38,7 @@
                     <flux:sidebar.collapse class="text-[#c9a847]" />
                 </div>
             </flux:sidebar.header>
-            <flux:sidebar.nav class="-mt-4 overflow-y-auto">
+            <flux:sidebar.nav class="overflow-y-auto">
                 <flux:sidebar.group class="grid">
                     <flux:sidebar.item icon="home" :href="route('dashboard')" :current="request()->routeIs('dashboard')" wire:navigate>
                         {{ __('home.dashboard') }}
