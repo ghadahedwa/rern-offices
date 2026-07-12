@@ -15,7 +15,7 @@ class ClaimsSummaryPdfController extends Controller
     {
         $user = $request->user();
         abort_unless(
-            $user?->hasRole('super-admin') || $user?->can('claims.index'),
+            $user?->hasRole('super-admin') || $user?->can('claims.export'),
             403
         );
 

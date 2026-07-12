@@ -22,6 +22,7 @@
         'governorates.delete' => 'حذف محافظة',
         'claims.index'   => 'عرض المطالبات',
         'claims.edit'    => 'تعديل المطالبات',
+        'claims.export'  => 'تصدير بيانات المطالبات',
 
         'vehicles.index'  => 'عرض قائمة السيارات',
         'vehicles.view'   => 'عرض تفاصيل السيارة',

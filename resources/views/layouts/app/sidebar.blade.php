@@ -102,7 +102,7 @@
                     @php
                         $canOfficeReports  = auth()->user()?->hasRole('super-admin') || auth()->user()?->can('offices.export');
                         $canVehicleReports = auth()->user()?->hasRole('super-admin') || auth()->user()?->can('vehicles.export');
-                        $canClaimsReports  = auth()->user()?->hasRole('super-admin') || auth()->user()?->can('claims.index');
+                        $canClaimsReports  = auth()->user()?->hasRole('super-admin') || auth()->user()?->can('claims.export');
                     @endphp
                     @if($canOfficeReports || $canVehicleReports || $canClaimsReports)
                     <div x-data="{ open: {{ request()->routeIs('reports.*') ? 'true' : 'false' }} }">
