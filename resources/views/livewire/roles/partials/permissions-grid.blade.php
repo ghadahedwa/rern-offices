@@ -30,6 +30,12 @@
         'vehicles.edit'   => 'تعديل سيارة',
         'vehicles.delete' => 'حذف سيارة',
         'vehicles.export' => 'تصدير بيانات السيارات',
+
+        'meetings.index'  => 'عرض أجندة الاجتماعات',
+        'meetings.view'   => 'عرض اجتماع',
+        'meetings.create' => 'إضافة اجتماع',
+        'meetings.edit'   => 'تعديل اجتماع',
+        'meetings.delete' => 'حذف اجتماع',
     ];
 
     // الصلاحيات مجمّعة حسب الفرع ← مجموعات فرعية (موديولات)
@@ -40,6 +46,9 @@
             'المقرات'           => $permissions->filter(fn($p) => str_starts_with($p->name, 'offices.') && $p->name !== 'offices.settings'),
             'السيارات المتنقلة' => $permissions->filter(fn($p) => str_starts_with($p->name, 'vehicles.')),
             'المطالبات'         => $permissions->filter(fn($p) => str_starts_with($p->name, 'claims.')),
+        ],
+        'home.branch_meetings' => [
+            'الاجتماعات'        => $permissions->filter(fn($p) => str_starts_with($p->name, 'meetings.')),
         ],
         'home.branch_system' => [
             'إعدادات المقرات'   => $permissions->filter(fn($p) => $p->name === 'offices.settings'),

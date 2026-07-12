@@ -44,6 +44,26 @@ return [
         ],
     ],
 
+    'meetings' => [
+        'label'         => 'home.branch_meetings',
+        'icon'          => 'calendar-days',
+        'default_route' => 'meetings.index',
+        'entries' => [
+            'meetings.index' => null,
+        ],
+        'route_patterns' => [
+            'meetings.*',
+        ],
+        'super_admin_only' => false,
+        'permissions' => [
+            'meetings.index',
+            'meetings.view',
+            'meetings.create',
+            'meetings.edit',
+            'meetings.delete',
+        ],
+    ],
+
     'system' => [
         'label'         => 'home.branch_system',
         'icon'          => 'cog-6-tooth',

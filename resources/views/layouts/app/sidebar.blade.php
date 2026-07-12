@@ -164,6 +164,12 @@
                     @endif
                     @endif {{-- /branch: offices --}}
 
+                    @if($currentBranch === 'meetings')
+                    <flux:sidebar.item icon="calendar-days" :href="route('meetings.index')" :current="request()->routeIs('meetings.*')" wire:navigate>
+                        {{ __('home.meetings_title') }}
+                    </flux:sidebar.item>
+                    @endif {{-- /branch: meetings --}}
+
                     @if($currentBranch === 'system')
 
                     <flux:sidebar.item icon="squares-2x2" :href="route('system-dashboard')" :current="request()->routeIs('system-dashboard')" wire:navigate>
