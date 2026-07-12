@@ -39,7 +39,38 @@
                 </div>
             </flux:sidebar.header>
             <flux:sidebar.nav class="overflow-y-auto">
+                @php
+                    $currentBranch      = \App\Support\Branch::current();
+                    $accessibleBranches = \App\Support\Branch::accessibleFor();
+                    $currentBranchConf  = \App\Support\Branch::config($currentBranch);
+                @endphp
+
+                {{-- مبدّل الفرع — يظهر فقط لو المستخدم عنده أكتر من فرع --}}
+                @if(count($accessibleBranches) > 1)
+                    <flux:dropdown position="bottom" align="start" class="w-full mb-2">
+                        <button type="button"
+                            class="flex items-center gap-2 w-full px-3 py-2 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 hover:border-[#c9a847] transition">
+                            <span class="text-sm font-semibold text-zinc-800 dark:text-zinc-100 flex-1 text-start">
+                                {{ $currentBranchConf ? __($currentBranchConf['label']) : '' }}
+                            </span>
+                            <svg class="w-4 h-4 text-[#c9a847] shrink-0" viewBox="0 0 20 20" fill="none">
+                                <path d="M5 8l5 5 5-5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                        </button>
+                        <flux:menu>
+                            @foreach($accessibleBranches as $bKey)
+                                @php $b = \App\Support\Branch::config($bKey); @endphp
+                                <flux:menu.item :href="route($b['default_route'])" icon="{{ $b['icon'] }}"
+                                    class="{{ $bKey === $currentBranch ? 'text-[#c9a847]!' : '' }}" wire:navigate>
+                                    {{ __($b['label']) }}
+                                </flux:menu.item>
+                            @endforeach
+                        </flux:menu>
+                    </flux:dropdown>
+                @endif
+
                 <flux:sidebar.group class="grid">
+                    @if($currentBranch === 'offices')
                     <flux:sidebar.item icon="home" :href="route('dashboard')" :current="request()->routeIs('dashboard')" wire:navigate>
                         {{ __('home.dashboard') }}
                     </flux:sidebar.item>
@@ -131,8 +162,9 @@
                         </div>
                     </div>
                     @endif
+                    @endif {{-- /branch: offices --}}
 
-                    @if(auth()->user()?->hasRole('super-admin'))
+                    @if($currentBranch === 'system' && auth()->user()?->hasRole('super-admin'))
                     <div x-data="{ open: {{ request()->routeIs('office-types.*') || request()->routeIs('location-descriptions.*') || request()->routeIs('work-systems.*') || request()->routeIs('working-hours.*') || request()->routeIs('connection-types.*') || request()->routeIs('device-types.*') || request()->routeIs('contractual-statuses.*') || request()->routeIs('structural-conditions.*') || request()->routeIs('disabilities-access.*') || request()->routeIs('fire-safety.*') || request()->routeIs('document-photocopying-services.*') || request()->routeIs('buffet-services.*') || request()->routeIs('cleanliness-contracts.*') || request()->routeIs('microfilm-options.*') || request()->routeIs('vehicle-types.*') || request()->routeIs('vehicle-brands.*') || request()->routeIs('vehicle-work-systems.*') || request()->routeIs('vehicle-working-hours.*') || request()->routeIs('vehicle-device-types.*') ? 'true' : 'false' }} }">
                         <button @click="open = !open"
                             class="nested-menu-btn flex items-center w-full px-3 py-2 font-medium rounded text-zinc-600 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-zinc-900 dark:hover:text-white transition-colors">

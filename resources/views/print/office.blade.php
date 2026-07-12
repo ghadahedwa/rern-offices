@@ -213,7 +213,7 @@
             <div class="logo-area">
                 <img src="{{ asset('images/logo3.png') }}" alt="شعار">
                 <div>
-                    <div class="app-title">قطاع الشهر العقاري</div>
+                    <div class="app-title">{{ __('home.app_name') }}</div>
                     <div class="app-subtitle">نظام مقرات التوثيق والشهر العقاري</div>
                 </div>
             </div>

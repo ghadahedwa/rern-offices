@@ -1,7 +1,7 @@
 <?php
 
 return [
-    'app_name'  => 'نظام مقرات الشهر العقاري',
+    'app_name'  => 'منظومة قطاع الشهر العقاري والتوثيق',
     'exit'      => 'خروج',
     'next_tab'  => 'التالي',
 
@@ -53,6 +53,11 @@ return [
     'wait' => ' برجاء الانتظار ',
     'search'              => 'البحث',
     'dashboard'           => 'لوحة التحكم',
+    // الفروع (المنظومة)
+    'branch_offices'      => 'إدارة المقرات',
+    'branch_meetings'     => 'الاجتماعات',
+    'branch_system'       => 'إدارة النظام',
+    'switch_branch'       => 'تبديل الفرع',
     'reports'             => 'التقارير',
     'reports_title'       => 'التقارير',
     'reports_subtitle'    => 'استخراج تقارير المقرات',

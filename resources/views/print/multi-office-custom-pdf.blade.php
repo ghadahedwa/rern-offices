@@ -52,7 +52,7 @@
         <tr>
             @if($logoBase64)<td style="width:44px;"><img class="logo-img" src="{{ $logoBase64 }}" alt=""></td>@endif
             <td>
-                <div class="app-title">قطاع الشهر العقاري</div>
+                <div class="app-title">{{ __('home.app_name') }}</div>
                 <div class="app-subtitle">تقرير مخصّص للمقرات</div>
             </td>
             <td class="meta-cell">

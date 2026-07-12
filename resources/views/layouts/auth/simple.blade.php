@@ -30,7 +30,7 @@
                 <img src="{{ asset('images/logo3.png') }}" class="w-58 h-58 object-contain" alt="الشعار" />
 
                 {{-- Page title --}}
-                <p class="text-xl text-center" style="color: #2c3e6b;">برنامج إدارة المكاتب</p>
+                <p class="text-xl text-center" style="color: #2c3e6b;">{{ __('home.app_name') }}</p>
 
                 {{-- Card slot --}}
                 {{ $slot }}
