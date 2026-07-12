@@ -20,7 +20,7 @@ class Create extends Component
 
     public function mount(?LocationDescription $locationDescription = null): void
     {
-        abort_unless(Auth::user()?->hasRole('super-admin'), 403);
+        abort_unless(Auth::user()?->can('offices.settings'), 403);
 
         if ($locationDescription?->exists) {
             $this->locationDescription    = $locationDescription;

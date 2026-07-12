@@ -18,7 +18,7 @@ class Create extends Component
 
     public function mount(?BuffetService $buffetService = null): void
     {
-        abort_unless(auth()->user()?->hasRole('super-admin'), 403);
+        abort_unless(auth()->user()?->can('offices.settings'), 403);
 
         if ($buffetService?->exists) {
             $this->buffetService = $buffetService;

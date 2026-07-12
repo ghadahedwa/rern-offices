@@ -7,6 +7,7 @@ use App\Models\Office;
 use App\Models\User;
 use App\Models\Vehicle;
 use App\Models\VehicleStat;
+use App\Support\Branch;
 use Illuminate\Support\Facades\DB;
 use Livewire\Component;
 use Livewire\WithoutUrlPagination;
@@ -20,6 +21,14 @@ class Dashboard extends Component
     public string $search = '';
     public string $filterEvent = '';
     public string $deletePeriod = '';
+
+    public function mount()
+    {
+        // داشبورد المقرات لمن يدخل فرع المقرات فقط؛ غيره يُوجَّه لصفحة دخول فرعه
+        if (! Branch::canAccess('offices')) {
+            return $this->redirect(Branch::defaultUrlFor(), navigate: true);
+        }
+    }
 
     public function updatingSearch(): void
     {

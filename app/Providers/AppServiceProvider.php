@@ -8,6 +8,7 @@ use Illuminate\Auth\Events\Logout;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
 
@@ -27,6 +28,9 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->configureDefaults();
+
+        // super-admin يتجاوز جميع الصلاحيات (bypass مركزي بدل الفحص اليدوي المتكرر)
+        Gate::before(fn ($user, string $ability) => $user->hasRole('super-admin') ? true : null);
 
         Event::listen(Login::class, function (Login $event) {
             DB::table('sessions')

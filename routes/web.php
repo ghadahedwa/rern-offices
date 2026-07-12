@@ -58,6 +58,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('reports/claims-summary/pdf', \App\Http\Controllers\ClaimsSummaryPdfController::class)->name('reports.claims-summary.pdf');
     Route::get('offices/{office}/pdf', [\App\Http\Controllers\OfficePdfController::class, '__invoke'])->name('offices.pdf');
 
+    // المستخدمون والأدوار — super-admin فقط حالياً (users.manage مؤجّلة)
     Route::middleware('role:super-admin')->group(function () {
         Route::livewire('users', \App\Livewire\Users\Index::class)->name('users.index');
         Route::livewire('users/create', \App\Livewire\Users\Create::class)->name('users.create');
@@ -66,7 +67,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::livewire('roles', \App\Livewire\Roles\Index::class)->name('roles.index');
         Route::livewire('roles/create', \App\Livewire\Roles\Create::class)->name('roles.create');
         Route::livewire('roles/{role}/edit', \App\Livewire\Roles\Edit::class)->name('roles.edit');
+    });
 
+    // إعدادات المقرات (القوائم المرجعية للمقرات والسيارات) — صلاحية offices.settings
+    Route::middleware('permission:offices.settings')->group(function () {
         Route::livewire('office-types', \App\Livewire\OfficeTypes\Index::class)->name('office-types.index');
         Route::livewire('office-types/create', \App\Livewire\OfficeTypes\Create::class)->name('office-types.create');
         Route::livewire('office-types/{officeType}/edit', \App\Livewire\OfficeTypes\Create::class)->name('office-types.edit');

@@ -88,11 +88,35 @@ class Branch
         return static::accessibleFor($user)[0] ?? null;
     }
 
-    /** الـ route الافتراضي للفرع الافتراضي للمستخدم (للتوجيه بعد اللوجين). */
-    public static function defaultRouteFor($user = null): string
+    /** URL صفحة دخول الفرع حسب صلاحيات المستخدم (أول entry متاح له). */
+    public static function entryUrlFor(string $key, $user = null): string
+    {
+        $user ??= Auth::user();
+        $branch = static::config($key);
+
+        foreach (($branch['entries'] ?? []) as $routeName => $ability) {
+            if ($ability === null) {
+                return route($routeName);
+            }
+            if ($ability === 'role:super-admin') {
+                if ($user?->hasRole('super-admin')) {
+                    return route($routeName);
+                }
+                continue;
+            }
+            if ($user?->can($ability)) {
+                return route($routeName);
+            }
+        }
+
+        return route($branch['default_route'] ?? 'dashboard');
+    }
+
+    /** URL التوجيه بعد اللوجين = صفحة دخول أول فرع متاح للمستخدم. */
+    public static function defaultUrlFor($user = null): string
     {
         $key = static::defaultKeyFor($user);
 
-        return $key ? (static::config($key)['default_route'] ?? 'dashboard') : 'dashboard';
+        return $key ? static::entryUrlFor($key, $user) : route('dashboard');
     }
 }

@@ -192,7 +192,7 @@ return [
     'cannot_edit_superadmin'   => 'لا يمكن تعديل مستخدم المدير العام',
     'leave_blank_password'   => 'اتركه فارغاً إذا لم تريد تغيير كلمة المرور',
     'users_settings'=>'إعدادات المستخدمين',
-    'program_settings' => 'إعدادات البرنامج',
+    'program_settings' => 'إعدادات المقرات',
     'offices_type'        => 'أنواع المقرات',
     'add_office_type'     => 'إضافة نوع مقر',
     'edit_office_type'    => 'تعديل نوع المقر',

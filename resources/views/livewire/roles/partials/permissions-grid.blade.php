@@ -15,6 +15,7 @@
         'offices.delete' => 'حذف مقر',
         'offices.export' => 'تصدير بيانات المقرات',
         'offices.phone-directory' => 'دليل الهاتف للمقرات',
+        'offices.settings' => 'إدارة إعدادات المقرات (القوائم المرجعية)',
         'governorates.index'  => 'عرض المحافظات',
         'governorates.create' => 'إضافة محافظة',
         'governorates.edit'   => 'تعديل محافظة',
@@ -30,67 +31,111 @@
         'vehicles.export' => 'تصدير بيانات السيارات',
     ];
 
-    $groups = [
-        // مجموعة "عام" (index/view/create/... بلا namespace) مخفية — صلاحيات ميتة لا يفحصها الكود
-        'المحافظات'         => $permissions->filter(fn($p) => str_starts_with($p->name, 'governorates.')),
-        'المقرات'           => $permissions->filter(fn($p) => str_starts_with($p->name, 'offices.')),
-        'السيارات المتنقلة' => $permissions->filter(fn($p) => str_starts_with($p->name, 'vehicles.')),
-        'المطالبات'         => $permissions->filter(fn($p) => str_starts_with($p->name, 'claims.')),
+    // الصلاحيات مجمّعة حسب الفرع ← مجموعات فرعية (موديولات)
+    // الصلاحيات العامة بلا namespace (index/view/... و manage-*) مخفية — ميتة لا يفحصها الكود
+    $branches = [
+        'home.branch_offices' => [
+            'المحافظات'         => $permissions->filter(fn($p) => str_starts_with($p->name, 'governorates.')),
+            'المقرات'           => $permissions->filter(fn($p) => str_starts_with($p->name, 'offices.') && $p->name !== 'offices.settings'),
+            'السيارات المتنقلة' => $permissions->filter(fn($p) => str_starts_with($p->name, 'vehicles.')),
+            'المطالبات'         => $permissions->filter(fn($p) => str_starts_with($p->name, 'claims.')),
+        ],
+        'home.branch_system' => [
+            'إعدادات المقرات'   => $permissions->filter(fn($p) => $p->name === 'offices.settings'),
+        ],
     ];
 @endphp
 
-<div class="flex flex-col gap-5">
-    @foreach($groups as $groupName => $groupPermissions)
-        @if($groupPermissions->isNotEmpty())
-            <div class="rounded-lg border border-zinc-200 dark:border-zinc-700 overflow-hidden">
+<div class="flex flex-col gap-6">
+    @foreach($branches as $branchKey => $groups)
+        @php
+            $branchPermNames = collect($groups)->flatMap(fn($g) => $g->pluck('name'))->unique()->values();
+        @endphp
+        @if($branchPermNames->isNotEmpty())
+            <div x-data="{
+                    open: true,
+                    branchNames: @js($branchPermNames->toArray()),
+                    get allChecked() { return this.branchNames.every(p => $wire.selectedPermissions.includes(p)); },
+                    toggleAll() {
+                        if (this.allChecked) {
+                            $wire.selectedPermissions = $wire.selectedPermissions.filter(p => !this.branchNames.includes(p));
+                        } else {
+                            $wire.selectedPermissions = [...new Set([...$wire.selectedPermissions, ...this.branchNames])];
+                        }
+                    }
+                 }"
+                 class="rounded-xl border border-zinc-300 dark:border-zinc-600 overflow-hidden">
 
-                {{-- Group Header with Select All --}}
-                <div class="flex items-center justify-between px-4 py-2.5 bg-zinc-50 dark:bg-zinc-800 border-b border-zinc-200 dark:border-zinc-700"
-                     x-data="{
-                         get allChecked() {
-                             return @js($groupPermissions->pluck('name')->toArray()).every(p => $wire.selectedPermissions.includes(p));
-                         },
-                         toggleAll() {
-                             const names = @js($groupPermissions->pluck('name')->toArray());
-                             if (this.allChecked) {
-                                 $wire.selectedPermissions = $wire.selectedPermissions.filter(p => !names.includes(p));
-                             } else {
-                                 const merged = [...new Set([...$wire.selectedPermissions, ...names])];
-                                 $wire.selectedPermissions = merged;
-                             }
-                         }
-                     }">
-                    <span class="text-xs font-semibold text-zinc-600 dark:text-zinc-400 uppercase tracking-wide">
-                        {{ $groupName }}
-                    </span>
-                    <button type="button" @click="toggleAll()"
-                            class="text-xs text-[#c9a847] hover:text-[#b8962e] transition font-medium">
-                        <span x-text="allChecked ? 'إلغاء الكل' : 'تحديد الكل'"></span>
+                {{-- رأس الفرع --}}
+                <div class="flex items-center justify-between px-4 py-3 bg-zinc-100 dark:bg-zinc-800 border-b border-zinc-200 dark:border-zinc-700">
+                    <button type="button" @click="open = !open" class="flex items-center gap-2 flex-1 text-start">
+                        <div class="w-1.5 h-5 bg-[#c9a847] rounded-full"></div>
+                        <span class="text-sm font-bold text-zinc-700 dark:text-zinc-200">{{ __($branchKey) }}</span>
+                        <svg class="w-4 h-4 text-zinc-400 transition-transform" :class="{ 'rotate-180': open }" viewBox="0 0 20 20">
+                            <path d="M5 8l5 5 5-5" fill="none" stroke="currentColor"/>
+                        </svg>
+                    </button>
+                    <button type="button" @click="toggleAll()" class="text-xs text-[#c9a847] hover:text-[#b8962e] font-medium shrink-0">
+                        <span x-text="allChecked ? 'إلغاء كل الفرع' : 'تحديد كل الفرع'"></span>
                     </button>
                 </div>
 
-                {{-- Permissions --}}
-                <div class="grid grid-cols-2 gap-px bg-zinc-100 dark:bg-zinc-700">
-                    @foreach($groupPermissions as $permission)
-                        <label class="flex items-center gap-3 px-4 py-3 bg-white dark:bg-zinc-900 hover:bg-zinc-50 dark:hover:bg-zinc-800 cursor-pointer transition">
-                            <input
-                                type="checkbox"
-                                wire:model="selectedPermissions"
-                                value="{{ $permission->name }}"
-                                class="w-4 h-4 rounded accent-[#c9a847] shrink-0"
-                            />
-                            <div class="flex flex-col min-w-0">
-                                <span class="text-sm text-zinc-800 dark:text-zinc-100 leading-tight">
-                                    {{ $labels[$permission->name] ?? $permission->name }}
-                                </span>
-                                <span class="text-xs text-zinc-400 dark:text-zinc-500 font-mono truncate">
-                                    {{ $permission->name }}
-                                </span>
+                {{-- موديولات الفرع --}}
+                <div x-show="open" x-transition class="p-4 flex flex-col gap-5">
+                    @foreach($groups as $groupName => $groupPermissions)
+                        @if($groupPermissions->isNotEmpty())
+                            <div class="rounded-lg border border-zinc-200 dark:border-zinc-700 overflow-hidden"
+                                 x-data="{
+                                     get allChecked() {
+                                         return @js($groupPermissions->pluck('name')->toArray()).every(p => $wire.selectedPermissions.includes(p));
+                                     },
+                                     toggleAll() {
+                                         const names = @js($groupPermissions->pluck('name')->toArray());
+                                         if (this.allChecked) {
+                                             $wire.selectedPermissions = $wire.selectedPermissions.filter(p => !names.includes(p));
+                                         } else {
+                                             $wire.selectedPermissions = [...new Set([...$wire.selectedPermissions, ...names])];
+                                         }
+                                     }
+                                 }">
+
+                                {{-- رأس المجموعة مع تحديد الكل --}}
+                                <div class="flex items-center justify-between px-4 py-2.5 bg-zinc-50 dark:bg-zinc-800 border-b border-zinc-200 dark:border-zinc-700">
+                                    <span class="text-xs font-semibold text-zinc-600 dark:text-zinc-400 uppercase tracking-wide">
+                                        {{ $groupName }}
+                                    </span>
+                                    <button type="button" @click="toggleAll()"
+                                            class="text-xs text-[#c9a847] hover:text-[#b8962e] transition font-medium">
+                                        <span x-text="allChecked ? 'إلغاء الكل' : 'تحديد الكل'"></span>
+                                    </button>
+                                </div>
+
+                                {{-- الصلاحيات --}}
+                                <div class="grid grid-cols-2 gap-px bg-zinc-100 dark:bg-zinc-700">
+                                    @foreach($groupPermissions as $permission)
+                                        <label class="flex items-center gap-3 px-4 py-3 bg-white dark:bg-zinc-900 hover:bg-zinc-50 dark:hover:bg-zinc-800 cursor-pointer transition">
+                                            <input
+                                                type="checkbox"
+                                                wire:model="selectedPermissions"
+                                                value="{{ $permission->name }}"
+                                                class="w-4 h-4 rounded accent-[#c9a847] shrink-0"
+                                            />
+                                            <div class="flex flex-col min-w-0">
+                                                <span class="text-sm text-zinc-800 dark:text-zinc-100 leading-tight">
+                                                    {{ $labels[$permission->name] ?? $permission->name }}
+                                                </span>
+                                                <span class="text-xs text-zinc-400 dark:text-zinc-500 font-mono truncate">
+                                                    {{ $permission->name }}
+                                                </span>
+                                            </div>
+                                        </label>
+                                    @endforeach
+                                </div>
+
                             </div>
-                        </label>
+                        @endif
                     @endforeach
                 </div>
-
             </div>
         @endif
     @endforeach

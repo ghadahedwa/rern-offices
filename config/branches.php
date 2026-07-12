@@ -19,6 +19,11 @@ return [
         'label'         => 'home.branch_offices',
         'icon'          => 'building-office-2',
         'default_route' => 'dashboard',
+        // صفحة الدخول للفرع حسب صلاحية المستخدم (أول متاح). null = متاح لأي حد يدخل الفرع.
+        // القيمة الخاصة 'role:super-admin' تعني الدور مش صلاحية.
+        'entries' => [
+            'dashboard' => null,
+        ],
         'route_patterns' => [
             'dashboard',
             'offices.*',
@@ -43,9 +48,14 @@ return [
         'label'         => 'home.branch_system',
         'icon'          => 'cog-6-tooth',
         'default_route' => 'users.index',
+        'entries' => [
+            'users.index'        => 'role:super-admin',
+            'office-types.index' => 'offices.settings',
+        ],
         'route_patterns' => [
             'users.*',
             'roles.*',
+            // إعدادات المقرات (القوائم المرجعية للمقرات والسيارات) — تهيئة يديرها الأدمن
             'office-types.*',
             'location-descriptions.*',
             'work-systems.*',
@@ -66,8 +76,11 @@ return [
             'vehicle-working-hours.*',
             'vehicle-device-types.*',
         ],
-        'super_admin_only' => true,
-        'permissions' => [],
+        'super_admin_only' => false,
+        'permissions' => [
+            // المستخدمون والأدوار للسوبر أدمن فقط حالياً؛ offices.settings يفتح الفرع لمدير الإعدادات
+            'offices.settings',
+        ],
     ],
 
 ];

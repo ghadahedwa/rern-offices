@@ -60,7 +60,7 @@
                         <flux:menu>
                             @foreach($accessibleBranches as $bKey)
                                 @php $b = \App\Support\Branch::config($bKey); @endphp
-                                <flux:menu.item :href="route($b['default_route'])" icon="{{ $b['icon'] }}"
+                                <flux:menu.item :href="\App\Support\Branch::entryUrlFor($bKey)" icon="{{ $b['icon'] }}"
                                     class="{{ $bKey === $currentBranch ? 'text-[#c9a847]!' : '' }}" wire:navigate>
                                     {{ __($b['label']) }}
                                 </flux:menu.item>
@@ -164,7 +164,32 @@
                     @endif
                     @endif {{-- /branch: offices --}}
 
-                    @if($currentBranch === 'system' && auth()->user()?->hasRole('super-admin'))
+                    @if($currentBranch === 'system')
+
+                    {{-- المستخدمون والأدوار — super-admin فقط حالياً --}}
+                    @if(auth()->user()?->hasRole('super-admin'))
+                    <div x-data="{ open: {{ request()->routeIs('users.*') || request()->routeIs('roles.*') ? 'true' : 'false' }} }">
+                        <button @click="open = !open"
+                            class="nested-menu-btn flex items-center w-full px-3 py-2 font-medium rounded text-zinc-600 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-zinc-900 dark:hover:text-white transition-colors">
+                            <span>⚙️</span>
+                            <span class="ml-2">{{ __('home.users_settings') }}</span>
+                            <svg class="ml-auto w-4 h-4 transition-transform" :class="{ 'rotate-180': open }" viewBox="0 0 20 20">
+                                <path d="M5 8l5 5 5-5" fill="none" stroke="currentColor"/>
+                            </svg>
+                        </button>
+                        <div x-show="open" x-transition class="ml-6 mt-1 space-y-1 overflow-hidden [&_[data-content]]:text-xs! [&_[data-content]]:min-w-0">
+                            <flux:sidebar.item icon="users" :href="route('users.index')" :current="request()->routeIs('users.*')" wire:navigate>
+                                {{ __('home.users') }}
+                            </flux:sidebar.item>
+                            <flux:sidebar.item icon="shield-check" :href="route('roles.index')" :current="request()->routeIs('roles.*')" wire:navigate>
+                                {{ __('home.roles') }}
+                            </flux:sidebar.item>
+                        </div>
+                    </div>
+                    @endif
+
+                    {{-- إعدادات المقرات (القوائم المرجعية للمقرات والسيارات) --}}
+                    @if(auth()->user()?->can('offices.settings'))
                     <div x-data="{ open: {{ request()->routeIs('office-types.*') || request()->routeIs('location-descriptions.*') || request()->routeIs('work-systems.*') || request()->routeIs('working-hours.*') || request()->routeIs('connection-types.*') || request()->routeIs('device-types.*') || request()->routeIs('contractual-statuses.*') || request()->routeIs('structural-conditions.*') || request()->routeIs('disabilities-access.*') || request()->routeIs('fire-safety.*') || request()->routeIs('document-photocopying-services.*') || request()->routeIs('buffet-services.*') || request()->routeIs('cleanliness-contracts.*') || request()->routeIs('microfilm-options.*') || request()->routeIs('vehicle-types.*') || request()->routeIs('vehicle-brands.*') || request()->routeIs('vehicle-work-systems.*') || request()->routeIs('vehicle-working-hours.*') || request()->routeIs('vehicle-device-types.*') ? 'true' : 'false' }} }">
                         <button @click="open = !open"
                             class="nested-menu-btn flex items-center w-full px-3 py-2 font-medium rounded text-zinc-600 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-zinc-900 dark:hover:text-white transition-colors">
@@ -238,28 +263,8 @@
                             </flux:sidebar.item>
                         </div>
                     </div>
-
-                    <div x-data="{ open: {{ request()->routeIs('users.*') || request()->routeIs('roles.*') ? 'true' : 'false' }} }">
-                        <button @click="open = !open"
-                            class="nested-menu-btn flex items-center w-full px-3 py-2 font-medium rounded text-zinc-600 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-zinc-900 dark:hover:text-white transition-colors">
-                            <span>⚙️</span>
-                            <span class="ml-2">{{ __('home.users_settings') }}</span>
-                            <svg class="ml-auto w-4 h-4 transition-transform"
-                                :class="{ 'rotate-180': open }"
-                                viewBox="0 0 20 20">
-                                <path d="M5 8l5 5 5-5" fill="none" stroke="currentColor"/>
-                            </svg>
-                        </button>
-                        <div x-show="open" x-transition class="ml-6 mt-1 space-y-1 overflow-hidden [&_[data-content]]:text-xs! [&_[data-content]]:min-w-0">
-                            <flux:sidebar.item icon="users" :href="route('users.index')" :current="request()->routeIs('users.*')" wire:navigate>
-                                {{ __('home.users') }}
-                            </flux:sidebar.item>
-                            <flux:sidebar.item icon="shield-check" :href="route('roles.index')" :current="request()->routeIs('roles.*')" wire:navigate>
-                                {{ __('home.roles') }}
-                            </flux:sidebar.item>
-                        </div>
-                    </div>
                     @endif
+                    @endif {{-- /branch: system --}}
                     
                 </flux:sidebar.group>
                 

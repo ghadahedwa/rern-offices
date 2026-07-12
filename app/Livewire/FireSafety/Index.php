@@ -29,7 +29,7 @@ class Index extends Component
 
     public function askDelete(int $id): void
     {
-        abort_unless(Auth::user()?->hasRole('super-admin'), 403);
+        abort_unless(Auth::user()?->can('offices.settings'), 403);
         $item = FireSafetyModel::findOrFail($id);
         $this->deletingId    = $item->id;
         $this->deletingLabel = $item->name;
@@ -38,7 +38,7 @@ class Index extends Component
 
     public function deleteRow(): void
     {
-        abort_unless(Auth::user()?->hasRole('super-admin'), 403);
+        abort_unless(Auth::user()?->can('offices.settings'), 403);
         if ($this->deletingId) {
             FireSafetyModel::findOrFail($this->deletingId)->delete();
             $this->reset('deletingId', 'deletingLabel', 'showDelete');
@@ -53,7 +53,7 @@ class Index extends Component
                 ->when($this->search, fn($q) => $q->where('name', 'like', "%{$this->search}%"))
                 ->orderBy('name')
                 ->paginate(15),
-            'isSuperAdmin' => Auth::user()?->hasRole('super-admin'),
+            'isSuperAdmin' => Auth::user()?->can('offices.settings'),
         ]);
     }
 }
