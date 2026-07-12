@@ -58,6 +58,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('reports/claims-summary/pdf', \App\Http\Controllers\ClaimsSummaryPdfController::class)->name('reports.claims-summary.pdf');
     Route::get('offices/{office}/pdf', [\App\Http\Controllers\OfficePdfController::class, '__invoke'])->name('offices.pdf');
 
+    // لوحة تحكم النظام — متاحة لمن يدخل فرع إدارة النظام (super-admin أو offices.settings)
+    Route::livewire('system-dashboard', \App\Livewire\SystemDashboard::class)
+        ->middleware('role_or_permission:super-admin|offices.settings')
+        ->name('system-dashboard');
+
     // المستخدمون والأدوار — super-admin فقط حالياً (users.manage مؤجّلة)
     Route::middleware('role:super-admin')->group(function () {
         Route::livewire('users', \App\Livewire\Users\Index::class)->name('users.index');

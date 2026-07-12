@@ -166,6 +166,10 @@
 
                     @if($currentBranch === 'system')
 
+                    <flux:sidebar.item icon="squares-2x2" :href="route('system-dashboard')" :current="request()->routeIs('system-dashboard')" wire:navigate>
+                        {{ __('home.system_dashboard') }}
+                    </flux:sidebar.item>
+
                     {{-- المستخدمون والأدوار — super-admin فقط حالياً --}}
                     @if(auth()->user()?->hasRole('super-admin'))
                     <div x-data="{ open: {{ request()->routeIs('users.*') || request()->routeIs('roles.*') ? 'true' : 'false' }} }">

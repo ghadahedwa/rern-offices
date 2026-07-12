@@ -47,12 +47,13 @@ return [
     'system' => [
         'label'         => 'home.branch_system',
         'icon'          => 'cog-6-tooth',
-        'default_route' => 'users.index',
+        'default_route' => 'system-dashboard',
         'entries' => [
-            'users.index'        => 'role:super-admin',
-            'office-types.index' => 'offices.settings',
+            // داشبورد النظام هي صفحة الدخول للجميع (متاحة لكل من يدخل الفرع)
+            'system-dashboard' => null,
         ],
         'route_patterns' => [
+            'system-dashboard',
             'users.*',
             'roles.*',
             // إعدادات المقرات (القوائم المرجعية للمقرات والسيارات) — تهيئة يديرها الأدمن
