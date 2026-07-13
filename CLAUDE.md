@@ -161,6 +161,23 @@ offices/{office}/statistics          → Offices\Statistics  (offices.statistics
 - لا يُكتب نص عربي hardcoded مباشرة في أي blade file
 - عند إضافة view جديد، أضف مفاتيحه في `lang/ar/home.php` أولاً قبل كتابة الـ blade
 - ملف اللغة: `lang/ar/home.php`
+- **رسائل التحقق:** أي حقل جديد له `required`/قواعد validation لازم اسمه العربي يتضاف في
+  `lang/ar/validation.php` تحت `attributes` (وإلا الرسالة تطلع باسم الحقل الإنجليزي).
+
+---
+
+## قاعدة البحث العربي (إلزامية)
+**أي بحث نصي عربي لازم يستخدم `App\Support\ArabicText` — مايتكتبش `where('col','like',...)` مباشرة.**
+- `ArabicText::normalize($term)` لكلمة البحث (PHP)، `ArabicText::sqlNormalize($col)` للعمود (SQL).
+- يوحّد: الألف (`أ إ آ ٱ→ا`)، الياء (`ى→ي`)، التاء المربوطة (`ة→ه`)، ويزيل المسافات.
+- الـ pagination يفضل في الداتابيز (مفيش سحب كل الصفوف). النمط:
+  ```php
+  ->when($this->search, fn($q) => $q->whereRaw(
+      \App\Support\ArabicText::sqlNormalize('name').' LIKE ?',
+      ['%'.\App\Support\ArabicText::normalize($this->search).'%']
+  ))
+  ```
+- مطبَّق حالياً في: المقرات، السيارات، الاجتماعات، المستخدمين.
 
 ---
 
