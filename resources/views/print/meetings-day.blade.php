@@ -63,7 +63,8 @@
                             <th style="width:10%;">{{ __('home.meeting_day') }}</th>
                             <th style="width:8%;"></th>
                             @for($j = 0; $j < 3; $j++)
-                                <th style="width:23%;">{{ 'الاجتماع ' . $ord[$j] }}</th>
+                                @php $abs = $page * 3 + $j; @endphp
+                                <th style="width:23%;">{{ 'الاجتماع ' . ($ord[$abs] ?? ($abs + 1)) }}</th>
                             @endfor
                             <th style="width:13%;">{{ __('home.meeting_notes') }}</th>
                         </tr>
@@ -75,7 +76,8 @@
                             @for($j = 0; $j < 3; $j++)<td>{{ optional($cols[$j] ?? null)->subject }}</td>@endfor
                             <td rowspan="4">
                                 @foreach($cols as $k => $m)
-                                    @if($m->notes)<div>{{ 'الاجتماع ' . $ord[$k] }}: {{ $m->notes }}</div>@endif
+                                    @php $abs = $page * 3 + $k; @endphp
+                                    @if($m->notes)<div>{{ 'الاجتماع ' . ($ord[$abs] ?? ($abs + 1)) }}: {{ $m->notes }}</div>@endif
                                 @endforeach
                             </td>
                         </tr>
