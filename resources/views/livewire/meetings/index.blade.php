@@ -4,7 +4,8 @@
     <div class="flex items-center justify-between gap-4">
         <h1 class="text-2xl font-semibold text-zinc-800 dark:text-zinc-100">{{ __('home.meetings_title') }}</h1>
         <div class="flex items-center gap-2">
-            @if($dateFilter)
+            {{-- زر «طباعة اليوم» مخفي مؤقتاً عن العميل — لإعادة إظهاره: احذف @if(false) --}}
+            @if(false && $dateFilter)
                 <a href="{{ route('meetings.print', ['date' => $dateFilter]) }}" target="_blank"
                    class="inline-flex items-center gap-2 border border-[#c9a847] text-[#c9a847] hover:bg-[#c9a847]/10 text-sm font-medium px-4 py-2 rounded-lg transition">
                     <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
