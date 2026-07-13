@@ -65,10 +65,10 @@
                             <span class="block text-xs text-zinc-400">{{ optional($meeting->date)->locale('ar')->dayName }}@if($meeting->time) · {{ substr($meeting->time, 0, 5) }}@endif</span>
                         </td>
                         <td class="px-4 py-3 font-medium text-zinc-800 dark:text-zinc-100" title="{{ $meeting->subject }}">
-                            <div class="line-clamp-2 whitespace-normal max-w-[280px]">{{ $meeting->subject }}</div>
+                            <div style="max-width:280px; white-space:normal; display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; overflow:hidden;">{{ $meeting->subject }}</div>
                         </td>
                         <td class="px-4 py-3 text-zinc-600 dark:text-zinc-300" title="{{ $meeting->location }}">
-                            <div class="line-clamp-2 whitespace-normal max-w-[200px]">{{ $meeting->location ?: '—' }}</div>
+                            <div style="max-width:200px; white-space:normal; display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; overflow:hidden;">{{ $meeting->location ?: '—' }}</div>
                         </td>
                         <td class="px-4 py-3 text-zinc-600 dark:text-zinc-300">
                             @forelse($meeting->attendees as $att)
