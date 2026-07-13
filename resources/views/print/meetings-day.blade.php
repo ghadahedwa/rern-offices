@@ -64,8 +64,8 @@
                     <div class="value">{{ $meeting->location ?: '—' }}</div>
                 </div>
                 <div class="cell">
-                    <div class="label">{{ __('home.meeting_concerned_party') }}</div>
-                    <div class="value">{{ $meeting->concerned_party ?: '—' }}{{ $meeting->concerned_party_title ? ' — '.$meeting->concerned_party_title : '' }}</div>
+                    <div class="label">{{ __('home.meeting_attendees') }}</div>
+                    <div class="value">@forelse($meeting->attendees as $att){{ $att->name }}@if($att->title) ({{ $att->title }})@endif@if(!$loop->last)، @endif@empty—@endforelse</div>
                 </div>
                 <div class="cell full">
                     <div class="label">{{ __('home.meeting_result') }}</div>

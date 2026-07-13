@@ -18,14 +18,6 @@
         </h1>
     </div>
 
-    {{-- Preview banner (الحفظ غير مفعّل) --}}
-    <div class="rounded-lg border border-amber-300 dark:border-amber-700/50 bg-amber-50 dark:bg-amber-900/20 px-4 py-3 text-sm text-amber-800 dark:text-amber-300 flex items-center gap-2">
-        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-        </svg>
-        {{ __('home.meeting_preview_banner') }}
-    </div>
-
     {{-- Form --}}
     <form wire:submit="save" class="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-sm p-6 space-y-5">
 
@@ -57,18 +49,18 @@
         {{-- المعنيون بالاجتماع — كذا شخص، كل واحد باسمه وصفته (repeater) --}}
         <div>
             <label class="{{ $lbl }}">{{ __('home.meeting_attendees') }}</label>
-            <div x-data="{ attendees: [{ name: '', title: '' }] }" class="space-y-2">
-                <template x-for="(a, i) in attendees" :key="i">
-                    <div class="flex items-center gap-2">
-                        <input type="text" x-model="a.name" placeholder="{{ __('home.attendee_name') }}"
+            <div class="space-y-2">
+                @foreach($attendees as $i => $a)
+                    <div wire:key="attendee-{{ $i }}" class="flex items-center gap-2">
+                        <input type="text" wire:model="attendees.{{ $i }}.name" placeholder="{{ __('home.attendee_name') }}"
                                class="flex-1 border border-zinc-300 dark:border-zinc-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-[#c9a847]" />
-                        <input type="text" x-model="a.title" placeholder="{{ __('home.attendee_title') }}"
-                               class="w-40 border border-zinc-300 dark:border-zinc-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-[#c9a847]" />
-                        <button type="button" @click="attendees.splice(i, 1)" x-show="attendees.length > 1"
-                                class="shrink-0 w-9 h-9 flex items-center justify-center rounded-lg border border-red-200 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition">✕</button>
+                        <input type="text" wire:model="attendees.{{ $i }}.title" placeholder="{{ __('home.attendee_title') }}"
+                               class="flex-1 border border-zinc-300 dark:border-zinc-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-[#c9a847]" />
+                        <button type="button" wire:click="removeAttendee({{ $i }})"
+                                @class(['shrink-0 w-9 h-9 flex items-center justify-center rounded-lg border border-red-200 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition', 'invisible' => count($attendees) <= 1])>✕</button>
                     </div>
-                </template>
-                <button type="button" @click="attendees.push({ name: '', title: '' })"
+                @endforeach
+                <button type="button" wire:click="addAttendee"
                         class="inline-flex items-center gap-1.5 text-sm text-[#c9a847] hover:text-[#b8962e] font-medium mt-1">
                     <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>

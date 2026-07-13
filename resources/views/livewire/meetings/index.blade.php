@@ -68,10 +68,11 @@
                         <td class="px-4 py-3 font-medium text-zinc-800 dark:text-zinc-100">{{ $meeting->subject }}</td>
                         <td class="px-4 py-3 text-zinc-600 dark:text-zinc-300">{{ $meeting->location ?: '—' }}</td>
                         <td class="px-4 py-3 text-zinc-600 dark:text-zinc-300">
-                            {{ $meeting->concerned_party ?: '—' }}
-                            @if($meeting->concerned_party_title)
-                                <span class="block text-xs text-zinc-400">{{ $meeting->concerned_party_title }}</span>
-                            @endif
+                            @forelse($meeting->attendees as $att)
+                                <span class="block">{{ $att->name }}@if($att->title)<span class="text-xs text-zinc-400"> ({{ $att->title }})</span>@endif</span>
+                            @empty
+                                —
+                            @endforelse
                         </td>
                         <td class="px-4 py-3 text-zinc-600 dark:text-zinc-300 max-w-[220px] truncate" title="{{ $meeting->result }}">{{ $meeting->result ?: '—' }}</td>
                         @if($canEdit || $canDelete)

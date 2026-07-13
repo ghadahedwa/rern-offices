@@ -169,6 +169,14 @@ return [
         'password'              => 'كلمة المرور',
         'password_confirmation' => 'تأكيد كلمة المرور',
         'remember'              => 'تذكرني',
+        'date'                  => 'التاريخ',
+        'time'                  => 'الساعة',
+        'subject'               => 'الموضوع',
+        'location'              => 'المكان',
+        'result'                => 'نتيجة الاجتماع',
+        'notes'                 => 'ملاحظات',
+        'attendees.*.name'      => 'اسم المعني',
+        'attendees.*.title'     => 'صفة المعني',
     ],
 
 ];

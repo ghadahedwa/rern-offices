@@ -67,14 +67,15 @@ class Index extends Component
         $user = Auth::user();
 
         $meetings = Meeting::query()
+            ->with('attendees')
             ->when($this->search, function ($q) {
                 $s = $this->search;
                 $q->where(function ($w) use ($s) {
                     $w->where('subject', 'like', "%{$s}%")
-                      ->orWhere('concerned_party', 'like', "%{$s}%")
-                      ->orWhere('concerned_party_title', 'like', "%{$s}%")
                       ->orWhere('location', 'like', "%{$s}%")
-                      ->orWhere('result', 'like', "%{$s}%");
+                      ->orWhere('result', 'like', "%{$s}%")
+                      ->orWhereHas('attendees', fn ($a) => $a->where('name', 'like', "%{$s}%")
+                                                             ->orWhere('title', 'like', "%{$s}%"));
                 });
             })
             ->when($this->dateFilter, fn ($q) => $q->whereDate('date', $this->dateFilter))

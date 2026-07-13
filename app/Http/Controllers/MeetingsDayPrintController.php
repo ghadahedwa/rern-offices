@@ -13,7 +13,8 @@ class MeetingsDayPrintController extends Controller
 
         $date = $request->query('date') ?: now()->toDateString();
 
-        $meetings = Meeting::whereDate('date', $date)
+        $meetings = Meeting::with('attendees')
+            ->whereDate('date', $date)
             ->orderBy('time')
             ->get();
 
