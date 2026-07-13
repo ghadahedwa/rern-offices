@@ -57,23 +57,27 @@
                     </tr>
                 </table>
 
+                @php
+                    $count = $cols->count();
+                    $mw = round(70 / max($count, 1), 2); // عرض عمود الاجتماع حسب العدد (يملأ العرض)
+                @endphp
                 <table class="agenda">
                     <thead>
                         <tr>
                             <th style="width:10%;">{{ __('home.meeting_day') }}</th>
                             <th style="width:8%;"></th>
-                            @for($j = 0; $j < 3; $j++)
-                                @php $abs = $page * 3 + $j; @endphp
-                                <th style="width:23%;">{{ 'الاجتماع ' . ($ord[$abs] ?? ($abs + 1)) }}</th>
-                            @endfor
-                            <th style="width:13%;">{{ __('home.meeting_notes') }}</th>
+                            @foreach($cols as $k => $m)
+                                @php $abs = $page * 3 + $k; @endphp
+                                <th style="width:{{ $mw }}%;">{{ 'الاجتماع ' . ($ord[$abs] ?? ($abs + 1)) }}</th>
+                            @endforeach
+                            <th style="width:12%;">{{ __('home.meeting_notes') }}</th>
                         </tr>
                     </thead>
                     <tbody>
                         <tr>
                             <td class="day" rowspan="4">{{ $d->locale('ar')->dayName }}<br>{{ $d->format('Y/m/d') }}</td>
                             <td class="lbl">{{ __('home.meeting_subject') }}</td>
-                            @for($j = 0; $j < 3; $j++)<td>{{ optional($cols[$j] ?? null)->subject }}</td>@endfor
+                            @foreach($cols as $m)<td>{{ $m->subject }}</td>@endforeach
                             <td rowspan="4">
                                 @foreach($cols as $k => $m)
                                     @php $abs = $page * 3 + $k; @endphp
@@ -83,21 +87,19 @@
                         </tr>
                         <tr>
                             <td class="lbl">{{ __('home.meeting_location') }}</td>
-                            @for($j = 0; $j < 3; $j++)
-                                @php $m = $cols[$j] ?? null; @endphp
-                                <td>{{ optional($m)->location }}@if($m && $m->time)<br><span class="muted">الساعة {{ substr($m->time, 0, 5) }}</span>@endif</td>
-                            @endfor
+                            @foreach($cols as $m)
+                                <td>{{ $m->location }}@if($m->time)<br><span class="muted">الساعة {{ substr($m->time, 0, 5) }}</span>@endif</td>
+                            @endforeach
                         </tr>
                         <tr>
                             <td class="lbl">{{ __('home.meeting_attendees') }}</td>
-                            @for($j = 0; $j < 3; $j++)
-                                @php $m = $cols[$j] ?? null; @endphp
-                                <td>@if($m)@foreach($m->attendees as $att)<div>{{ $att->title ? $att->title . ' / ' . $att->name : $att->name }}</div>@endforeach @endif</td>
-                            @endfor
+                            @foreach($cols as $m)
+                                <td>@foreach($m->attendees as $att)<div>{{ $att->title ? $att->title . ' / ' . $att->name : $att->name }}</div>@endforeach</td>
+                            @endforeach
                         </tr>
                         <tr>
                             <td class="lbl">{{ __('home.meeting_result') }}</td>
-                            @for($j = 0; $j < 3; $j++)<td>{{ optional($cols[$j] ?? null)->result }}</td>@endfor
+                            @foreach($cols as $m)<td>{{ $m->result }}</td>@endforeach
                         </tr>
                     </tbody>
                 </table>
