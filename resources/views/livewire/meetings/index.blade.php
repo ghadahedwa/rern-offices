@@ -48,12 +48,9 @@
                 <tr>
                     <th class="px-4 py-3 font-medium">#</th>
                     <th class="px-4 py-3 font-medium">{{ __('home.meeting_date') }}</th>
-                    <th class="px-4 py-3 font-medium">{{ __('home.meeting_day') }}</th>
-                    <th class="px-4 py-3 font-medium">{{ __('home.meeting_time') }}</th>
                     <th class="px-4 py-3 font-medium">{{ __('home.meeting_subject') }}</th>
                     <th class="px-4 py-3 font-medium">{{ __('home.meeting_location') }}</th>
                     <th class="px-4 py-3 font-medium">{{ __('home.meeting_concerned_party') }}</th>
-                    <th class="px-4 py-3 font-medium">{{ __('home.meeting_result') }}</th>
                     @if($canEdit || $canDelete)
                         <th class="px-4 py-3 font-medium">{{ __('home.actions') }}</th>
                     @endif
@@ -63,11 +60,12 @@
                 @forelse ($meetings as $meeting)
                     <tr class="hover:bg-zinc-50 dark:hover:bg-zinc-800 transition">
                         <td class="px-4 py-3 text-zinc-500">{{ $meetings->firstItem() + $loop->index }}</td>
-                        <td class="px-4 py-3 text-zinc-800 dark:text-zinc-100">{{ optional($meeting->date)->format('Y-m-d') }}</td>
-                        <td class="px-4 py-3 text-zinc-600 dark:text-zinc-300">{{ optional($meeting->date)->locale('ar')->dayName }}</td>
-                        <td class="px-4 py-3 text-zinc-600 dark:text-zinc-300">{{ $meeting->time ? substr($meeting->time, 0, 5) : '—' }}</td>
+                        <td class="px-4 py-3 text-zinc-800 dark:text-zinc-100">
+                            {{ optional($meeting->date)->format('Y-m-d') }}
+                            <span class="block text-xs text-zinc-400">{{ optional($meeting->date)->locale('ar')->dayName }}@if($meeting->time) · {{ substr($meeting->time, 0, 5) }}@endif</span>
+                        </td>
                         <td class="px-4 py-3 font-medium text-zinc-800 dark:text-zinc-100 max-w-[280px] whitespace-normal" title="{{ $meeting->subject }}">{{ \Illuminate\Support\Str::limit($meeting->subject, 60) }}</td>
-                        <td class="px-4 py-3 text-zinc-600 dark:text-zinc-300">{{ $meeting->location ?: '—' }}</td>
+                        <td class="px-4 py-3 text-zinc-600 dark:text-zinc-300 max-w-[200px] whitespace-normal">{{ $meeting->location ?: '—' }}</td>
                         <td class="px-4 py-3 text-zinc-600 dark:text-zinc-300">
                             @forelse($meeting->attendees as $att)
                                 <span class="block">{{ $att->name }}@if($att->title)<span class="text-xs text-zinc-400"> ({{ $att->title }})</span>@endif</span>
@@ -75,7 +73,6 @@
                                 —
                             @endforelse
                         </td>
-                        <td class="px-4 py-3 text-zinc-600 dark:text-zinc-300 max-w-[220px] truncate" title="{{ $meeting->result }}">{{ $meeting->result ?: '—' }}</td>
                         @if($canEdit || $canDelete)
                             <td class="px-4 py-3">
                                 <div class="flex items-center gap-2">
@@ -97,7 +94,7 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="{{ ($canEdit || $canDelete) ? 9 : 8 }}" class="px-4 py-10 text-center text-zinc-400">
+                        <td colspan="{{ ($canEdit || $canDelete) ? 6 : 5 }}" class="px-4 py-10 text-center text-zinc-400">
                             {{ __('home.no_meetings') }}
                         </td>
                     </tr>
