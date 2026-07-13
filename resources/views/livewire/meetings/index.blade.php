@@ -64,8 +64,12 @@
                             {{ optional($meeting->date)->format('Y-m-d') }}
                             <span class="block text-xs text-zinc-400">{{ optional($meeting->date)->locale('ar')->dayName }}@if($meeting->time) · {{ substr($meeting->time, 0, 5) }}@endif</span>
                         </td>
-                        <td class="px-4 py-3 font-medium text-zinc-800 dark:text-zinc-100 max-w-[280px] whitespace-normal" title="{{ $meeting->subject }}">{{ \Illuminate\Support\Str::limit($meeting->subject, 60) }}</td>
-                        <td class="px-4 py-3 text-zinc-600 dark:text-zinc-300 max-w-[200px] whitespace-normal">{{ $meeting->location ?: '—' }}</td>
+                        <td class="px-4 py-3 font-medium text-zinc-800 dark:text-zinc-100" title="{{ $meeting->subject }}">
+                            <div class="line-clamp-2 whitespace-normal max-w-[280px]">{{ $meeting->subject }}</div>
+                        </td>
+                        <td class="px-4 py-3 text-zinc-600 dark:text-zinc-300" title="{{ $meeting->location }}">
+                            <div class="line-clamp-2 whitespace-normal max-w-[200px]">{{ $meeting->location ?: '—' }}</div>
+                        </td>
                         <td class="px-4 py-3 text-zinc-600 dark:text-zinc-300">
                             @forelse($meeting->attendees as $att)
                                 <span class="block">{{ $att->name }}@if($att->title)<span class="text-xs text-zinc-400"> ({{ $att->title }})</span>@endif</span>
