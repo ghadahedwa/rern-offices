@@ -98,7 +98,10 @@ class Index extends Component
             ->when($this->type_id, fn($q) => $q->where('type_id', $this->type_id))
             ->when($this->work_system_id, fn($q) => $q->where('work_system_id', $this->work_system_id))
             ->when($this->status, fn($q) => $q->where('status', $this->status))
-            ->when($this->search, fn($q) => $q->where('name', 'like', "%{$this->search}%"))
+            ->when($this->search, fn($q) => $q->whereRaw(
+                \App\Support\ArabicText::sqlNormalize('name').' LIKE ?',
+                ['%'.\App\Support\ArabicText::normalize($this->search).'%']
+            ))
             ->latest()
             ->paginate(15);
 

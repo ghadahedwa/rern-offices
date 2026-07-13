@@ -58,9 +58,12 @@ class Index extends Component
         $roles = Role::orderBy('name')->get();
 
         $users = User::with(['roles', 'governorates'])
-            ->where(function ($q) {
-                $q->where('name', 'like', "%{$this->search}%")
-                  ->orWhere('username', 'like', "%{$this->search}%");
+            ->when($this->search, function ($q) {
+                $like = '%'.\App\Support\ArabicText::normalize($this->search).'%';
+                $q->where(function ($w) use ($like) {
+                    $w->whereRaw(\App\Support\ArabicText::sqlNormalize('name').' LIKE ?', [$like])
+                      ->orWhereRaw(\App\Support\ArabicText::sqlNormalize('username').' LIKE ?', [$like]);
+                });
             })
             ->when($this->roleFilter, fn($q) => $q->role($this->roleFilter))
             ->oldest()
