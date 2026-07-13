@@ -29,10 +29,19 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::livewire('vehicles/{vehicle}', \App\Livewire\Vehicles\Show::class)->name('vehicles.show');
     Route::livewire('vehicles/{vehicle}/edit', \App\Livewire\Vehicles\Create::class)->name('vehicles.edit');
 
-    // Meetings — فرع الاجتماعات (الأساس؛ الأجندة قيد الإنشاء)
+    // Meetings — فرع الاجتماعات
     Route::livewire('meetings', \App\Livewire\Meetings\Index::class)
         ->middleware('permission:meetings.index')
         ->name('meetings.index');
+    Route::get('meetings/print', \App\Http\Controllers\MeetingsDayPrintController::class)
+        ->middleware('permission:meetings.index')
+        ->name('meetings.print');
+    Route::livewire('meetings/create', \App\Livewire\Meetings\Create::class)
+        ->middleware('permission:meetings.create')
+        ->name('meetings.create');
+    Route::livewire('meetings/{meeting}/edit', \App\Livewire\Meetings\Create::class)
+        ->middleware('permission:meetings.edit')
+        ->name('meetings.edit');
 
     // دليل الهاتف للمقرات — صلاحية offices.phone-directory (تُفحص داخل mount)
     Route::livewire('offices-phone-directory', \App\Livewire\Reports\PhoneDirectory::class)->name('offices.phone-directory');
