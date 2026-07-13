@@ -66,7 +66,7 @@
                         <td class="px-4 py-3 text-zinc-800 dark:text-zinc-100">{{ optional($meeting->date)->format('Y-m-d') }}</td>
                         <td class="px-4 py-3 text-zinc-600 dark:text-zinc-300">{{ optional($meeting->date)->locale('ar')->dayName }}</td>
                         <td class="px-4 py-3 text-zinc-600 dark:text-zinc-300">{{ $meeting->time ? substr($meeting->time, 0, 5) : '—' }}</td>
-                        <td class="px-4 py-3 font-medium text-zinc-800 dark:text-zinc-100">{{ $meeting->subject }}</td>
+                        <td class="px-4 py-3 font-medium text-zinc-800 dark:text-zinc-100 max-w-[280px] whitespace-normal" title="{{ $meeting->subject }}">{{ \Illuminate\Support\Str::limit($meeting->subject, 60) }}</td>
                         <td class="px-4 py-3 text-zinc-600 dark:text-zinc-300">{{ $meeting->location ?: '—' }}</td>
                         <td class="px-4 py-3 text-zinc-600 dark:text-zinc-300">
                             @forelse($meeting->attendees as $att)

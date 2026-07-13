@@ -71,8 +71,8 @@ class Create extends Component
     {
         return [
             'date'                => ['required', 'date'],
-            'time'                => ['required'],
-            'subject'             => ['required', 'string', 'max:255'],
+            'time'                => ['nullable'],
+            'subject'             => ['required', 'string'],
             'location'            => ['nullable', 'string', 'max:255'],
             'result'              => ['nullable', 'string'],
             'notes'               => ['nullable', 'string'],
@@ -88,7 +88,7 @@ class Create extends Component
 
         $meetingData = [
             'date'     => $this->date,
-            'time'     => $this->time,
+            'time'     => $this->time ?: null,
             'subject'  => $this->subject,
             'location' => $this->location ?: null,
             'result'   => $this->result ?: null,

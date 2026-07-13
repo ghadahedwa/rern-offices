@@ -28,7 +28,7 @@
                 @error('date') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
             </div>
             <div>
-                <label class="{{ $lbl }}">{{ __('home.meeting_time') }} <span class="text-red-500">*</span></label>
+                <label class="{{ $lbl }}">{{ __('home.meeting_time') }}</label>
                 <input type="time" wire:model="time" class="{{ $inp }}" />
                 @error('time') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
             </div>
@@ -36,7 +36,7 @@
 
         <div>
             <label class="{{ $lbl }}">{{ __('home.meeting_subject') }} <span class="text-red-500">*</span></label>
-            <input type="text" wire:model="subject" class="{{ $inp }}" />
+            <textarea wire:model="subject" rows="2" class="{{ $inp }}"></textarea>
             @error('subject') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
         </div>
 
