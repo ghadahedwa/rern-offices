@@ -69,13 +69,15 @@ class Index extends Component
         $meetings = Meeting::query()
             ->with('attendees')
             ->when($this->search, function ($q) {
-                $s = $this->search;
-                $q->where(function ($w) use ($s) {
-                    $w->where('subject', 'like', "%{$s}%")
-                      ->orWhere('location', 'like', "%{$s}%")
-                      ->orWhere('result', 'like', "%{$s}%")
-                      ->orWhereHas('attendees', fn ($a) => $a->where('name', 'like', "%{$s}%")
-                                                             ->orWhere('title', 'like', "%{$s}%"));
+                $like = '%'.\App\Support\ArabicText::normalize($this->search).'%';
+                $norm = fn (string $col) => \App\Support\ArabicText::sqlNormalize($col);
+                $q->where(function ($w) use ($like, $norm) {
+                    $w->whereRaw($norm('subject').' LIKE ?', [$like])
+                      ->orWhereRaw($norm('location').' LIKE ?', [$like])
+                      ->orWhereRaw($norm('result').' LIKE ?', [$like])
+                      ->orWhereHas('attendees', fn ($a) => $a
+                          ->whereRaw($norm('name').' LIKE ?', [$like])
+                          ->orWhereRaw($norm('title').' LIKE ?', [$like]));
                 });
             })
             ->when($this->dateFilter, fn ($q) => $q->whereDate('date', $this->dateFilter))
