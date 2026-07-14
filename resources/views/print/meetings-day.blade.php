@@ -16,11 +16,12 @@
         .app-subtitle { font-size: 10pt; color: #555; margin-top: 1px; }
         .meta-cell { text-align: left; font-size: 9pt; color: #666; line-height: 1.6; }
 
+        .agenda-wrap { width: 92%; margin: 0 auto; }
         .agenda { width: 100%; border-collapse: collapse; }
-        .agenda th, .agenda td { border: 1px solid #333; padding: 6px; font-size: 9.5pt; vertical-align: top; }
-        .agenda th { background-color: #c9a847; color: #fff; text-align: center; font-weight: bold; }
-        .agenda td.no { text-align: center; font-weight: bold; color: #666; background-color: #faf6ea; }
-        .agenda td.time { text-align: center; white-space: nowrap; }
+        .agenda th, .agenda td { border: 1px solid #333; padding: 7px; font-size: 14pt; font-weight: bold; text-align: center; vertical-align: top; }
+        .agenda th { background-color: #c9a847; color: #fff; }
+        .agenda td.no { color: #666; background-color: #faf6ea; }
+        .agenda td.time { white-space: nowrap; }
         .agenda .muted { color: #666; font-size: 9pt; }
 
         .empty { text-align: center; color: #888; padding: 30px; border: 1px solid #ccc; margin-top: 10px; }
@@ -46,32 +47,34 @@
     @if($meetings->isEmpty())
         <div class="empty">{{ __('home.no_meetings') }} — {{ $d->locale('ar')->dayName }} {{ $d->format('Y/m/d') }}</div>
     @else
-        <table class="agenda">
-            <thead>
-                <tr>
-                    <th style="width:4%;">{{ __('home.meeting_no') }}</th>
-                    <th style="width:20%;">{{ __('home.meeting_subject') }}</th>
-                    <th style="width:14%;">{{ __('home.meeting_location') }}</th>
-                    <th style="width:8%;">{{ __('home.meeting_time') }}</th>
-                    <th style="width:20%;">{{ __('home.meeting_attendees') }}</th>
-                    <th style="width:17%;">{{ __('home.meeting_result') }}</th>
-                    <th style="width:17%;">{{ __('home.meeting_notes') }}</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach($meetings as $k => $m)
+        <div class="agenda-wrap">
+            <table class="agenda">
+                <thead>
                     <tr>
-                        <td class="no">{{ $k + 1 }}</td>
-                        <td>{{ $m->subject }}</td>
-                        <td>{{ $m->location }}</td>
-                        <td class="time">{{ $m->time ? substr($m->time, 0, 5) : '—' }}</td>
-                        <td>@foreach($m->attendees as $att)<div>{{ $att->title ? $att->title . ' / ' . $att->name : $att->name }}</div>@endforeach</td>
-                        <td>{{ $m->result }}</td>
-                        <td>{{ $m->notes }}</td>
+                        <th style="width:4%;">{{ __('home.meeting_no') }}</th>
+                        <th style="width:20%;">{{ __('home.meeting_subject') }}</th>
+                        <th style="width:14%;">{{ __('home.meeting_location') }}</th>
+                        <th style="width:8%;">{{ __('home.meeting_time') }}</th>
+                        <th style="width:20%;">{{ __('home.meeting_attendees') }}</th>
+                        <th style="width:17%;">{{ __('home.meeting_result') }}</th>
+                        <th style="width:17%;">{{ __('home.meeting_notes') }}</th>
                     </tr>
-                @endforeach
-            </tbody>
-        </table>
+                </thead>
+                <tbody>
+                    @foreach($meetings as $k => $m)
+                        <tr>
+                            <td class="no">{{ $k + 1 }}</td>
+                            <td>{{ $m->subject }}</td>
+                            <td>{{ $m->location }}</td>
+                            <td class="time">{{ $m->time ? substr($m->time, 0, 5) : '—' }}</td>
+                            <td>@foreach($m->attendees as $att)<div>{{ $att->title ? $att->title . ' / ' . $att->name : $att->name }}</div>@endforeach</td>
+                            <td>{{ $m->result }}</td>
+                            <td>{{ $m->notes }}</td>
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
     @endif
 
 </body>
