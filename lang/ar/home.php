@@ -81,6 +81,8 @@ return [
     'meeting_deleted'     => 'تم حذف الاجتماع',
     'meetings_search_placeholder' => 'ابحث بالموضوع أو المكان أو المعني…',
     'print_day'           => 'طباعة اليوم',
+    'meetings_total'      => 'إجمالي الاجتماعات',
+    'meeting_no'          => 'م',
     'meeting_attendees'   => 'المعنيون بالاجتماع',
     'attendee_name'       => 'الاسم',
     'attendee_title'      => 'الصفة',
