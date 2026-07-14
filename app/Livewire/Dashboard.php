@@ -7,6 +7,7 @@ use App\Models\Office;
 use App\Models\User;
 use App\Models\Vehicle;
 use App\Models\VehicleStat;
+use App\Support\ArabicText;
 use App\Support\Branch;
 use Illuminate\Support\Facades\DB;
 use Livewire\Component;
@@ -425,10 +426,25 @@ class Dashboard extends Component
         $activitiesQuery = Activity::with('causer')
             ->whereNotIn('subject_type', [User::class, \Spatie\Permission\Models\Role::class])
             ->whereNotIn('event', ['login', 'logout'])
-            ->when($this->search, fn ($q) => $q
-                ->where('description', 'like', "%{$this->search}%")
-                ->orWhereHasMorph('causer', User::class, fn ($u) => $u->where('name', 'like', "%{$this->search}%"))
-            )
+            ->when($this->search, function ($q) {
+                $like = '%'.ArabicText::normalize($this->search).'%';
+
+                // محافظات مطابقة لكلمة البحث — لمطابقة نشاط المطالبات (اسم المحافظة مخزَّن كـ properties->governorate_id لا كـ subject مباشر)
+                $matchingGovIds = Governorate::whereRaw(ArabicText::sqlNormalize('name').' LIKE ?', [$like])->pluck('id');
+
+                $q->where(function ($w) use ($like, $matchingGovIds) {
+                    $w->whereRaw(ArabicText::sqlNormalize('description').' LIKE ?', [$like])
+                        ->orWhereHasMorph('causer', User::class, fn ($u) => $u->whereRaw(ArabicText::sqlNormalize('name').' LIKE ?', [$like]))
+                        ->orWhereHasMorph('subject', [Office::class, Vehicle::class], fn ($s) => $s->whereRaw(ArabicText::sqlNormalize('name').' LIKE ?', [$like]))
+                        ->orWhere(fn ($g) => $g
+                            ->whereIn('subject_type', [
+                                \App\Models\GovernorateDemand::class,
+                                \App\Models\GovernorateClaim::class,
+                                \App\Models\GovernorateCancelledDemand::class,
+                            ])
+                            ->whereIn('properties->governorate_id', $matchingGovIds));
+                });
+            })
             ->when($this->filterEvent, fn ($q) => $q->where('event', $this->filterEvent))
             ->latest();
 

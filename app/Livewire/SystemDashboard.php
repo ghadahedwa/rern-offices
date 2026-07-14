@@ -3,6 +3,7 @@
 namespace App\Livewire;
 
 use App\Models\User;
+use App\Support\ArabicText;
 use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
@@ -69,10 +70,15 @@ class SystemDashboard extends Component
                     $q->whereIn('subject_type', [User::class, Role::class])
                       ->orWhereIn('event', ['login', 'logout']);
                 })
-                ->when($this->search, fn ($q) => $q
-                    ->where('description', 'like', "%{$this->search}%")
-                    ->orWhereHasMorph('causer', User::class, fn ($u) => $u->where('name', 'like', "%{$this->search}%"))
-                )
+                ->when($this->search, function ($q) {
+                    $like = '%'.ArabicText::normalize($this->search).'%';
+
+                    $q->where(function ($w) use ($like) {
+                        $w->whereRaw(ArabicText::sqlNormalize('description').' LIKE ?', [$like])
+                            ->orWhereHasMorph('causer', User::class, fn ($u) => $u->whereRaw(ArabicText::sqlNormalize('name').' LIKE ?', [$like]))
+                            ->orWhereHasMorph('subject', [User::class, Role::class], fn ($s) => $s->whereRaw(ArabicText::sqlNormalize('name').' LIKE ?', [$like]));
+                    });
+                })
                 ->when($this->filterEvent, fn ($q) => $q->where('event', $this->filterEvent))
                 ->latest()
                 ->paginate(10);
