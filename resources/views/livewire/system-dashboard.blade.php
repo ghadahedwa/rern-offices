@@ -93,6 +93,30 @@
                     <option value="login">{{ __('home.activity_filter_login') }}</option>
                     <option value="logout">{{ __('home.activity_filter_logout') }}</option>
                 </select>
+
+                {{-- حذف السجلات القديمة — أداة صيانة عامة على جدول سجل النشاط كله، مش مقصورة على المستخدمين/الأدوار --}}
+                <div class="flex gap-2 sm:ms-auto">
+                    <select
+                        wire:model.live="deletePeriod"
+                        class="border border-zinc-300 dark:border-zinc-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-zinc-800 text-zinc-800 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-red-400/40"
+                    >
+                        <option value="">{{ __('home.activity_delete_label') }}</option>
+                        <option value="3days">{{ __('home.activity_period_3days') }}</option>
+                        <option value="1week">{{ __('home.activity_period_1week') }}</option>
+                        <option value="2weeks">{{ __('home.activity_period_2weeks') }}</option>
+                        <option value="3weeks">{{ __('home.activity_period_3weeks') }}</option>
+                        <option value="1month">{{ __('home.activity_period_1month') }}</option>
+                    </select>
+                    <button
+                        wire:click="deleteOldActivities"
+                        wire:confirm="{{ __('home.activity_delete_confirm') }}"
+                        @disabled(!$deletePeriod)
+                        class="inline-flex items-center gap-1.5 text-sm px-3 py-2 rounded-lg border border-red-300 dark:border-red-700 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition disabled:opacity-40 disabled:cursor-not-allowed"
+                    >
+                        <flux:icon.trash variant="outline" class="w-4 h-4" />
+                        {{ __('home.activity_delete_btn') }}
+                    </button>
+                </div>
             </div>
 
             @if($activities->isEmpty())

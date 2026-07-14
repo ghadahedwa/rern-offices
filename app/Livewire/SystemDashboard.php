@@ -21,6 +21,7 @@ class SystemDashboard extends Component
 
     public string $search = '';
     public string $filterEvent = '';
+    public string $deletePeriod = '';
 
     public function mount(): void
     {
@@ -38,6 +39,35 @@ class SystemDashboard extends Component
     public function updatingFilterEvent(): void
     {
         $this->resetPage();
+    }
+
+    public function deleteOldActivities(): void
+    {
+        abort_unless(auth()->user()?->hasRole('super-admin'), 403);
+
+        $cutoff = match ($this->deletePeriod) {
+            '3days'  => now()->subDays(3),
+            '1week'  => now()->subWeek(),
+            '2weeks' => now()->subWeeks(2),
+            '3weeks' => now()->subWeeks(3),
+            '1month' => now()->subMonth(),
+            default  => null,
+        };
+
+        if (! $cutoff) {
+            return;
+        }
+
+        $deleted = Activity::where('created_at', '<', $cutoff)->delete();
+
+        $this->deletePeriod = '';
+        $this->resetPage();
+
+        if ($deleted > 0) {
+            \Flux\Flux::toast(variant: 'success', text: __('home.activity_deleted_success', ['count' => $deleted]));
+        } else {
+            \Flux\Flux::toast(variant: 'warning', text: __('home.activity_delete_none'));
+        }
     }
 
     public function render()
