@@ -99,7 +99,6 @@ class Dashboard extends Component
         $totalGovernorates = $isSuperAdmin
             ? Governorate::count()
             : $user->governorates()->count();
-        $totalUsers     = $isSuperAdmin ? User::count() : null;
 
         $addedThisMonth  = 0;
         $needsVisitCount = 0;
@@ -421,7 +420,11 @@ class Dashboard extends Component
             ->select('users.id', 'users.name', 'sessions.last_activity', 'sessions.ip_address')
             ->get();
 
+        // نشاط المستخدمين والأدوار، والدخول/الخروج (حدث حساب/جلسة مش خاص بالمقرات)
+        // ليهم سجلهم الخاص في داشبورد إدارة النظام — مستبعدين هنا لمنع التكرار
         $activitiesQuery = Activity::with('causer')
+            ->whereNotIn('subject_type', [User::class, \Spatie\Permission\Models\Role::class])
+            ->whereNotIn('event', ['login', 'logout'])
             ->when($this->search, fn ($q) => $q
                 ->where('description', 'like', "%{$this->search}%")
                 ->orWhereHasMorph('causer', User::class, fn ($u) => $u->where('name', 'like', "%{$this->search}%"))
@@ -452,12 +455,6 @@ class Dashboard extends Component
                     ->whereIn('subject_type', [\App\Models\GovernorateDemand::class, \App\Models\GovernorateClaim::class, \App\Models\GovernorateCancelledDemand::class])
                     ->whereIn('properties->governorate_id', $govIds)
                     ->whereNotIn('causer_id', $usersAboveMe));
-
-                // دخول/خروج أعضاء فريقه (من مستوى ≤ مستواه)
-                $q->orWhere(fn ($w) => $w
-                    ->whereIn('event', ['login', 'logout'])
-                    ->whereIn('causer_id', $teamUserIds)
-                    ->whereNotIn('causer_id', $usersAboveMe));
             });
         } elseif (! $isSuperAdmin) {
             // مفتش: نشاطه فقط
@@ -471,7 +468,7 @@ class Dashboard extends Component
         $govNames = Governorate::pluck('name', 'id');
 
         return view('livewire.dashboard', compact(
-            'totalOffices', 'totalGovernorates', 'totalUsers',
+            'totalOffices', 'totalGovernorates',
             'addedThisMonth', 'needsVisitCount', 'onlineUsers', 'activities', 'isSuperAdmin',
             'officesByGov', 'vehiclesByGov', 'officesByType', 'officesByStructure',
             'user', 'statsSummary', 'govTooltipData', 'govNames',

@@ -26,8 +26,6 @@
                 <option value="updated">{{ __('home.activity_filter_updated') }}</option>
                 <option value="deleted">{{ __('home.activity_filter_deleted') }}</option>
                 <option value="viewed">{{ __('home.activity_filter_viewed') }}</option>
-                <option value="login">{{ __('home.activity_filter_login') }}</option>
-                <option value="logout">{{ __('home.activity_filter_logout') }}</option>
             </select>
 
             @if($isSuperAdmin)

@@ -45,6 +45,13 @@ class Edit extends Component
 
         $this->role->syncPermissions($this->selectedPermissions);
 
+        activity()
+            ->causedBy(auth()->user())
+            ->performedOn($this->role)
+            ->event('updated')
+            ->withProperties(['name' => $this->role->name])
+            ->log('تعديل دور');
+
         Flux::toast(variant: 'success', text: __('home.role_updated'));
         $this->redirect(route('roles.index'), navigate: true);
     }

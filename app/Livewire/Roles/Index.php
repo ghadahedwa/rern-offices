@@ -26,6 +26,13 @@ class Index extends Component
             return;
         }
 
+        activity()
+            ->causedBy(auth()->user())
+            ->performedOn($role)
+            ->event('deleted')
+            ->withProperties(['name' => $role->name])
+            ->log('حذف دور');
+
         $role->delete();
         Flux::toast(variant: 'success', text: __('home.role_deleted'));
     }

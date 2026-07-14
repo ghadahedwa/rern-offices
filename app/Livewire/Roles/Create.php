@@ -35,6 +35,13 @@ class Create extends Component
         $role->save();
         $role->syncPermissions($this->selectedPermissions);
 
+        activity()
+            ->causedBy(auth()->user())
+            ->performedOn($role)
+            ->event('created')
+            ->withProperties(['name' => $role->name])
+            ->log('إضافة دور');
+
         Flux::toast(variant: 'success', text: __('home.role_created'));
         $this->redirect(route('roles.index'), navigate: true);
     }
