@@ -177,6 +177,26 @@ return [
         'notes'                 => 'ملاحظات',
         'attendees.*.name'      => 'اسم المعني',
         'attendees.*.title'     => 'صفة المعني',
+
+        // المخازن
+        'level'                 => 'المستوى',
+        'warehouse_type_id'     => 'نوع المخزن',
+        'governorate_id'        => 'المحافظة',
+        'item_unit_id'          => 'الوحدة',
+        'min_stock'             => 'الحد الأدنى',
+        'warehouse_id'          => 'المخزن',
+        'from_warehouse_id'     => 'المخزن المصدر',
+        'to_warehouse_id'       => 'المخزن المستلم',
+        'item_id'               => 'الصنف',
+        'quantity'              => 'الكمية',
+        'received_at'           => 'تاريخ الورود',
+        'transferred_at'        => 'تاريخ الصرف',
+        'supplier_name'         => 'المورد',
+        'document_type'         => 'نوع المستند',
+        'attachment'            => 'المرفق',
+        'lines'                 => 'الأصناف',
+        'lines.*.item_id'       => 'الصنف',
+        'lines.*.quantity'      => 'الكمية',
     ],
 
 ];

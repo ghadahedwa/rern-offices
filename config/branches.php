@@ -64,6 +64,24 @@ return [
         ],
     ],
 
+    'warehouses' => [
+        'label'         => 'home.branch_warehouses',
+        'icon'          => 'archive-box',
+        'default_route' => 'warehouses.dashboard',
+        'entries' => [
+            'warehouses.dashboard' => null,
+        ],
+        'route_patterns' => [
+            'warehouses.*',
+        ],
+        'super_admin_only' => false,
+        'permissions' => [
+            'warehouses.index',
+            'warehouses.create',
+            'warehouses.export',
+        ],
+    ],
+
     'system' => [
         'label'         => 'home.branch_system',
         'icon'          => 'cog-6-tooth',
@@ -76,6 +94,11 @@ return [
             'system-dashboard',
             'users.*',
             'roles.*',
+            // إعدادات المخازن (المخازن والأصناف والأنواع والوحدات) — تهيئة يديرها الأدمن
+            'warehouse-manage.*',
+            'items.*',
+            'warehouse-types.*',
+            'item-units.*',
             // إعدادات المقرات (القوائم المرجعية للمقرات والسيارات) — تهيئة يديرها الأدمن
             'office-types.*',
             'location-descriptions.*',
@@ -99,8 +122,9 @@ return [
         ],
         'super_admin_only' => false,
         'permissions' => [
-            // المستخدمون والأدوار للسوبر أدمن فقط حالياً؛ offices.settings يفتح الفرع لمدير الإعدادات
+            // المستخدمون والأدوار للسوبر أدمن فقط حالياً؛ offices.settings/warehouses.settings يفتح الفرع لمدير الإعدادات
             'offices.settings',
+            'warehouses.settings',
         ],
     ],
 

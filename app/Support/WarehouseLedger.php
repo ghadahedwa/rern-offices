@@ -1,0 +1,168 @@
+<?php
+
+namespace App\Support;
+
+use App\Exceptions\WarehouseException;
+use App\Models\Item;
+use App\Models\Warehouse;
+use App\Models\WarehouseIncoming;
+use App\Models\WarehouseMovement;
+use App\Models\WarehouseStock;
+use App\Models\WarehouseTransfer;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\DB;
+
+/**
+ * خدمة مركزية لكل حركات المخزون — تحدّث الأرصدة وتكتب سجل الحركات (Ledger) في مكان واحد.
+ * لا يُعدَّل رصيد أي صنف إلا من خلال هذه الخدمة (يضمن اتساق الرصيد مع السجل).
+ */
+class WarehouseLedger
+{
+    /**
+     * رصيد افتتاحي: يضبط رصيد الصنف في المخزن إلى القيمة المُدخَلة.
+     */
+    public static function recordOpening(Warehouse $warehouse, Item $item, int $quantity, $user = null): WarehouseMovement
+    {
+        $userId = static::userId($user);
+
+        return DB::transaction(function () use ($warehouse, $item, $quantity, $userId) {
+            $stock  = static::lockStock($warehouse->id, $item->id);
+            $before = $stock->quantity;
+            $after  = $quantity;                 // الافتتاحي يضبط الرصيد (لا يضيف)
+            $stock->update(['quantity' => $after]);
+
+            return static::logMovement($warehouse->id, $item->id, 'opening', $quantity, $before, $after, null, $userId);
+        });
+    }
+
+    /**
+     * تسجيل الوارد: يضيف كميات كل بنود المستند إلى المخزن الرئيسي.
+     */
+    public static function recordIncoming(WarehouseIncoming $incoming): void
+    {
+        DB::transaction(function () use ($incoming) {
+            foreach ($incoming->items as $line) {
+                $stock  = static::lockStock($incoming->warehouse_id, $line->item_id);
+                $before = $stock->quantity;
+                $after  = $before + $line->quantity;
+                $stock->update(['quantity' => $after]);
+
+                static::logMovement(
+                    $incoming->warehouse_id, $line->item_id, 'incoming',
+                    $line->quantity, $before, $after, $incoming, $incoming->created_by
+                );
+            }
+        });
+    }
+
+    /**
+     * تنفيذ النقل: خصم من المصدر وإضافة للمستلم لكل بند — إمّا كله أو لا شيء.
+     *
+     * @throws WarehouseException قاعدة النقل مخالفة أو رصيد أحد الأصناف غير كافٍ.
+     */
+    public static function recordTransfer(WarehouseTransfer $transfer): void
+    {
+        $from = $transfer->fromWarehouse()->with('type')->first();
+        $to   = $transfer->toWarehouse()->with('type')->first();
+
+        static::assertTransferAllowed($from, $to);
+
+        DB::transaction(function () use ($transfer) {
+            foreach ($transfer->items as $line) {
+                $fromStock = static::lockStock($transfer->from_warehouse_id, $line->item_id);
+
+                if ($fromStock->quantity < $line->quantity) {
+                    $itemName = $line->item?->name ?? ('#'.$line->item_id);
+                    throw new WarehouseException(
+                        "الرصيد غير كافٍ للصنف «{$itemName}» في المخزن المصدر "
+                        ."(المتاح {$fromStock->quantity}، المطلوب {$line->quantity})."
+                    );
+                }
+
+                $toStock = static::lockStock($transfer->to_warehouse_id, $line->item_id);
+
+                // خصم من المصدر
+                $fb = $fromStock->quantity;
+                $fa = $fb - $line->quantity;
+                $fromStock->update(['quantity' => $fa]);
+                static::logMovement(
+                    $transfer->from_warehouse_id, $line->item_id, 'transfer_out',
+                    $line->quantity, $fb, $fa, $transfer, $transfer->created_by
+                );
+
+                // إضافة للمستلم
+                $tb = $toStock->quantity;
+                $ta = $tb + $line->quantity;
+                $toStock->update(['quantity' => $ta]);
+                static::logMovement(
+                    $transfer->to_warehouse_id, $line->item_id, 'transfer_in',
+                    $line->quantity, $tb, $ta, $transfer, $transfer->created_by
+                );
+            }
+        });
+    }
+
+    /**
+     * قاعدة النقل: مسموح من مستوى أقل أو مساوٍ فقط — يُمنَع الصعود لأعلى.
+     *
+     * @throws WarehouseException
+     */
+    public static function assertTransferAllowed(Warehouse $from, Warehouse $to): void
+    {
+        if ($from->id === $to->id) {
+            throw new WarehouseException('لا يمكن النقل من المخزن إلى نفسه.');
+        }
+
+        $fromLevel = $from->level();
+        $toLevel   = $to->level();
+
+        if ($fromLevel === null || $toLevel === null) {
+            throw new WarehouseException('لا يمكن تحديد نوع أحد المخزنين لتطبيق قاعدة النقل.');
+        }
+
+        // مسموح: النزول لأدنى أو نفس المستوى. ممنوع: الصعود لأعلى.
+        if ($fromLevel > $toLevel) {
+            throw new WarehouseException('النقل إلى مستوى أعلى غير مسموح — الحركة تكون من الأعلى للأدنى أو بين نفس المستوى.');
+        }
+    }
+
+    /** الحصول على صف الرصيد (وإنشاؤه بصفر لو غير موجود) مع قفل للتحديث. */
+    protected static function lockStock(int $warehouseId, int $itemId): WarehouseStock
+    {
+        return WarehouseStock::query()
+            ->lockForUpdate()
+            ->firstOrCreate(
+                ['warehouse_id' => $warehouseId, 'item_id' => $itemId],
+                ['quantity' => 0]
+            );
+    }
+
+    /** كتابة صف في سجل الحركات. */
+    protected static function logMovement(
+        int $warehouseId, int $itemId, string $type, int $quantity,
+        int $before, int $after, ?Model $reference, $userId
+    ): WarehouseMovement {
+        return WarehouseMovement::create([
+            'warehouse_id'   => $warehouseId,
+            'item_id'        => $itemId,
+            'type'           => $type,
+            'quantity'       => $quantity,
+            'balance_before' => $before,
+            'balance_after'  => $after,
+            'reference_type' => $reference?->getMorphClass(),
+            'reference_id'   => $reference?->getKey(),
+            'user_id'        => $userId,
+            'created_at'     => now(),
+        ]);
+    }
+
+    /** تطبيع المستخدم إلى معرّف. */
+    protected static function userId($user): ?int
+    {
+        if ($user === null) {
+            return null;
+        }
+
+        return is_object($user) ? $user->id : (int) $user;
+    }
+}

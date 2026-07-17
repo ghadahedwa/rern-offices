@@ -43,6 +43,19 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->middleware('permission:meetings.edit')
         ->name('meetings.edit');
 
+    // Warehouses — فرع المخازن
+    Route::livewire('warehouses/dashboard', \App\Livewire\Warehouses\Dashboard::class)
+        ->middleware('permission:warehouses.index')
+        ->name('warehouses.dashboard');
+
+    Route::livewire('warehouses/opening-balances', \App\Livewire\Warehouses\OpeningBalances::class)
+        ->middleware('permission:warehouses.create')
+        ->name('warehouses.opening-balances');
+
+    Route::livewire('warehouses/stock', \App\Livewire\Warehouses\Stock::class)
+        ->middleware('permission:warehouses.index')
+        ->name('warehouses.stock');
+
     // دليل الهاتف للمقرات — صلاحية offices.phone-directory (تُفحص داخل mount)
     Route::livewire('offices-phone-directory', \App\Livewire\Reports\PhoneDirectory::class)->name('offices.phone-directory');
 
@@ -74,7 +87,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // لوحة تحكم النظام — متاحة لمن يدخل فرع إدارة النظام (super-admin أو offices.settings)
     Route::livewire('system-dashboard', \App\Livewire\SystemDashboard::class)
-        ->middleware('role_or_permission:super-admin|offices.settings')
+        ->middleware('role_or_permission:super-admin|offices.settings|warehouses.settings')
         ->name('system-dashboard');
 
     // المستخدمون والأدوار — super-admin فقط حالياً (users.manage مؤجّلة)
@@ -86,6 +99,25 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::livewire('roles', \App\Livewire\Roles\Index::class)->name('roles.index');
         Route::livewire('roles/create', \App\Livewire\Roles\Create::class)->name('roles.create');
         Route::livewire('roles/{role}/edit', \App\Livewire\Roles\Edit::class)->name('roles.edit');
+    });
+
+    // إعدادات المخازن (المخازن + الأصناف + الأنواع + الوحدات) — فرع النظام، صلاحية warehouses.settings
+    Route::middleware('permission:warehouses.settings')->group(function () {
+        Route::livewire('warehouse-manage', \App\Livewire\Warehouses\Manage\Index::class)->name('warehouse-manage.index');
+        Route::livewire('warehouse-manage/create', \App\Livewire\Warehouses\Manage\Create::class)->name('warehouse-manage.create');
+        Route::livewire('warehouse-manage/{warehouse}/edit', \App\Livewire\Warehouses\Manage\Create::class)->name('warehouse-manage.edit');
+
+        Route::livewire('items', \App\Livewire\Warehouses\Items\Index::class)->name('items.index');
+        Route::livewire('items/create', \App\Livewire\Warehouses\Items\Create::class)->name('items.create');
+        Route::livewire('items/{item}/edit', \App\Livewire\Warehouses\Items\Create::class)->name('items.edit');
+
+        Route::livewire('warehouse-types', \App\Livewire\Warehouses\Types\Index::class)->name('warehouse-types.index');
+        Route::livewire('warehouse-types/create', \App\Livewire\Warehouses\Types\Create::class)->name('warehouse-types.create');
+        Route::livewire('warehouse-types/{warehouseType}/edit', \App\Livewire\Warehouses\Types\Create::class)->name('warehouse-types.edit');
+
+        Route::livewire('item-units', \App\Livewire\Warehouses\Units\Index::class)->name('item-units.index');
+        Route::livewire('item-units/create', \App\Livewire\Warehouses\Units\Create::class)->name('item-units.create');
+        Route::livewire('item-units/{itemUnit}/edit', \App\Livewire\Warehouses\Units\Create::class)->name('item-units.edit');
     });
 
     // إعدادات المقرات (القوائم المرجعية للمقرات والسيارات) — صلاحية offices.settings

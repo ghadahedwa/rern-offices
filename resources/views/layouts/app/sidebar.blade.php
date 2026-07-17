@@ -170,6 +170,22 @@
                     </flux:sidebar.item>
                     @endif {{-- /branch: meetings --}}
 
+                    @if($currentBranch === 'warehouses')
+                    <flux:sidebar.item icon="squares-2x2" :href="route('warehouses.dashboard')" :current="request()->routeIs('warehouses.dashboard')" wire:navigate>
+                        {{ __('home.warehouses_dashboard') }}
+                    </flux:sidebar.item>
+
+                    <flux:sidebar.item icon="scale" :href="route('warehouses.stock')" :current="request()->routeIs('warehouses.stock')" wire:navigate>
+                        {{ __('home.wh_stock') }}
+                    </flux:sidebar.item>
+
+                    @if(auth()->user()?->hasRole('super-admin') || auth()->user()?->can('warehouses.create'))
+                    <flux:sidebar.item icon="clipboard-document-list" :href="route('warehouses.opening-balances')" :current="request()->routeIs('warehouses.opening-balances')" wire:navigate>
+                        {{ __('home.wh_opening_balances') }}
+                    </flux:sidebar.item>
+                    @endif
+                    @endif {{-- /branch: warehouses --}}
+
                     @if($currentBranch === 'system')
 
                     <flux:sidebar.item icon="squares-2x2" :href="route('system-dashboard')" :current="request()->routeIs('system-dashboard')" wire:navigate>
@@ -193,6 +209,36 @@
                             </flux:sidebar.item>
                             <flux:sidebar.item icon="shield-check" :href="route('roles.index')" :current="request()->routeIs('roles.*')" wire:navigate>
                                 {{ __('home.roles') }}
+                            </flux:sidebar.item>
+                        </div>
+                    </div>
+                    @endif
+
+                    {{-- إعدادات المخازن (المخازن + الأصناف + الأنواع + الوحدات) — صلاحية warehouses.settings --}}
+                    @if(auth()->user()?->can('warehouses.settings'))
+                    <div x-data="{ open: {{ request()->routeIs('warehouse-manage.*') || request()->routeIs('items.*') || request()->routeIs('warehouse-types.*') || request()->routeIs('item-units.*') ? 'true' : 'false' }} }">
+                        <button @click="open = !open"
+                            class="nested-menu-btn flex items-center w-full px-3 py-2 font-medium rounded text-zinc-600 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-zinc-900 dark:hover:text-white transition-colors">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-gray-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z" />
+                            </svg>
+                            <span class="ml-2">{{ __('home.warehouse_settings') }}</span>
+                            <svg class="ml-auto w-4 h-4 transition-transform" :class="{ 'rotate-180': open }" viewBox="0 0 20 20">
+                                <path d="M5 8l5 5 5-5" fill="none" stroke="currentColor"/>
+                            </svg>
+                        </button>
+                        <div x-show="open" x-transition class="ml-6 mt-1 space-y-1 overflow-hidden [&_[data-content]]:text-xs! [&_[data-content]]:min-w-0">
+                            <flux:sidebar.item icon="building-office-2" :href="route('warehouse-manage.index')" :current="request()->routeIs('warehouse-manage.*')" wire:navigate>
+                                {{ __('home.warehouses_manage_title') }}
+                            </flux:sidebar.item>
+                            <flux:sidebar.item icon="cube" :href="route('items.index')" :current="request()->routeIs('items.*')" wire:navigate>
+                                {{ __('home.items_title') }}
+                            </flux:sidebar.item>
+                            <flux:sidebar.item icon="tag" :href="route('warehouse-types.index')" :current="request()->routeIs('warehouse-types.*')" wire:navigate>
+                                {{ __('home.warehouse_types_title') }}
+                            </flux:sidebar.item>
+                            <flux:sidebar.item icon="scale" :href="route('item-units.index')" :current="request()->routeIs('item-units.*')" wire:navigate>
+                                {{ __('home.item_units_title') }}
                             </flux:sidebar.item>
                         </div>
                     </div>

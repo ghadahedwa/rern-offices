@@ -1,0 +1,484 @@
+<title>شرح نظام المخازن</title>
+<style>
+  :root {
+    --bg: #f7f4ec;
+    --surface: #ffffff;
+    --surface-2: #fbf8f1;
+    --border: #e7e0d0;
+    --ink: #2b2620;
+    --ink-soft: #6b6355;
+    --gold: #b8962e;
+    --gold-bright: #c9a847;
+    --gold-wash: #f6eecf;
+    --green: #2f8f5b;
+    --green-wash: #e7f3ec;
+    --red: #c0492f;
+    --red-wash: #f7e8e3;
+    --shadow: 0 1px 2px rgba(43,38,32,.06), 0 8px 24px rgba(43,38,32,.05);
+    --radius: 14px;
+    --font: "Segoe UI", Tahoma, "Noto Kufi Arabic", "Dubai", system-ui, sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1a1713;
+      --surface: #241f19;
+      --surface-2: #2c261f;
+      --border: #3a332a;
+      --ink: #f3ece0;
+      --ink-soft: #b3a894;
+      --gold: #d9b74e;
+      --gold-bright: #e0c96a;
+      --gold-wash: #33291454;
+      --green: #5cc98a;
+      --green-wash: #17301f;
+      --red: #e08466;
+      --red-wash: #3a201a;
+      --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.35);
+    }
+  }
+  :root[data-theme="light"] {
+    --bg: #f7f4ec; --surface: #ffffff; --surface-2: #fbf8f1; --border: #e7e0d0;
+    --ink: #2b2620; --ink-soft: #6b6355; --gold: #b8962e; --gold-bright: #c9a847;
+    --gold-wash: #f6eecf; --green: #2f8f5b; --green-wash: #e7f3ec; --red: #c0492f;
+    --red-wash: #f7e8e3; --shadow: 0 1px 2px rgba(43,38,32,.06), 0 8px 24px rgba(43,38,32,.05);
+  }
+  :root[data-theme="dark"] {
+    --bg: #1a1713; --surface: #241f19; --surface-2: #2c261f; --border: #3a332a;
+    --ink: #f3ece0; --ink-soft: #b3a894; --gold: #d9b74e; --gold-bright: #e0c96a;
+    --gold-wash: #33291454; --green: #5cc98a; --green-wash: #17301f; --red: #e08466;
+    --red-wash: #3a201a; --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.35);
+  }
+
+  * { box-sizing: border-box; }
+  html { direction: rtl; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font-family: var(--font); line-height: 1.7;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 940px; margin: 0 auto; padding: clamp(20px, 4vw, 48px) clamp(16px, 4vw, 32px) 64px; }
+
+  /* header */
+  .eyebrow {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-size: 13px; font-weight: 600; letter-spacing: .04em;
+    color: var(--gold); background: var(--gold-wash);
+    padding: 5px 12px; border-radius: 999px; margin-bottom: 18px;
+  }
+  .eyebrow::before { content: "📦"; font-size: 14px; }
+  h1 {
+    font-size: clamp(28px, 5vw, 42px); line-height: 1.25; margin: 0 0 12px;
+    font-weight: 800; letter-spacing: -.01em; text-wrap: balance;
+  }
+  h1 .accent { color: var(--gold); }
+  .lede { font-size: clamp(16px, 2.4vw, 19px); color: var(--ink-soft); max-width: 62ch; margin: 0; }
+
+  .section-label {
+    display: flex; align-items: center; gap: 12px; margin: 48px 0 20px;
+  }
+  .section-label .bar { width: 5px; height: 22px; background: var(--gold-bright); border-radius: 99px; }
+  .section-label h2 { font-size: clamp(19px, 3vw, 23px); margin: 0; font-weight: 750; }
+
+  /* concept chips */
+  .concepts { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 14px; }
+  .concept {
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 16px 18px; box-shadow: var(--shadow);
+  }
+  .concept .ic { font-size: 22px; }
+  .concept h3 { margin: 8px 0 4px; font-size: 15px; font-weight: 700; }
+  .concept p { margin: 0; font-size: 13.5px; color: var(--ink-soft); line-height: 1.55; }
+
+  /* simulator */
+  .sim {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 18px;
+    box-shadow: var(--shadow); overflow: hidden;
+  }
+  .board {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px;
+    background: var(--border);
+  }
+  .wh {
+    background: var(--surface-2); padding: 22px 16px; text-align: center;
+    position: relative; transition: background .3s;
+  }
+  .wh.pulse { background: var(--gold-wash); }
+  .wh .lvl {
+    position: absolute; top: 12px; inset-inline-start: 12px;
+    font-size: 11px; font-weight: 700; color: var(--gold);
+    background: var(--gold-wash); border-radius: 6px; padding: 2px 7px;
+  }
+  .wh .type { font-size: 12px; color: var(--ink-soft); font-weight: 600; }
+  .wh .name { font-size: 16px; font-weight: 750; margin: 2px 0 14px; }
+  .wh .count {
+    font-size: 44px; font-weight: 800; line-height: 1;
+    font-variant-numeric: tabular-nums; color: var(--ink);
+    transition: color .25s;
+  }
+  .wh .count.up { color: var(--green); }
+  .wh .count.down { color: var(--red); }
+  .wh .unit { font-size: 12.5px; color: var(--ink-soft); margin-top: 6px; }
+
+  .stage {
+    padding: 20px clamp(16px, 3vw, 26px);
+    border-top: 1px solid var(--border);
+    display: flex; flex-direction: column; gap: 16px;
+  }
+  .op-card {
+    background: var(--surface-2); border: 1px solid var(--border);
+    border-inline-start: 4px solid var(--gold-bright);
+    border-radius: 12px; padding: 15px 17px;
+    display: flex; gap: 14px; align-items: flex-start; min-height: 78px;
+  }
+  .op-card.op-incoming { border-inline-start-color: var(--green); }
+  .op-card.op-transfer { border-inline-start-color: var(--gold-bright); }
+  .op-card.op-opening  { border-inline-start-color: var(--ink-soft); }
+  .op-card .badge {
+    flex: none; width: 42px; height: 42px; border-radius: 10px;
+    display: grid; place-items: center; font-size: 20px;
+    background: var(--gold-wash);
+  }
+  .op-card.op-incoming .badge { background: var(--green-wash); }
+  .op-card .txt { flex: 1; }
+  .op-card .txt .step-no { font-size: 12px; font-weight: 700; color: var(--gold); letter-spacing: .03em; }
+  .op-card .txt h4 { margin: 2px 0 4px; font-size: 16px; font-weight: 750; }
+  .op-card .txt p { margin: 0; font-size: 14px; color: var(--ink-soft); line-height: 1.55; }
+  .op-card .txt .paper {
+    display: inline-flex; align-items: center; gap: 5px; margin-top: 7px;
+    font-size: 12px; color: var(--ink-soft);
+    background: var(--surface); border: 1px dashed var(--border);
+    border-radius: 7px; padding: 3px 9px;
+  }
+
+  .controls { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+  button {
+    font-family: inherit; font-size: 15px; font-weight: 700; cursor: pointer;
+    border-radius: 10px; padding: 11px 22px; border: 1px solid transparent;
+    transition: transform .08s, background .2s, opacity .2s;
+  }
+  button:active { transform: translateY(1px); }
+  button:focus-visible { outline: 3px solid var(--gold-bright); outline-offset: 2px; }
+  .btn-primary { background: var(--gold-bright); color: #241f00; }
+  .btn-primary:hover { background: var(--gold); }
+  .btn-primary:disabled { opacity: .45; cursor: not-allowed; }
+  .btn-ghost { background: transparent; color: var(--ink-soft); border-color: var(--border); }
+  .btn-ghost:hover { color: var(--ink); border-color: var(--ink-soft); }
+  .btn-danger { background: transparent; color: var(--red); border-color: var(--red); }
+  .btn-danger:hover { background: var(--red-wash); }
+  .progress { margin-inline-start: auto; font-size: 13px; color: var(--ink-soft); font-variant-numeric: tabular-nums; }
+
+  /* ledger */
+  .ledger-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 13.5px; min-width: 640px; }
+  thead th {
+    text-align: start; font-weight: 700; color: var(--ink-soft);
+    padding: 10px 14px; border-bottom: 1px solid var(--border);
+    font-size: 12.5px; letter-spacing: .02em; white-space: nowrap;
+  }
+  tbody td { padding: 11px 14px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr { animation: rowIn .35s ease; }
+  @keyframes rowIn { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
+  .tag {
+    display: inline-flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 700;
+    padding: 3px 9px; border-radius: 999px; white-space: nowrap;
+  }
+  .tag.in  { background: var(--green-wash); color: var(--green); }
+  .tag.out { background: var(--red-wash); color: var(--red); }
+  .tag.open{ background: var(--gold-wash); color: var(--gold); }
+  .bal { font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .bal .arrow { color: var(--ink-soft); margin: 0 4px; }
+  .bal .to { font-weight: 750; }
+  .qty { font-weight: 750; font-variant-numeric: tabular-nums; }
+  .qty.plus { color: var(--green); }
+  .qty.minus { color: var(--red); }
+  .empty-row td { text-align: center; color: var(--ink-soft); padding: 26px; font-size: 13.5px; }
+
+  /* transfer rule */
+  .rule {
+    display: grid; grid-template-columns: 1fr auto; gap: 24px; align-items: center;
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 22px 24px; box-shadow: var(--shadow);
+  }
+  .rule .flow { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+  .rule .node {
+    width: 100%; max-width: 240px; text-align: center; font-weight: 700; font-size: 14.5px;
+    padding: 10px 14px; border-radius: 10px; border: 1px solid var(--border);
+    background: var(--surface-2);
+  }
+  .rule .node small { display: block; font-size: 11.5px; color: var(--ink-soft); font-weight: 600; }
+  .rule .down { color: var(--gold); font-size: 18px; line-height: 1; }
+  .rule .note p { margin: 0 0 10px; font-size: 14px; color: var(--ink-soft); line-height: 1.6; }
+  .rule .note .yes { color: var(--green); font-weight: 700; }
+  .rule .note .no { color: var(--red); font-weight: 700; }
+
+  .toast {
+    position: fixed; inset-block-end: 24px; inset-inline: 0; margin: 0 auto; width: max-content; max-width: 90%;
+    background: var(--red); color: #fff; font-weight: 700; font-size: 14px;
+    padding: 12px 20px; border-radius: 10px; box-shadow: var(--shadow);
+    opacity: 0; transform: translateY(12px); pointer-events: none; transition: .3s;
+  }
+  .toast.show { opacity: 1; transform: none; }
+
+  .footnote {
+    margin-top: 40px; padding: 20px 22px; background: var(--surface-2);
+    border: 1px solid var(--border); border-radius: var(--radius);
+    font-size: 14px; color: var(--ink-soft); line-height: 1.65;
+  }
+  .footnote strong { color: var(--ink); }
+
+  @media (max-width: 560px) {
+    .wh .count { font-size: 34px; }
+    .wh .name { font-size: 14px; }
+    .rule { grid-template-columns: 1fr; }
+    @keyframes rowIn { from {opacity:0;} to {opacity:1;} }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    * { animation: none !important; transition: none !important; }
+  }
+</style>
+
+<div class="wrap">
+  <header>
+    <span class="eyebrow">موديول المخازن — شرح مبسّط</span>
+    <h1>نظام <span class="accent">جرد ذكي</span> يعرف كل صنف موجود منه كام قطعة في كل مخزن</h1>
+    <p class="lede">النظام بيسجّل كل حركة دخول أو خروج، والرصيد بيتحسب أوتوماتيك. اضغط «الخطوة التالية» عشان تشوف بنفسك إزاي الأرقام بتتحرك — بمثال حقيقي على الطابعات.</p>
+  </header>
+
+  <div class="section-label"><span class="bar"></span><h2>المكوّنات الأساسية</h2></div>
+  <div class="concepts">
+    <div class="concept"><div class="ic">🏬</div><h3>المخازن</h3><p>3 أنواع: رئيسي، إقليمي، فرعي — كل واحد ليه رصيده الخاص من كل صنف.</p></div>
+    <div class="concept"><div class="ic">📥</div><h3>الوارد</h3><p>أصناف جديدة داخلة للمخزن الرئيسي، مع صورة إذن الاستلام.</p></div>
+    <div class="concept"><div class="ic">🔄</div><h3>النقل</h3><p>تحريك أصناف من مخزن لمخزن، مع صورة إذن الصرف.</p></div>
+    <div class="concept"><div class="ic">🧾</div><h3>سجل الحركات</h3><p>كل عملية تتسجّل بالرصيد قبلها وبعدها ومين عملها — مفيش رقم بيتغير بدون أثر.</p></div>
+  </div>
+
+  <div class="section-label"><span class="bar"></span><h2>جرّب بنفسك — رحلة الطابعات</h2></div>
+  <div class="sim">
+    <div class="board" id="board"></div>
+
+    <div class="stage">
+      <div class="op-card op-opening" id="opCard">
+        <div class="badge" id="opBadge">👋</div>
+        <div class="txt">
+          <div class="step-no" id="opStep">ابدأ من هنا</div>
+          <h4 id="opTitle">مثال على مخزن الطابعات</h4>
+          <p id="opDesc">عندنا 3 مخازن فاضية. اضغط «الخطوة التالية» عشان نبدأ بإدخال الرصيد الافتتاحي، وبعدها وارد، وبعدها نقل بين المخازن — وشوف السجل بيتكوّن تحت.</p>
+        </div>
+      </div>
+
+      <div class="controls">
+        <button class="btn-primary" id="nextBtn">الخطوة التالية ←</button>
+        <button class="btn-danger" id="tryBtn">جرّب حركة مرفوضة ⛔</button>
+        <button class="btn-ghost" id="resetBtn">إعادة من البداية ↺</button>
+        <span class="progress" id="progress"></span>
+      </div>
+    </div>
+
+    <div class="ledger-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>الحركة</th><th>المخزن</th><th>الصنف</th><th>الكمية</th>
+            <th>الرصيد (قبل ← بعد)</th><th>المستخدم</th>
+          </tr>
+        </thead>
+        <tbody id="ledger">
+          <tr class="empty-row"><td colspan="6">لسه مفيش حركات — اضغط «الخطوة التالية».</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="section-label"><span class="bar"></span><h2>قاعدة النقل الوحيدة</h2></div>
+  <div class="rule">
+    <div class="flow">
+      <div class="node">مخزن رئيسي <small>المستوى 1</small></div>
+      <div class="down">▼</div>
+      <div class="node">مخزن إقليمي <small>المستوى 2</small></div>
+      <div class="down">▼</div>
+      <div class="node">مخزن فرعي <small>المستوى 3</small></div>
+    </div>
+    <div class="note">
+      <p>الأصناف بتتحرّك من <strong>فوق لتحت</strong> بس — زي التوزيع الحكومي الطبيعي.</p>
+      <p><span class="yes">✔ مسموح:</span> رئيسي ← إقليمي، رئيسي ← فرعي، إقليمي ← فرعي.</p>
+      <p><span class="no">✘ مرفوض:</span> أي حركة لفوق (فرعي ← رئيسي) أو بين نفس المستوى. النظام بيرفضها ويقولك السبب.</p>
+    </div>
+  </div>
+
+  <div class="footnote">
+    <strong>علاقته بـ Odoo:</strong> ده نفس منطق موديول المخزون (Inventory) في Odoo بالظبط — حركات مخزون + رصيد مشتق + نقل داخلي + مرفقات. الفرق إننا بنعمل <strong>الجزء اللي محتاجينه فقط</strong> (تتبّع كميات الأصناف بين المقرات)، من غير الطبقة التجارية والمالية (تسعير، أوامر شراء وبيع، باركود) — لأنها مالهاش لازمة في طبيعة الشغل الحكومي.
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  const warehouses = [
+    { key: 'benha',  name: 'مخزن بنها',   type: 'رئيسي',  level: 1, stock: 0 },
+    { key: 'shibin', name: 'مخزن شبين',   type: 'إقليمي', level: 2, stock: 0 },
+    { key: 'far3',   name: 'المخزن الفرعي', type: 'فرعي',   level: 3, stock: 0 },
+  ];
+  const byKey = k => warehouses.find(w => w.key === k);
+  const UNIT = 'طابعة', ITEM = 'طابعات', USER = 'أحمد';
+
+  const steps = [
+    { kind: 'opening', wh: 'benha', qty: 100, title: 'رصيد افتتاحي', icon: '🏁',
+      desc: 'أول ما بدأنا نستخدم النظام، دخّلنا إن مخزن بنها (الرئيسي) عنده 100 طابعة حاليًا. دي نقطة البداية.' },
+    { kind: 'incoming', wh: 'benha', qty: 50, supplier: 'شركة التوريدات', icon: '📥',
+      desc: 'وصلت شحنة 50 طابعة جديدة للمخزن الرئيسي. سجّلنا التاريخ والمورد والكمية، ورفعنا صورة إذن الاستلام. الرصيد زاد أوتوماتيك.',
+      paper: 'إذن استلام (صورة)' },
+    { kind: 'transfer', from: 'benha', to: 'shibin', qty: 30, title: 'نقل بين المخازن', icon: '🔄',
+      desc: 'بعتنا 30 طابعة من بنها لمخزن شبين. النظام خصم 30 من بنها وأضافها لشبين في نفس اللحظة، ورفعنا إذن الصرف.',
+      paper: 'إذن صرف (صورة)' },
+    { kind: 'transfer', from: 'shibin', to: 'far3', qty: 10, title: 'نقل بين المخازن', icon: '🔄',
+      desc: 'وزّعنا 10 طابعات من شبين للمخزن الفرعي في القرية. لاحظ إن الحركة نازلة لتحت — وده المسموح.',
+      paper: 'إذن صرف (صورة)' },
+  ];
+
+  let idx = 0;
+  const boardEl = document.getElementById('board');
+  const ledgerEl = document.getElementById('ledger');
+  const nextBtn = document.getElementById('nextBtn');
+  const progressEl = document.getElementById('progress');
+  let ledgerRows = 0;
+
+  function renderBoard() {
+    boardEl.innerHTML = warehouses.map(w => `
+      <div class="wh" data-wh="${w.key}">
+        <span class="lvl">${w.level}</span>
+        <div class="type">${w.type}</div>
+        <div class="name">${w.name}</div>
+        <div class="count" data-count="${w.key}">${w.stock}</div>
+        <div class="unit">${ITEM}</div>
+      </div>`).join('');
+  }
+
+  function animateCount(key, from, to) {
+    const el = document.querySelector(`[data-count="${key}"]`);
+    if (!el) return;
+    el.classList.remove('up', 'down');
+    el.classList.add(to > from ? 'up' : 'down');
+    const whEl = el.closest('.wh'); whEl.classList.add('pulse');
+    const dur = 550, t0 = performance.now();
+    const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reduce) { el.textContent = to; }
+    else {
+      const tick = now => {
+        const p = Math.min(1, (now - t0) / dur);
+        el.textContent = Math.round(from + (to - from) * (1 - Math.pow(1 - p, 3)));
+        if (p < 1) requestAnimationFrame(tick);
+      };
+      requestAnimationFrame(tick);
+    }
+    setTimeout(() => { el.classList.remove('up', 'down'); whEl.classList.remove('pulse'); }, 900);
+  }
+
+  function clearEmpty() {
+    const er = ledgerEl.querySelector('.empty-row');
+    if (er) er.remove();
+  }
+
+  function addLedgerRow({ typeTag, tagClass, whName, qtyText, qtyClass, before, after }) {
+    clearEmpty();
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><span class="tag ${tagClass}">${typeTag}</span></td>
+      <td>${whName}</td>
+      <td>${ITEM}</td>
+      <td class="qty ${qtyClass}">${qtyText}</td>
+      <td class="bal"><span class="from">${before}</span><span class="arrow">←</span><span class="to">${after}</span></td>
+      <td>${USER}</td>`;
+    ledgerEl.appendChild(tr);
+    ledgerRows++;
+  }
+
+  function applyStep(step) {
+    if (step.kind === 'opening' || step.kind === 'incoming') {
+      const w = byKey(step.wh); const before = w.stock; const after = before + step.qty;
+      w.stock = after;
+      animateCount(w.key, before, after);
+      addLedgerRow({
+        typeTag: step.kind === 'opening' ? 'رصيد افتتاحي' : 'وارد',
+        tagClass: step.kind === 'opening' ? 'open' : 'in',
+        whName: w.name, qtyText: '+' + step.qty, qtyClass: 'plus', before, after,
+      });
+    } else if (step.kind === 'transfer') {
+      const from = byKey(step.from), to = byKey(step.to);
+      const fb = from.stock, fa = fb - step.qty;
+      const tb = to.stock, ta = tb + step.qty;
+      from.stock = fa; to.stock = ta;
+      animateCount(from.key, fb, fa);
+      setTimeout(() => animateCount(to.key, tb, ta), 120);
+      addLedgerRow({ typeTag: 'صرف (نقل)', tagClass: 'out', whName: from.name,
+        qtyText: '−' + step.qty, qtyClass: 'minus', before: fb, after: fa });
+      addLedgerRow({ typeTag: 'استلام (نقل)', tagClass: 'in', whName: to.name,
+        qtyText: '+' + step.qty, qtyClass: 'plus', before: tb, after: ta });
+    }
+  }
+
+  function renderOpCard(step, n) {
+    const card = document.getElementById('opCard');
+    card.className = 'op-card op-' + step.kind;
+    document.getElementById('opBadge').textContent = step.icon;
+    document.getElementById('opStep').textContent = 'الخطوة ' + n + ' من ' + steps.length;
+    document.getElementById('opTitle').textContent =
+      step.kind === 'incoming' ? 'وارد للمخزن الرئيسي' : (step.title || '');
+    let html = step.desc;
+    document.getElementById('opDesc').innerHTML = html +
+      (step.paper ? `<br><span class="paper">📎 ${step.paper}</span>` : '');
+  }
+
+  function updateProgress() {
+    progressEl.textContent = idx >= steps.length
+      ? 'خلصنا كل الخطوات ✔'
+      : (idx + ' / ' + steps.length + ' حركات مسجّلة');
+  }
+
+  function next() {
+    if (idx >= steps.length) return;
+    const step = steps[idx];
+    applyStep(step);
+    renderOpCard(step, idx + 1);
+    idx++;
+    if (idx >= steps.length) {
+      nextBtn.disabled = true;
+      nextBtn.textContent = 'تم ✔';
+    }
+    updateProgress();
+  }
+
+  function reset() {
+    warehouses.forEach(w => w.stock = 0);
+    idx = 0; ledgerRows = 0;
+    renderBoard();
+    ledgerEl.innerHTML = '<tr class="empty-row"><td colspan="6">لسه مفيش حركات — اضغط «الخطوة التالية».</td></tr>';
+    nextBtn.disabled = false;
+    nextBtn.textContent = 'الخطوة التالية ←';
+    const card = document.getElementById('opCard');
+    card.className = 'op-card op-opening';
+    document.getElementById('opBadge').textContent = '👋';
+    document.getElementById('opStep').textContent = 'ابدأ من هنا';
+    document.getElementById('opTitle').textContent = 'مثال على مخزن الطابعات';
+    document.getElementById('opDesc').textContent = 'عندنا 3 مخازن فاضية. اضغط «الخطوة التالية» عشان نبدأ بإدخال الرصيد الافتتاحي، وبعدها وارد، وبعدها نقل بين المخازن — وشوف السجل بيتكوّن تحت.';
+    updateProgress();
+  }
+
+  let toastTimer;
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg; t.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => t.classList.remove('show'), 3200);
+  }
+  function tryRejected() {
+    showToast('⛔ مرفوض: مينفعش نقل من «الفرعي» إلى «الرئيسي» — الحركة بتبقى لتحت بس.');
+  }
+
+  document.getElementById('nextBtn').addEventListener('click', next);
+  document.getElementById('resetBtn').addEventListener('click', reset);
+  document.getElementById('tryBtn').addEventListener('click', tryRejected);
+
+  renderBoard();
+  updateProgress();
+</script>
