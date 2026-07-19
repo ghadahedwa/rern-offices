@@ -56,6 +56,22 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->middleware('permission:warehouses.index')
         ->name('warehouses.stock');
 
+    Route::livewire('warehouses/incoming', \App\Livewire\Warehouses\Incoming\Index::class)
+        ->middleware('permission:warehouses.index')
+        ->name('warehouses.incoming.index');
+
+    Route::livewire('warehouses/incoming/create', \App\Livewire\Warehouses\Incoming\Create::class)
+        ->middleware('permission:warehouses.create')
+        ->name('warehouses.incoming.create');
+
+    Route::livewire('warehouses/transfers', \App\Livewire\Warehouses\Transfers\Index::class)
+        ->middleware('permission:warehouses.index')
+        ->name('warehouses.transfers.index');
+
+    Route::livewire('warehouses/transfers/create', \App\Livewire\Warehouses\Transfers\Create::class)
+        ->middleware('permission:warehouses.create')
+        ->name('warehouses.transfers.create');
+
     // دليل الهاتف للمقرات — صلاحية offices.phone-directory (تُفحص داخل mount)
     Route::livewire('offices-phone-directory', \App\Livewire\Reports\PhoneDirectory::class)->name('offices.phone-directory');
 

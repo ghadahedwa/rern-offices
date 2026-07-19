@@ -73,12 +73,15 @@ return [
         ],
         'route_patterns' => [
             'warehouses.*',
+            // إدارة المخازن (تسجيل/تعديل المخازن نفسها) — كيان تشغيلي زي المقرات، مش قائمة مرجعية
+            'warehouse-manage.*',
         ],
         'super_admin_only' => false,
         'permissions' => [
             'warehouses.index',
             'warehouses.create',
             'warehouses.export',
+            'warehouses.settings',
         ],
     ],
 
@@ -94,8 +97,7 @@ return [
             'system-dashboard',
             'users.*',
             'roles.*',
-            // إعدادات المخازن (المخازن والأصناف والأنواع والوحدات) — تهيئة يديرها الأدمن
-            'warehouse-manage.*',
+            // إعدادات المخازن (الأصناف والأنواع والوحدات — قوائم مرجعية). إدارة المخازن نفسها انتقلت لفرع المخازن.
             'items.*',
             'warehouse-types.*',
             'item-units.*',

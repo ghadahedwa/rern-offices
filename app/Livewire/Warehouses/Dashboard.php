@@ -52,11 +52,16 @@ class Dashboard extends Component
     public function render()
     {
         return view('livewire.warehouses.dashboard', [
-            'warehousesCount' => Warehouse::count(),
-            'itemsCount'      => Item::count(),
-            'movementsMonth'  => WarehouseMovement::whereMonth('created_at', now()->month)
-                                    ->whereYear('created_at', now()->year)->count(),
-            'lowStock'        => $this->lowStockItems(),
+            'warehousesCount'  => Warehouse::count(),
+            'itemsCount'       => Item::count(),
+            'movementsMonth'   => WarehouseMovement::whereMonth('created_at', now()->month)
+                                     ->whereYear('created_at', now()->year)->count(),
+            'lowStock'         => $this->lowStockItems(),
+            'recentMovements'  => WarehouseMovement::with(['warehouse', 'item', 'user'])
+                                     ->latest('created_at')
+                                     ->limit(8)
+                                     ->get(),
+            'canCreate'        => Auth::user()?->can('warehouses.create'),
         ]);
     }
 }

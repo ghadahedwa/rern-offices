@@ -56,6 +56,37 @@ class WarehouseLedger
     }
 
     /**
+     * حذف بإرجاع: يتراجع عن أثر الوارد على الرصيد ثم يحذف المستند وحركاته.
+     * (لا يوجد تعديل بعد الحفظ — الحذف هو الطريقة الوحيدة للتراجع.)
+     *
+     * @throws WarehouseException لو الرصيد الحالي أقل من كمية أحد البنود (حركات لاحقة استهلكته).
+     */
+    public static function reverseIncoming(WarehouseIncoming $incoming): void
+    {
+        DB::transaction(function () use ($incoming) {
+            foreach ($incoming->items as $line) {
+                $stock = static::lockStock($incoming->warehouse_id, $line->item_id);
+
+                if ($stock->quantity < $line->quantity) {
+                    $itemName = $line->item?->name ?? ('#'.$line->item_id);
+                    throw new WarehouseException(
+                        "لا يمكن حذف الوارد: الرصيد الحالي للصنف «{$itemName}» ({$stock->quantity}) "
+                        ."أقل من الكمية الواردة ({$line->quantity})."
+                    );
+                }
+
+                $stock->update(['quantity' => $stock->quantity - $line->quantity]);
+            }
+
+            WarehouseMovement::where('reference_type', $incoming->getMorphClass())
+                ->where('reference_id', $incoming->id)
+                ->delete();
+
+            $incoming->delete();
+        });
+    }
+
+    /**
      * تنفيذ النقل: خصم من المصدر وإضافة للمستلم لكل بند — إمّا كله أو لا شيء.
      *
      * @throws WarehouseException قاعدة النقل مخالفة أو رصيد أحد الأصناف غير كافٍ.
@@ -99,6 +130,40 @@ class WarehouseLedger
                     $line->quantity, $tb, $ta, $transfer, $transfer->created_by
                 );
             }
+        });
+    }
+
+    /**
+     * حذف بإرجاع: يتراجع عن أثر النقل (يرجّع للمصدر، يخصم من المستلم) ثم يحذف المستند وحركاته.
+     * (لا يوجد تعديل بعد الحفظ — الحذف هو الطريقة الوحيدة للتراجع.)
+     *
+     * @throws WarehouseException لو رصيد المستلم الحالي أقل من كمية أحد البنود (حركات لاحقة استهلكته).
+     */
+    public static function reverseTransfer(WarehouseTransfer $transfer): void
+    {
+        DB::transaction(function () use ($transfer) {
+            foreach ($transfer->items as $line) {
+                $toStock = static::lockStock($transfer->to_warehouse_id, $line->item_id);
+
+                if ($toStock->quantity < $line->quantity) {
+                    $itemName = $line->item?->name ?? ('#'.$line->item_id);
+                    throw new WarehouseException(
+                        "لا يمكن حذف النقل: الرصيد الحالي للصنف «{$itemName}» في المخزن المستلم "
+                        ."({$toStock->quantity}) أقل من الكمية المنقولة ({$line->quantity})."
+                    );
+                }
+
+                $fromStock = static::lockStock($transfer->from_warehouse_id, $line->item_id);
+
+                $toStock->update(['quantity' => $toStock->quantity - $line->quantity]);
+                $fromStock->update(['quantity' => $fromStock->quantity + $line->quantity]);
+            }
+
+            WarehouseMovement::where('reference_type', $transfer->getMorphClass())
+                ->where('reference_id', $transfer->id)
+                ->delete();
+
+            $transfer->delete();
         });
     }
 

@@ -922,6 +922,7 @@ return [
     'wh_remove_line'              => 'حذف',
     'wh_movements'                => 'سجل الحركات',
     'wh_movement_type'            => 'نوع الحركة',
+    'wh_movement_date'            => 'التاريخ',
     'wh_balance_before'           => 'الرصيد قبل',
     'wh_balance_after'            => 'الرصيد بعد',
     'wh_type_opening'             => 'رصيد افتتاحي',

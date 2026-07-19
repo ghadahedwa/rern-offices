@@ -36,6 +36,15 @@
         'meetings.create' => 'إضافة اجتماع',
         'meetings.edit'   => 'تعديل اجتماع',
         'meetings.delete' => 'حذف اجتماع',
+
+        'warehouses.index'       => 'عرض قوائم المخازن والأرصدة والحركات',
+        'warehouses.view'        => 'عرض تفاصيل حركة/مستند',
+        'warehouses.create'      => 'إضافة (رصيد افتتاحي / وارد / نقل)',
+        'warehouses.edit'        => 'تعديل',
+        'warehouses.delete'      => 'حذف (بإرجاع الرصيد)',
+        'warehouses.export'      => 'تصدير تقارير المخازن',
+        'warehouses.attachments' => 'عرض وتنزيل مرفقات المخازن',
+        'warehouses.settings'    => 'إدارة إعدادات المخازن (المخازن / الأصناف / الأنواع / الوحدات)',
     ];
 
     // الصلاحيات مجمّعة حسب الفرع ← مجموعات فرعية (موديولات)
@@ -50,8 +59,12 @@
         'home.branch_meetings' => [
             'الاجتماعات'        => $permissions->filter(fn($p) => str_starts_with($p->name, 'meetings.')),
         ],
+        'home.branch_warehouses' => [
+            'المخازن'           => $permissions->filter(fn($p) => str_starts_with($p->name, 'warehouses.') && $p->name !== 'warehouses.settings'),
+        ],
         'home.branch_system' => [
             'إعدادات المقرات'   => $permissions->filter(fn($p) => $p->name === 'offices.settings'),
+            'إعدادات المخازن'   => $permissions->filter(fn($p) => $p->name === 'warehouses.settings'),
         ],
     ];
 @endphp
