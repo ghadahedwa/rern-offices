@@ -923,6 +923,8 @@ return [
     'wh_movements'                => 'سجل الحركات',
     'wh_movement_type'            => 'نوع الحركة',
     'wh_movement_date'            => 'التاريخ',
+    'wh_date_from'                => 'من',
+    'wh_date_to'                  => 'إلى',
     'wh_balance_before'           => 'الرصيد قبل',
     'wh_balance_after'            => 'الرصيد بعد',
     'wh_type_opening'             => 'رصيد افتتاحي',
@@ -930,6 +932,7 @@ return [
     'wh_type_transfer_out'        => 'صرف (نقل)',
     'wh_type_transfer_in'         => 'استلام (نقل)',
     'wh_low_stock_alert'          => 'أصناف وصلت للحد الأدنى',
+    'wh_below_min_stock'          => 'تحت الحد الأدنى',
     'wh_main_warehouse_only'      => 'الوارد يُسجَّل على المخزن الرئيسي فقط',
     'wh_no_main_warehouse'        => 'لا يوجد مخزن رئيسي — أنشئ مخزناً نوعه «رئيسي» أولاً',
 ];

@@ -175,6 +175,12 @@
                         {{ __('home.warehouses_dashboard') }}
                     </flux:sidebar.item>
 
+                    @if(auth()->user()?->can('warehouses.settings'))
+                    <flux:sidebar.item icon="building-office-2" :href="route('warehouse-manage.index')" :current="request()->routeIs('warehouse-manage.*')" wire:navigate>
+                        {{ __('home.warehouses_manage_title') }}
+                    </flux:sidebar.item>
+                    @endif
+
                     <flux:sidebar.item icon="scale" :href="route('warehouses.stock')" :current="request()->routeIs('warehouses.stock')" wire:navigate>
                         {{ __('home.wh_stock') }}
                     </flux:sidebar.item>
@@ -187,17 +193,16 @@
                         {{ __('home.wh_transfers') }}
                     </flux:sidebar.item>
 
+                    <flux:sidebar.item icon="queue-list" :href="route('warehouses.movements')" :current="request()->routeIs('warehouses.movements')" wire:navigate>
+                        {{ __('home.wh_movements') }}
+                    </flux:sidebar.item>
+
                     @if(auth()->user()?->hasRole('super-admin') || auth()->user()?->can('warehouses.create'))
                     <flux:sidebar.item icon="clipboard-document-list" :href="route('warehouses.opening-balances')" :current="request()->routeIs('warehouses.opening-balances')" wire:navigate>
                         {{ __('home.wh_opening_balances') }}
                     </flux:sidebar.item>
                     @endif
 
-                    @if(auth()->user()?->can('warehouses.settings'))
-                    <flux:sidebar.item icon="building-office-2" :href="route('warehouse-manage.index')" :current="request()->routeIs('warehouse-manage.*')" wire:navigate>
-                        {{ __('home.warehouses_manage_title') }}
-                    </flux:sidebar.item>
-                    @endif
                     @endif {{-- /branch: warehouses --}}
 
                     @if($currentBranch === 'system')

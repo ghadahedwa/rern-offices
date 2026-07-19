@@ -6,10 +6,12 @@
     </div>
 
     {{-- Filters --}}
-    <div class="flex flex-wrap gap-3">
-        <input wire:model.live.debounce.300ms="search" type="text"
-               placeholder="{{ __('home.search') }} — {{ __('home.item_name') }}"
-               class="w-full max-w-xs border border-zinc-300 dark:border-zinc-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-[#c9a847]" />
+    <div class="flex flex-wrap items-end gap-3">
+        <div class="max-w-sm flex-1 min-w-50">
+            <input wire:model.live.debounce.300ms="search" type="text"
+                   placeholder="{{ __('home.search') }}"
+                   class="w-full border border-zinc-300 dark:border-zinc-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-[#c9a847]" />
+        </div>
         <select wire:model.live="warehouseFilter"
                 class="border border-zinc-300 dark:border-zinc-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-[#c9a847]">
             <option value="">{{ __('home.wh_all_warehouses') }}</option>

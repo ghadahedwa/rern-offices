@@ -72,6 +72,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->middleware('permission:warehouses.create')
         ->name('warehouses.transfers.create');
 
+    Route::livewire('warehouses/movements', \App\Livewire\Warehouses\Movements::class)
+        ->middleware('permission:warehouses.index')
+        ->name('warehouses.movements');
+
     // دليل الهاتف للمقرات — صلاحية offices.phone-directory (تُفحص داخل mount)
     Route::livewire('offices-phone-directory', \App\Livewire\Reports\PhoneDirectory::class)->name('offices.phone-directory');
 
@@ -122,6 +126,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::livewire('warehouse-manage', \App\Livewire\Warehouses\Manage\Index::class)->name('warehouse-manage.index');
         Route::livewire('warehouse-manage/create', \App\Livewire\Warehouses\Manage\Create::class)->name('warehouse-manage.create');
         Route::livewire('warehouse-manage/{warehouse}/edit', \App\Livewire\Warehouses\Manage\Create::class)->name('warehouse-manage.edit');
+        Route::livewire('warehouse-manage/{warehouse}', \App\Livewire\Warehouses\Manage\Show::class)->name('warehouse-manage.show');
 
         Route::livewire('items', \App\Livewire\Warehouses\Items\Index::class)->name('items.index');
         Route::livewire('items/create', \App\Livewire\Warehouses\Items\Create::class)->name('items.create');

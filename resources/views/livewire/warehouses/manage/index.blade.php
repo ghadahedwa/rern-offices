@@ -53,6 +53,10 @@
                         @if($canManage)
                             <td class="px-4 py-3">
                                 <div class="flex items-center gap-2">
+                                    <a href="{{ route('warehouse-manage.show', $warehouse) }}" wire:navigate
+                                       class="inline-flex items-center text-xs px-3 py-1.5 rounded-md border border-zinc-300 dark:border-zinc-600 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition">
+                                        {{ __('home.view') }}
+                                    </a>
                                     <a href="{{ route('warehouse-manage.edit', $warehouse) }}" wire:navigate
                                        class="inline-flex items-center text-xs px-3 py-1.5 rounded-md border border-zinc-300 dark:border-zinc-600 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition">
                                         {{ __('home.edit') }}
