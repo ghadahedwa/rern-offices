@@ -6,6 +6,7 @@
 <title>رأيك يهمنا — منظومة قطاع الشهر العقاري والتوثيق</title>
 <link rel="preconnect" href="https://fonts.bunny.net">
 <link href="https://fonts.bunny.net/css?family=cairo:400,500,600,700&family=reem-kufi:400,500,600,700" rel="stylesheet" />
+@verbatim
 <style>
 /* ============ Design tokens ============ */
 :root{
@@ -168,15 +169,16 @@ footer svg{width:14px;height:14px}
 }
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
+@endverbatim
 </head>
 <body>
 <div class="dots tr"></div>
 <div class="dots bl"></div>
 
-<!-- ===== Top bar ===== -->
+{{-- ===== Top bar ===== --}}
 <header class="topbar">
   <div class="brand">
-    <img class="emblem" src="/images/logo3.png" alt="شعار وزارة العدل" />
+    <img class="emblem" src="{{ asset('images/logo3.png') }}" alt="شعار وزارة العدل" />
     <div class="titles">
       <b>منظومة قطاع الشهر العقاري والتوثيق</b>
       <span>بوابة رأي المواطن</span>
@@ -188,7 +190,7 @@ footer svg{width:14px;height:14px}
   </button>
 </header>
 
-<!-- ===== Hero ===== -->
+{{-- ===== Hero ===== --}}
 <main>
   <span class="eyebrow">نسعد بخدمتك</span>
   <h1>رأيك <span class="accent">يهمنا</span></h1>
@@ -199,7 +201,7 @@ footer svg{width:14px;height:14px}
 
   <div class="cards">
 
-    <!-- شكوى -->
+    {{-- شكوى --}}
     <a href="#" class="card" style="--c:var(--complaint);--tint:var(--complaint-tint)">
       <div class="ic">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
@@ -215,7 +217,7 @@ footer svg{width:14px;height:14px}
       </div>
     </a>
 
-    <!-- اقتراح -->
+    {{-- اقتراح --}}
     <a href="#" class="card" style="--c:var(--suggestion);--tint:var(--suggestion-tint)">
       <div class="ic">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
@@ -231,7 +233,7 @@ footer svg{width:14px;height:14px}
       </div>
     </a>
 
-    <!-- تقييم -->
+    {{-- تقييم --}}
     <a href="#" class="card" style="--c:var(--rating);--tint:var(--rating-tint)">
       <div class="ic">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
@@ -254,7 +256,7 @@ footer svg{width:14px;height:14px}
   </div>
 </main>
 
-<!-- ===== Footer ===== -->
+{{-- ===== Footer ===== --}}
 <footer>
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
   بياناتك آمنة وتُستخدم لتحسين الخدمة فقط · جميع الحقوق محفوظة &copy; وزارة العدل
