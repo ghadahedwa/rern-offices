@@ -13,11 +13,11 @@
             input[type="checkbox"]:focus { box-shadow: 0 0 0 2px #c9a84766; }
         </style>
     </head>
-    <body class="antialiased min-h-screen" style="background-image: url('/images/bg-image.jpg'); background-size: cover; background-position: center; background-repeat: no-repeat;">
+    <body class="antialiased min-h-dvh lg:h-dvh lg:overflow-hidden" style="background-image: url('/images/bg-image.jpg'); background-size: cover; background-position: center; background-repeat: no-repeat;">
         {{-- Background overlay --}}
         <div class="fixed inset-0" style="background-color: rgba(255, 255, 255, 0.7);"></div>
 
-        <div class="relative min-h-screen flex flex-col items-center py-6 px-4 overflow-hidden">
+        <div class="relative min-h-dvh lg:h-dvh flex flex-col items-center py-4 px-4 overflow-hidden">
 
             {{-- Dot grid decoration: top-start corner --}}
             <div class="dot-grid absolute top-4 start-4 w-36 h-36 opacity-70 pointer-events-none"></div>
@@ -25,7 +25,7 @@
             <div class="dot-grid absolute bottom-4 end-4 w-36 h-36 opacity-70 pointer-events-none"></div>
 
             {{-- Main content --}}
-            <div class="flex flex-col items-center w-full max-w-xl z-10 gap-4 flex-1 justify-center">
+            <div class="flex flex-col items-center w-full max-w-xl z-10 gap-3 flex-1 justify-center">
 
                 <img src="{{ asset('images/logo3.png') }}" class="w-58 h-58 object-contain" alt="الشعار" />
 
