@@ -125,8 +125,8 @@ h1 .accent{color:var(--gold-dark)}
   color:var(--ink-soft)}
 
 /* ============ Cards ============ */
-.cards{margin-top:clamp(18px,3vh,34px);width:100%;max-width:1000px;
-  display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+.cards{margin-top:clamp(18px,3vh,34px);width:100%;max-width:700px;
+  display:grid;grid-template-columns:repeat(2,1fr);gap:20px}
 .card{--c:var(--gold);--tint:var(--rating-tint);
   position:relative;background:var(--paper-2);border:1px solid var(--line);border-radius:20px;
   padding:28px 24px 24px;text-align:center;cursor:pointer;text-decoration:none;color:inherit;
@@ -206,22 +206,6 @@ footer svg{width:14px;height:14px}
   </p>
 
   <div class="cards">
-
-    {{-- شكوى --}}
-    <a href="#" class="card" style="--c:var(--complaint);--tint:var(--complaint-tint)">
-      <div class="ic">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M21 15a2 2 0 0 1-2 2H8l-4 4V6a2 2 0 0 1 2-2h13a2 2 0 0 1 2 2Z"/><path d="M12 8v4"/><circle cx="12" cy="15" r=".6" fill="currentColor"/>
-        </svg>
-      </div>
-      <div class="body">
-        <h3>تقديم شكوى</h3>
-        <p>واجهتَ تقصيرًا في الخدمة؟ أبلِغنا لتُتَّخذ اللازم بشأنها.</p>
-        <span class="go">ابدأ الآن
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
-        </span>
-      </div>
-    </a>
 
     {{-- اقتراح --}}
     <a href="#" class="card" style="--c:var(--suggestion);--tint:var(--suggestion-tint)">
