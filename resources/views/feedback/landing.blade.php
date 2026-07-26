@@ -1,118 +1,9 @@
-<!DOCTYPE html>
-<html lang="ar" dir="rtl">
-<head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>رأيك يهمنا — منظومة قطاع الشهر العقاري والتوثيق</title>
-<link rel="preconnect" href="https://fonts.bunny.net">
-<link href="https://fonts.bunny.net/css?family=cairo:400,500,600,700&family=reem-kufi:400,500,600,700" rel="stylesheet" />
+<x-layouts.feedback>
+
+@push('styles')
 @verbatim
 <style>
-/* ============ Design tokens ============ */
-:root{
-  --paper:#f7f4ec;          /* warm gold-biased ground */
-  --paper-2:#fffdf8;        /* card ground */
-  --ink:#26314f;            /* deep navy ink */
-  --ink-soft:#5b667f;       /* muted navy */
-  --line:#e6dfcf;           /* warm hairline */
-  --gold:#c9a847;
-  --gold-dark:#b8962e;
-  /* per-card accents */
-  --complaint:#b8544a;      /* clay / brick */
-  --complaint-tint:#f7e7e4;
-  --suggestion:#2f7d78;     /* muted teal */
-  --suggestion-tint:#e2f0ee;
-  --rating:#c9a847;         /* gold */
-  --rating-tint:#f6eecf;
-  --overlay:rgba(247,244,236,.78);
-  --shadow:0 1px 2px rgba(38,49,79,.05), 0 12px 30px -12px rgba(38,49,79,.18);
-  --shadow-hover:0 2px 4px rgba(38,49,79,.06), 0 22px 45px -14px rgba(38,49,79,.32);
-}
-@media (prefers-color-scheme: dark){
-  :root{
-    --overlay:rgba(12,15,22,.86);
-    --paper:#12161f;
-    --paper-2:#1b2130;
-    --ink:#eae6d9;
-    --ink-soft:#98a1ba;
-    --line:#2a3143;
-    --gold:#d8b856;
-    --gold-dark:#c9a847;
-    --complaint:#e07d72;
-    --complaint-tint:#33232180;
-    --suggestion:#5bb3ad;
-    --suggestion-tint:#1b302e80;
-    --rating:#d8b856;
-    --rating-tint:#2e281680;
-    --shadow:0 1px 2px rgba(0,0,0,.4), 0 14px 34px -14px rgba(0,0,0,.6);
-    --shadow-hover:0 2px 6px rgba(0,0,0,.5), 0 26px 50px -14px rgba(0,0,0,.75);
-  }
-}
-:root[data-theme="light"]{
-  --overlay:rgba(247,244,236,.78);
-  --paper:#f7f4ec; --paper-2:#fffdf8; --ink:#26314f; --ink-soft:#5b667f;
-  --line:#e6dfcf; --gold:#c9a847; --gold-dark:#b8962e;
-  --complaint:#b8544a; --complaint-tint:#f7e7e4;
-  --suggestion:#2f7d78; --suggestion-tint:#e2f0ee;
-  --rating:#c9a847; --rating-tint:#f6eecf;
-  --shadow:0 1px 2px rgba(38,49,79,.05), 0 12px 30px -12px rgba(38,49,79,.18);
-  --shadow-hover:0 2px 4px rgba(38,49,79,.06), 0 22px 45px -14px rgba(38,49,79,.32);
-}
-:root[data-theme="dark"]{
-  --overlay:rgba(12,15,22,.86);
-  --paper:#12161f; --paper-2:#1b2130; --ink:#eae6d9; --ink-soft:#98a1ba;
-  --line:#2a3143; --gold:#d8b856; --gold-dark:#c9a847;
-  --complaint:#e07d72; --complaint-tint:#33232180;
-  --suggestion:#5bb3ad; --suggestion-tint:#1b302e80;
-  --rating:#d8b856; --rating-tint:#2e281680;
-  --shadow:0 1px 2px rgba(0,0,0,.4), 0 14px 34px -14px rgba(0,0,0,.6);
-  --shadow-hover:0 2px 6px rgba(0,0,0,.5), 0 26px 50px -14px rgba(0,0,0,.75);
-}
-
-*{box-sizing:border-box;margin:0;padding:0}
-html,body{height:100%}
-body{
-  font-family:'Cairo','Segoe UI',Tahoma,sans-serif;
-  color:var(--ink);
-  height:100dvh;
-  display:flex;flex-direction:column;
-  position:relative;
-  overflow:hidden;
-  transition:color .3s ease;
-  background:var(--paper) url('/images/bg-image.jpg') center/cover no-repeat fixed;
-}
-/* readability overlay over the photo — tuned per theme */
-body::before{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;
-  background:var(--overlay);transition:background .3s ease}
-/* gold dot-grid decoration in the corners */
-.dots{position:fixed;width:190px;height:190px;opacity:.5;pointer-events:none;z-index:0;
-  background-image:radial-gradient(circle,var(--gold) 1.4px,transparent 1.4px);
-  background-size:17px 17px;-webkit-mask-image:radial-gradient(closest-side,#000,transparent);
-          mask-image:radial-gradient(closest-side,#000,transparent);}
-.dots.tr{top:-30px;left:-30px}
-.dots.bl{bottom:-30px;right:-30px}
-
-/* ============ Top bar ============ */
-.topbar{position:relative;z-index:2;flex:none;display:flex;align-items:center;
-  justify-content:space-between;padding:12px 26px;gap:16px}
-.brand{display:flex;align-items:center;gap:12px}
-.brand .emblem{width:54px;height:54px;flex:none;object-fit:contain}
-.brand .titles{display:flex;flex-direction:column;line-height:1.25}
-.brand .titles b{font-family:'Reem Kufi',sans-serif;font-weight:600;font-size:15px;color:var(--ink)}
-.brand .titles span{font-size:11.5px;color:var(--ink-soft)}
-.theme-btn{width:40px;height:40px;border-radius:12px;border:1px solid var(--line);
-  background:var(--paper-2);color:var(--ink-soft);cursor:pointer;display:grid;place-items:center;
-  transition:.2s}
-.theme-btn:hover{color:var(--gold);border-color:var(--gold)}
-.theme-btn:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
-.theme-btn svg{width:19px;height:19px}
-.theme-btn .moon{display:none}
-:root[data-theme="dark"] .theme-btn .sun{display:none}
-:root[data-theme="dark"] .theme-btn .moon{display:block}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .theme-btn .sun{display:none}
-  :root:not([data-theme="light"]) .theme-btn .moon{display:block}}
-
-/* ============ Hero ============ */
+/* ============ Hero (خاص بصفحة الـ landing) ============ */
 main{position:relative;z-index:1;flex:1;min-height:0;display:flex;flex-direction:column;
   align-items:center;justify-content:center;padding:16px 20px;text-align:center}
 .eyebrow{font-family:'Reem Kufi',sans-serif;font-size:13px;font-weight:500;letter-spacing:.14em;
@@ -151,14 +42,7 @@ h1 .accent{color:var(--gold-dark)}
 .card .stars{display:flex;gap:3px;margin-top:2px}
 .card .stars svg{width:15px;height:15px;fill:var(--rating);stroke:none}
 
-/* ============ Footer ============ */
-footer{position:relative;z-index:1;flex:none;text-align:center;padding:12px 20px;
-  border-top:1px solid var(--line);color:var(--ink-soft);font-size:12px;display:flex;
-  align-items:center;justify-content:center;gap:8px;flex-wrap:wrap}
-footer svg{width:14px;height:14px}
-
 @media (max-width:820px){
-  body{height:auto;min-height:100dvh;overflow-y:auto}
   .cards{grid-template-columns:1fr;max-width:420px;gap:16px}
   .card{flex-direction:row;text-align:start;padding:20px;align-items:center;gap:18px}
   .card .ic{margin-bottom:0;width:60px;height:60px;border-radius:18px;flex:none}
@@ -167,48 +51,42 @@ footer svg{width:14px;height:14px}
   .card .go{margin-top:10px}
   .card p{max-width:none}
 }
+
+/* ============ شريط إرشادي — الشكاوى الرسمية ============ */
+.official-note{margin-top:clamp(16px,2.4vh,26px);width:100%;max-width:700px;
+  display:flex;align-items:flex-start;gap:14px;text-align:start;
+  background:var(--paper-2);border:1px solid var(--line);border-inline-start:3px solid var(--danger);
+  border-radius:14px;padding:14px 18px;box-shadow:var(--shadow)}
+.official-note .on-ic{width:40px;height:40px;flex:none;border-radius:12px;
+  background:var(--danger-tint);color:var(--danger);display:grid;place-items:center}
+.official-note .on-ic svg{width:22px;height:22px}
+.official-note .on-title{font-size:12.5px;line-height:1.6;color:var(--ink);font-weight:500}
+.official-note .on-title b{font-weight:700}
+.official-note .on-links{margin-top:8px;display:flex;flex-wrap:wrap;gap:7px 16px}
+.official-note .on-links a{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:600;
+  color:var(--ink-soft);text-decoration:none;transition:.18s}
+.official-note .on-links a:hover{color:var(--danger)}
+.official-note .on-links a svg{width:15px;height:15px;flex:none}
 @media (max-width:520px){
-  .topbar{padding:10px 16px;gap:10px}
-  .brand{gap:10px}
-  .brand .emblem{width:50px;height:50px}
-  .brand .titles b{font-size:12.5px;line-height:1.4}
-  .theme-btn{width:36px;height:36px}
+  .official-note{padding:13px 15px;gap:11px}
+  .official-note .on-links{gap:7px 12px}
 }
-@media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 @endverbatim
-</head>
-<body>
-<div class="dots tr"></div>
-<div class="dots bl"></div>
-
-{{-- ===== Top bar ===== --}}
-<header class="topbar">
-  <div class="brand">
-    <img class="emblem" src="{{ asset('images/logo3.png') }}" alt="شعار وزارة العدل" />
-    <div class="titles">
-      <b>منظومة قطاع الشهر العقاري والتوثيق</b>
-    </div>
-  </div>
-  <button class="theme-btn" onclick="toggleTheme()" aria-label="تبديل المظهر">
-    <svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
-    <svg class="moon" viewBox="0 0 24 24" fill="currentColor"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"/></svg>
-  </button>
-</header>
+@endpush
 
 {{-- ===== Hero ===== --}}
 <main>
   <span class="eyebrow">نسعد بخدمتك</span>
   <h1>رأيك <span class="accent">يهمنا</span></h1>
   <p class="lead">
-    شاركنا رأيك في الخدمة المقدَّمة بمقرات قطاع الشهر العقاري والتوثيق.
-    اختر ما تريد من الخيارات التالية، ولن يستغرق الأمر سوى دقائق.
+    شاركنا رأيك في خدماتنا، ولن يستغرق الأمر سوى دقائق.
   </p>
 
   <div class="cards">
 
     {{-- اقتراح --}}
-    <a href="#" class="card" style="--c:var(--suggestion);--tint:var(--suggestion-tint)">
+    <a href="{{ route('feedback.suggestion') }}" wire:navigate class="card" style="--c:var(--suggestion);--tint:var(--suggestion-tint)">
       <div class="ic">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
           <path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-4 10.5c.6.6 1 1.4 1 2.5h6c0-1.1.4-1.9 1-2.5A6 6 0 0 0 12 3Z"/>
@@ -224,7 +102,7 @@ footer svg{width:14px;height:14px}
     </a>
 
     {{-- تقييم --}}
-    <a href="#" class="card" style="--c:var(--rating);--tint:var(--rating-tint)">
+    <a href="{{ route('feedback.rating') }}" wire:navigate class="card" style="--c:var(--rating);--tint:var(--rating-tint)">
       <div class="ic">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
           <path d="M12 3l2.6 5.3 5.9.9-4.3 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8L4.5 9.2l5.9-.9Z"/>
@@ -244,21 +122,32 @@ footer svg{width:14px;height:14px}
     </a>
 
   </div>
+
+  {{-- ===== شريط إرشادي: الشكاوى الرسمية ===== --}}
+  <div class="official-note">
+    <div class="on-ic">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/>
+      </svg>
+    </div>
+    <div class="on-body">
+      <p class="on-title">لتقديم شكوى رسمية، توجّه إلى <b>منظومة الشكاوى الحكومية الموحدة بمجلس الوزراء</b></p>
+      <div class="on-links">
+        <a href="tel:16528">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3 19.5 19.5 0 0 1-6-6 19.8 19.8 0 0 1-3-8.6A2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 1.9.7 2.8a2 2 0 0 1-.5 2.1L8.1 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.5c.9.3 1.8.6 2.8.7a2 2 0 0 1 1.7 2z"/></svg>
+          16528
+        </a>
+        <a href="https://wa.me/201555516528" target="_blank" rel="noopener">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 0 0-8.6 15l-1.3 4.8 4.9-1.3A10 10 0 1 0 12 2zm0 18.2a8.2 8.2 0 0 1-4.2-1.1l-.3-.2-2.9.8.8-2.8-.2-.3A8.2 8.2 0 1 1 12 20.2zm4.5-6.1c-.2-.1-1.4-.7-1.7-.8s-.4-.1-.6.1-.6.8-.8 1-.3.2-.5.1a6.7 6.7 0 0 1-2-1.2 7.4 7.4 0 0 1-1.3-1.7c-.2-.3 0-.4.1-.6l.4-.5.3-.4v-.4c0-.1-.6-1.4-.8-1.9s-.4-.4-.6-.4h-.5a1 1 0 0 0-.7.3 3 3 0 0 0-.9 2.2 5.2 5.2 0 0 0 1 2.7 11.8 11.8 0 0 0 4.6 4c.6.3 1.1.4 1.5.6a3.6 3.6 0 0 0 1.6.1 2.7 2.7 0 0 0 1.7-1.2 2.2 2.2 0 0 0 .2-1.2c-.1-.1-.2-.2-.5-.3z"/></svg>
+          واتساب ٠١٥٥٥٥١٦٥٢٨
+        </a>
+        <a href="https://www.shakwa.eg" target="_blank" rel="noopener">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 0 20 15.3 15.3 0 0 1 0-20z"/></svg>
+          shakwa.eg
+        </a>
+      </div>
+    </div>
+  </div>
 </main>
 
-{{-- ===== Footer ===== --}}
-<footer>
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-  بياناتك آمنة وتُستخدم لتحسين الخدمة فقط · جميع الحقوق محفوظة &copy; وزارة العدل
-</footer>
-
-<script>
-function toggleTheme(){
-  const root=document.documentElement;
-  const now=root.getAttribute('data-theme')
-    || (matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light');
-  root.setAttribute('data-theme', now==='dark'?'light':'dark');
-}
-</script>
-</body>
-</html>
+</x-layouts.feedback>

@@ -4,8 +4,10 @@ use Illuminate\Support\Facades\Route;
 
 Route::redirect('/', '/login')->name('home');
 
-// بوابة رأي المواطن — صفحة عامة (بدون تسجيل دخول) للاستبيان: شكوى / اقتراح / تقييم
+// بوابة رأي المواطن — صفحات عامة (بدون تسجيل دخول): اقتراح / تقييم
 Route::view('feedback', 'feedback.landing')->name('feedback');
+Route::livewire('feedback/rating', \App\Livewire\Feedback\Rating::class)->name('feedback.rating');
+Route::livewire('feedback/suggestion', \App\Livewire\Feedback\Suggestion::class)->name('feedback.suggestion');
 
 Route::middleware(['auth', 'verified'])->group(function () {
     //Route::view('dashboard', 'dashboard')->name('dashboard');
