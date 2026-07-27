@@ -68,6 +68,24 @@
   background:var(--paper);border:1px dashed var(--line);border-radius:12px;padding:14px 16px}
 .gate-hint svg{width:18px;height:18px;flex:none;color:var(--accent)}
 
+/* حجب التكرار (قاعدة الأسبوعين) */
+.blocked{margin-top:22px;text-align:center;background:var(--danger-tint);
+  border:1px solid color-mix(in srgb,var(--danger) 35%,var(--line));border-radius:16px;padding:24px 20px}
+.blocked .ic{width:56px;height:56px;border-radius:50%;background:var(--paper-2);color:var(--danger);
+  display:grid;place-items:center;margin:0 auto 14px}
+.blocked .ic svg{width:28px;height:28px}
+.blocked p{font-size:13.5px;line-height:1.8;color:var(--ink)}
+.blocked .date{font-weight:700;color:var(--danger)}
+.blocked .alt{margin-top:16px;display:inline-flex;align-items:center;gap:7px;font-family:'Reem Kufi',sans-serif;
+  font-size:13.5px;font-weight:600;color:var(--accent-strong);text-decoration:none;border:1px solid var(--accent);
+  border-radius:12px;padding:9px 18px;transition:.2s}
+.blocked .alt:hover{background:var(--accent-tint)}
+.blocked .alt svg{width:15px;height:15px}
+
+/* خطأ حد الجهاز */
+.gate-error{margin-top:16px;font-size:13px;color:var(--danger);background:var(--danger-tint);
+  border:1px solid color-mix(in srgb,var(--danger) 30%,var(--line));border-radius:12px;padding:12px 15px;text-align:center}
+
 /* thank you */
 .thanks{text-align:center;padding:34px 24px}
 .thanks .ic{width:76px;height:76px;border-radius:50%;background:var(--accent-tint);color:var(--accent);

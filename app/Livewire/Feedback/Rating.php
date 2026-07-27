@@ -2,9 +2,12 @@
 
 namespace App\Livewire\Feedback;
 
+use App\Livewire\Feedback\Concerns\InteractsWithFeedbackGate;
+use App\Models\FeedbackRating;
 use App\Models\Governorate;
 use App\Models\Office;
 use App\Rules\EgyptianNationalId;
+use App\Services\FeedbackGate;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
@@ -14,6 +17,8 @@ use Livewire\Component;
 #[Title('تقييم الخدمة')]
 class Rating extends Component
 {
+    use InteractsWithFeedbackGate;
+
     /* ===== الخطوة الأولى: هوية مقدّم التقييم + المقر ===== */
     public string $name = '';
     public string $national_id = '';
@@ -52,16 +57,30 @@ class Rating extends Component
         'rating_accessibility' => ['تيسير الخدمة لذوي الإعاقة وكبار السن', true],
     ];
 
-    /** عند تغيير المحافظة نصفّر المقر المختار */
+    protected function feedbackType(): string
+    {
+        return FeedbackGate::TYPE_RATING;
+    }
+
+    /** عند تغيير المحافظة نصفّر المقر المختار ونعيد ضبط البوابة */
     public function updatedGovernorateId(): void
     {
         $this->office_id = null;
+        $this->gateBlocked = false;
+        $this->gateRetryDate = '';
     }
 
-    /** تحقق فوري من الرقم القومي عند الخروج من الحقل */
+    /** تحقق فوري من الرقم القومي + فحص التكرار عند الخروج من الحقل */
     public function updatedNationalId(): void
     {
         $this->validateOnly('national_id');
+        $this->evaluateGate();
+    }
+
+    /** فحص التكرار بمجرد اختيار المقر (قبل عرض البنود) */
+    public function updatedOfficeId(): void
+    {
+        $this->evaluateGate();
     }
 
     #[Computed]
@@ -81,22 +100,33 @@ class Rating extends Component
             ->orderBy('name')->get(['id', 'name']);
     }
 
-    /** تظهر بنود التقييم بمجرد اختيار المقر (بوابة التحقق ستُضاف هنا لاحقاً) */
+    /** تظهر بنود التقييم بعد اختيار المقر وطالما لم يُحجب بقاعدة التكرار */
     #[Computed]
     public function showRating(): bool
     {
-        return (bool) $this->office_id;
+        return $this->office_id && ! $this->gateBlocked;
     }
 
-    public function submit(): void
+    protected function persist(string $ip): void
     {
-        $this->validate($this->rules(), attributes: $this->validationAttributes());
-
-        // TODO(المرحلة ١): بوابة الحماية (توحيد الرقم القومي + قاعدة الأسبوعين
-        //                  + حد الجهاز + سجل المرفوض) ثم الحفظ في feedback_ratings.
-        //                  مؤجّلة لحد ما نقفل على البنود والتصميم.
-
-        $this->submitted = true;
+        FeedbackRating::create([
+            'governorate_id'       => $this->governorate_id,
+            'office_id'            => $this->office_id,
+            'name'                 => $this->name,
+            'national_id'          => $this->national_id,
+            'phone'                => $this->phone,
+            'wait_time'            => $this->wait_time,
+            'rating_speed'         => $this->rating_speed,
+            'rating_staff'         => $this->rating_staff,
+            'rating_queue'         => $this->rating_queue,
+            'rating_cleanliness'   => $this->rating_cleanliness,
+            'rating_clarity'       => $this->rating_clarity,
+            'rating_accessibility' => $this->rating_accessibility,
+            'overall_rating'       => $this->overall_rating,
+            'notes'                => $this->notes ?: null,
+            'ip_address'           => $ip,
+            'user_agent'           => request()->userAgent(),
+        ]);
     }
 
     protected function rules(): array

@@ -2,9 +2,13 @@
 
 namespace App\Livewire\Feedback;
 
+use App\Livewire\Feedback\Concerns\InteractsWithFeedbackGate;
+use App\Models\FeedbackSuggestion;
 use App\Models\Governorate;
 use App\Models\Office;
+use App\Models\SuggestionTopic;
 use App\Rules\EgyptianNationalId;
+use App\Services\FeedbackGate;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
@@ -14,6 +18,8 @@ use Livewire\Component;
 #[Title('تقديم اقتراح')]
 class Suggestion extends Component
 {
+    use InteractsWithFeedbackGate;
+
     /* ===== الخطوة الأولى: هوية مقدّم المقترح + المقر ===== */
     public string $name = '';
     public string $national_id = '';
@@ -77,15 +83,29 @@ class Suggestion extends Component
         return $keys;
     }
 
+    protected function feedbackType(): string
+    {
+        return FeedbackGate::TYPE_SUGGESTION;
+    }
+
     public function updatedGovernorateId(): void
     {
         $this->office_id = null;
+        $this->gateBlocked = false;
+        $this->gateRetryDate = '';
     }
 
-    /** تحقق فوري من الرقم القومي عند الخروج من الحقل */
+    /** تحقق فوري من الرقم القومي + فحص التكرار عند الخروج من الحقل */
     public function updatedNationalId(): void
     {
         $this->validateOnly('national_id');
+        $this->evaluateGate();
+    }
+
+    /** فحص التكرار بمجرد اختيار المقر (قبل عرض المجالات) */
+    public function updatedOfficeId(): void
+    {
+        $this->evaluateGate();
     }
 
     #[Computed]
@@ -105,29 +125,40 @@ class Suggestion extends Component
             ->orderBy('name')->get(['id', 'name']);
     }
 
-    /** تظهر مجالات المقترح بمجرد اختيار المقر (بوابة التحقق ستُضاف هنا لاحقاً) */
+    /** تظهر المجالات بعد اختيار المقر وطالما لم يُحجب بقاعدة التكرار */
     #[Computed]
     public function showTopics(): bool
     {
-        return (bool) $this->office_id;
+        return $this->office_id && ! $this->gateBlocked;
     }
 
-    public function submit(): void
+    /** لازم عنوان واحد على الأقل أو اقتراح حر */
+    protected function afterValidation(): bool
     {
-        $this->validate($this->rules(), attributes: $this->validationAttributes());
-
-        // لازم عنوان واحد على الأقل أو اقتراح حر
         if (empty($this->topics) && trim($this->other_suggestion) === '') {
             $this->addError('topics', 'اختر عنواناً واحداً على الأقل أو اكتب اقتراحاً في الخانة الحرة.');
 
-            return;
+            return false;
         }
 
-        // TODO(المرحلة ١): بوابة الحماية (توحيد الرقم القومي + قاعدة الأسبوعين
-        //                  + حد الجهاز + سجل المرفوض) ثم الحفظ في feedback_suggestions
-        //                  والعناوين في pivot. مؤجّلة لحد ما نقفل على البنود والتصميم.
+        return true;
+    }
 
-        $this->submitted = true;
+    protected function persist(string $ip): void
+    {
+        $suggestion = FeedbackSuggestion::create([
+            'governorate_id'   => $this->governorate_id,
+            'office_id'        => $this->office_id,
+            'name'             => $this->name,
+            'national_id'      => $this->national_id,
+            'phone'            => $this->phone,
+            'other_suggestion' => trim($this->other_suggestion) ?: null,
+            'ip_address'       => $ip,
+            'user_agent'       => request()->userAgent(),
+        ]);
+
+        $topicIds = SuggestionTopic::whereIn('key', $this->topics)->pluck('id');
+        $suggestion->topics()->sync($topicIds);
     }
 
     protected function rules(): array

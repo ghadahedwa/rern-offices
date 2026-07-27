@@ -1,4 +1,11 @@
 {{-- قسم الهوية والمقر — مشترك بين فورم التقييم والمقترحات --}}
+
+{{-- honeypot: حقل مصيدة مخفي — المواطن لا يراه، والبوت يملؤه فيُكشف --}}
+<div aria-hidden="true" style="position:absolute;left:-9999px;top:-9999px;width:1px;height:1px;overflow:hidden">
+  <label>Website</label>
+  <input type="text" tabindex="-1" autocomplete="off" wire:model="website" />
+</div>
+
 <div class="sec">
   <div class="sec-head"><span class="bar"></span><h2>بياناتك وتحديد المقر</h2></div>
 

@@ -138,11 +138,27 @@
           </div>
         </div>
 
+        @error('gate')<p class="gate-error">{{ $message }}</p>@enderror
+
         <button type="submit" class="submit-btn" wire:loading.attr="disabled">
           <span wire:loading.remove wire:target="submit">إرسال التقييم</span>
           <span wire:loading wire:target="submit">جارٍ الإرسال...</span>
           <svg wire:loading.remove wire:target="submit" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>
         </button>
+      </div>
+    @elseif($gateBlocked)
+      <div class="blocked">
+        <div class="ic">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
+        </div>
+        <p>
+          لا يتيح النظام تقييم هذا المقر أكثر من مرة كل أسبوعين.<br>
+          يمكنك المحاولة اعتباراً من <span class="date">{{ $gateRetryDate }}</span>.
+        </p>
+        <a href="{{ route('feedback.suggestion') }}" wire:navigate class="alt">
+          لديك ملاحظة أخرى؟ قدّم اقتراح
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+        </a>
       </div>
     @else
       <div class="gate-hint">
