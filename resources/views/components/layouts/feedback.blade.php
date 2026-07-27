@@ -58,6 +58,7 @@ body{
   font-family:'Cairo','Segoe UI',Tahoma,sans-serif;
   color:var(--ink);min-height:100dvh;
   display:flex;flex-direction:column;position:relative;
+  overflow-x:hidden;                 /* أمان ضد أي سكرول أفقي في صفحات البوابة */
   transition:color .3s ease;
   background:var(--paper) url('/images/bg-image.jpg') center/cover no-repeat fixed;
 }

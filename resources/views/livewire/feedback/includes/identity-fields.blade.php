@@ -1,7 +1,8 @@
 {{-- قسم الهوية والمقر — مشترك بين فورم التقييم والمقترحات --}}
 
-{{-- honeypot: حقل مصيدة مخفي — المواطن لا يراه، والبوت يملؤه فيُكشف --}}
-<div aria-hidden="true" style="position:absolute;left:-9999px;top:-9999px;width:1px;height:1px;overflow:hidden">
+{{-- honeypot: حقل مصيدة مخفي — المواطن لا يراه، والبوت يملؤه فيُكشف.
+     نستخدم نمط visually-hidden (لا يزيح خارج الشاشة) لتجنّب سكرول أفقي في RTL. --}}
+<div aria-hidden="true" style="position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0">
   <label>Website</label>
   <input type="text" tabindex="-1" autocomplete="off" wire:model="website" />
 </div>
