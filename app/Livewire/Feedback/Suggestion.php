@@ -113,6 +113,12 @@ class Suggestion extends Component
         $this->evaluateGate();
     }
 
+    /** إعادة فحص التكرار عند تغيير الهاتف (لأنه أحد مفتاحي القفل) */
+    public function updatedPhone(): void
+    {
+        $this->evaluateGate();
+    }
+
     #[Computed]
     public function governorates()
     {

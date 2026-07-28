@@ -25,7 +25,7 @@
     </div>
     <div class="field">
       <label>رقم الهاتف المحمول <span class="req">*</span></label>
-      <input type="tel" inputmode="numeric" maxlength="11" class="inp" wire:model="phone"
+      <input type="tel" inputmode="numeric" maxlength="11" class="inp" wire:model.blur="phone"
              x-data x-on:input="$el.value = digitsOnly($el.value)" placeholder="01XXXXXXXXX" />
       @error('phone')<p class="err">{{ $message }}</p>@enderror
     </div>
