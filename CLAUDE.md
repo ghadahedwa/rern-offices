@@ -109,11 +109,17 @@ stat_types.group_key:
 
 ## Routes (web.php)
 ```php
+/                                    → redirect إلى /feedback (name: home)  ← الجذر يفتح البوابة العامة
 offices                              → Offices\Index       (offices.index)
 offices/create                       → Offices\Create      (offices.create)
 offices/{office}                     → Offices\Show        (offices.show)
 offices/{office}/edit                → Offices\Create      (offices.edit)  ← نفس component
 offices/{office}/statistics          → Offices\Statistics  (offices.statistics)
+
+// بوابة رأي المواطن — عامة (بدون auth):
+feedback                             → view feedback.landing (feedback)
+feedback/rating                      → Feedback\Rating      (feedback.rating)
+feedback/suggestion                  → Feedback\Suggestion  (feedback.suggestion)
 ```
 
 ---
@@ -328,6 +334,44 @@ resources/views/livewire/offices/
 - صفحة مستقلة `/offices/{id}/formation`
 - جدول منفصل (مثل `office_employees`) — بيانات تتبع المقر، **ليسوا مستخدمين** ولا أدوار/مستويات لهم
 - لا تزال في مرحلة التخطيط
+
+---
+
+## بوابة رأي المواطن (Citizen Feedback) ✅ **منجزة (جهة المواطن)**
+بوابة عامة **بدون تسجيل دخول** تحت `/feedback`. الجذر `/` يوجّه لها. الموظفون يدخلون عبر `/login` مباشرة (لا رابط دخول في البوابة).
+
+### الشاشات
+- `feedback.landing` (blade) — كرتان: **تقييم الخدمة** / **تقديم اقتراح** + **شريط إرشادي للشكاوى الرسمية** (منظومة الشكاوى الموحدة بمجلس الوزراء: 16528 · واتساب · shakwa.eg — لا منظومة شكاوى داخلية).
+- `Feedback\Rating` (`/feedback/rating`) و `Feedback\Suggestion` (`/feedback/suggestion`) — مكوّنات Livewire عامة، **كشف تدريجي على صفحة واحدة**: قسم الهوية والمقر أولاً، وبمجرد اختيار المقر تظهر البنود (شرط: التحقق قبل استيفاء البنود). موبايل-أولاً (خط الإدخال 16px لمنع zoom iOS).
+- **التقييم:** مدة الانتظار (4) + 6 محاور نجوم (السادس اختياري) + تقييم عام + ملاحظات. **المقترحات:** 5 مجالات × عناوين multi-select (chips) + "اقتراح آخر" حر (كتالوج في `Suggestion::DOMAINS`).
+
+### البنية (layout + partials مشتركة)
+- Layout عام موحّد: `resources/views/components/layouts/feedback.blade.php` — يخدم الـ landing (`<x-layouts.feedback>`) والمكوّنات (`#[Layout('components.layouts.feedback')]`). يحوي design tokens + topbar + footer + theme toggle + `digitsOnly()` (تنقية الأرقام: عربي→إنجليزي + إزالة الحروف). `body{overflow-x:hidden}`.
+- Partials تحت `resources/views/livewire/feedback/includes/`: `form-styles` (ستايل الفورم بمتغيّر `--accent`؛ كل شاشة تحدد لونها)، `identity-fields` (الهوية والمقر — **الرقم القومي/الهاتف `wire:model.live` + `oninput="digitsOnly"`**؛ ⚠️ لا تضع `x-data` على input فيه `wire:model` — يكسر التفاعلية)، `star-row`.
+
+### الجداول والموديلات
+`feedback_ratings` · `feedback_suggestions` · `suggestion_domains` · `suggestion_topics` · `feedback_suggestion_topic` (pivot) · `feedback_rejected_attempts`. FK للمقر/المحافظة `nullOnDelete` (حفظ التاريخ). `SuggestionCatalogSeeder` يزرع 5 مجالات/20 عنوان من `Suggestion::DOMAINS` (idempotent، في DatabaseSeeder).
+
+### بوابة الحماية (Anti-abuse)
+- `config/feedback.php`: `window_days=14` · `ip_max_per_minute=10` · `rejected_retention_days=30`.
+- `App\Services\FeedbackGate`: `duplicateRetryDate` (يفحص **الرقم القومي أو الهاتف** + المقر خلال المدة — الهاتف معرّف شخصي، لكل نوع منفصل) · `ipThrottled`/`hitIp` (RateLimiter نافذة 60ث، صمّام ضد البوت فقط) · `logRejection`.
+- Trait `App\Livewire\Feedback\Concerns\InteractsWithFeedbackGate`: honeypot (حقل `website` مخفي visually-hidden) · `evaluateGate()` فحص تفاعلي (يحجب قبل البنود؛ **يسجّل duplicate_window مرة واحدة عند دخول الحجب فقط** لا مع كل re-check) · `submit()` (honeypot→validate→IP→تكرار→حفظ في transaction) · `formatArabicDate` · الانتقال بين الفورمين (تحت).
+- المكوّن يوفّر `feedbackType()`/`persist()`؛ Suggestion يربط العناوين بـ `topics()->sync`. `showRating`/`showTopics` = `office_id && !gateBlocked`.
+- ⚠️ المشروع يستخدم **CarbonImmutable** — أي دالة ترجع تاريخ استخدم `CarbonInterface`.
+
+### الإظهار حسب النوع
+فلاج **`is_public` على `office_types`** (مش على المقر) — قابل للتعديل من شاشة إدارة الأنواع (checkbox + شارة "عام" + فلتر). الفورمان يعرضان مقرات الأنواع العامة فقط عبر `Office::scopePublicFeedback` (whereHas officeType is_public)، والمحافظات بلا مقرات عامة تُخفى. فلتر "الظهور للمواطن": toggle في شاشة المقرات (`public_only`)، select في شاشة الأنواع.
+
+### الانتقال بين الفورمين بنفس البيانات
+بعد الإرسال الناجح أو شاشة الرفض، زر «قيّم/قدّم اقتراح أيضاً» ينقل الهوية عبر الـ **session** ورابط `?resume=1`. `mount()→resumeFromCarry()` يقرأ الـ session **فقط عند resume=1** (لا تعبئة تلقائية عند الفتح اليدوي = آمن للأجهزة المشتركة)، يمسحها بعد قراءة واحدة، ويشغّل `evaluateGate()`.
+
+### التنظيف التلقائي
+أمر `feedback:prune-rejected` (مجدول يومياً 03:30 في `routes/console.php`) يحذف `feedback_rejected_attempts` الأقدم من `rejected_retention_days`.
+
+### المتبقّي
+**موديول عرض النتائج للإدارة** (صلاحيات + تصميم قراءة + تجميع/ترتيب الأولويات) — مرحلة منفصلة مؤجّلة. شاشة المقترحات تقرأ المجالات من الـ const (المفاتيح مطابقة للكتالوج المزروع) — تُحوَّل لـ DB مع شاشة إدارة الكتالوج.
+
+**⚠️ النشر:** موديول البوابة يحتاج `git pull` + `migrate --force` (جداول + is_public) + `config:cache` (مفاتيح feedback) + `route:cache` (توجيه الجذر) + `view:cache`.
 
 ---
 
