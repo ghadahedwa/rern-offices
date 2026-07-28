@@ -20,19 +20,24 @@ class FeedbackGate
     public const TYPE_SUGGESTION = 'suggestion';
 
     /**
-     * لو وُجد إرسال سابق لنفس (الرقم القومي + المقر) خلال المدة،
+     * لو وُجد إرسال سابق لنفس (الرقم القومي أو الهاتف) + المقر خلال المدة،
      * تُرجع تاريخ السماح القادم (آخر إرسال + المدة)، وإلا null (مسموح).
-     * القفل على الرقم القومي فقط (بلا الهاتف): الهاتف غير متحقَّق منه (لا OTP)،
-     * وإدخاله في القفل يسبّب حجباً خاطئاً لمن يتشاركون رقماً واحداً (عائلة/مساعِد).
+     * الهاتف معرّف شخصي (المواطن يُدخل رقمه هو حتى على جهاز غيره)، فيصلح كطبقة قفل ثانية.
+     * (ملاحظة: يبقى احتمال حجب من يتشاركون رقماً واحداً — عائلة/مساعِد — وهو نادر ومقبول.)
      */
-    public function duplicateRetryDate(string $type, string $nationalId, int $officeId): ?CarbonInterface
+    public function duplicateRetryDate(string $type, string $nationalId, string $phone, int $officeId): ?CarbonInterface
     {
         $windowDays = (int) config('feedback.window_days', 14);
         $model = $type === self::TYPE_SUGGESTION ? FeedbackSuggestion::class : FeedbackRating::class;
 
         $last = $model::query()
             ->where('office_id', $officeId)
-            ->where('national_id', $nationalId)
+            ->where(function ($q) use ($nationalId, $phone) {
+                $q->where('national_id', $nationalId);
+                if ($phone !== '') {
+                    $q->orWhere('phone', $phone);
+                }
+            })
             ->where('created_at', '>=', now()->subDays($windowDays))
             ->latest('created_at')
             ->first();
