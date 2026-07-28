@@ -36,6 +36,7 @@ trait InteractsWithFeedbackGate
     /** فحص تفاعلي: يُستدعى عند تغيّر المقر/الرقم القومي قبل عرض البنود. */
     protected function evaluateGate(): void
     {
+        $wasBlocked = $this->gateBlocked;
         $this->gateBlocked = false;
         $this->gateRetryDate = '';
 
@@ -52,10 +53,14 @@ trait InteractsWithFeedbackGate
             $this->gateBlocked = true;
             $this->gateRetryDate = $this->formatArabicDate($retry);
             $this->stashIdentity();
-            app(FeedbackGate::class)->logRejection(
-                $this->feedbackType(), 'duplicate_window',
-                $this->national_id, $this->phone, (int) $this->office_id, request(),
-            );
+
+            // نسجّل الرفض مرة واحدة فقط عند الدخول في الحجب — لا مع كل إعادة فحص (live)
+            if (! $wasBlocked) {
+                app(FeedbackGate::class)->logRejection(
+                    $this->feedbackType(), 'duplicate_window',
+                    $this->national_id, $this->phone, (int) $this->office_id, request(),
+                );
+            }
         }
     }
 
