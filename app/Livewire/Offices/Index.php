@@ -39,6 +39,10 @@ class Index extends Component
     #[Url]
     public ?int $location_description_id = null;
 
+    /** إظهار المقرات الظاهرة للمواطن فقط (toggle مثل VIP) */
+    #[Url]
+    public bool $public_only = false;
+
     #[Url]
     public bool $needs_visit = false;
 
@@ -122,6 +126,7 @@ class Index extends Component
     public function updatingGovernorateId(): void { $this->resetPage(); }
     public function updatingTypeId(): void { $this->resetPage(); }
     public function updatingLocationDescriptionId(): void { $this->resetPage(); }
+    public function updatingPublicOnly(): void { $this->resetPage(); }
     public function updatingNeedsVisit(): void { $this->resetPage(); }
     public function updatingWorkSystemId(): void { $this->resetPage(); }
     public function updatingWorkingHoursId(): void { $this->resetPage(); }
@@ -152,6 +157,7 @@ class Index extends Component
             ->when($this->governorate_id, fn($q) => $q->where('governorate_id', $this->governorate_id))
             ->when($this->type_id, fn($q) => $q->where('type_id', $this->type_id))
             ->when($this->location_description_id, fn($q) => $q->where('location_description_id', $this->location_description_id))
+            ->when($this->public_only, fn($q) => $q->publicFeedback())
             ->when($this->search, fn($q) => $q->whereRaw(
                 \App\Support\ArabicText::sqlNormalize('name').' LIKE ?',
                 ['%'.\App\Support\ArabicText::normalize($this->search).'%']

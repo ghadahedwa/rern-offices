@@ -94,6 +94,12 @@ class Office extends Model
         return $this->belongsTo(OfficeType::class, 'type_id');
     }
 
+    /** المقرات التي يظهر نوعها للمواطن في بوابة رأي المواطن. */
+    public function scopePublicFeedback($query)
+    {
+        return $query->whereHas('officeType', fn ($q) => $q->where('is_public', true));
+    }
+
     public function locationDescription(): BelongsTo
     {
         return $this->belongsTo(LocationDescription::class, 'location_description_id');

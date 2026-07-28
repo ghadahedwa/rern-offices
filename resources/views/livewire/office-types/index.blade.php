@@ -14,11 +14,17 @@
         @endif
     </div>
 
-    {{-- Search --}}
-    <div class="max-w-sm">
+    {{-- Search + filter --}}
+    <div class="flex flex-wrap items-center gap-3">
         <input wire:model.live.debounce.300ms="search" type="text"
                placeholder="{{ __('home.search') }}"
-               class="w-full border border-zinc-300 dark:border-zinc-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-[#c9a847]" />
+               class="max-w-sm flex-1 min-w-50 border border-zinc-300 dark:border-zinc-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-[#c9a847]" />
+        <select wire:model.live="publicFilter"
+                class="border border-zinc-300 dark:border-zinc-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-[#c9a847]">
+            <option value="">— {{ __('home.public_visibility') }} —</option>
+            <option value="yes">{{ __('home.public_visible') }}</option>
+            <option value="no">{{ __('home.public_hidden') }}</option>
+        </select>
     </div>
 
     {{-- Table --}}
@@ -37,7 +43,14 @@
                 @forelse($officeTypes as $type)
                     <tr class="hover:bg-zinc-50 dark:hover:bg-zinc-800 transition">
                         <td class="px-4 py-3 text-zinc-500">{{ $officeTypes->firstItem() + $loop->index }}</td>
-                        <td class="px-4 py-3 font-medium text-zinc-800 dark:text-zinc-100">{{ $type->name }}</td>
+                        <td class="px-4 py-3 font-medium text-zinc-800 dark:text-zinc-100">
+                            {{ $type->name }}
+                            @if($type->is_public)
+                                <span class="inline-flex items-center ms-2 text-[11px] font-medium px-2 py-0.5 rounded-full bg-[#c9a847]/15 text-[#b8962e] dark:text-[#d8b856]">
+                                    {{ __('home.office_type_public_badge') }}
+                                </span>
+                            @endif
+                        </td>
                         @if($isSuperAdmin)
                             <td class="px-4 py-3">
                                 <div class="flex items-center gap-2">

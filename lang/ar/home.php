@@ -231,6 +231,12 @@ return [
     'office_type_created' => 'تم إضافة نوع المقر بنجاح',
     'office_type_updated' => 'تم تحديث نوع المقر بنجاح',
     'office_type_deleted' => 'تم حذف نوع المقر بنجاح',
+    'office_type_is_public'      => 'يظهر للمواطن في بوابة رأي المواطن',
+    'office_type_is_public_hint' => 'عند التفعيل، تظهر مقرات هذا النوع في شاشات التقييم والمقترحات العامة.',
+    'office_type_public_badge'   => 'عام',
+    'public_visibility'          => 'الظهور للمواطن',
+    'public_visible'             => 'ظاهر للمواطن',
+    'public_hidden'              => 'غير ظاهر',
 
         //governorates
     'governorates'           => 'المحافظات(المكاتب)',

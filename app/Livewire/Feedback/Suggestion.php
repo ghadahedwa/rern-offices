@@ -111,7 +111,9 @@ class Suggestion extends Component
     #[Computed]
     public function governorates()
     {
-        return Governorate::orderBy('order')->orderBy('name')->get(['id', 'name']);
+        // فقط المحافظات التي بها مقر واحد على الأقل من نوع ظاهر للمواطن
+        return Governorate::whereHas('offices', fn ($q) => $q->publicFeedback())
+            ->orderBy('order')->orderBy('name')->get(['id', 'name']);
     }
 
     #[Computed]
@@ -121,7 +123,8 @@ class Suggestion extends Component
             return collect();
         }
 
-        return Office::where('governorate_id', $this->governorate_id)
+        return Office::publicFeedback()
+            ->where('governorate_id', $this->governorate_id)
             ->orderBy('name')->get(['id', 'name']);
     }
 

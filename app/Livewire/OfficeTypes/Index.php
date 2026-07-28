@@ -18,11 +18,19 @@ class Index extends Component
 
     public string $search = '';
 
+    /** فلتر الظهور للمواطن: '' الكل | 'yes' ظاهر | 'no' غير ظاهر */
+    public string $publicFilter = '';
+
     public bool $showDelete = false;
     public ?int $deletingId = null;
     public string $deletingLabel = '';
 
     public function updatingSearch(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatingPublicFilter(): void
     {
         $this->resetPage();
     }
@@ -51,6 +59,7 @@ class Index extends Component
         return view('livewire.office-types.index', [
             'officeTypes'  => OfficeType::query()
                 ->when($this->search, fn($q) => $q->where('name', 'like', "%{$this->search}%"))
+                ->when($this->publicFilter !== '', fn($q) => $q->where('is_public', $this->publicFilter === 'yes'))
                 ->orderBy('name')
                 ->paginate(15),
             'isSuperAdmin' => Auth::user()?->can('offices.settings'),

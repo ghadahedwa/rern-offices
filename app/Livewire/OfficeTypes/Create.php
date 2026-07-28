@@ -16,6 +16,8 @@ class Create extends Component
 
     public string $name = '';
 
+    public bool $is_public = false;
+
     public function mount(?OfficeType $officeType = null): void
     {
         abort_unless(auth()->user()?->can('offices.settings'), 403);
@@ -23,6 +25,7 @@ class Create extends Component
         if ($officeType?->exists) {
             $this->officeType = $officeType;
             $this->name       = $officeType->name;
+            $this->is_public  = $officeType->is_public;
         }
     }
 
@@ -32,11 +35,13 @@ class Create extends Component
             'name' => ['required', 'string', 'max:255'],
         ]);
 
+        $data = ['name' => $this->name, 'is_public' => $this->is_public];
+
         if ($this->officeType?->exists) {
-            $this->officeType->update(['name' => $this->name]);
+            $this->officeType->update($data);
             Flux::toast(variant: 'success', text: __('home.office_type_updated'));
         } else {
-            OfficeType::create(['name' => $this->name]);
+            OfficeType::create($data);
             Flux::toast(variant: 'success', text: __('home.office_type_created'));
         }
 
