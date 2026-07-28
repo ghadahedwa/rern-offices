@@ -19,13 +19,13 @@
   <div class="grid2">
     <div class="field">
       <label>الرقم القومي <span class="req">*</span></label>
-      <input type="text" inputmode="numeric" maxlength="14" class="inp" wire:model.blur="national_id"
+      <input type="text" inputmode="numeric" maxlength="14" class="inp" wire:model.live.debounce.600ms="national_id"
              oninput="this.value = digitsOnly(this.value)" placeholder="١٤ رقماً" />
       @error('national_id')<p class="err">{{ $message }}</p>@enderror
     </div>
     <div class="field">
       <label>رقم الهاتف المحمول <span class="req">*</span></label>
-      <input type="tel" inputmode="numeric" maxlength="11" class="inp" wire:model.blur="phone"
+      <input type="tel" inputmode="numeric" maxlength="11" class="inp" wire:model.live.debounce.600ms="phone"
              oninput="this.value = digitsOnly(this.value)" placeholder="01XXXXXXXXX" />
       @error('phone')<p class="err">{{ $message }}</p>@enderror
     </div>

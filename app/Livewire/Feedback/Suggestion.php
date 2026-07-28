@@ -100,11 +100,13 @@ class Suggestion extends Component
         $this->gateRetryDate = '';
     }
 
-    /** تحقق فوري من الرقم القومي + فحص التكرار عند الخروج من الحقل */
+    /** تحقق فوري من الرقم القومي + فحص التكرار مع الكتابة */
     public function updatedNationalId(): void
     {
-        $this->evaluateGate();          // يحدّث حالة الحجب أولاً (يفكّه لو الرقم الجديد غير مكرّر)
-        $this->validateOnly('national_id');
+        $this->evaluateGate();                       // يفكّ الحجب لو الرقم الجديد غير مكرّر
+        if (strlen($this->national_id) >= 14) {      // نتحقق من الصيغة فقط بعد اكتمال الرقم
+            $this->validateOnly('national_id');
+        }
     }
 
     /** فحص التكرار بمجرد اختيار المقر (قبل عرض المجالات) */
