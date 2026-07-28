@@ -103,8 +103,8 @@ class Suggestion extends Component
     /** تحقق فوري من الرقم القومي + فحص التكرار عند الخروج من الحقل */
     public function updatedNationalId(): void
     {
+        $this->evaluateGate();          // يحدّث حالة الحجب أولاً (يفكّه لو الرقم الجديد غير مكرّر)
         $this->validateOnly('national_id');
-        $this->evaluateGate();
     }
 
     /** فحص التكرار بمجرد اختيار المقر (قبل عرض المجالات) */
