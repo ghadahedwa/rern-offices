@@ -93,7 +93,13 @@
 .thanks .ic svg{width:40px;height:40px}
 .thanks h2{font-family:'Reem Kufi',sans-serif;font-size:22px;font-weight:700;color:var(--ink)}
 .thanks p{margin-top:8px;font-size:13.5px;line-height:1.7;color:var(--ink-soft)}
-.thanks .back{margin-top:22px;display:inline-flex;align-items:center;gap:8px;font-family:'Reem Kufi',sans-serif;
+.thanks .actions{margin-top:22px;display:flex;flex-direction:column;gap:10px;align-items:center}
+.thanks .also{display:inline-flex;align-items:center;gap:8px;font-family:'Reem Kufi',sans-serif;
+  font-size:14px;font-weight:600;color:#fff;background:var(--accent);border:none;border-radius:12px;
+  padding:11px 22px;text-decoration:none;transition:.2s}
+.thanks .also:hover{background:var(--accent-strong)}
+.thanks .also svg{width:16px;height:16px}
+.thanks .back{display:inline-flex;align-items:center;gap:8px;font-family:'Reem Kufi',sans-serif;
   font-size:14px;font-weight:600;color:var(--accent-strong);text-decoration:none;border:1px solid var(--accent);
   border-radius:12px;padding:10px 20px;transition:.2s}
 .thanks .back:hover{background:var(--accent-tint)}

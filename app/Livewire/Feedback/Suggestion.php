@@ -83,6 +83,11 @@ class Suggestion extends Component
         return $keys;
     }
 
+    public function mount(): void
+    {
+        $this->resumeFromCarry();
+    }
+
     protected function feedbackType(): string
     {
         return FeedbackGate::TYPE_SUGGESTION;

@@ -57,6 +57,11 @@ class Rating extends Component
         'rating_accessibility' => ['تيسير الخدمة لذوي الإعاقة وكبار السن', true],
     ];
 
+    public function mount(): void
+    {
+        $this->resumeFromCarry();
+    }
+
     protected function feedbackType(): string
     {
         return FeedbackGate::TYPE_RATING;

@@ -51,6 +51,7 @@ trait InteractsWithFeedbackGate
         if ($retry) {
             $this->gateBlocked = true;
             $this->gateRetryDate = $this->formatArabicDate($retry);
+            $this->stashIdentity();
             app(FeedbackGate::class)->logRejection(
                 $this->feedbackType(), 'duplicate_window',
                 $this->national_id, $this->phone, (int) $this->office_id, request(),
@@ -92,13 +93,66 @@ trait InteractsWithFeedbackGate
             $gate->logRejection($this->feedbackType(), 'duplicate_window', $this->national_id, $this->phone, $this->office_id, request());
             $this->gateBlocked = true;
             $this->gateRetryDate = $this->formatArabicDate($retry);
+            $this->stashIdentity();
 
             return;
         }
 
         // 4) الحفظ
         DB::transaction(fn () => $this->persist($ip));
+        $this->stashIdentity();   // نحمل الهوية للانتقال للفورم الآخر بضغطة
         $this->submitted = true;
+    }
+
+    /* ===== الانتقال بين الفورمين بنفس البيانات ===== */
+
+    /** يخزّن الهوية في الـ session لاستئنافها في الفورم الآخر (تُقرأ مرة واحدة). */
+    protected function stashIdentity(): void
+    {
+        session()->put('feedback.carry', [
+            'name'           => $this->name,
+            'national_id'    => $this->national_id,
+            'phone'          => $this->phone,
+            'governorate_id' => $this->governorate_id,
+            'office_id'      => $this->office_id,
+        ]);
+    }
+
+    /** يُستدعى في mount: يعبّئ الهوية القادمة من الفورم الآخر (فقط عند ?resume=1). */
+    protected function resumeFromCarry(): void
+    {
+        if (! request()->boolean('resume')) {
+            return;
+        }
+
+        $carry = session()->pull('feedback.carry');   // قراءة + مسح (مرة واحدة)
+        if (! $carry) {
+            return;
+        }
+
+        $this->name           = $carry['name'] ?? '';
+        $this->national_id    = $carry['national_id'] ?? '';
+        $this->phone          = $carry['phone'] ?? '';
+        $this->governorate_id = $carry['governorate_id'] ?? null;
+        $this->office_id      = $carry['office_id'] ?? null;
+
+        $this->evaluateGate();   // يكشف البنود مباشرة أو يظهر الحجب
+    }
+
+    /** رابط الفورم الآخر مع إشارة الاستئناف. */
+    public function otherFormUrl(): string
+    {
+        return $this->feedbackType() === FeedbackGate::TYPE_RATING
+            ? route('feedback.suggestion', ['resume' => 1])
+            : route('feedback.rating', ['resume' => 1]);
+    }
+
+    /** نص زر الانتقال للفورم الآخر. */
+    public function otherFormLabel(): string
+    {
+        return $this->feedbackType() === FeedbackGate::TYPE_RATING
+            ? 'قدّم اقتراحاً أيضاً'
+            : 'قيّم الخدمة أيضاً';
     }
 
     /** "٦ أغسطس ٢٠٢٦" — أسماء عربية وأرقام عربية. */
