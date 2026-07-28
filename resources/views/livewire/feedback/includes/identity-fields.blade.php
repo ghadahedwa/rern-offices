@@ -20,13 +20,13 @@
     <div class="field">
       <label>الرقم القومي <span class="req">*</span></label>
       <input type="text" inputmode="numeric" maxlength="14" class="inp" wire:model.blur="national_id"
-             x-data x-on:input="$el.value = digitsOnly($el.value)" placeholder="١٤ رقماً" />
+             oninput="this.value = digitsOnly(this.value)" placeholder="١٤ رقماً" />
       @error('national_id')<p class="err">{{ $message }}</p>@enderror
     </div>
     <div class="field">
       <label>رقم الهاتف المحمول <span class="req">*</span></label>
       <input type="tel" inputmode="numeric" maxlength="11" class="inp" wire:model.blur="phone"
-             x-data x-on:input="$el.value = digitsOnly($el.value)" placeholder="01XXXXXXXXX" />
+             oninput="this.value = digitsOnly(this.value)" placeholder="01XXXXXXXXX" />
       @error('phone')<p class="err">{{ $message }}</p>@enderror
     </div>
   </div>
