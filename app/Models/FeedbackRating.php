@@ -2,11 +2,14 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class FeedbackRating extends Model
 {
+    use HasFactory;
+
     protected $fillable = [
         'governorate_id', 'office_id',
         'name', 'national_id', 'phone',
