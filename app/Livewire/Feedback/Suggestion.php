@@ -8,6 +8,7 @@ use App\Models\Governorate;
 use App\Models\Office;
 use App\Models\SuggestionTopic;
 use App\Rules\EgyptianNationalId;
+use App\Rules\PublicFeedbackOffice;
 use App\Services\FeedbackGate;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
@@ -163,7 +164,7 @@ class Suggestion extends Component
     protected function persist(string $ip): void
     {
         $suggestion = FeedbackSuggestion::create([
-            'governorate_id'   => $this->governorate_id,
+            'governorate_id'   => $this->officeGovernorateId(),
             'office_id'        => $this->office_id,
             'name'             => $this->name,
             'national_id'      => $this->national_id,
@@ -184,7 +185,7 @@ class Suggestion extends Component
             'national_id'      => ['required', new EgyptianNationalId],
             'phone'            => ['required', 'regex:/^01[0125]\d{8}$/'],
             'governorate_id'   => ['required', 'exists:governorates,id'],
-            'office_id'        => ['required', 'exists:offices,id'],
+            'office_id'        => ['required', new PublicFeedbackOffice],
             'topics'           => ['array'],
             'topics.*'         => ['string', 'in:'.implode(',', self::topicKeys())],
             'other_suggestion' => ['nullable', 'string', 'max:1000'],

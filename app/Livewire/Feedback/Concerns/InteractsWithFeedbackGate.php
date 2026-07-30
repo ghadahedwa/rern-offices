@@ -27,6 +27,15 @@ trait InteractsWithFeedbackGate
     /** يحفظ الإرسال في قاعدة البيانات (داخل transaction). */
     abstract protected function persist(string $ip): void;
 
+    /**
+     * محافظة المقر المختار — تُشتق من المقر نفسه لا من مُدخَل المستخدم،
+     * حتى لا يُحفظ صف بمحافظة لا تخصّ المقر (يفسد تجميع النتائج لاحقاً).
+     */
+    protected function officeGovernorateId(): ?int
+    {
+        return \App\Models\Office::whereKey($this->office_id)->value('governorate_id');
+    }
+
     /** تحقق إضافي بعد الأساسي — يرجع false لإيقاف الإرسال (مع إضافة الأخطاء). */
     protected function afterValidation(): bool
     {

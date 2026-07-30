@@ -7,6 +7,7 @@ use App\Models\FeedbackRating;
 use App\Models\Governorate;
 use App\Models\Office;
 use App\Rules\EgyptianNationalId;
+use App\Rules\PublicFeedbackOffice;
 use App\Services\FeedbackGate;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
@@ -126,7 +127,7 @@ class Rating extends Component
     protected function persist(string $ip): void
     {
         FeedbackRating::create([
-            'governorate_id'       => $this->governorate_id,
+            'governorate_id'       => $this->officeGovernorateId(),
             'office_id'            => $this->office_id,
             'name'                 => $this->name,
             'national_id'          => $this->national_id,
@@ -152,7 +153,7 @@ class Rating extends Component
             'national_id'          => ['required', new EgyptianNationalId],
             'phone'                => ['required', 'regex:/^01[0125]\d{8}$/'],
             'governorate_id'       => ['required', 'exists:governorates,id'],
-            'office_id'            => ['required', 'exists:offices,id'],
+            'office_id'            => ['required', new PublicFeedbackOffice],
             'wait_time'            => ['required', 'in:'.implode(',', array_keys(self::WAIT_TIMES))],
             'rating_speed'         => ['required', 'integer', 'between:1,5'],
             'rating_staff'         => ['required', 'integer', 'between:1,5'],
