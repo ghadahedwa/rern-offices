@@ -170,6 +170,12 @@ feedback/suggestion                  → Feedback\Suggestion  (feedback.suggesti
 - **رسائل التحقق:** أي حقل جديد له `required`/قواعد validation لازم اسمه العربي يتضاف في
   `lang/ar/validation.php` تحت `attributes` (وإلا الرسالة تطلع باسم الحقل الإنجليزي).
 
+### الاستثناء الوحيد: بوابة رأي المواطن
+**نصوص `resources/views/feedback/` و`resources/views/livewire/feedback/` تُكتب inline مباشرة — بقرار مقصود، ليست مخالفة.**
+السبب: القاعدة قيمتها في شاشات الإدارة حيث تتكرر نفس اللافتة عبر عشرات الشاشات فيخدمها مفتاح واحد. نصوص البوابة **سردية فريدة** لا تتكرر، ولا توجد لغة ثانية مخطط لها، فالمفتاح يضيف طبقة بلا مقابل.
+ينطبق الاستثناء أيضاً على النصوص العربية في `Rating::WAIT_TIMES` / `Rating::CRITERIA` / `Suggestion::DOMAINS`.
+⚠️ الاستثناء **للبوابة العامة فقط** — أي شاشة إدارية جديدة (بما فيها موديول عرض النتائج القادم) تلتزم بالقاعدة كاملة.
+
 ---
 
 ## قاعدة البحث العربي (إلزامية)
@@ -359,6 +365,12 @@ resources/views/livewire/offices/
 - المكوّن يوفّر `feedbackType()`/`persist()`؛ Suggestion يربط العناوين بـ `topics()->sync`. `showRating`/`showTopics` = `office_id && !gateBlocked`.
 - ⚠️ المشروع يستخدم **CarbonImmutable** — أي دالة ترجع تاريخ استخدم `CarbonInterface`.
 
+### سلامة المدخلات (لا تُضعِفها)
+الفورمان **عامان بلا auth**، فأي قيمة جاية من العميل غير موثوقة حتى لو الواجهة مابتسمحش بيها:
+- `office_id` يُتحقق منه بـ **`App\Rules\PublicFeedbackOffice`** (وليس `exists:offices,id`) — يمنع تعليق رأي مواطن على مقر من نوع غير عام عبر طلب متلاعَب فيه. `scopePublicFeedback` وحده يخصّ **العرض** فقط.
+- `governorate_id` **يُشتق من المقر** عبر `officeGovernorateId()` في الـ trait — لا يُحفظ كما أرسله العميل (وإلا فسد تجميع النتائج حسب المحافظة لاحقاً). **المقر هو مصدر الحقيقة.**
+- فهرس `['phone','office_id']` على جدولي التقييم/المقترحات: `duplicateRetryDate` يبحث `national_id OR phone` والاستعلام يتنفّذ أثناء الكتابة (`wire:model.live`).
+
 ### الإظهار حسب النوع
 فلاج **`is_public` على `office_types`** (مش على المقر) — قابل للتعديل من شاشة إدارة الأنواع (checkbox + شارة "عام" + فلتر). الفورمان يعرضان مقرات الأنواع العامة فقط عبر `Office::scopePublicFeedback` (whereHas officeType is_public)، والمحافظات بلا مقرات عامة تُخفى. فلتر "الظهور للمواطن": toggle في شاشة المقرات (`public_only`)، select في شاشة الأنواع.
 
@@ -367,9 +379,22 @@ resources/views/livewire/offices/
 
 ### التنظيف التلقائي
 أمر `feedback:prune-rejected` (مجدول يومياً 03:30 في `routes/console.php`) يحذف `feedback_rejected_attempts` الأقدم من `rejected_retention_days`.
+⚠️ الجدولة تحتاج `schedule:run` في cron السيرفر — **أُضيف بالفعل** (2026-07-30):
+`* * * * * cd /var/www/rern-offices && /usr/bin/php artisan schedule:run >> /dev/null 2>&1`
+نسخة احتياطية من الـ crontab السابق في `/root/crontab-backup-2026-07-30.txt`. أي `Schedule::command` جديد يشتغل تلقائياً من الآن.
+
+### الاختبارات (Pest)
+`php artisan test` — **٧٧ اختبار، كلها ناجحة**. تشغيل اختبارات البوابة وحدها: `php artisan test tests/Feature/Feedback`.
+- `tests/Feature/Feedback/FeedbackGateTest.php` — منع التكرار (بالرقم القومي/الهاتف، انتهاء المدة، لكل مقر ولكل نوع)، تسجيل الرفض مرة واحدة، honeypot، حد الـ IP، `is_public`، نقل الهوية بـ `resume=1`.
+- `tests/Feature/Feedback/FeedbackValidationTest.php` — الرقم القومي بحالات رفضه الستة، صيغة الهاتف، سلامة المقر/المحافظة، أمر التنظيف.
+- factories في `database/factories/` لـ Governorate / OfficeType / Office / FeedbackRating / FeedbackSuggestion (state `->public()` لنوع ظاهر للمواطن). الموديلات المستخدَمة في الاختبارات تحتاج `HasFactory`.
+- **الاختبارات تعمل على sqlite في الذاكرة** (`phpunit.xml`) — لا تلمس قاعدة البيانات الحقيقية أبداً. لا تشغّلها على السيرفر.
+- ⚠️ **عند تعديل منطق البوابة شغّل الاختبارات قبل الـ push** — هي الحارس الوحيد لمنطق منع التكرار.
 
 ### المتبقّي
-**موديول عرض النتائج للإدارة** (صلاحيات + تصميم قراءة + تجميع/ترتيب الأولويات) — مرحلة منفصلة مؤجّلة. شاشة المقترحات تقرأ المجالات من الـ const (المفاتيح مطابقة للكتالوج المزروع) — تُحوَّل لـ DB مع شاشة إدارة الكتالوج.
+- **قناة وصول المواطن للبوابة** — غير موجودة. المقترح: `?office={id}` يعبّي المحافظة والمقر تلقائياً + QR لكل مقر يُطبع ويُعلَّق على الشباك. بدونها البوابة منشورة لكن لا أحد يعرف كيف يصلها.
+- **موديول عرض النتائج للإدارة** (صلاحيات + تصميم قراءة + تجميع/ترتيب الأولويات) — مرحلة منفصلة مؤجّلة.
+- شاشة المقترحات تقرأ المجالات من الـ const (المفاتيح مطابقة للكتالوج المزروع) — تُحوَّل لـ DB مع شاشة إدارة الكتالوج.
 
 **⚠️ النشر:** موديول البوابة يحتاج `git pull` + `migrate --force` (جداول + is_public) + `config:cache` (مفاتيح feedback) + `route:cache` (توجيه الجذر) + `view:cache`.
 
