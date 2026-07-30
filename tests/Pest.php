@@ -15,7 +15,7 @@ use Tests\TestCase;
 */
 
 pest()->extend(TestCase::class)
- // ->use(RefreshDatabase::class)
+    ->use(RefreshDatabase::class)   // تبني جداول قاعدة الاختبار (sqlite في الذاكرة) قبل كل اختبار
     ->in('Feature');
 
 /*

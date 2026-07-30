@@ -17,10 +17,14 @@ class Branch
         return config('branches', []);
     }
 
-    /** إعدادات فرع واحد. */
-    public static function config(string $key): ?array
+    /**
+     * إعدادات فرع واحد.
+     * يقبل null لأن current()/defaultKeyFor() يرجعان null لمستخدم بلا فرع متاح
+     * (مستخدم جديد بلا أدوار) — والقوالب تتعامل مع القيمة الفارغة.
+     */
+    public static function config(?string $key): ?array
     {
-        return config("branches.$key");
+        return $key === null ? null : config("branches.$key");
     }
 
     /** هل يقدر المستخدم يدخل الفرع ده؟ (super-admin أو عنده أي صلاحية من صلاحياته) */
