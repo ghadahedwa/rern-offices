@@ -963,7 +963,11 @@ return [
     'fr_date_from'                => 'من تاريخ',
     'fr_date_to'                  => 'إلى تاريخ',
     'fr_reset_filters'            => 'إعادة ضبط الفلاتر',
-    'fr_search_placeholder'       => 'بحث بالاسم أو الرقم القومي أو الهاتف',
+    'fr_period_this_month'        => 'هذا الشهر',
+    'fr_period_last_3_months'     => 'آخر ٣ شهور',
+    'fr_period_this_year'         => 'هذه السنة',
+    'fr_search_placeholder'       => 'بحث بالاسم أو الرقم القومي أو الهاتف أو داخل النص',
+    'fr_search_placeholder_plain' => 'بحث بالرقم القومي أو الهاتف أو عنوان الجهاز',
 
     // أعمدة مشتركة
     'fr_date'                     => 'التاريخ',
@@ -1023,4 +1027,8 @@ return [
     'fr_view_all'                 => 'عرض الكل',
     'fr_answered_count'           => 'عدد المجيبين',
     'fr_of_five'                  => 'من ٥',
+    'fr_monthly_trend'            => 'اتجاه التقييم شهرياً',
+    'fr_trend_hint'               => 'متوسط التقييم العام لكل شهر — الرقم أسفل العمود هو عدد الآراء',
+    'fr_governorates_ranking'     => 'ترتيب المحافظات حسب التقييم',
+    'fr_last_12_months'           => 'آخر ١٢ شهراً',
 ];

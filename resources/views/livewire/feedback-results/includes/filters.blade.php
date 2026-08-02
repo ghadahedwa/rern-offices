@@ -37,6 +37,20 @@
         </div>
     </div>
 
+    {{-- اختصارات فترة جاهزة — تغني عن اختيار تاريخين يدوياً في الحالات الشائعة --}}
+    <div class="mt-4 flex flex-wrap items-center gap-2">
+        @php $active = $this->activePeriod(); @endphp
+        @foreach($this->periodOptions() as $period)
+            <button type="button" wire:click="setPeriod('{{ $period }}')"
+                    class="px-3 py-1.5 rounded-full text-xs font-medium border transition
+                        {{ $active === $period
+                            ? 'border-[#c9a847] bg-[#c9a847] text-white'
+                            : 'border-zinc-300 dark:border-zinc-600 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700' }}">
+                {{ __('home.fr_period_'.$period) }}
+            </button>
+        @endforeach
+    </div>
+
     @if($this->hasActiveFilters())
         <div class="mt-4">
             <button type="button" wire:click="resetFilters"

@@ -23,11 +23,15 @@
             <thead class="bg-zinc-50 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 text-xs uppercase">
                 <tr>
                     <th class="px-3 py-3 font-medium w-[5%] hidden 2xl:table-cell">#</th>
-                    <th class="px-3 py-3 font-medium w-[12%]">{{ __('home.fr_date') }}</th>
+                    @include('livewire.feedback-results.includes.sortable-th', [
+                        'column' => 'created_at', 'label' => __('home.fr_date'), 'thClass' => 'w-[12%]',
+                    ])
                     <th class="px-3 py-3 font-medium w-[28%]">{{ __('home.fr_office') }}</th>
                     <th class="px-3 py-3 font-medium w-[21%]">{{ __('home.fr_citizen') }}</th>
                     <th class="px-3 py-3 font-medium w-[11%] hidden xl:table-cell">{{ __('home.fr_wait_time') }}</th>
-                    <th class="px-3 py-3 font-medium w-[16%]">{{ __('home.fr_overall_rating') }}</th>
+                    @include('livewire.feedback-results.includes.sortable-th', [
+                        'column' => 'overall_rating', 'label' => __('home.fr_overall_rating'), 'thClass' => 'w-[16%]',
+                    ])
                     <th class="px-3 py-3 font-medium w-[7%]">{{ __('home.fr_details') }}</th>
                 </tr>
             </thead>

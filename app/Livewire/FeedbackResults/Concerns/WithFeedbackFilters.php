@@ -4,6 +4,7 @@ namespace App\Livewire\FeedbackResults\Concerns;
 
 use App\Models\Governorate;
 use App\Models\Office;
+use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Builder;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Url;
@@ -50,6 +51,61 @@ trait WithFeedbackFilters
         $this->afterFilterChange();
     }
 
+    /** اختصارات الفترة الجاهزة. */
+    public const PERIODS = ['this_month', 'last_3_months', 'this_year'];
+
+    /**
+     * نفس القائمة كدالة — القوالب لا تستطيع قراءة ثابت trait مباشرة
+     * (PHP 8.2+ يمنع Trait::CONST خارج الكلاس المستخدِم).
+     */
+    public function periodOptions(): array
+    {
+        return self::PERIODS;
+    }
+
+    /** يضبط from/to من اختصار جاهز؛ الضغط على المفعّل يلغيه. */
+    public function setPeriod(string $key): void
+    {
+        if ($this->activePeriod() === $key) {
+            $this->from = $this->to = '';
+            $this->afterFilterChange();
+
+            return;
+        }
+
+        $now = CarbonImmutable::now();
+
+        [$from, $to] = match ($key) {
+            'this_month'    => [$now->startOfMonth(), $now],
+            'last_3_months' => [$now->subMonths(3), $now],
+            'this_year'     => [$now->startOfYear(), $now],
+            default         => [null, null],
+        };
+
+        $this->from = $from?->toDateString() ?? '';
+        $this->to   = $to?->toDateString() ?? '';
+        $this->afterFilterChange();
+    }
+
+    /** أي اختصار مطابق للفترة الحالية (لتمييز الزر المفعّل)؛ null لو الفترة مخصّصة. */
+    public function activePeriod(): ?string
+    {
+        foreach (self::PERIODS as $key) {
+            $now = CarbonImmutable::now();
+            [$from, $to] = match ($key) {
+                'this_month'    => [$now->startOfMonth(), $now],
+                'last_3_months' => [$now->subMonths(3), $now],
+                'this_year'     => [$now->startOfYear(), $now],
+            };
+
+            if ($this->from === $from->toDateString() && $this->to === $to->toDateString()) {
+                return $key;
+            }
+        }
+
+        return null;
+    }
+
     public function resetFilters(): void
     {
         $this->reset('governorate_id', 'office_id', 'from', 'to');
@@ -77,11 +133,39 @@ trait WithFeedbackFilters
      */
     protected function applyFilters(Builder $query): Builder
     {
-        return $this->applyScope($query)
+        return $this->applyDateRange($this->applyScope($query))
             ->when($this->governorate_id !== '', fn ($q) => $this->filterByGovernorate($q))
-            ->when($this->office_id !== '', fn ($q) => $q->where('office_id', $this->office_id))
-            ->when($this->from !== '', fn ($q) => $q->whereDate('created_at', '>=', $this->from))
-            ->when($this->to !== '', fn ($q) => $q->whereDate('created_at', '<=', $this->to));
+            ->when($this->office_id !== '', fn ($q) => $q->where('office_id', $this->office_id));
+    }
+
+    /**
+     * فلترة الفترة كنطاق مفتوح على العمود نفسه.
+     * ⚠️ لا تستخدم whereDate هنا: `DATE(created_at) >= ?` يطبّق دالة على العمود
+     * فيمنع MySQL من استخدام الفهرس ويحوّل الفلترة لمسح كامل للجدول.
+     * الحد الأعلى `< اليوم التالي` حتى يدخل يوم النهاية بالكامل (٢٣:٥٩ وما بعدها).
+     */
+    protected function applyDateRange(Builder $query): Builder
+    {
+        $from = $this->parsedDate($this->from);
+        $to   = $this->parsedDate($this->to);
+
+        return $query
+            ->when($from, fn ($q) => $q->where('created_at', '>=', $from->startOfDay()))
+            ->when($to, fn ($q) => $q->where('created_at', '<', $to->addDay()->startOfDay()));
+    }
+
+    /** التاريخ يأتي من الـ URL فقد يكون تالفاً — نتجاهله بدل الانهيار. */
+    protected function parsedDate(string $value): ?CarbonImmutable
+    {
+        if (trim($value) === '') {
+            return null;
+        }
+
+        try {
+            return CarbonImmutable::parse($value);
+        } catch (\Throwable) {
+            return null;
+        }
     }
 
     /**

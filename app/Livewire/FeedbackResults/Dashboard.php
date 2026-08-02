@@ -6,6 +6,7 @@ use App\Livewire\FeedbackResults\Concerns\WithFeedbackFilters;
 use App\Models\FeedbackRating;
 use App\Models\FeedbackRejectedAttempt;
 use App\Models\FeedbackSuggestion;
+use App\Models\Governorate;
 use App\Models\Office;
 use App\Models\SuggestionTopic;
 use Illuminate\Database\Eloquent\Builder;
@@ -139,6 +140,57 @@ class Dashboard extends Component
         ];
     }
 
+    /** ترتيب المحافظات حسب متوسط التقييم — نفس حد العينة المطبَّق على المقرات. */
+    private function governoratesRanking()
+    {
+        $rows = $this->ratingsQuery()
+            ->whereNotNull('governorate_id')
+            ->selectRaw('governorate_id, COUNT(*) as total, AVG(overall_rating) as avg_overall')
+            ->groupBy('governorate_id')
+            ->get();
+
+        $names = Governorate::whereIn('id', $rows->pluck('governorate_id'))->pluck('name', 'id');
+        $min = $this->minSample();
+
+        return $rows->map(fn ($r) => [
+            'governorate' => $names[$r->governorate_id] ?? '—',
+            'count'       => (int) $r->total,
+            'avg'         => round((float) $r->avg_overall, 2),
+            'enough'      => (int) $r->total >= $min,
+        ])->sortByDesc('avg')->values();
+    }
+
+    /**
+     * الاتجاه الشهري: متوسط التقييم العام وعدد الآراء شهراً بشهر.
+     * يجيب على «هل الخدمة بتتحسن؟» — وهو ما لا تقوله لقطة الفترة الواحدة.
+     * بلا فلتر فترة نقتصر على آخر ١٢ شهراً حتى لا يتمدّد المخطط بلا حدود.
+     */
+    private function monthlyTrend(): array
+    {
+        $query = $this->ratingsQuery();
+
+        if ($this->from === '' && $this->to === '') {
+            $query->where('created_at', '>=', now()->subMonths(11)->startOfMonth());
+        }
+
+        $rows = $query->selectRaw($this->monthExpression().' as ym, COUNT(*) as total, AVG(overall_rating) as avg_overall')
+            ->groupBy('ym')->orderBy('ym')->get();
+
+        return $rows->map(fn ($r) => [
+            'label' => $r->ym,
+            'count' => (int) $r->total,
+            'avg'   => round((float) $r->avg_overall, 2),
+        ])->all();
+    }
+
+    /** تجميع الشهر يختلف بين MySQL (الإنتاج) وsqlite (الاختبارات). */
+    private function monthExpression(): string
+    {
+        return DB::connection()->getDriverName() === 'sqlite'
+            ? "strftime('%Y-%m', created_at)"
+            : "DATE_FORMAT(created_at, '%Y-%m')";
+    }
+
     /**
      * أكثر عناوين المقترحات طلباً + توزيع المجالات.
      * نعدّ على جدول الربط مقيَّداً بمقترحات النطاق المفلتَر (subquery لا تحميل كامل).
@@ -190,14 +242,16 @@ class Dashboard extends Component
         return ['notes' => $notes, 'others' => $others];
     }
 
-    /** ملخص المحاولات المرفوضة حسب السبب (المحافظة عبر علاقة المقر). */
+    /**
+     * ملخص المحاولات المرفوضة حسب السبب.
+     * لا يمرّ بـ applyFilters لأن الجدول بلا governorate_id (المحافظة عبر علاقة المقر)،
+     * لكنه يستخدم applyDateRange نفسها حتى لا يتفرّع منطق التاريخ في مكانين.
+     */
     private function rejectedSummary()
     {
-        return FeedbackRejectedAttempt::query()
+        return $this->applyDateRange(FeedbackRejectedAttempt::query())
             ->when($this->governorate_id !== '', fn ($q) => $q->whereHas('office', fn ($o) => $o->where('governorate_id', $this->governorate_id)))
             ->when($this->office_id !== '', fn ($q) => $q->where('office_id', $this->office_id))
-            ->when($this->from !== '', fn ($q) => $q->whereDate('created_at', '>=', $this->from))
-            ->when($this->to !== '', fn ($q) => $q->whereDate('created_at', '<=', $this->to))
             ->selectRaw('reason, COUNT(*) as total')
             ->groupBy('reason')
             ->pluck('total', 'reason');
@@ -206,14 +260,16 @@ class Dashboard extends Component
     public function render()
     {
         return view('livewire.feedback-results.dashboard', [
-            'kpis'      => $this->kpis(),
-            'criteria'  => $this->criteriaAverages(),
-            'waits'     => $this->waitDistribution(),
-            'ranking'   => $this->officesRanking(),
-            'priority'  => $this->topicsPriority(),
-            'freeTexts' => $this->freeTexts(),
-            'rejected'  => $this->rejectedSummary(),
-            'minSample' => $this->minSample(),
+            'kpis'        => $this->kpis(),
+            'criteria'    => $this->criteriaAverages(),
+            'waits'       => $this->waitDistribution(),
+            'ranking'     => $this->officesRanking(),
+            'govRanking'  => $this->governoratesRanking(),
+            'trend'       => $this->monthlyTrend(),
+            'priority'    => $this->topicsPriority(),
+            'freeTexts'   => $this->freeTexts(),
+            'rejected'    => $this->rejectedSummary(),
+            'minSample'   => $this->minSample(),
         ]);
     }
 }

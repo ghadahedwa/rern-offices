@@ -3,6 +3,7 @@
 namespace App\Livewire\FeedbackResults;
 
 use App\Livewire\FeedbackResults\Concerns\WithFeedbackFilters;
+use App\Livewire\FeedbackResults\Concerns\WithFeedbackSorting;
 use App\Models\FeedbackSuggestion;
 use App\Support\ArabicText;
 use Illuminate\Support\Facades\Auth;
@@ -16,7 +17,7 @@ use Livewire\WithPagination;
 #[Title('مقترحات المواطنين')]
 class Suggestions extends Component
 {
-    use WithFeedbackFilters, WithPagination;
+    use WithFeedbackFilters, WithFeedbackSorting, WithPagination;
 
     #[Url(as: 'q', except: '')]
     public string $search = '';
@@ -27,6 +28,12 @@ class Suggestions extends Component
     public function mount(): void
     {
         abort_unless(Auth::user()?->hasRole('super-admin'), 403);
+    }
+
+    /** topics_count متاح للترتيب لأن withCount يضيفه كعمود في الاستعلام. */
+    protected function sortableColumns(): array
+    {
+        return ['created_at', 'topics_count'];
     }
 
     public function updatingSearch(): void
@@ -47,13 +54,18 @@ class Suggestions extends Component
                 $norm = ArabicText::normalize($term);
                 $q->where(function ($sub) use ($term, $norm) {
                     $sub->whereRaw(ArabicText::sqlNormalize('name').' LIKE ?', ["%{$norm}%"])
+                        // الاقتراح الحر + عناوين الكتالوج المختارة
+                        ->orWhereRaw(ArabicText::sqlNormalize('other_suggestion').' LIKE ?', ["%{$norm}%"])
+                        ->orWhereHas('topics', fn ($t) => $t->whereRaw(
+                            ArabicText::sqlNormalize('suggestion_topics.name').' LIKE ?', ["%{$norm}%"]
+                        ))
                         ->orWhere('national_id', 'like', "%{$term}%")
                         ->orWhere('phone', 'like', "%{$term}%");
                 });
             })
             ->with(['office:id,name', 'governorate:id,name', 'topics.domain'])
             ->withCount('topics')
-            ->latest('created_at')
+            ->tap(fn ($q) => $this->applySorting($q))
             ->paginate(15);
 
         return view('livewire.feedback-results.suggestions', [

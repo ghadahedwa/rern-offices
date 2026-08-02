@@ -121,6 +121,37 @@ it('يفلتر الداشبورد بالفترة الزمنية', function () {
     expect($kpis['ratings'])->toBe(1);
 });
 
+it('يشمل نطاق الفترة يومَي الطرفين بالكامل', function () {
+    $office = Office::factory()->public()->create();
+    $day = now()->subDays(5)->toDateString();
+
+    // آخر دقيقة في يوم النهاية وأول دقيقة في يوم البداية — لا بد أن يدخلا
+    FeedbackRating::factory()->create(['office_id' => $office->id, 'created_at' => $day.' 23:59:30']);
+    FeedbackRating::factory()->create(['office_id' => $office->id, 'created_at' => $day.' 00:00:30']);
+    // اليوم التالي — خارج النطاق
+    FeedbackRating::factory()->create(['office_id' => $office->id, 'created_at' => now()->subDays(4)->startOfDay()->addMinute()]);
+
+    $kpis = Livewire::actingAs(superAdmin())->test(Dashboard::class)
+        ->set('from', $day)
+        ->set('to', $day)
+        ->viewData('kpis');
+
+    expect($kpis['ratings'])->toBe(2);
+});
+
+it('يتجاهل تاريخاً تالفاً في الرابط بدل الانهيار', function () {
+    $office = Office::factory()->public()->create();
+    FeedbackRating::factory()->count(2)->create(['office_id' => $office->id]);
+
+    $kpis = Livewire::actingAs(superAdmin())->test(Dashboard::class)
+        ->set('from', 'ليس تاريخاً')
+        ->set('to', '../../etc/passwd')
+        ->assertOk()
+        ->viewData('kpis');
+
+    expect($kpis['ratings'])->toBe(2);   // الفلتر التالف يُهمَل، لا يُطبَّق ولا ينهار
+});
+
 it('يفلتر الداشبورد بالمحافظة', function () {
     $a = Office::factory()->public()->create();
     $b = Office::factory()->public()->create();
@@ -194,6 +225,113 @@ it('يبحث بالرقم القومي والهاتف', function () {
         ->set('search', '01099887766')
         ->assertSee('صاحب الرقم')
         ->assertDontSee('مواطن آخر');
+});
+
+/* ===================== البحث في النصوص الحرة ===================== */
+
+it('يبحث داخل نص ملاحظة التقييم', function () {
+    $office = Office::factory()->public()->create();
+    FeedbackRating::factory()->create(['office_id' => $office->id, 'name' => 'صاحب الشكوى', 'notes' => 'التكييف لا يعمل منذ شهر']);
+    FeedbackRating::factory()->create(['office_id' => $office->id, 'name' => 'مواطن راضٍ', 'notes' => 'الخدمة ممتازة']);
+
+    Livewire::actingAs(superAdmin())->test(Ratings::class)
+        ->set('search', 'التكييف')
+        ->assertSee('صاحب الشكوى')
+        ->assertDontSee('مواطن راضٍ');
+});
+
+it('يبحث داخل الاقتراح الحر وداخل عناوين الكتالوج', function () {
+    $office = Office::factory()->public()->create();
+
+    FeedbackSuggestion::factory()->create(['office_id' => $office->id, 'name' => 'صاحب النص الحر', 'other_suggestion' => 'إتاحة الدفع الإلكتروني']);
+
+    $withTopic = FeedbackSuggestion::factory()->create(['office_id' => $office->id, 'name' => 'صاحب العنوان', 'other_suggestion' => null]);
+    $withTopic->topics()->sync([topic('زيادة مقاعد الانتظار')->id]);
+
+    // نص حر
+    Livewire::actingAs(superAdmin())->test(Suggestions::class)
+        ->set('search', 'الدفع الإلكتروني')
+        ->assertSee('صاحب النص الحر')
+        ->assertDontSee('صاحب العنوان');
+
+    // عنوان من الكتالوج
+    Livewire::actingAs(superAdmin())->test(Suggestions::class)
+        ->set('search', 'مقاعد الانتظار')
+        ->assertSee('صاحب العنوان')
+        ->assertDontSee('صاحب النص الحر');
+});
+
+/* ===================== الترتيب ===================== */
+
+it('يرتّب التقييمات بالتقييم العام ويعكس الاتجاه عند إعادة الضغط', function () {
+    $office = Office::factory()->public()->create();
+    FeedbackRating::factory()->create(['office_id' => $office->id, 'overall_rating' => 1]);
+    FeedbackRating::factory()->create(['office_id' => $office->id, 'overall_rating' => 5]);
+
+    $component = Livewire::actingAs(superAdmin())->test(Ratings::class)->call('sort', 'overall_rating');
+    expect($component->viewData('ratings')->first()->overall_rating)->toBe(5);   // تنازلي أولاً
+
+    $component->call('sort', 'overall_rating');
+    expect($component->viewData('ratings')->first()->overall_rating)->toBe(1);   // انعكس
+});
+
+it('يتجاهل عمود ترتيب غير مسموح به قادماً من الرابط', function () {
+    $office = Office::factory()->public()->create();
+    FeedbackRating::factory()->count(2)->create(['office_id' => $office->id]);
+
+    // حقن عبر الرابط: لا يُمرَّر لـ orderBy ولا ينهار — يعود للترتيب الافتراضي
+    Livewire::actingAs(superAdmin())->test(Ratings::class)
+        ->set('sortBy', 'national_id) --')
+        ->assertOk()
+        ->call('sort', 'national_id')
+        ->assertSet('sortBy', 'national_id) --');   // sort() رفض التغيير أصلاً
+});
+
+/* ===================== اختصارات الفترة ===================== */
+
+it('يضبط الفترة من الاختصار ويلغيها عند إعادة الضغط', function () {
+    $component = Livewire::actingAs(superAdmin())->test(Dashboard::class)
+        ->call('setPeriod', 'this_month');
+
+    expect($component->get('from'))->toBe(now()->startOfMonth()->toDateString())
+        ->and($component->get('to'))->toBe(now()->toDateString());
+
+    $component->call('setPeriod', 'this_month');
+    expect($component->get('from'))->toBe('')->and($component->get('to'))->toBe('');
+});
+
+/* ===================== الاتجاه الزمني ومقارنة المحافظات ===================== */
+
+it('يجمّع الاتجاه شهرياً بمتوسط كل شهر على حدة', function () {
+    $office = Office::factory()->public()->create();
+
+    FeedbackRating::factory()->create(['office_id' => $office->id, 'overall_rating' => 2, 'created_at' => now()->subMonths(2)->startOfMonth()->addDays(3)]);
+    FeedbackRating::factory()->create(['office_id' => $office->id, 'overall_rating' => 4, 'created_at' => now()->subMonths(2)->startOfMonth()->addDays(9)]);
+    FeedbackRating::factory()->create(['office_id' => $office->id, 'overall_rating' => 5, 'created_at' => now()->startOfMonth()->addDay()]);
+
+    $trend = Livewire::actingAs(superAdmin())->test(Dashboard::class)->viewData('trend');
+
+    expect($trend)->toHaveCount(2)
+        ->and($trend[0]['avg'])->toBe(3.0)      // متوسط الشهر الأقدم (2 و4)
+        ->and($trend[0]['count'])->toBe(2)
+        ->and($trend[1]['avg'])->toBe(5.0);
+});
+
+it('يرتّب المحافظات ويُعلِّم ذات العينة الناقصة', function () {
+    config(['feedback.min_ratings_for_ranking' => 5]);
+
+    $strong = Office::factory()->public()->create();
+    $weak   = Office::factory()->public()->create();
+
+    FeedbackRating::factory()->count(5)->create(['office_id' => $strong->id, 'overall_rating' => 5]);
+    FeedbackRating::factory()->count(2)->create(['office_id' => $weak->id, 'overall_rating' => 1]);
+
+    $rows = Livewire::actingAs(superAdmin())->test(Dashboard::class)->viewData('govRanking');
+
+    expect($rows)->toHaveCount(2)
+        ->and($rows->first()['avg'])->toBe(5.0)
+        ->and($rows->first()['enough'])->toBeTrue()
+        ->and($rows->last()['enough'])->toBeFalse();
 });
 
 /* ===================== المحاولات المرفوضة ===================== */

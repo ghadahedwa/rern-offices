@@ -42,6 +42,38 @@
         </div>
     </div>
 
+    {{-- الاتجاه الشهري — يجيب على «بيتحسن ولا بيسوء؟» بعكس لقطة الفترة الواحدة --}}
+    <div class="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-sm p-5">
+        <div class="flex items-center justify-between gap-3 mb-2">
+            <div class="flex items-center gap-3">
+                <div class="w-1 h-5 bg-[#c9a847] rounded-full"></div>
+                <h3 class="text-sm font-semibold text-zinc-600 dark:text-zinc-400 uppercase tracking-wide">{{ __('home.fr_monthly_trend') }}</h3>
+            </div>
+            @if($from === '' && $to === '')
+                <span class="text-xs text-zinc-400">{{ __('home.fr_last_12_months') }}</span>
+            @endif
+        </div>
+        <p class="text-xs text-zinc-400 mb-5">{{ __('home.fr_trend_hint') }}</p>
+
+        @if(count($trend) === 0)
+            <p class="text-sm text-zinc-400 py-6 text-center">{{ __('home.fr_no_data') }}</p>
+        @else
+            <div class="flex items-end gap-2 overflow-x-auto pb-1" style="min-height: 11rem;">
+                @foreach($trend as $month)
+                    <div class="flex-1 min-w-14 flex flex-col items-center justify-end gap-1">
+                        <span class="text-xs font-medium text-zinc-600 dark:text-zinc-300">{{ $month['avg'] }}</span>
+                        {{-- ارتفاع العمود = المتوسط ÷ ٥ من مساحة ٧rem --}}
+                        <div class="w-full bg-[#c9a847] rounded-t transition-all"
+                             style="height: {{ max(4, round($month['avg'] / 5 * 112)) }}px"
+                             title="{{ $month['label'] }} — {{ $month['avg'] }}/5 ({{ $month['count'] }})"></div>
+                        <span class="text-xs text-zinc-500 dark:text-zinc-400 whitespace-nowrap">{{ $month['label'] }}</span>
+                        <span class="text-xs text-zinc-400">{{ $month['count'] }}</span>
+                    </div>
+                @endforeach
+            </div>
+        @endif
+    </div>
+
     {{-- متوسط المحاور + توزيع مدة الانتظار --}}
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
@@ -159,6 +191,35 @@
                     </div>
                 </div>
             @endif
+        @endif
+    </div>
+
+    {{-- ترتيب المحافظات --}}
+    <div class="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-sm p-5">
+        <div class="flex items-center gap-3 mb-5">
+            <div class="w-1 h-5 bg-[#c9a847] rounded-full"></div>
+            <h3 class="text-sm font-semibold text-zinc-600 dark:text-zinc-400 uppercase tracking-wide">{{ __('home.fr_governorates_ranking') }}</h3>
+        </div>
+
+        @if($govRanking->isEmpty())
+            <p class="text-sm text-zinc-400 py-6 text-center">{{ __('home.fr_no_data') }}</p>
+        @else
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8">
+                @foreach($govRanking as $row)
+                    <div class="flex items-center justify-between gap-3 py-2 border-b border-zinc-100 dark:border-zinc-800">
+                        <span class="text-sm text-zinc-800 dark:text-zinc-100 truncate">
+                            {{ $row['governorate'] }}
+                            @unless($row['enough'])
+                                <span class="text-xs text-zinc-400">({{ __('home.fr_insufficient_sample') }})</span>
+                            @endunless
+                        </span>
+                        <span class="flex items-center gap-2 whitespace-nowrap">
+                            @include('livewire.feedback-results.includes.stars', ['value' => $row['avg']])
+                            <span class="text-xs text-zinc-400">({{ $row['count'] }})</span>
+                        </span>
+                    </div>
+                @endforeach
+            </div>
         @endif
     </div>
 

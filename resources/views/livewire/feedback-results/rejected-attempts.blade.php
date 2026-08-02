@@ -24,7 +24,7 @@
     <div class="flex flex-wrap items-end gap-4">
         <div class="max-w-sm flex-1 min-w-50">
             <input wire:model.live.debounce.300ms="search" type="text"
-                   placeholder="{{ __('home.fr_search_placeholder') }}"
+                   placeholder="{{ __('home.fr_search_placeholder_plain') }}"
                    class="w-full border border-zinc-300 dark:border-zinc-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-[#c9a847]" />
         </div>
         <div class="w-48">
