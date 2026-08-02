@@ -101,7 +101,7 @@ trait InteractsWithFeedbackGate
         }
         $gate->hitIp($ip);
 
-        // 3) قاعدة الأسبوعين (رقم قومي / هاتف)
+        // 3) قاعدة الأسبوع (رقم قومي / هاتف)
         $retry = $gate->duplicateRetryDate($this->feedbackType(), $this->national_id, $this->phone, (int) $this->office_id);
         if ($retry) {
             $gate->logRejection($this->feedbackType(), 'duplicate_window', $this->national_id, $this->phone, $this->office_id, request());

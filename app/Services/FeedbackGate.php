@@ -27,7 +27,7 @@ class FeedbackGate
      */
     public function duplicateRetryDate(string $type, string $nationalId, string $phone, int $officeId): ?CarbonInterface
     {
-        $windowDays = (int) config('feedback.window_days', 14);
+        $windowDays = (int) config('feedback.window_days', 7);
         $model = $type === self::TYPE_SUGGESTION ? FeedbackSuggestion::class : FeedbackRating::class;
 
         $last = $model::query()

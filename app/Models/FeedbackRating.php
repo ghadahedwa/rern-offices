@@ -10,6 +10,36 @@ class FeedbackRating extends Model
 {
     use HasFactory;
 
+    /**
+     * خيارات مدة الانتظار ومحاور التقييم — مصدر الحقيقة هنا (بيانات، لا واجهة)،
+     * وتقرأها شاشة البوابة العامة وشاشات النتائج الإدارية معاً.
+     * (النصوص العربية هنا مشمولة باستثناء قاعدة اللغة الخاص بالبوابة.)
+     */
+    public const WAIT_TIMES = [
+        'under_15' => 'أقل من ١٥ دقيقة',
+        '15_30'    => 'من ١٥ إلى ٣٠ دقيقة',
+        '30_60'    => 'من ٣٠ إلى ٦٠ دقيقة',
+        'over_60'  => 'أكثر من ساعة',
+    ];
+
+    /** نفس الخيارات بصيغة مختصرة — لخلايا الجداول حيث العرض محدود (العنوان الكامل في tooltip). */
+    public const WAIT_TIMES_SHORT = [
+        'under_15' => 'دون ١٥ د',
+        '15_30'    => '١٥–٣٠ د',
+        '30_60'    => '٣٠–٦٠ د',
+        'over_60'  => 'فوق ساعة',
+    ];
+
+    /** المفتاح = اسم العمود، القيمة = [العنوان، اختياري؟] */
+    public const CRITERIA = [
+        'rating_speed'         => ['سرعة إنجاز المعاملة', false],
+        'rating_staff'         => ['معاملة الموظفين وحُسن الاستقبال', false],
+        'rating_queue'         => ['تنظيم الدور والانتظار', false],
+        'rating_cleanliness'   => ['نظافة المقر وأماكن الانتظار', false],
+        'rating_clarity'       => ['وضوح الإجراءات والرسوم', false],
+        'rating_accessibility' => ['تيسير الخدمة لذوي الإعاقة وكبار السن', true],
+    ];
+
     protected $fillable = [
         'governorate_id', 'office_id',
         'name', 'national_id', 'phone',
@@ -28,5 +58,21 @@ class FeedbackRating extends Model
     public function governorate(): BelongsTo
     {
         return $this->belongsTo(Governorate::class);
+    }
+
+    /**
+     * متوسط محاور التقييم لهذا الصف — يُحسب على المحاور المُجابة فقط.
+     * المحور السادس (ذوو الإعاقة) اختياري، فاحتسابه كصفر يبوّظ المتوسط.
+     */
+    public function criteriaAverage(): ?float
+    {
+        $values = [];
+        foreach (array_keys(self::CRITERIA) as $field) {
+            if ($this->{$field} !== null) {
+                $values[] = (int) $this->{$field};
+            }
+        }
+
+        return $values === [] ? null : round(array_sum($values) / count($values), 2);
     }
 }

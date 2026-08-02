@@ -40,23 +40,10 @@ class Rating extends Component
 
     public bool $submitted = false;
 
-    /** خيارات مدة الانتظار */
-    public const WAIT_TIMES = [
-        'under_15' => 'أقل من ١٥ دقيقة',
-        '15_30'    => 'من ١٥ إلى ٣٠ دقيقة',
-        '30_60'    => 'من ٣٠ إلى ٦٠ دقيقة',
-        'over_60'  => 'أكثر من ساعة',
-    ];
+    /** خيارات مدة الانتظار ومحاور التقييم — معرّفة على الموديل (مصدر واحد للبوابة والنتائج) */
+    public const WAIT_TIMES = FeedbackRating::WAIT_TIMES;
 
-    /** محاور التقييم (المفتاح = اسم الحقل، القيمة = [العنوان، اختياري؟]) */
-    public const CRITERIA = [
-        'rating_speed'         => ['سرعة إنجاز المعاملة', false],
-        'rating_staff'         => ['معاملة الموظفين وحُسن الاستقبال', false],
-        'rating_queue'         => ['تنظيم الدور والانتظار', false],
-        'rating_cleanliness'   => ['نظافة المقر وأماكن الانتظار', false],
-        'rating_clarity'       => ['وضوح الإجراءات والرسوم', false],
-        'rating_accessibility' => ['تيسير الخدمة لذوي الإعاقة وكبار السن', true],
-    ];
+    public const CRITERIA = FeedbackRating::CRITERIA;
 
     public function mount(): void
     {

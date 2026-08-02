@@ -120,6 +120,12 @@ offices/{office}/statistics          → Offices\Statistics  (offices.statistics
 feedback                             → view feedback.landing (feedback)
 feedback/rating                      → Feedback\Rating      (feedback.rating)
 feedback/suggestion                  → Feedback\Suggestion  (feedback.suggestion)
+
+// نتائج رأي المواطن — إدارية (super-admin فقط):
+feedback-results                     → FeedbackResults\Dashboard         (feedback-results.dashboard)
+feedback-results/ratings             → FeedbackResults\Ratings           (feedback-results.ratings)
+feedback-results/suggestions         → FeedbackResults\Suggestions       (feedback-results.suggestions)
+feedback-results/rejected            → FeedbackResults\RejectedAttempts  (feedback-results.rejected)
 ```
 
 ---
@@ -359,7 +365,7 @@ resources/views/livewire/offices/
 `feedback_ratings` · `feedback_suggestions` · `suggestion_domains` · `suggestion_topics` · `feedback_suggestion_topic` (pivot) · `feedback_rejected_attempts`. FK للمقر/المحافظة `nullOnDelete` (حفظ التاريخ). `SuggestionCatalogSeeder` يزرع 5 مجالات/20 عنوان من `Suggestion::DOMAINS` (idempotent، في DatabaseSeeder).
 
 ### بوابة الحماية (Anti-abuse)
-- `config/feedback.php`: `window_days=14` · `ip_max_per_minute=10` · `rejected_retention_days=30`.
+- `config/feedback.php`: `window_days=7` · `ip_max_per_minute=10` · `rejected_retention_days=30`.
 - `App\Services\FeedbackGate`: `duplicateRetryDate` (يفحص **الرقم القومي أو الهاتف** + المقر خلال المدة — الهاتف معرّف شخصي، لكل نوع منفصل) · `ipThrottled`/`hitIp` (RateLimiter نافذة 60ث، صمّام ضد البوت فقط) · `logRejection`.
 - Trait `App\Livewire\Feedback\Concerns\InteractsWithFeedbackGate`: honeypot (حقل `website` مخفي visually-hidden) · `evaluateGate()` فحص تفاعلي (يحجب قبل البنود؛ **يسجّل duplicate_window مرة واحدة عند دخول الحجب فقط** لا مع كل re-check) · `submit()` (honeypot→validate→IP→تكرار→حفظ في transaction) · `formatArabicDate` · الانتقال بين الفورمين (تحت).
 - المكوّن يوفّر `feedbackType()`/`persist()`؛ Suggestion يربط العناوين بـ `topics()->sync`. `showRating`/`showTopics` = `office_id && !gateBlocked`.
@@ -384,7 +390,7 @@ resources/views/livewire/offices/
 نسخة احتياطية من الـ crontab السابق في `/root/crontab-backup-2026-07-30.txt`. أي `Schedule::command` جديد يشتغل تلقائياً من الآن.
 
 ### الاختبارات (Pest)
-`php artisan test` — **٧٧ اختبار، كلها ناجحة**. تشغيل اختبارات البوابة وحدها: `php artisan test tests/Feature/Feedback`.
+`php artisan test` — **٩٩ اختبار، كلها ناجحة**. تشغيل اختبارات البوابة وحدها: `php artisan test tests/Feature/Feedback`.
 - `tests/Feature/Feedback/FeedbackGateTest.php` — منع التكرار (بالرقم القومي/الهاتف، انتهاء المدة، لكل مقر ولكل نوع)، تسجيل الرفض مرة واحدة، honeypot، حد الـ IP، `is_public`، نقل الهوية بـ `resume=1`.
 - `tests/Feature/Feedback/FeedbackValidationTest.php` — الرقم القومي بحالات رفضه الستة، صيغة الهاتف، سلامة المقر/المحافظة، أمر التنظيف.
 - factories في `database/factories/` لـ Governorate / OfficeType / Office / FeedbackRating / FeedbackSuggestion (state `->public()` لنوع ظاهر للمواطن). الموديلات المستخدَمة في الاختبارات تحتاج `HasFactory`.
@@ -393,10 +399,61 @@ resources/views/livewire/offices/
 
 ### المتبقّي
 - **قناة وصول المواطن للبوابة** — غير موجودة. المقترح: `?office={id}` يعبّي المحافظة والمقر تلقائياً + QR لكل مقر يُطبع ويُعلَّق على الشباك. بدونها البوابة منشورة لكن لا أحد يعرف كيف يصلها.
-- **موديول عرض النتائج للإدارة** (صلاحيات + تصميم قراءة + تجميع/ترتيب الأولويات) — مرحلة منفصلة مؤجّلة.
 - شاشة المقترحات تقرأ المجالات من الـ const (المفاتيح مطابقة للكتالوج المزروع) — تُحوَّل لـ DB مع شاشة إدارة الكتالوج.
 
 **⚠️ النشر:** موديول البوابة يحتاج `git pull` + `migrate --force` (جداول + is_public) + `config:cache` (مفاتيح feedback) + `route:cache` (توجيه الجذر) + `view:cache`.
+
+---
+
+## موديول نتائج رأي المواطن (الإدارة) ✅ **منجز**
+فرع مستقل في السايدبار اسمه **«رأي المواطن»** (`config/branches.php` → مفتاح `feedback`, `super_admin_only => true`). الشاشات تحت `App\Livewire\FeedbackResults\` وقوالبها في `resources/views/livewire/feedback-results/`.
+
+```php
+feedback-results.dashboard     → /feedback-results              (Dashboard)
+feedback-results.ratings       → /feedback-results/ratings      (Ratings)
+feedback-results.suggestions   → /feedback-results/suggestions  (Suggestions)
+feedback-results.rejected      → /feedback-results/rejected     (RejectedAttempts)
+```
+كلها خلف `middleware('role:super-admin')` + فحص ثانٍ في `mount()`.
+⚠️ **لا تخلط** `feedback.*` (البوابة العامة بلا auth) مع `feedback-results.*` (الشاشات الإدارية) — أنماط الفرع تطابق الثانية فقط.
+
+### الفلاتر المشتركة
+`Concerns\WithFeedbackFilters` — محافظة/مقر/فترة مربوطة بالـ URL (`gov`, `office`, `from`, `to`)، والقالب المشترك `includes/filters.blade.php`.
+- `applyFilters()` هو المدخل الوحيد لأي استعلام في الموديول.
+- `filterByGovernorate()` قابل للتجاوز — جدول `feedback_rejected_attempts` **ليس فيه `governorate_id`**، فالمكوّن يفلتر عبر علاقة المقر.
+- `applyScope()` فارغ حالياً (super-admin) — **هو النقطة الوحيدة** التي تُضاف فيها فلترة محافظات المستخدم عند فتح الموديول لأدوار أخرى (مع إضافة صلاحية `feedback.view` وحذف `super_admin_only`).
+
+### قواعد حسابية لا تُكسر
+- **المحور السادس (ذوو الإعاقة) `nullable`** — المتوسط يُحسب على المجيبين فقط. في SQL نعتمد أن `AVG`/`COUNT` يتجاهلان NULL؛ وعلى مستوى الصف `FeedbackRating::criteriaAverage()`. احتسابه صفراً يبوّظ الرقم.
+- **حد أدنى للعينة قبل ترتيب المقرات**: `config('feedback.min_ratings_for_ranking')` (افتراضي ٥). المقرات الأقل تُعرض في مجموعة «عينة غير كافية» **خارج الترتيب** — مقر بتقييم واحد بخمس نجوم ليس أفضل مقر.
+- **التقييم العام ومتوسط المحاور رقمان مختلفان** — يُعرضان معاً، لا يُستبدل أحدهما بالآخر.
+- **أولويات المقترحات** تُحسب من جدول الربط `feedback_suggestion_topic` مقيَّداً بـ subquery على المقترحات المفلترة (لا تحميل كامل للصفوف).
+
+### قاعدة عرض الجداول (اتبعها في أي جدول جديد)
+جدول بأعمدة كثيرة ونص عربي حقيقي يتجاوز عرض الشاشة بسهولة. الأعمدة الثابتة بالبكسل (`w-44`…) لا تحلّ المشكلة — تنقلها لشاشة أضيق. المطبَّق هنا:
+- **`table-fixed` + نِسَب مئوية مجموعها ١٠٠٪** على الـ `<th>` — الجدول = عرض الحاوية بالضبط مهما طال المحتوى.
+- **`truncate` + `title`** على كل خلية نصية (اسم مقر/مواطن/ملاحظة) — النص الكامل في الـ tooltip وفي صف التفاصيل.
+- **إخفاء تدريجي حسب الأهمية**: `hidden xl:table-cell` للأعمدة الثانوية، `hidden 2xl:table-cell` لعمود الترقيم. الأساسي الظاهر دائماً ٥ أعمدة.
+- **`min-w-140`** (٥٦٠px) — على الموبايل يتحوّل لتمرير أفقي داخل البطاقة بدل سحق الأعمدة.
+- ⚠️ **أي عمود يُخفى لازم محتواه يكون موجوداً في صف التفاصيل** — مدة الانتظار أُضيفت للتفاصيل لهذا السبب بالذات.
+- ⚠️ الفئات دي محتاجة `npm run build` بعد أي تعديل.
+
+### مصدر الحقيقة للمسمّيات
+`FeedbackRating::WAIT_TIMES` و`FeedbackRating::CRITERIA` **على الموديل** (بيانات لا واجهة)، و`Livewire\Feedback\Rating` يشير إليهما (`const X = FeedbackRating::X`). عناوين المقترحات ومجالاتها من جدولي `suggestion_topics`/`suggestion_domains`. لا تُكرَّر هذه النصوص في `lang/ar/home.php`.
+باقي نصوص الموديول **كلها مفاتيح `fr_*` في `lang/ar/home.php`** — استثناء اللغة يخصّ البوابة العامة فقط.
+
+### بيانات تجريبية (محلي فقط)
+```bash
+php artisan db:seed --class=FeedbackDemoSeeder
+```
+`FeedbackDemoSeeder` يرفض العمل على production ولا يُستدعى من `DatabaseSeeder`. **يمسح بيانات البوابة الموجودة** قبل الزرع، ويولّد انحيازاً بين المقرات ومقرّين بعينة صغيرة عمداً + محوراً اختيارياً فارغاً في ~40% من الصفوف — أي أنه يختبر القاعدتين أعلاه بصرياً.
+
+### الاختبارات
+`php artisan test tests/Feature/FeedbackResults` — **٢٢ اختباراً**: منع غير السوبر أدمن من الشاشات الأربع، متوسط المحور الاختياري، حد العينة، فلاتر الفترة/المحافظة، تصفير المقر عند تغيير المحافظة، عدّ عناوين المقترحات مع الفلتر، البحث العربي المطبَّع، فلترة المرفوضات عبر علاقة المقر، المقر المحذوف.
+
+### المتبقّي في هذا الموديول
+- **التصدير (PDF/Excel)** — مؤجَّل عمداً للإصدار الثاني.
+- توسيع الوصول لأدوار غير super-admin (صلاحية `feedback.view` + `applyScope`).
 
 ---
 

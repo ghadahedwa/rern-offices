@@ -120,7 +120,7 @@
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
         </div>
         <p>
-          لا يتيح النظام تقديم أكثر من مقترح لهذا المقر كل أسبوعين.<br>
+          لا يتيح النظام تقديم أكثر من مقترح لهذا المقر كل أسبوع.<br>
           يمكنك المحاولة اعتباراً من <span class="date">{{ $gateRetryDate }}</span>.
         </p>
         <a href="{{ $this->otherFormUrl() }}" wire:navigate class="alt">

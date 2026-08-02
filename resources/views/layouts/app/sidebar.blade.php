@@ -205,6 +205,24 @@
 
                     @endif {{-- /branch: warehouses --}}
 
+                    @if($currentBranch === 'feedback')
+                    <flux:sidebar.item icon="squares-2x2" :href="route('feedback-results.dashboard')" :current="request()->routeIs('feedback-results.dashboard')" wire:navigate>
+                        {{ __('home.fr_dashboard') }}
+                    </flux:sidebar.item>
+
+                    <flux:sidebar.item icon="star" :href="route('feedback-results.ratings')" :current="request()->routeIs('feedback-results.ratings')" wire:navigate>
+                        {{ __('home.fr_ratings') }}
+                    </flux:sidebar.item>
+
+                    <flux:sidebar.item icon="light-bulb" :href="route('feedback-results.suggestions')" :current="request()->routeIs('feedback-results.suggestions')" wire:navigate>
+                        {{ __('home.fr_suggestions') }}
+                    </flux:sidebar.item>
+
+                    <flux:sidebar.item icon="shield-exclamation" :href="route('feedback-results.rejected')" :current="request()->routeIs('feedback-results.rejected')" wire:navigate>
+                        {{ __('home.fr_rejected') }}
+                    </flux:sidebar.item>
+                    @endif {{-- /branch: feedback --}}
+
                     @if($currentBranch === 'system')
 
                     <flux:sidebar.item icon="squares-2x2" :href="route('system-dashboard')" :current="request()->routeIs('system-dashboard')" wire:navigate>

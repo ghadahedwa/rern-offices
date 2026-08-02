@@ -85,6 +85,23 @@ return [
         ],
     ],
 
+    // نتائج بوابة رأي المواطن — للسوبر أدمن فقط حالياً.
+    // عند التوسيع: احذف super_admin_only وأضف 'feedback.view' في permissions.
+    'feedback' => [
+        'label'         => 'home.branch_feedback',
+        'icon'          => 'chat-bubble-left-right',
+        'default_route' => 'feedback-results.dashboard',
+        'entries' => [
+            'feedback-results.dashboard' => null,
+        ],
+        'route_patterns' => [
+            // ملاحظة: البوابة العامة اسمها 'feedback.*' — النمط ده بيخصّ الشاشات الإدارية فقط
+            'feedback-results.*',
+        ],
+        'super_admin_only' => true,
+        'permissions' => [],
+    ],
+
     'system' => [
         'label'         => 'home.branch_system',
         'icon'          => 'cog-6-tooth',

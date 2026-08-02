@@ -941,4 +941,86 @@ return [
     'wh_below_min_stock'          => 'تحت الحد الأدنى',
     'wh_main_warehouse_only'      => 'الوارد يُسجَّل على المخزن الرئيسي فقط',
     'wh_no_main_warehouse'        => 'لا يوجد مخزن رئيسي — أنشئ مخزناً نوعه «رئيسي» أولاً',
+
+    /*
+    |--------------------------------------------------------------------------
+    | نتائج بوابة رأي المواطن (شاشات إدارية — تلتزم بقاعدة اللغة كاملة)
+    |--------------------------------------------------------------------------
+    | ملاحظة: مسمّيات محاور التقييم ومدد الانتظار وعناوين المقترحات تُقرأ من
+    | Rating::CRITERIA / Rating::WAIT_TIMES / جدول suggestion_topics — لا تُكرَّر هنا.
+    */
+    'branch_feedback'             => 'رأي المواطن',
+    'fr_dashboard'                => 'لوحة نتائج رأي المواطن',
+    'fr_ratings'                  => 'التقييمات',
+    'fr_suggestions'              => 'المقترحات',
+    'fr_rejected'                 => 'المحاولات المرفوضة',
+
+    // الفلاتر
+    'fr_governorate'              => 'المحافظة',
+    'fr_office'                   => 'المقر',
+    'fr_all_governorates'         => 'كل المحافظات',
+    'fr_all_offices'              => 'كل المقرات',
+    'fr_date_from'                => 'من تاريخ',
+    'fr_date_to'                  => 'إلى تاريخ',
+    'fr_reset_filters'            => 'إعادة ضبط الفلاتر',
+    'fr_search_placeholder'       => 'بحث بالاسم أو الرقم القومي أو الهاتف',
+
+    // أعمدة مشتركة
+    'fr_date'                     => 'التاريخ',
+    'fr_citizen'                  => 'مقدّم الرأي',
+    'fr_details'                  => 'التفاصيل',
+    'fr_deleted_office'           => 'مقر محذوف',
+    'fr_no_data'                  => 'لا توجد بيانات في النطاق المحدد',
+
+    // التقييمات
+    'fr_wait_time'                => 'مدة الانتظار',
+    'fr_overall_rating'           => 'التقييم العام',
+    'fr_criteria_avg'             => 'متوسط المحاور',
+    'fr_criteria_avg_short'       => 'متوسط',   // لخلايا الجدول حيث العرض ثابت
+    'fr_notes'                    => 'الملاحظات',
+    'fr_no_notes'                 => 'لا توجد ملاحظات',
+    'fr_no_ratings'               => 'لا توجد تقييمات مطابقة',
+    'fr_criteria'                 => 'محاور التقييم',
+    'fr_not_answered'             => 'لم يُجب',
+
+    // المقترحات
+    'fr_topics'                   => 'العناوين المختارة',
+    'fr_topics_count'             => 'عدد العناوين',
+    'fr_other_suggestion'         => 'اقتراح حر',
+    'fr_no_topics'                => 'لم يختر عناوين',
+    'fr_no_suggestions'           => 'لا توجد مقترحات مطابقة',
+
+    // المحاولات المرفوضة
+    'fr_reason'                   => 'سبب الرفض',
+    'fr_reason_duplicate_window'  => 'تكرار خلال المدة',
+    'fr_reason_honeypot'          => 'إرسال آلي (بوت)',
+    'fr_reason_rate_limit'        => 'تجاوز حد الجهاز',
+    'fr_type'                     => 'النوع',
+    'fr_type_rating'              => 'تقييم',
+    'fr_type_suggestion'          => 'اقتراح',
+    'fr_ip'                       => 'عنوان الجهاز',
+    'fr_user_agent'               => 'المتصفح',
+    'fr_no_rejected'              => 'لا توجد محاولات مرفوضة',
+    'fr_rejected_retention_note'  => 'تُحذف السجلات تلقائياً بعد :days يوماً',
+
+    // الداشبورد
+    'fr_total_ratings'            => 'إجمالي التقييمات',
+    'fr_total_suggestions'        => 'إجمالي المقترحات',
+    'fr_avg_overall'              => 'متوسط التقييم العام',
+    'fr_rated_offices'            => 'مقرات جرى تقييمها',
+    'fr_criteria_averages'        => 'متوسط محاور التقييم',
+    'fr_wait_distribution'        => 'توزيع مدة الانتظار',
+    'fr_offices_ranking'          => 'ترتيب المقرات حسب التقييم',
+    'fr_top_offices'              => 'الأعلى تقييماً',
+    'fr_bottom_offices'           => 'الأدنى تقييماً',
+    'fr_insufficient_sample'      => 'عينة غير كافية',
+    'fr_insufficient_sample_hint' => 'مقرات عدد تقييماتها أقل من :min — معروضة دون ترتيب',
+    'fr_ratings_count'            => 'عدد التقييمات',
+    'fr_top_topics'               => 'أكثر عناوين المقترحات طلباً',
+    'fr_domains_distribution'     => 'توزيع مجالات المقترحات',
+    'fr_free_texts'               => 'نصوص حرة من المواطنين',
+    'fr_rejected_summary'         => 'ملخص المحاولات المرفوضة',
+    'fr_view_all'                 => 'عرض الكل',
+    'fr_answered_count'           => 'عدد المجيبين',
+    'fr_of_five'                  => 'من ٥',
 ];

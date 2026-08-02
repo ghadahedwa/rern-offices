@@ -116,6 +116,17 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->middleware('role_or_permission:super-admin|offices.settings|warehouses.settings')
         ->name('system-dashboard');
 
+    // نتائج بوابة رأي المواطن — فرع مستقل، super-admin فقط حالياً
+    Route::middleware('role:super-admin')
+        ->prefix('feedback-results')
+        ->name('feedback-results.')
+        ->group(function () {
+            Route::livewire('/', \App\Livewire\FeedbackResults\Dashboard::class)->name('dashboard');
+            Route::livewire('ratings', \App\Livewire\FeedbackResults\Ratings::class)->name('ratings');
+            Route::livewire('suggestions', \App\Livewire\FeedbackResults\Suggestions::class)->name('suggestions');
+            Route::livewire('rejected', \App\Livewire\FeedbackResults\RejectedAttempts::class)->name('rejected');
+        });
+
     // المستخدمون والأدوار — super-admin فقط حالياً (users.manage مؤجّلة)
     Route::middleware('role:super-admin')->group(function () {
         Route::livewire('users', \App\Livewire\Users\Index::class)->name('users.index');
