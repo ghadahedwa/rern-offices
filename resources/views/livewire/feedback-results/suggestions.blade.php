@@ -32,7 +32,10 @@
             </thead>
             <tbody class="divide-y divide-zinc-100 dark:divide-zinc-700">
                 @forelse($suggestions as $suggestion)
-                    <tr class="hover:bg-zinc-50 dark:hover:bg-zinc-800 transition">
+                    {{-- الصف المفتوح + صف تفاصيله يُقرآن ككتلة واحدة (نفس مبدأ شاشة التقييمات) --}}
+                    <tr class="transition {{ $expanded === $suggestion->id
+                        ? 'bg-[#c9a847]/10 dark:bg-[#c9a847]/15'
+                        : 'hover:bg-zinc-50 dark:hover:bg-zinc-800' }}">
                         <td class="px-3 py-3 text-zinc-500 hidden 2xl:table-cell">{{ $suggestions->firstItem() + $loop->index }}</td>
                         <td class="px-3 py-3 text-zinc-600 dark:text-zinc-300 whitespace-nowrap">
                             {{ $suggestion->created_at->format('Y-m-d') }}
@@ -65,15 +68,23 @@
                         </td>
                         <td class="px-3 py-3">
                             <button wire:click="toggle({{ $suggestion->id }})"
-                                    class="inline-flex items-center text-xs px-3 py-1.5 rounded-md border border-zinc-300 dark:border-zinc-600 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition">
-                                {{ $expanded === $suggestion->id ? '−' : '+' }}
+                                    class="inline-flex items-center justify-center w-7 h-7 rounded-md border transition
+                                        {{ $expanded === $suggestion->id
+                                            ? 'border-[#c9a847] bg-[#c9a847] text-white'
+                                            : 'border-zinc-300 dark:border-zinc-600 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700' }}">
+                                <svg class="w-4 h-4 transition-transform {{ $expanded === $suggestion->id ? 'rotate-180' : '' }}"
+                                     fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
+                                </svg>
                             </button>
                         </td>
                     </tr>
 
                     @if($expanded === $suggestion->id)
-                        <tr class="bg-zinc-50/70 dark:bg-zinc-800/40">
-                            <td colspan="7" class="px-6 py-5">
+                        {{-- border-t-0!: يلغي فاصل divide-y فيلتحم بالصف الأعلى · border-b-2: يقفل الكتلة --}}
+                        <tr class="bg-[#c9a847]/10 dark:bg-[#c9a847]/15 border-t-0! border-b-2 border-b-zinc-300 dark:border-b-zinc-600">
+                            <td colspan="7" class="px-4 pt-0 pb-5">
+                              <div class="rounded-lg border border-[#c9a847]/30 bg-white dark:bg-zinc-900 p-5 shadow-sm">
                                 <div class="flex items-center gap-3 mb-4">
                                     <div class="w-1 h-5 bg-[#c9a847] rounded-full"></div>
                                     <h3 class="text-sm font-semibold text-zinc-600 dark:text-zinc-400 uppercase tracking-wide">
@@ -111,6 +122,7 @@
                                 <p class="mt-4 text-xs text-zinc-400">
                                     {{ __('home.fr_ip') }}: {{ $suggestion->ip_address ?? '—' }}
                                 </p>
+                              </div>
                             </td>
                         </tr>
                     @endif

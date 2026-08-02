@@ -238,6 +238,21 @@ it('يعرض عدد العناوين لكل مقترح', function () {
     expect($rows->first()->topics_count)->toBe(2);
 });
 
+it('يخرج الملاحظات من الجدول ويعرضها مع المحاور في صف التفاصيل', function () {
+    $office = Office::factory()->public()->create();
+    $rating = FeedbackRating::factory()->create([
+        'office_id' => $office->id,
+        'notes'     => 'ملاحظة المواطن التجريبية',
+    ]);
+
+    Livewire::actingAs(superAdmin())->test(Ratings::class)
+        ->assertDontSee('ملاحظة المواطن التجريبية')          // لا عمود للملاحظات في الجدول
+        ->call('toggle', $rating->id)
+        ->assertSee('ملاحظة المواطن التجريبية')              // تظهر بعد فتح التفاصيل
+        ->assertSee(FeedbackRating::CRITERIA['rating_speed'][0])
+        ->assertSee(FeedbackRating::WAIT_TIMES[$rating->wait_time]);   // مدة الانتظار نزلت للتفاصيل
+});
+
 it('يعرض المقر المحذوف بلافتة بديلة بدل الانهيار', function () {
     $office = Office::factory()->public()->create();
     FeedbackRating::factory()->create(['office_id' => $office->id]);
