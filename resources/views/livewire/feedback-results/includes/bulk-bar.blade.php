@@ -14,22 +14,18 @@
             </span>
 
             @if($inTrash)
+                {{-- الاسترجاع غير مدمّر (وقابل للتراجع بحذفٍ آخر) فينفَّذ بلا تأكيد --}}
                 <button type="button" wire:click="restoreSelected"
-                        wire:confirm="{{ __('home.fr_bulk_confirm_restore', ['count' => $bulkCount]) }}"
                         class="{{ $btn }} border-emerald-300 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/20">
                     {{ __('home.fr_bulk_restore') }}
                 </button>
-                <button type="button" wire:click="forceDeleteSelected"
-                        wire:confirm="{{ __('home.fr_bulk_confirm_force', ['count' => $bulkCount]) }}"
+                <button type="button" wire:click="askBulkForceDelete"
                         class="{{ $btn }} border-red-300 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20">
                     {{ __('home.fr_bulk_force_delete') }}
                 </button>
             @else
-                {{-- الرسالة تختلف بحسب قابلية التراجع: سلة للآراء، ونهائي لسجلّ المحاولات --}}
-                <button type="button" wire:click="deleteSelected"
-                        wire:confirm="{{ $this->usesSoftDeletes()
-                            ? __('home.fr_bulk_confirm_delete', ['count' => $bulkCount])
-                            : __('home.fr_bulk_confirm_purge', ['count' => $bulkCount]) }}"
+                {{-- التأكيد في المودال المشترك (نفس مودال حذف المقرات)، ونصّه يتغيّر بحسب قابلية التراجع --}}
+                <button type="button" wire:click="askBulkDelete"
                         class="{{ $btn }} border-red-300 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20">
                     <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>

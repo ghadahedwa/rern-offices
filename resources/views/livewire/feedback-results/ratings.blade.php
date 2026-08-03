@@ -157,4 +157,6 @@
 
     <div>{{ $ratings->links() }}</div>
 
+    @include('livewire.partials.delete-modal')
+
 </div>

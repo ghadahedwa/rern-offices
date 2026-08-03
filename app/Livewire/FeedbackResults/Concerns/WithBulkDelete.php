@@ -34,6 +34,15 @@ trait WithBulkDelete
     #[Url(as: 'trashed', except: false)]
     public bool $showTrashed = false;
 
+    /* حالة مودال التأكيد المشترك livewire.partials.delete-modal — نفس مودال حذف المقرات. */
+    public bool $showDelete = false;
+    public string $deletingPrompt = '';
+    public string $deletingLabel = '';
+    public string $deletingWarning = '';
+
+    /** الإجراء المنتظر تأكيده؛ ينفّذه deleteRow() الذي يستدعيه زر المودال. */
+    public string $pendingBulkAction = '';
+
     public function usesSoftDeletes(): bool
     {
         return in_array(SoftDeletes::class, class_uses_recursive($this->bulkModel()), true);
@@ -114,6 +123,51 @@ trait WithBulkDelete
     public function markAllMatching(): void
     {
         $this->selectAllMatching = true;
+    }
+
+    /* الحذف يمرّ بمودال التأكيد المشترك؛ الاسترجاع فعل غير مدمّر فينفَّذ مباشرة. */
+
+    public function askBulkDelete(): void
+    {
+        $this->askBulk('delete');
+    }
+
+    public function askBulkForceDelete(): void
+    {
+        $this->askBulk('forceDelete');
+    }
+
+    private function askBulk(string $action): void
+    {
+        $count = $this->selectedCount();
+
+        if ($count === 0) {
+            Flux::toast(variant: 'warning', text: __('home.fr_bulk_none_selected'));
+
+            return;
+        }
+
+        // الحذف المنطقي وحده قابل للتراجع، فهو وحده بلا تنبيه أحمر
+        $reversible = $this->usesSoftDeletes() && $action === 'delete';
+
+        $this->pendingBulkAction = $action;
+        $this->deletingPrompt    = $reversible ? __('home.fr_bulk_confirm_delete') : __('home.fr_bulk_confirm_purge');
+        $this->deletingLabel     = __('home.fr_bulk_label', ['count' => $count, 'subject' => $this->bulkSubject()]);
+        $this->deletingWarning   = $reversible ? '' : __('home.fr_bulk_warning_permanent');
+        $this->showDelete        = true;
+    }
+
+    /** زر التأكيد في المودال المشترك. */
+    public function deleteRow(): void
+    {
+        // مودال مغلق = لا تأكيد قائم؛ يمنع تنفيذ إجراء مؤجَّل عبر طلب مستقل
+        $action = $this->showDelete ? $this->pendingBulkAction : '';
+
+        $this->reset('showDelete', 'deletingPrompt', 'deletingLabel', 'deletingWarning', 'pendingBulkAction');
+
+        if (in_array($action, ['delete', 'forceDelete'], true)) {
+            $this->applyBulk($action);
+        }
     }
 
     public function deleteSelected(): void

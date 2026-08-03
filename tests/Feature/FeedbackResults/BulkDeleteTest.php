@@ -96,6 +96,63 @@ it('الحذف النهائي من السلة يمسح الصف وصفوف رب�
         ->and(DB::table('feedback_suggestion_topic')->where('feedback_suggestion_id', $suggestion->id)->count())->toBe(0);
 });
 
+/* ===================== مودال التأكيد المشترك ===================== */
+
+it('يفتح مودال التأكيد بنص السلة بلا تنبيه أحمر، ثم يحذف عند التأكيد', function () {
+    $rating = FeedbackRating::factory()->create(['office_id' => Office::factory()->public()->create()->id]);
+
+    Livewire::actingAs(bulkAdmin())->test(Ratings::class)
+        ->set('selected', [(string) $rating->id])
+        ->call('askBulkDelete')
+        ->assertSet('showDelete', true)
+        ->assertSet('deletingPrompt', __('home.fr_bulk_confirm_delete'))
+        // الحذف المنطقي قابل للتراجع فلا تنبيه أحمر
+        ->assertSet('deletingWarning', '')
+        ->assertSee(__('home.fr_bulk_label', ['count' => 1, 'subject' => __('home.fr_ratings')]))
+        ->call('deleteRow')
+        ->assertSet('showDelete', false);
+
+    expect($rating->fresh()->deleted_at)->not->toBeNull();
+});
+
+it('يُظهر تنبيه اللا رجعة في الحذف النهائي وفي المحاولات المرفوضة', function () {
+    $suggestion = FeedbackSuggestion::factory()->create(['office_id' => Office::factory()->public()->create()->id]);
+    $suggestion->delete();
+
+    Livewire::actingAs(bulkAdmin())->test(Suggestions::class)
+        ->call('toggleTrashed')
+        ->set('selected', [(string) $suggestion->id])
+        ->call('askBulkForceDelete')
+        ->assertSet('deletingPrompt', __('home.fr_bulk_confirm_purge'))
+        ->assertSet('deletingWarning', __('home.fr_bulk_warning_permanent'));
+
+    $attempt = FeedbackRejectedAttempt::create(['type' => 'rating', 'reason' => 'honeypot']);
+
+    // جدول بلا سلة: حتى الحذف العادي فيه نهائي، فلازم يحمل التنبيه نفسه
+    Livewire::actingAs(bulkAdmin())->test(RejectedAttempts::class)
+        ->set('selected', [(string) $attempt->id])
+        ->call('askBulkDelete')
+        ->assertSet('deletingWarning', __('home.fr_bulk_warning_permanent'));
+});
+
+it('لا يفتح المودال بلا تحديد', function () {
+    Livewire::actingAs(bulkAdmin())->test(Ratings::class)
+        ->call('askBulkDelete')
+        ->assertSet('showDelete', false);
+});
+
+it('لا يحذف شيئاً لو أُغلق المودال قبل التأكيد', function () {
+    $rating = FeedbackRating::factory()->create(['office_id' => Office::factory()->public()->create()->id]);
+
+    Livewire::actingAs(bulkAdmin())->test(Ratings::class)
+        ->set('selected', [(string) $rating->id])
+        ->call('askBulkDelete')
+        ->set('showDelete', false)
+        ->call('deleteRow');
+
+    expect($rating->fresh()->deleted_at)->toBeNull();
+});
+
 /* ===================== القاعدة التي لا تُكسر ===================== */
 
 it('حذف تقييم لا يفتح نافذة منع التكرار لصاحبه', function () {

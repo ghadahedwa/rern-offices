@@ -1,5 +1,6 @@
 {{-- ── Delete Confirmation Modal (مشترك) ──
-     يتطلب في الـ component: bool $showDelete, string $deletingLabel, method deleteRow() --}}
+     يتطلب في الـ component: bool $showDelete, string $deletingLabel, method deleteRow()
+     واختيارياً: $deletingWarning (تنبيه أحمر) و$deletingPrompt (نص السؤال بدل الافتراضي) --}}
 <div x-show="$wire.showDelete"
      x-transition.opacity
      @click.self="$wire.showDelete = false"
@@ -23,7 +24,7 @@
         </div>
         <div class="bg-white dark:bg-zinc-900 px-5 py-6 space-y-5">
             <p class="text-sm text-zinc-600 dark:text-zinc-300 text-center">
-                {{ __('home.confirm_delete_record') }}<br>
+                {{ ($deletingPrompt ?? '') ?: __('home.confirm_delete_record') }}<br>
                 <span class="font-semibold text-zinc-800 dark:text-zinc-100">{{ $deletingLabel }}</span>
             </p>
             @if(!empty($deletingWarning ?? ''))

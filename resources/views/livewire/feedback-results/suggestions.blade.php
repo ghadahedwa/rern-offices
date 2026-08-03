@@ -155,4 +155,6 @@
 
     <div>{{ $suggestions->links() }}</div>
 
+    @include('livewire.partials.delete-modal')
+
 </div>

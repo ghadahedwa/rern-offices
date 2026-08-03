@@ -96,4 +96,6 @@
 
     <div>{{ $attempts->links() }}</div>
 
+    @include('livewire.partials.delete-modal')
+
 </div>
