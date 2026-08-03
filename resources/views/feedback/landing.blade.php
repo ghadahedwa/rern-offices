@@ -123,7 +123,8 @@ h1 .accent{color:var(--gold-dark)}
 
   </div>
 
-  {{-- ===== شريط إرشادي: الشكاوى الرسمية ===== --}}
+  {{-- ===== شريط إرشادي: الشكاوى الرسمية — مُخفى بمفتاح الإعداد لحين قرار العميل ===== --}}
+  @if(config('feedback.show_complaints_bar'))
   <div class="official-note">
     <div class="on-ic">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
@@ -148,6 +149,7 @@ h1 .accent{color:var(--gold-dark)}
       </div>
     </div>
   </div>
+  @endif
 </main>
 
 </x-layouts.feedback>
