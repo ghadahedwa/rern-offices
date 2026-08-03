@@ -137,7 +137,7 @@
                             <tr class="hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition">
                                 <td class="py-2.5 px-3 whitespace-nowrap">
                                     <p class="text-xs text-zinc-400 dark:text-zinc-500">{{ $activity->created_at->diffForHumans() }}</p>
-                                    <p class="text-xs text-zinc-300 dark:text-zinc-600">{{ $activity->created_at->format('Y-m-d H:i') }}</p>
+                                    <p class="text-xs text-zinc-300 dark:text-zinc-600">{{ \App\Support\LocalTime::stamp($activity->created_at) }}</p>
                                 </td>
                                 <td class="py-2.5 px-3 font-medium text-zinc-700 dark:text-zinc-300 whitespace-nowrap text-xs">
                                     {{ optional($activity->causer)->name ?? '—' }}

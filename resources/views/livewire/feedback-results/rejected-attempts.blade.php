@@ -58,8 +58,8 @@
                     <tr class="hover:bg-zinc-50 dark:hover:bg-zinc-800 transition">
                         <td class="px-3 py-3 text-zinc-500 hidden 2xl:table-cell">{{ $attempts->firstItem() + $loop->index }}</td>
                         <td class="px-4 py-3 text-zinc-600 dark:text-zinc-300 whitespace-nowrap">
-                            {{ $attempt->created_at->format('Y-m-d') }}
-                            <span class="block text-xs text-zinc-400">{{ $attempt->created_at->format('H:i') }}</span>
+                            {{ \App\Support\LocalTime::date($attempt->created_at) }}
+                            <span class="block text-xs text-zinc-400">{{ \App\Support\LocalTime::time($attempt->created_at) }}</span>
                         </td>
                         <td class="px-3 py-3 text-zinc-600 dark:text-zinc-300">{{ __('home.fr_type_'.$attempt->type) }}</td>
                         <td class="px-3 py-3">

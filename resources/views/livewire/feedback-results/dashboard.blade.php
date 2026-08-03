@@ -300,7 +300,7 @@
                         <div class="py-2.5 border-b border-zinc-100 dark:border-zinc-800 last:border-0">
                             <p class="text-sm text-zinc-700 dark:text-zinc-200">{{ $note->notes }}</p>
                             <p class="text-xs text-zinc-400 mt-1">
-                                {{ $note->office?->name ?? __('home.fr_deleted_office') }} · {{ $note->created_at->format('Y-m-d') }}
+                                {{ $note->office?->name ?? __('home.fr_deleted_office') }} · {{ \App\Support\LocalTime::date($note->created_at) }}
                             </p>
                         </div>
                     @empty
@@ -314,7 +314,7 @@
                         <div class="py-2.5 border-b border-zinc-100 dark:border-zinc-800 last:border-0">
                             <p class="text-sm text-zinc-700 dark:text-zinc-200">{{ $other->other_suggestion }}</p>
                             <p class="text-xs text-zinc-400 mt-1">
-                                {{ $other->office?->name ?? __('home.fr_deleted_office') }} · {{ $other->created_at->format('Y-m-d') }}
+                                {{ $other->office?->name ?? __('home.fr_deleted_office') }} · {{ \App\Support\LocalTime::date($other->created_at) }}
                             </p>
                         </div>
                     @empty

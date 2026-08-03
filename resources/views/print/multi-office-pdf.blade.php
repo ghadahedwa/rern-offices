@@ -79,7 +79,7 @@
                 <div class="app-subtitle">تقرير مقارنة المقرات</div>
             </td>
             <td class="meta-cell">
-                <div>تاريخ الطباعة: {{ now()->format('Y-m-d') }}</div>
+                <div>تاريخ الطباعة: {{ \App\Support\LocalTime::date(now()) }}</div>
                 <div>عدد المقرات: {{ $offices->count() }}</div>
             </td>
         </tr>
@@ -207,7 +207,7 @@
     </table>
 
     <div class="page-footer">
-        نظام مقرات التوثيق والشهر العقاري — طُبع بتاريخ {{ now()->format('Y-m-d H:i') }}
+        نظام مقرات التوثيق والشهر العقاري — طُبع بتاريخ {{ \App\Support\LocalTime::stamp(now()) }}
     </div>
 
 </body>

@@ -42,8 +42,8 @@
                         : 'hover:bg-zinc-50 dark:hover:bg-zinc-800' }}">
                         <td class="px-3 py-3 text-zinc-500 hidden 2xl:table-cell">{{ $suggestions->firstItem() + $loop->index }}</td>
                         <td class="px-3 py-3 text-zinc-600 dark:text-zinc-300 whitespace-nowrap">
-                            {{ $suggestion->created_at->format('Y-m-d') }}
-                            <span class="block text-xs text-zinc-400">{{ $suggestion->created_at->format('H:i') }}</span>
+                            {{ \App\Support\LocalTime::date($suggestion->created_at) }}
+                            <span class="block text-xs text-zinc-400">{{ \App\Support\LocalTime::time($suggestion->created_at) }}</span>
                         </td>
                         {{-- المحافظة سطر فرعي تحت المقر — نفس ترتيب شاشة التقييمات --}}
                         <td class="px-3 py-3">

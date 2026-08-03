@@ -218,7 +218,7 @@
                 </div>
             </div>
             <div class="report-meta">
-                <div>تاريخ الطباعة: {{ now()->format('Y-m-d') }}</div>
+                <div>تاريخ الطباعة: {{ \App\Support\LocalTime::date(now()) }}</div>
                 <div>المحافظة: {{ $office->governorate->name ?? '—' }}</div>
                 @if($office->officeType)
                 <div>النوع: {{ $office->officeType->name }}</div>
@@ -415,7 +415,7 @@
 
         {{-- Footer --}}
         <div style="margin-top:24px; padding-top:10px; border-top:1px solid #e4e4e4; text-align:center; font-size:10px; color:#aaa;">
-            نظام مقرات التوثيق والشهر العقاري — طُبع بتاريخ {{ now()->format('Y-m-d H:i') }}
+            نظام مقرات التوثيق والشهر العقاري — طُبع بتاريخ {{ \App\Support\LocalTime::stamp(now()) }}
         </div>
 
     </div>

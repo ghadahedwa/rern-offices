@@ -61,7 +61,7 @@
                         <td class="px-4 py-3 text-zinc-500">{{ $meetings->firstItem() + $loop->index }}</td>
                         <td class="px-4 py-3 text-zinc-800 dark:text-zinc-100">
                             {{ optional($meeting->date)->format('Y-m-d') }}
-                            <span class="block text-xs text-zinc-400">{{ optional($meeting->date)->locale('ar')->dayName }}@if($meeting->time) · {{ substr($meeting->time, 0, 5) }}@endif</span>
+                            <span class="block text-xs text-zinc-400">{{ optional($meeting->date)->locale('ar')->dayName }}@if($meeting->time) · {{ \App\Support\LocalTime::clock($meeting->time) }}@endif</span>
                         </td>
                         <td class="px-4 py-3 font-medium text-zinc-800 dark:text-zinc-100" title="{{ $meeting->subject }}">
                             <div style="max-width:280px; white-space:normal; display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; overflow:hidden;">{{ $meeting->subject }}</div>

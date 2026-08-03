@@ -334,6 +334,28 @@ it('يرتّب المحافظات ويُعلِّم ذات العينة النا�
         ->and($rows->last()['enough'])->toBeFalse();
 });
 
+/* ===================== عرض الوقت ===================== */
+
+it('يعرض الوقت بنظام ١٢ ساعة محوَّلاً لتوقيت مصر', function () {
+    $office = Office::factory()->public()->create();
+
+    // مخزَّن UTC؛ أغسطس في مصر = UTC+3 → 20:30 محلياً
+    FeedbackRating::factory()->create([
+        'office_id'  => $office->id,
+        'created_at' => '2026-08-03 17:30:00',
+    ]);
+
+    Livewire::actingAs(superAdmin())->test(Ratings::class)
+        ->assertSee('8:30 م')          // ١٢ ساعة + توقيت محلي
+        ->assertDontSee('17:30');      // لا الصيغة الأربع والعشرينية ولا قيمة UTC الخام
+});
+
+it('يفرّق بين ص وم', function () {
+    expect(\App\Support\LocalTime::time(\Carbon\CarbonImmutable::parse('2026-08-03 05:00:00')))->toBe('8:00 ص')
+        ->and(\App\Support\LocalTime::time(\Carbon\CarbonImmutable::parse('2026-08-03 17:00:00')))->toBe('8:00 م')
+        ->and(\App\Support\LocalTime::time(null))->toBe('—');
+});
+
 /* ===================== المحاولات المرفوضة ===================== */
 
 it('يفلتر المحاولات المرفوضة بالمحافظة عبر علاقة المقر', function () {

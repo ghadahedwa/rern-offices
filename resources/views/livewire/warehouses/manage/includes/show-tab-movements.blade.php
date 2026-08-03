@@ -64,7 +64,7 @@
                         <td class="px-4 py-3 text-zinc-400 dark:text-zinc-500">{{ number_format($movement->balance_before) }}</td>
                         <td class="px-4 py-3 text-zinc-600 dark:text-zinc-300">{{ number_format($movement->balance_after) }}</td>
                         <td class="px-4 py-3 text-zinc-500 dark:text-zinc-400">{{ $movement->user?->name ?? '—' }}</td>
-                        <td class="px-4 py-3 text-zinc-400 dark:text-zinc-500">{{ $movement->created_at->format('Y-m-d H:i') }}</td>
+                        <td class="px-4 py-3 text-zinc-400 dark:text-zinc-500">{{ \App\Support\LocalTime::stamp($movement->created_at) }}</td>
                     </tr>
                 @empty
                     <tr>

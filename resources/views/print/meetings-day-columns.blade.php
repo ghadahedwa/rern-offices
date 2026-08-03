@@ -24,6 +24,8 @@
         .agenda td.lbl { background-color: #faf6ea; font-weight: bold; text-align: center; color: #222; vertical-align: middle; height: 36mm; }
         .agenda td.day { background-color: #f5efdc; font-weight: bold; text-align: center; vertical-align: middle; font-size: 11pt; }
         .agenda td .muted { color: #666; font-size: 9pt; }
+        {{-- المعنيون: نقطة لكل شخص + إزاحة معلّقة (نفس مبدأ تقرير اليوم) --}}
+        .agenda td .person { padding-right: 11px; text-indent: -11px; margin-bottom: 3px; }
 
         .empty { text-align: center; color: #888; padding: 30px; border: 1px solid #ccc; margin-top: 10px; }
     </style>
@@ -88,13 +90,13 @@
                         <tr>
                             <td class="lbl">{{ __('home.meeting_location') }}</td>
                             @foreach($cols as $m)
-                                <td>{{ $m->location }}@if($m->time)<br><span class="muted">الساعة {{ substr($m->time, 0, 5) }}</span>@endif</td>
+                                <td>{{ $m->location }}@if($m->time)<br><span class="muted">الساعة {{ \App\Support\LocalTime::clock($m->time) }}</span>@endif</td>
                             @endforeach
                         </tr>
                         <tr>
                             <td class="lbl">{{ __('home.meeting_attendees') }}</td>
                             @foreach($cols as $m)
-                                <td>@foreach($m->attendees as $att)<div>{{ $att->title ? $att->title . ' / ' . $att->name : $att->name }}</div>@endforeach</td>
+                                <td>@foreach($m->attendees as $att)<div class="person">• {{ $att->title ? $att->title . ' / ' . $att->name : $att->name }}</div>@endforeach</td>
                             @endforeach
                         </tr>
                         <tr>

@@ -31,7 +31,8 @@ class Create extends Component
     public function mount(): void
     {
         abort_unless(Auth::user()?->can('warehouses.create'), 403);
-        $this->received_at = now()->format('Y-m-d');
+        // «اليوم» بالتوقيت المحلي — now() بـ UTC يعطي تاريخ الأمس بين ١٢ و٣ فجراً بتوقيت مصر
+        $this->received_at = \App\Support\LocalTime::date(now());
         $this->lines = [['item_id' => null, 'quantity' => null]];
     }
 

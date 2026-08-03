@@ -43,8 +43,8 @@
                         : 'hover:bg-zinc-50 dark:hover:bg-zinc-800' }}">
                         <td class="px-3 py-3 text-zinc-500 hidden 2xl:table-cell">{{ $ratings->firstItem() + $loop->index }}</td>
                         <td class="px-3 py-3 text-zinc-600 dark:text-zinc-300 whitespace-nowrap">
-                            {{ $rating->created_at->format('Y-m-d') }}
-                            <span class="block text-xs text-zinc-400">{{ $rating->created_at->format('H:i') }}</span>
+                            {{ \App\Support\LocalTime::date($rating->created_at) }}
+                            <span class="block text-xs text-zinc-400">{{ \App\Support\LocalTime::time($rating->created_at) }}</span>
                         </td>
                         {{-- المحافظة سطر فرعي تحت المقر بدل عمود مستقل — توفير عرض بلا فقد معلومة --}}
                         <td class="px-3 py-3">

@@ -38,7 +38,7 @@
                 <div class="app-subtitle">ملخص مديونية المحافظات</div>
             </td>
             <td class="meta-cell">
-                <div>تاريخ الطباعة: {{ now()->format('Y-m-d') }}</div>
+                <div>تاريخ الطباعة: {{ \App\Support\LocalTime::date(now()) }}</div>
             </td>
         </tr>
     </table>
@@ -90,7 +90,7 @@
     </div>
 
     <div class="page-footer">
-        نظام مقرات التوثيق والشهر العقاري — طُبع بتاريخ {{ now()->format('Y-m-d H:i') }}
+        نظام مقرات التوثيق والشهر العقاري — طُبع بتاريخ {{ \App\Support\LocalTime::stamp(now()) }}
     </div>
 
 </body>

@@ -36,7 +36,8 @@ class Create extends Component
     public function mount(): void
     {
         abort_unless(Auth::user()?->can('warehouses.create'), 403);
-        $this->transferred_at = now()->format('Y-m-d');
+        // «اليوم» بالتوقيت المحلي — انظر التعليق في Incoming\Create
+        $this->transferred_at = \App\Support\LocalTime::date(now());
         $this->lines = [['item_id' => null, 'quantity' => null]];
     }
 

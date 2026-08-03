@@ -184,6 +184,20 @@ feedback-results/rejected            → FeedbackResults\RejectedAttempts  (feed
 
 ---
 
+## قاعدة التوقيت (إلزامية)
+**التخزين بـ UTC، والعرض بتوقيت مصر — لا تخلط بينهما.**
+`config('app.timezone') = UTC` (لا تغيّرها: الصفوف المخزَّنة ستُقرأ كأنها توقيت محلي فتصبح غلطاً بـ٢–٣ ساعات)، و`config('app.display_timezone') = Africa/Cairo` للعرض فقط عبر **`App\Support\LocalTime`**:
+```php
+LocalTime::date($dt)   // 2026-08-03
+LocalTime::time($dt)   // 9:00 ص   (نظام ١٢ ساعة بالعربي)
+LocalTime::stamp($dt)  // 2026-08-03 9:00 ص
+```
+- **حوِّل**: أي **لحظة زمنية** — `created_at`/`updated_at`، `now()` في تذييل الطباعة، والقيمة الافتراضية لـ«اليوم» في فورمات الإدخال (`now()` بـ UTC يعطي تاريخ الأمس بين ١٢ و٣ فجراً).
+- **لا تحوِّل**: الحقول المصبوبة `'date'` (`visited_at`, `established_at`, `Meeting::date`, `received_at`…) — يوم كتبه المستخدم بلا دلالة توقيت، وتحويله قد ينقله يوماً كاملاً.
+- **لا تلمس**: `diffForHumans()` و`sessions.last_activity` — فروق بين لحظتين، سليمة أصلاً.
+- ⚠️ التوقيت الصيفي في مصر يجعل الفرق `+2` أو `+3` حسب الشهر — لذلك لا يصلح أي إزاحة ثابتة، و`LocalTime` يتكفّل بها.
+- ⚠️ **لا تستبدل مسارات الـ namespace بـ `sed`/`perl` عبر الشِل** — `\L` و`\S` تُفسَّر كتحويل حالة أحرف فتفسد `\App\Support\LocalTime`. استخدم أداة التحرير أو سكربت PHP.
+
 ## قاعدة البحث العربي (إلزامية)
 **أي بحث نصي عربي لازم يستخدم `App\Support\ArabicText` — مايتكتبش `where('col','like',...)` مباشرة.**
 - `ArabicText::normalize($term)` لكلمة البحث (PHP)، `ArabicText::sqlNormalize($col)` للعمود (SQL).
