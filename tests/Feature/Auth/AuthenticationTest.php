@@ -61,7 +61,8 @@ test('users can logout', function () {
 
     $response = $this->actingAs($user)->post(route('logout'));
 
-    $response->assertRedirect(route('home'));
+    // شاشة الدخول لا الجذر (الجذر موجّه لبوابة رأي المواطن العامة)
+    $response->assertRedirect(route('login'));
 
     $this->assertGuest();
 });

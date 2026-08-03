@@ -55,7 +55,7 @@ test('user can delete their account', function () {
 
     $response
         ->assertHasNoErrors()
-        ->assertRedirect('/');
+        ->assertRedirect('/login');
 
     expect($user->fresh())->toBeNull();
     expect(auth()->check())->toBeFalse();

@@ -17,6 +17,7 @@ class Logout
         Session::invalidate();
         Session::regenerateToken();
 
-        return redirect('/');
+        // شاشة الدخول لا الجذر — الجذر موجّه لبوابة رأي المواطن العامة
+        return redirect('/login');
     }
 }

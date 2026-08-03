@@ -24,6 +24,7 @@ class DeleteUserForm extends Component
 
         tap(Auth::user(), $logout(...))->delete();
 
-        $this->redirect('/', navigate: true);
+        // شاشة الدخول لا الجذر — الجذر موجّه لبوابة رأي المواطن العامة
+        $this->redirect('/login', navigate: true);
     }
 }
