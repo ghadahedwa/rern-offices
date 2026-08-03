@@ -97,9 +97,11 @@ class FeedbackDemoSeeder extends Seeder
 
     private function wipe(): void
     {
+        // forceDelete: الجدولان يستخدمان SoftDeletes، والزرع النظيف يعني إفراغاً فعلياً
+        // (وإلا بقيت صفوف قديمة في السلة تخصم من نظافة البيانات التجريبية).
         DB::table('feedback_suggestion_topic')->delete();
-        FeedbackSuggestion::query()->delete();
-        FeedbackRating::query()->delete();
+        FeedbackSuggestion::withTrashed()->forceDelete();
+        FeedbackRating::withTrashed()->forceDelete();
         FeedbackRejectedAttempt::query()->delete();
     }
 

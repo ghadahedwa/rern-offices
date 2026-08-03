@@ -30,7 +30,10 @@ class FeedbackGate
         $windowDays = (int) config('feedback.window_days', 7);
         $model = $type === self::TYPE_SUGGESTION ? FeedbackSuggestion::class : FeedbackRating::class;
 
+        // withTrashed: الصف المحذوف إدارياً (سلة المحذوفات) يظل حارساً للنافذة.
+        // بدونها يصير حذف رأي عبثي من شاشة النتائج إذناً لصاحبه بإعادة إرساله فوراً.
         $last = $model::query()
+            ->withTrashed()
             ->where('office_id', $officeId)
             ->where(function ($q) use ($nationalId, $phone) {
                 $q->where('national_id', $nationalId);

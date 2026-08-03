@@ -2,6 +2,7 @@
 
 namespace App\Livewire\FeedbackResults;
 
+use App\Livewire\FeedbackResults\Concerns\WithBulkDelete;
 use App\Livewire\FeedbackResults\Concerns\WithFeedbackFilters;
 use App\Models\FeedbackRejectedAttempt;
 use App\Services\FeedbackGate;
@@ -17,7 +18,7 @@ use Livewire\WithPagination;
 #[Title('المحاولات المرفوضة')]
 class RejectedAttempts extends Component
 {
-    use WithFeedbackFilters, WithPagination;
+    use WithBulkDelete, WithFeedbackFilters, WithPagination;
 
     /** أسباب الرفض كما يسجّلها FeedbackGate/الـ trait */
     public const REASONS = ['duplicate_window', 'rate_limit', 'honeypot'];
@@ -57,9 +58,23 @@ class RejectedAttempts extends Component
         return $query->whereHas('office', fn ($q) => $q->where('governorate_id', $this->governorate_id));
     }
 
-    public function render()
+    protected function bulkModel(): string
     {
-        $base = fn () => $this->applyFilters(FeedbackRejectedAttempt::query())
+        return FeedbackRejectedAttempt::class;
+    }
+
+    protected function bulkSubject(): string
+    {
+        return __('home.fr_rejected');
+    }
+
+    /**
+     * الاستعلام المفلتر — مصدر واحد لما يُعرض ولما يُحذف جماعياً.
+     * لا سلة محذوفات هنا: الجدول يُنظَّف تلقائياً ولا علاقة له بمنع التكرار.
+     */
+    protected function bulkQuery(): Builder
+    {
+        return $this->applyFilters(FeedbackRejectedAttempt::query())
             ->when($this->reason !== '', fn ($q) => $q->where('reason', $this->reason))
             ->when($this->type !== '', fn ($q) => $q->where('type', $this->type))
             ->when($this->search !== '', function ($q) {
@@ -68,10 +83,13 @@ class RejectedAttempts extends Component
                     ->orWhere('phone', 'like', "%{$term}%")
                     ->orWhere('ip_address', 'like', "%{$term}%"));
             });
+    }
 
+    public function render()
+    {
         return view('livewire.feedback-results.rejected-attempts', [
-            'attempts'       => $base()->with('office:id,name,governorate_id')->latest('created_at')->paginate(15),
-            'reasonCounts'   => $base()->selectRaw('reason, COUNT(*) as total')->groupBy('reason')->pluck('total', 'reason'),
+            'attempts'       => $this->bulkQuery()->with('office:id,name,governorate_id')->latest('created_at')->paginate(15),
+            'reasonCounts'   => $this->bulkQuery()->selectRaw('reason, COUNT(*) as total')->groupBy('reason')->pluck('total', 'reason'),
             'retentionDays'  => (int) config('feedback.rejected_retention_days', 30),
             'types'          => [FeedbackGate::TYPE_RATING, FeedbackGate::TYPE_SUGGESTION],
         ]);

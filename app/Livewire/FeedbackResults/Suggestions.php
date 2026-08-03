@@ -2,10 +2,12 @@
 
 namespace App\Livewire\FeedbackResults;
 
+use App\Livewire\FeedbackResults\Concerns\WithBulkDelete;
 use App\Livewire\FeedbackResults\Concerns\WithFeedbackFilters;
 use App\Livewire\FeedbackResults\Concerns\WithFeedbackSorting;
 use App\Models\FeedbackSuggestion;
 use App\Support\ArabicText;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
@@ -17,7 +19,7 @@ use Livewire\WithPagination;
 #[Title('مقترحات المواطنين')]
 class Suggestions extends Component
 {
-    use WithFeedbackFilters, WithFeedbackSorting, WithPagination;
+    use WithBulkDelete, WithFeedbackFilters, WithFeedbackSorting, WithPagination;
 
     #[Url(as: 'q', except: '')]
     public string $search = '';
@@ -46,9 +48,20 @@ class Suggestions extends Component
         $this->expanded = $this->expanded === $id ? null : $id;
     }
 
-    public function render()
+    protected function bulkModel(): string
     {
-        $suggestions = $this->applyFilters(FeedbackSuggestion::query())
+        return FeedbackSuggestion::class;
+    }
+
+    protected function bulkSubject(): string
+    {
+        return __('home.fr_suggestions');
+    }
+
+    /** الاستعلام المفلتر — مصدر واحد لما يُعرض ولما يُحذف جماعياً. */
+    protected function bulkQuery(): Builder
+    {
+        return $this->applyTrashScope($this->applyFilters(FeedbackSuggestion::query()))
             ->when($this->search !== '', function ($q) {
                 $term = trim($this->search);
                 $norm = ArabicText::normalize($term);
@@ -62,7 +75,12 @@ class Suggestions extends Component
                         ->orWhere('national_id', 'like', "%{$term}%")
                         ->orWhere('phone', 'like', "%{$term}%");
                 });
-            })
+            });
+    }
+
+    public function render()
+    {
+        $suggestions = $this->bulkQuery()
             ->with(['office:id,name', 'governorate:id,name', 'topics.domain'])
             ->withCount('topics')
             ->tap(fn ($q) => $this->applySorting($q))

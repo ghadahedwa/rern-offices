@@ -2,10 +2,12 @@
 
 namespace App\Livewire\FeedbackResults;
 
+use App\Livewire\FeedbackResults\Concerns\WithBulkDelete;
 use App\Livewire\FeedbackResults\Concerns\WithFeedbackFilters;
 use App\Livewire\FeedbackResults\Concerns\WithFeedbackSorting;
 use App\Models\FeedbackRating;
 use App\Support\ArabicText;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
@@ -17,7 +19,7 @@ use Livewire\WithPagination;
 #[Title('تقييمات المواطنين')]
 class Ratings extends Component
 {
-    use WithFeedbackFilters, WithFeedbackSorting, WithPagination;
+    use WithBulkDelete, WithFeedbackFilters, WithFeedbackSorting, WithPagination;
 
     #[Url(as: 'q', except: '')]
     public string $search = '';
@@ -45,9 +47,20 @@ class Ratings extends Component
         $this->expanded = $this->expanded === $id ? null : $id;
     }
 
-    public function render()
+    protected function bulkModel(): string
     {
-        $ratings = $this->applyFilters(FeedbackRating::query())
+        return FeedbackRating::class;
+    }
+
+    protected function bulkSubject(): string
+    {
+        return __('home.fr_ratings');
+    }
+
+    /** الاستعلام المفلتر — مصدر واحد لما يُعرض ولما يُحذف جماعياً. */
+    protected function bulkQuery(): Builder
+    {
+        return $this->applyTrashScope($this->applyFilters(FeedbackRating::query()))
             ->when($this->search !== '', function ($q) {
                 $term = trim($this->search);
                 $norm = ArabicText::normalize($term);
@@ -58,7 +71,12 @@ class Ratings extends Component
                         ->orWhere('national_id', 'like', "%{$term}%")
                         ->orWhere('phone', 'like', "%{$term}%");
                 });
-            })
+            });
+    }
+
+    public function render()
+    {
+        $ratings = $this->bulkQuery()
             ->with(['office:id,name', 'governorate:id,name'])
             ->tap(fn ($q) => $this->applySorting($q))
             ->paginate(15);

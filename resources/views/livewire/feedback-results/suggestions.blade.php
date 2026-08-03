@@ -8,12 +8,24 @@
 
     @include('livewire.feedback-results.includes.filters')
 
-    {{-- Search --}}
-    <div class="max-w-sm">
-        <input wire:model.live.debounce.300ms="search" type="text"
-               placeholder="{{ __('home.fr_search_placeholder') }}"
-               class="w-full border border-zinc-300 dark:border-zinc-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-[#c9a847]" />
+    {{-- Search + سلة المحذوفات --}}
+    <div class="flex flex-wrap items-center gap-3">
+        <div class="max-w-sm flex-1 min-w-50">
+            <input wire:model.live.debounce.300ms="search" type="text"
+                   placeholder="{{ __('home.fr_search_placeholder') }}"
+                   class="w-full border border-zinc-300 dark:border-zinc-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-[#c9a847]" />
+        </div>
+        @include('livewire.feedback-results.includes.trash-toggle')
     </div>
+
+    @if($showTrashed)
+        <p class="text-xs text-zinc-500 dark:text-zinc-400 border-r-2 border-[#c9a847] pr-3">
+            {{ __('home.fr_trash_note') }}
+        </p>
+    @endif
+
+    @php $pageIds = $suggestions->pluck('id')->all(); @endphp
+    @include('livewire.feedback-results.includes.bulk-bar', ['pageIds' => $pageIds, 'total' => $suggestions->total()])
 
     {{-- Table --}}
     <div class="overflow-x-auto rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-sm">
@@ -21,16 +33,17 @@
         <table class="w-full min-w-140 table-fixed text-sm text-right">
             <thead class="bg-zinc-50 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 text-xs uppercase">
                 <tr>
+                    @include('livewire.feedback-results.includes.bulk-th', ['pageIds' => $pageIds])
                     <th class="px-3 py-3 font-medium w-[4%] hidden 2xl:table-cell">#</th>
                     @include('livewire.feedback-results.includes.sortable-th', [
                         'column' => 'created_at', 'label' => __('home.fr_date'), 'thClass' => 'w-[11%]',
                     ])
-                    <th class="px-3 py-3 font-medium w-[24%]">{{ __('home.fr_office') }}</th>
+                    <th class="px-3 py-3 font-medium w-[22%]">{{ __('home.fr_office') }}</th>
                     <th class="px-3 py-3 font-medium w-[18%]">{{ __('home.fr_citizen') }}</th>
                     @include('livewire.feedback-results.includes.sortable-th', [
                         'column' => 'topics_count', 'label' => __('home.fr_topics_count'), 'thClass' => 'w-[10%]',
                     ])
-                    <th class="px-3 py-3 font-medium w-[27%] hidden xl:table-cell">{{ __('home.fr_other_suggestion') }}</th>
+                    <th class="px-3 py-3 font-medium w-[25%] hidden xl:table-cell">{{ __('home.fr_other_suggestion') }}</th>
                     <th class="px-3 py-3 font-medium w-[6%]">{{ __('home.fr_details') }}</th>
                 </tr>
             </thead>
@@ -40,6 +53,7 @@
                     <tr class="transition {{ $expanded === $suggestion->id
                         ? 'bg-[#c9a847]/10 dark:bg-[#c9a847]/15'
                         : 'hover:bg-zinc-50 dark:hover:bg-zinc-800' }}">
+                        @include('livewire.feedback-results.includes.bulk-td', ['rowId' => $suggestion->id])
                         <td class="px-3 py-3 text-zinc-500 hidden 2xl:table-cell">{{ $suggestions->firstItem() + $loop->index }}</td>
                         <td class="px-3 py-3 text-zinc-600 dark:text-zinc-300 whitespace-nowrap">
                             {{ \App\Support\LocalTime::date($suggestion->created_at) }}
@@ -87,7 +101,7 @@
                     @if($expanded === $suggestion->id)
                         {{-- border-t-0!: يلغي فاصل divide-y فيلتحم بالصف الأعلى · border-b-2: يقفل الكتلة --}}
                         <tr class="bg-[#c9a847]/10 dark:bg-[#c9a847]/15 border-t-0! border-b-2 border-b-zinc-300 dark:border-b-zinc-600">
-                            <td colspan="7" class="px-4 pt-0 pb-5">
+                            <td colspan="8" class="px-4 pt-0 pb-5">
                               <div class="rounded-lg border border-[#c9a847]/30 bg-white dark:bg-zinc-900 p-5 shadow-sm">
                                 <div class="flex items-center gap-3 mb-4">
                                     <div class="w-1 h-5 bg-[#c9a847] rounded-full"></div>
@@ -132,7 +146,7 @@
                     @endif
                 @empty
                     <tr>
-                        <td colspan="7" class="px-4 py-10 text-center text-zinc-400">{{ __('home.fr_no_suggestions') }}</td>
+                        <td colspan="8" class="px-4 py-10 text-center text-zinc-400">{{ __('home.fr_no_suggestions') }}</td>
                     </tr>
                 @endforelse
             </tbody>
