@@ -74,7 +74,7 @@
                         ? 'bg-[#c9a847] border-[#c9a847] text-white shadow-sm'
                         : 'bg-white border-zinc-300 text-zinc-600 dark:bg-zinc-800 dark:border-zinc-600 dark:text-zinc-400 hover:border-[#c9a847] hover:text-[#b8962e]' }}">
                 <flux:icon.eye variant="outline" class="w-4 h-4" />
-                {{ __('home.public_visible') }}
+                {{ __('home.rating_place') }}
                 @if($public_only)
                     <span class="w-2 h-2 rounded-full bg-white"></span>
                 @endif

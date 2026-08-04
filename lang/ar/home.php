@@ -237,6 +237,7 @@ return [
     'public_visibility'          => 'الظهور للمواطن',
     'public_visible'             => 'ظاهر للمواطن',
     'public_hidden'              => 'غير ظاهر',
+    'rating_place'               => 'محل تقييم',
 
         //governorates
     'governorates'           => 'المحافظات(المكاتب)',
