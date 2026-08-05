@@ -36,6 +36,7 @@
                 @endforeach
             </select>
         </div>
+        @include('livewire.feedback-results.includes.export-bar')
     </div>
 
     @php $pageIds = $attempts->pluck('id')->all(); @endphp

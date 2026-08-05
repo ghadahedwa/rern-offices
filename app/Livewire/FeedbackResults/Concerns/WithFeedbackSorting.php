@@ -2,6 +2,7 @@
 
 namespace App\Livewire\FeedbackResults\Concerns;
 
+use App\Support\FeedbackResults\FeedbackSort;
 use Illuminate\Database\Eloquent\Builder;
 use Livewire\Attributes\Url;
 
@@ -46,10 +47,6 @@ trait WithFeedbackSorting
      */
     protected function applySorting(Builder $query): Builder
     {
-        $column = in_array($this->sortBy, $this->sortableColumns(), true) ? $this->sortBy : 'created_at';
-        $dir    = $this->sortDir === 'asc' ? 'asc' : 'desc';
-
-        return $query->orderBy($column, $dir)
-            ->when($column !== 'created_at', fn ($q) => $q->orderBy('created_at', 'desc'));
+        return FeedbackSort::apply($query, $this->sortBy, $this->sortDir, $this->sortableColumns());
     }
 }

@@ -2,10 +2,13 @@
 
 namespace App\Livewire\FeedbackResults;
 
+use App\Exports\FeedbackRejectedExport;
 use App\Livewire\FeedbackResults\Concerns\WithBulkDelete;
+use App\Livewire\FeedbackResults\Concerns\WithFeedbackExport;
 use App\Livewire\FeedbackResults\Concerns\WithFeedbackFilters;
 use App\Models\FeedbackRejectedAttempt;
 use App\Services\FeedbackGate;
+use App\Support\FeedbackResults\RejectedAttemptsQuery;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Layout;
@@ -18,7 +21,7 @@ use Livewire\WithPagination;
 #[Title('المحاولات المرفوضة')]
 class RejectedAttempts extends Component
 {
-    use WithBulkDelete, WithFeedbackFilters, WithPagination;
+    use WithBulkDelete, WithFeedbackExport, WithFeedbackFilters, WithPagination;
 
     /** أسباب الرفض كما يسجّلها FeedbackGate/الـ trait */
     public const REASONS = ['duplicate_window', 'rate_limit', 'honeypot'];
@@ -52,12 +55,6 @@ class RejectedAttempts extends Component
         $this->resetPage();
     }
 
-    /** الجدول ليس فيه governorate_id — نمرّ عبر علاقة المقر. */
-    protected function filterByGovernorate(Builder $query): Builder
-    {
-        return $query->whereHas('office', fn ($q) => $q->where('governorate_id', $this->governorate_id));
-    }
-
     protected function bulkModel(): string
     {
         return FeedbackRejectedAttempt::class;
@@ -69,20 +66,39 @@ class RejectedAttempts extends Component
     }
 
     /**
-     * الاستعلام المفلتر — مصدر واحد لما يُعرض ولما يُحذف جماعياً.
+     * الاستعلام المفلتر — مصدر واحد لما يُعرض ولما يُحذف جماعياً ولما يُصدَّر.
      * لا سلة محذوفات هنا: الجدول يُنظَّف تلقائياً ولا علاقة له بمنع التكرار.
      */
     protected function bulkQuery(): Builder
     {
-        return $this->applyFilters(FeedbackRejectedAttempt::query())
-            ->when($this->reason !== '', fn ($q) => $q->where('reason', $this->reason))
-            ->when($this->type !== '', fn ($q) => $q->where('type', $this->type))
-            ->when($this->search !== '', function ($q) {
-                $term = trim($this->search);
-                $q->where(fn ($sub) => $sub->where('national_id', 'like', "%{$term}%")
-                    ->orWhere('phone', 'like', "%{$term}%")
-                    ->orWhere('ip_address', 'like', "%{$term}%"));
-            });
+        return RejectedAttemptsQuery::build(
+            $this->filterSet(), Auth::user(), $this->search, $this->reason, $this->type,
+        );
+    }
+
+    /* ── التصدير — Excel فقط: قيمة هذه الشاشة تشغيلية لا تقريرية ── */
+
+    protected function exportBaseName(): string
+    {
+        return 'feedback-rejected';
+    }
+
+    protected function exportIsEmpty(): bool
+    {
+        return $this->bulkQuery()->count() === 0;
+    }
+
+    protected function extraExportParams(): array
+    {
+        return array_filter(['reason' => $this->reason, 'type' => $this->type], fn ($v) => $v !== '');
+    }
+
+    public function excelExport(): object
+    {
+        return new FeedbackRejectedExport(
+            $this->bulkQuery()->latest('created_at'),
+            $this->exportPersonal,
+        );
     }
 
     public function render()

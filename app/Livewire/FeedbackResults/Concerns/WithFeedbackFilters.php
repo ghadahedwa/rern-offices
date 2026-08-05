@@ -4,8 +4,11 @@ namespace App\Livewire\FeedbackResults\Concerns;
 
 use App\Models\Governorate;
 use App\Models\Office;
+use App\Support\FeedbackResults\FeedbackFilterSet;
+use App\Support\FeedbackResults\FeedbackScope;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Url;
 
@@ -13,7 +16,11 @@ use Livewire\Attributes\Url;
  * الفلاتر المشتركة لشاشات نتائج بوابة رأي المواطن (محافظة / مقر / فترة).
  * مربوطة بالـ URL حتى تبقى الحالة عند المشاركة أو الرجوع.
  *
- * ملاحظة نطاق: الشاشات حالياً super-admin فقط، لكن applyScope() هو النقطة
+ * التطبيق الفعلي للفلترة في App\Support\FeedbackResults\FeedbackFilterSet،
+ * والـ trait يبنيه من خصائص المكوّن — عشان كنترولرات التصدير (خارج Livewire)
+ * تفلتر بنفس الكود بالضبط، فلا يخرج الملف بأرقام تخالف الشاشة.
+ *
+ * ملاحظة نطاق: الشاشات حالياً super-admin فقط، لكن FeedbackScope هو النقطة
  * الوحيدة اللي هتتوسّع فيها فلترة محافظات المستخدم عند فتح الموديول لأدوار أخرى.
  */
 trait WithFeedbackFilters
@@ -127,45 +134,39 @@ trait WithFeedbackFilters
         }
     }
 
+    /** الفلاتر الحالية ككائن مستقل — يشاركه المكوّن مع كنترولرات التصدير. */
+    public function filterSet(): FeedbackFilterSet
+    {
+        return new FeedbackFilterSet(
+            $this->governorate_id,
+            $this->office_id,
+            $this->from,
+            $this->to,
+        );
+    }
+
     /**
      * يطبّق فلاتر المحافظة/المقر/الفترة على أي استعلام فيه
      * الأعمدة office_id / created_at (والمحافظة عبر filterByGovernorate).
      */
     protected function applyFilters(Builder $query): Builder
     {
-        return $this->applyDateRange($this->applyScope($query))
-            ->when($this->governorate_id !== '', fn ($q) => $this->filterByGovernorate($q))
-            ->when($this->office_id !== '', fn ($q) => $q->where('office_id', $this->office_id));
+        return $this->filterSet()->apply(
+            $this->applyScope($query),
+            fn ($q) => $this->filterByGovernorate($q),
+        );
     }
 
-    /**
-     * فلترة الفترة كنطاق مفتوح على العمود نفسه.
-     * ⚠️ لا تستخدم whereDate هنا: `DATE(created_at) >= ?` يطبّق دالة على العمود
-     * فيمنع MySQL من استخدام الفهرس ويحوّل الفلترة لمسح كامل للجدول.
-     * الحد الأعلى `< اليوم التالي` حتى يدخل يوم النهاية بالكامل (٢٣:٥٩ وما بعدها).
-     */
+    /** فلترة الفترة وحدها (لجدول لا تنطبق عليه بقية الفلاتر كما هي). */
     protected function applyDateRange(Builder $query): Builder
     {
-        $from = $this->parsedDate($this->from);
-        $to   = $this->parsedDate($this->to);
-
-        return $query
-            ->when($from, fn ($q) => $q->where('created_at', '>=', $from->startOfDay()))
-            ->when($to, fn ($q) => $q->where('created_at', '<', $to->addDay()->startOfDay()));
+        return $this->filterSet()->applyDateRange($query);
     }
 
     /** التاريخ يأتي من الـ URL فقد يكون تالفاً — نتجاهله بدل الانهيار. */
     protected function parsedDate(string $value): ?CarbonImmutable
     {
-        if (trim($value) === '') {
-            return null;
-        }
-
-        try {
-            return CarbonImmutable::parse($value);
-        } catch (\Throwable) {
-            return null;
-        }
+        return FeedbackFilterSet::parse($value);
     }
 
     /**
@@ -178,12 +179,12 @@ trait WithFeedbackFilters
     }
 
     /**
-     * نطاق رؤية المستخدم. مفتوح حالياً (الشاشات super-admin فقط)؛
-     * عند فتح الموديول لأدوار أخرى تُضاف هنا فلترة محافظات المستخدم.
+     * نطاق رؤية المستخدم — يفوّض لـ FeedbackScope حتى تسري نفس الفلترة
+     * على الشاشة وعلى الملف المصدَّر معاً.
      */
     protected function applyScope(Builder $query): Builder
     {
-        return $query;
+        return FeedbackScope::apply($query, Auth::user());
     }
 
     #[Computed]

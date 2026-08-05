@@ -125,6 +125,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::livewire('ratings', \App\Livewire\FeedbackResults\Ratings::class)->name('ratings');
             Route::livewire('suggestions', \App\Livewire\FeedbackResults\Suggestions::class)->name('suggestions');
             Route::livewire('rejected', \App\Livewire\FeedbackResults\RejectedAttempts::class)->name('rejected');
+
+            // تقارير PDF — الفلاتر تصل في الـ query string نفسه الذي على الشاشة
+            // (لا session)، فرابط التقرير قابل للمشاركة والحفظ.
+            Route::get('pdf', \App\Http\Controllers\FeedbackDashboardPdfController::class)->name('dashboard.pdf');
+            Route::get('ratings/pdf', \App\Http\Controllers\FeedbackRatingsPdfController::class)->name('ratings.pdf');
+            Route::get('suggestions/pdf', \App\Http\Controllers\FeedbackSuggestionsPdfController::class)->name('suggestions.pdf');
         });
 
     // المستخدمون والأدوار — super-admin فقط حالياً (users.manage مؤجّلة)

@@ -3,6 +3,7 @@
     {{-- Header --}}
     <div class="flex items-center justify-between gap-4">
         <h1 class="text-2xl font-semibold text-zinc-800 dark:text-zinc-100">{{ __('home.fr_dashboard') }}</h1>
+        @include('livewire.feedback-results.includes.export-bar')
     </div>
 
     @include('livewire.feedback-results.includes.filters')

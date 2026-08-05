@@ -2,11 +2,13 @@
 
 namespace App\Livewire\FeedbackResults;
 
+use App\Exports\FeedbackRatingsExport;
 use App\Livewire\FeedbackResults\Concerns\WithBulkDelete;
+use App\Livewire\FeedbackResults\Concerns\WithFeedbackExport;
 use App\Livewire\FeedbackResults\Concerns\WithFeedbackFilters;
 use App\Livewire\FeedbackResults\Concerns\WithFeedbackSorting;
 use App\Models\FeedbackRating;
-use App\Support\ArabicText;
+use App\Support\FeedbackResults\RatingsQuery;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Layout;
@@ -19,7 +21,7 @@ use Livewire\WithPagination;
 #[Title('تقييمات المواطنين')]
 class Ratings extends Component
 {
-    use WithBulkDelete, WithFeedbackFilters, WithFeedbackSorting, WithPagination;
+    use WithBulkDelete, WithFeedbackExport, WithFeedbackFilters, WithFeedbackSorting, WithPagination;
 
     #[Url(as: 'q', except: '')]
     public string $search = '';
@@ -34,7 +36,7 @@ class Ratings extends Component
 
     protected function sortableColumns(): array
     {
-        return ['created_at', 'overall_rating'];
+        return RatingsQuery::SORTABLE;
     }
 
     public function updatingSearch(): void
@@ -57,21 +59,35 @@ class Ratings extends Component
         return __('home.fr_ratings');
     }
 
-    /** الاستعلام المفلتر — مصدر واحد لما يُعرض ولما يُحذف جماعياً. */
+    /** الاستعلام المفلتر — مصدر واحد لما يُعرض ولما يُحذف جماعياً ولما يُصدَّر. */
     protected function bulkQuery(): Builder
     {
-        return $this->applyTrashScope($this->applyFilters(FeedbackRating::query()))
-            ->when($this->search !== '', function ($q) {
-                $term = trim($this->search);
-                $norm = ArabicText::normalize($term);
-                $q->where(function ($sub) use ($term, $norm) {
-                    $sub->whereRaw(ArabicText::sqlNormalize('name').' LIKE ?', ["%{$norm}%"])
-                        // نص الملاحظة الحر: أغنى ما في البيانات، ومطبَّع عربياً مثل الاسم
-                        ->orWhereRaw(ArabicText::sqlNormalize('notes').' LIKE ?', ["%{$norm}%"])
-                        ->orWhere('national_id', 'like', "%{$term}%")
-                        ->orWhere('phone', 'like', "%{$term}%");
-                });
-            });
+        return RatingsQuery::build($this->filterSet(), Auth::user(), $this->search, $this->showTrashed);
+    }
+
+    /* ── التصدير ── */
+
+    protected function exportBaseName(): string
+    {
+        return 'feedback-ratings';
+    }
+
+    protected function pdfRouteName(): ?string
+    {
+        return 'feedback-results.ratings.pdf';
+    }
+
+    protected function exportIsEmpty(): bool
+    {
+        return $this->bulkQuery()->count() === 0;
+    }
+
+    public function excelExport(): object
+    {
+        return new FeedbackRatingsExport(
+            $this->applySorting($this->bulkQuery()),
+            $this->exportPersonal,
+        );
     }
 
     public function render()
