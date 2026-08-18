@@ -1,0 +1,892 @@
+<title>شرح نظام المراسلات</title>
+<style>
+  :root {
+    --bg: #f7f4ec;
+    --surface: #ffffff;
+    --surface-2: #fbf8f1;
+    --border: #e7e0d0;
+    --ink: #2b2620;
+    --ink-soft: #6b6355;
+    --gold: #b8962e;
+    --gold-bright: #c9a847;
+    --gold-wash: #f6eecf;
+    --green: #2f8f5b;
+    --green-wash: #e7f3ec;
+    --red: #c0492f;
+    --red-wash: #f7e8e3;
+    --blue: #2f6f9f;
+    --blue-wash: #e6eff6;
+    --shadow: 0 1px 2px rgba(43,38,32,.06), 0 8px 24px rgba(43,38,32,.05);
+    --radius: 14px;
+    --font: "Segoe UI", Tahoma, "Noto Kufi Arabic", "Dubai", system-ui, sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #1a1713; --surface: #241f19; --surface-2: #2c261f; --border: #3a332a;
+      --ink: #f3ece0; --ink-soft: #b3a894; --gold: #d9b74e; --gold-bright: #e0c96a;
+      --gold-wash: #33291454; --green: #5cc98a; --green-wash: #17301f;
+      --red: #e08466; --red-wash: #3a201a; --blue: #7fb4dc; --blue-wash: #17262f;
+      --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.35);
+    }
+  }
+  :root[data-theme="light"] {
+    --bg: #f7f4ec; --surface: #ffffff; --surface-2: #fbf8f1; --border: #e7e0d0;
+    --ink: #2b2620; --ink-soft: #6b6355; --gold: #b8962e; --gold-bright: #c9a847;
+    --gold-wash: #f6eecf; --green: #2f8f5b; --green-wash: #e7f3ec; --red: #c0492f;
+    --red-wash: #f7e8e3; --blue: #2f6f9f; --blue-wash: #e6eff6;
+    --shadow: 0 1px 2px rgba(43,38,32,.06), 0 8px 24px rgba(43,38,32,.05);
+  }
+  :root[data-theme="dark"] {
+    --bg: #1a1713; --surface: #241f19; --surface-2: #2c261f; --border: #3a332a;
+    --ink: #f3ece0; --ink-soft: #b3a894; --gold: #d9b74e; --gold-bright: #e0c96a;
+    --gold-wash: #33291454; --green: #5cc98a; --green-wash: #17301f; --red: #e08466;
+    --red-wash: #3a201a; --blue: #7fb4dc; --blue-wash: #17262f;
+    --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.35);
+  }
+
+  * { box-sizing: border-box; }
+  html { direction: rtl; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font-family: var(--font); line-height: 1.75;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 940px; margin: 0 auto; padding: clamp(20px, 4vw, 48px) clamp(16px, 4vw, 32px) 64px; }
+
+  .eyebrow {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-size: 13px; font-weight: 600; letter-spacing: .04em;
+    color: var(--gold); background: var(--gold-wash);
+    padding: 5px 12px; border-radius: 999px; margin-bottom: 18px;
+  }
+  .eyebrow::before { content: "✉️"; font-size: 14px; }
+  h1 {
+    font-size: clamp(28px, 5vw, 42px); line-height: 1.3; margin: 0 0 12px;
+    font-weight: 800; letter-spacing: -.01em; text-wrap: balance;
+  }
+  h1 .accent { color: var(--gold); }
+  .lede { font-size: clamp(16px, 2.4vw, 19px); color: var(--ink-soft); max-width: 64ch; margin: 0; }
+
+  .section-label { display: flex; align-items: center; gap: 12px; margin: 48px 0 20px; }
+  .section-label .bar { width: 5px; height: 22px; background: var(--gold-bright); border-radius: 99px; }
+  .section-label h2 { font-size: clamp(19px, 3vw, 23px); margin: 0; font-weight: 750; }
+
+  /* المشكلات */
+  .pains { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 14px; }
+  .pain {
+    background: var(--surface); border: 1px solid var(--border);
+    border-inline-start: 4px solid var(--red);
+    border-radius: var(--radius); padding: 16px 18px; box-shadow: var(--shadow);
+  }
+  .pain h3 { margin: 0 0 5px; font-size: 15px; font-weight: 700; }
+  .pain p { margin: 0; font-size: 13.5px; color: var(--ink-soft); line-height: 1.6; }
+
+  /* المكوّنات */
+  .concepts { display: grid; grid-template-columns: repeat(auto-fit, minmax(165px, 1fr)); gap: 14px; }
+  .concept {
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 16px 18px; box-shadow: var(--shadow);
+  }
+  .concept .ic { font-size: 22px; }
+  .concept h3 { margin: 8px 0 4px; font-size: 15px; font-weight: 700; }
+  .concept p { margin: 0; font-size: 13.5px; color: var(--ink-soft); line-height: 1.6; }
+
+  /* المحاكاة */
+  .sim { background: var(--surface); border: 1px solid var(--border); border-radius: 18px; box-shadow: var(--shadow); overflow: hidden; }
+  .board { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--border); }
+  .side { background: var(--surface-2); padding: 20px 16px; text-align: center; transition: background .3s; position: relative; min-height: 190px; }
+  .side.active { background: var(--gold-wash); }
+  .side .role { font-size: 11.5px; color: var(--ink-soft); font-weight: 600; }
+  .side .name { font-size: 16px; font-weight: 750; margin: 2px 0 14px; }
+  .side .slot { min-height: 116px; display: grid; place-items: center; }
+  .side .none { font-size: 12.5px; color: var(--ink-soft); opacity: .7; }
+
+  .doc {
+    width: 100%; max-width: 258px; background: var(--surface);
+    border: 1px solid var(--border); border-inline-start: 4px solid var(--gold-bright);
+    border-radius: 11px; padding: 12px 13px; text-align: start;
+    box-shadow: var(--shadow); animation: pop .3s ease;
+  }
+  @keyframes pop { from { opacity: 0; transform: scale(.94); } to { opacity: 1; transform: none; } }
+  .doc .serial { font-size: 12px; font-weight: 800; color: var(--gold); font-variant-numeric: tabular-nums; letter-spacing: .02em; }
+  .doc .subj { font-size: 14px; font-weight: 750; margin: 3px 0 7px; line-height: 1.45; }
+  .doc .meta { display: flex; flex-wrap: wrap; gap: 5px; }
+
+  .chip {
+    display: inline-flex; align-items: center; gap: 4px;
+    font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 999px; white-space: nowrap;
+  }
+  .chip.draft { background: var(--surface-2); color: var(--ink-soft); border: 1px solid var(--border); }
+  .chip.urgent { background: var(--red-wash); color: var(--red); }
+  .chip.attach { background: var(--blue-wash); color: var(--blue); }
+  .chip.new { background: var(--gold-wash); color: var(--gold); }
+  .chip.seen { background: var(--surface-2); color: var(--ink-soft); border: 1px solid var(--border); }
+  .chip.ack { background: var(--green-wash); color: var(--green); }
+  .chip.office { background: var(--gold-wash); color: var(--gold); }
+  .chip.pending { background: var(--blue-wash); color: var(--blue); }
+  .chip.signed { background: var(--green-wash); color: var(--green); }
+  .chip.cc { background: var(--blue-wash); color: var(--blue); }
+  .chip.task { background: var(--gold-wash); color: var(--gold); }
+
+  /* أطراف العمل */
+  .cast { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .castbox {
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 18px 20px; box-shadow: var(--shadow);
+  }
+  .castbox > h3 { margin: 0 0 12px; font-size: 15.5px; font-weight: 750; color: var(--gold); }
+  .person { display: flex; gap: 11px; align-items: flex-start; padding: 9px 0; border-top: 1px solid var(--border); }
+  .castbox .person:first-of-type { border-top: none; }
+  .person .av {
+    flex: none; width: 34px; height: 34px; border-radius: 9px; display: grid; place-items: center;
+    background: var(--surface-2); font-size: 16px;
+  }
+  .person .who-name { font-size: 14px; font-weight: 700; }
+  .person .who-role { font-size: 12.5px; color: var(--ink-soft); line-height: 1.5; }
+
+  /* مواقف */
+  .cases { display: grid; grid-template-columns: repeat(auto-fit, minmax(262px, 1fr)); gap: 14px; }
+  .case {
+    background: var(--surface); border: 1px solid var(--border);
+    border-inline-start: 4px solid var(--gold-bright);
+    border-radius: var(--radius); padding: 18px 20px; box-shadow: var(--shadow);
+  }
+  .case .ic { font-size: 24px; }
+  .case h3 { margin: 8px 0 6px; font-size: 15.5px; font-weight: 750; }
+  .case p { margin: 0 0 8px; font-size: 13.5px; color: var(--ink-soft); line-height: 1.65; }
+  .case .without {
+    display: block; font-size: 13px; color: var(--red); background: var(--red-wash);
+    border-radius: 8px; padding: 8px 11px; line-height: 1.55;
+  }
+
+  /* جداول */
+  .wont { width: 100%; }
+  .wont td { font-size: 13.5px; }
+  .wont td:first-child { color: var(--ink-soft); }
+  .wont td:last-child { font-weight: 600; }
+
+  .stage { padding: 20px clamp(16px, 3vw, 26px); border-top: 1px solid var(--border); display: flex; flex-direction: column; gap: 16px; }
+  .op-card {
+    background: var(--surface-2); border: 1px solid var(--border);
+    border-inline-start: 4px solid var(--gold-bright);
+    border-radius: 12px; padding: 15px 17px; display: flex; gap: 14px; align-items: flex-start; min-height: 92px;
+  }
+  .op-card .badge { flex: none; width: 42px; height: 42px; border-radius: 10px; display: grid; place-items: center; font-size: 20px; background: var(--gold-wash); }
+  .op-card .txt { flex: 1; }
+  .op-card .txt .step-no { font-size: 12px; font-weight: 700; color: var(--gold); letter-spacing: .03em; }
+  .op-card .txt h4 { margin: 2px 0 4px; font-size: 16px; font-weight: 750; }
+  .op-card .txt p { margin: 0; font-size: 14px; color: var(--ink-soft); line-height: 1.6; }
+  .op-card .txt .paper {
+    display: inline-flex; align-items: center; gap: 5px; margin-top: 8px;
+    font-size: 12px; color: var(--ink-soft);
+    background: var(--surface); border: 1px dashed var(--border); border-radius: 7px; padding: 3px 9px;
+  }
+
+  .controls { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+  button {
+    font-family: inherit; font-size: 15px; font-weight: 700; cursor: pointer;
+    border-radius: 10px; padding: 11px 22px; border: 1px solid transparent;
+    transition: transform .08s, background .2s, opacity .2s;
+  }
+  button:active { transform: translateY(1px); }
+  button:focus-visible { outline: 3px solid var(--gold-bright); outline-offset: 2px; }
+  .btn-primary { background: var(--gold-bright); color: #241f00; }
+  .btn-primary:hover { background: var(--gold); }
+  .btn-primary:disabled { opacity: .45; cursor: not-allowed; }
+  .btn-ghost { background: transparent; color: var(--ink-soft); border-color: var(--border); }
+  .btn-ghost:hover { color: var(--ink); border-color: var(--ink-soft); }
+  .progress { margin-inline-start: auto; font-size: 13px; color: var(--ink-soft); font-variant-numeric: tabular-nums; }
+
+  .ledger-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 13.5px; min-width: 520px; }
+  thead th {
+    text-align: start; font-weight: 700; color: var(--ink-soft);
+    padding: 10px 14px; border-bottom: 1px solid var(--border);
+    font-size: 12.5px; letter-spacing: .02em; white-space: nowrap;
+  }
+  tbody td { padding: 11px 14px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr { animation: rowIn .35s ease; }
+  @keyframes rowIn { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
+  .when { font-variant-numeric: tabular-nums; color: var(--ink-soft); white-space: nowrap; font-size: 12.5px; }
+  .who { color: var(--ink-soft); font-size: 13px; }
+  .empty-row td { text-align: center; color: var(--ink-soft); padding: 26px; font-size: 13.5px; }
+
+  /* بطاقات المقارنة */
+  .split { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .box {
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 18px 20px; box-shadow: var(--shadow);
+  }
+  .box.ok { border-inline-start: 4px solid var(--green); }
+  .box.no { border-inline-start: 4px solid var(--red); }
+  .box.info { border-inline-start: 4px solid var(--blue); }
+  .box h3 { margin: 0 0 8px; font-size: 15.5px; font-weight: 750; }
+  .box p { margin: 0 0 6px; font-size: 14px; color: var(--ink-soft); line-height: 1.65; }
+  .box p:last-of-type { margin-bottom: 0; }
+  .box .verdict { display: block; margin-top: 10px; font-size: 13.5px; font-weight: 700; }
+  .box.ok .verdict { color: var(--green); }
+  .box.no .verdict { color: var(--red); }
+  .box.info .verdict { color: var(--blue); }
+
+  /* رحلة QR */
+  .qrflow { display: grid; grid-template-columns: 1fr auto 1fr auto 1fr; gap: 12px; align-items: center; }
+  .qrnode {
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 16px 14px; text-align: center; box-shadow: var(--shadow);
+  }
+  .qrnode .ic { font-size: 26px; }
+  .qrnode h4 { margin: 7px 0 3px; font-size: 14px; font-weight: 750; }
+  .qrnode p { margin: 0; font-size: 12.5px; color: var(--ink-soft); line-height: 1.55; }
+  .qrarrow { color: var(--gold); font-size: 20px; font-weight: 800; }
+
+  /* المراحل والأسئلة */
+  .phases { display: grid; gap: 10px; }
+  .phase {
+    display: grid; grid-template-columns: auto 1fr; gap: 15px; align-items: start;
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 15px 18px; box-shadow: var(--shadow);
+  }
+  .phase.ask { border-inline-start: 4px solid var(--gold-bright); }
+  .phase .no {
+    flex: none; width: 30px; height: 30px; border-radius: 9px; display: grid; place-items: center;
+    background: var(--gold-wash); color: var(--gold); font-weight: 800; font-size: 14px;
+  }
+  .phase h3 { margin: 3px 0 3px; font-size: 15px; font-weight: 750; }
+  .phase p { margin: 0; font-size: 13.5px; color: var(--ink-soft); line-height: 1.6; }
+  .phase .why {
+    display: block; margin-top: 7px; font-size: 12.5px; color: var(--ink-soft);
+    background: var(--surface-2); border: 1px dashed var(--border);
+    border-radius: 8px; padding: 7px 10px; line-height: 1.55;
+  }
+
+  /* تبويبات توضيحية */
+  .tabsdemo { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+  .tabsdemo span {
+    font-size: 13px; font-weight: 700; padding: 7px 14px; border-radius: 999px;
+    border: 1px solid var(--border); background: var(--surface); color: var(--ink-soft);
+  }
+  .tabsdemo span.on { background: var(--gold-wash); color: var(--gold); border-color: transparent; }
+
+  .footnote {
+    margin-top: 40px; padding: 20px 22px; background: var(--surface-2);
+    border: 1px solid var(--border); border-radius: var(--radius);
+    font-size: 14px; color: var(--ink-soft); line-height: 1.7;
+  }
+  .footnote strong { color: var(--ink); }
+  .footnote + .footnote { margin-top: 14px; }
+  .footnote.warn { border-inline-start: 4px solid var(--red); }
+
+  @media (max-width: 620px) {
+    .board { grid-template-columns: 1fr; }
+    .split { grid-template-columns: 1fr; }
+    .cast { grid-template-columns: 1fr; }
+    .qrflow { grid-template-columns: 1fr; }
+    .qrarrow { transform: rotate(90deg); justify-self: center; }
+    @keyframes rowIn { from {opacity:0;} to {opacity:1;} }
+  }
+  @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+</style>
+
+<div class="wrap">
+  <header>
+    <span class="eyebrow">نظام المراسلات — عرض توضيحي</span>
+    <h1>منظومة <span class="accent">وارد وصادر</span> تُوصِّل المستند وتُثبِت مَن استلمه ومتى</h1>
+    <p class="lede">
+      أعرض في هذه الصفحة تصوّري النهائي لنظام المراسلات الذي يربط
+      <strong>رئاسة المصلحة</strong> بـ<strong>المكتب الفني</strong> — والطرفان يُرسلان ويستقبلان.
+      القرارات والكتب الدورية والمذكرات تُرسَل بمرفقاتها الممسوحة ضوئياً، ولكل جهة دفتر صادر ووارد خاص بها،
+      مع إثبات استلام موثَّق بالوقت والاسم — بديلاً عن المخاطبات الورقية والفاكس.
+    </p>
+  </header>
+
+  <div class="section-label"><span class="bar"></span><h2>المشكلة التي يعالجها النظام</h2></div>
+  <div class="pains">
+    <div class="pain">
+      <h3>المستند يستغرق وقتاً</h3>
+      <p>المكاتبة العاجلة تنتظر مندوباً أو جهاز فاكس، وهذا الوقت يُحتسب على سير العمل لا على الورق.</p>
+    </div>
+    <div class="pain">
+      <h3>لا يوجد إثبات استلام</h3>
+      <p>«أرسلنا إليكم» في مقابل «لم يصلنا شيء» — ولا شيء يحسم هذه النقطة سوى دفتر تسليم ورقي معرَّض للضياع.</p>
+    </div>
+    <div class="pain">
+      <h3>الرجوع إلى القرار صعب</h3>
+      <p>قرار صادر منذ عامين يحتاج بحثاً في دواليب الورق، وقد لا يُعثَر عليه إطلاقاً.</p>
+    </div>
+  </div>
+
+  <div class="section-label"><span class="bar"></span><h2>لماذا نظام مستقل وليس بريداً إلكترونياً؟</h2></div>
+  <p class="lede" style="margin-bottom:16px">
+    سؤال يتكرر في كل اجتماع، وأودّ حسمه في البداية: البريد الإلكتروني والنظام لا يؤدّيان الغرض نفسه.
+  </p>
+  <div class="split">
+    <div class="box no">
+      <h3>📧 البريد الإلكتروني</h3>
+      <p>يُوصِّل <strong>رسالة</strong>. لا رقم صادر له، ولا حالة، ولا إثبات استلام له وزن،
+         ولا يعرف مَن تأخّر ولا أين توقّفت المكاتبة. وسلاسل الردود المتداخلة أسوأ شكل لأرشيف قرارات
+         تُراجَع بعد سنوات — كما أن المستخدم يستطيع حذف مستند رسمي من صندوقه بلا أثر.</p>
+      <span class="verdict">يحلّ مشكلة النقل فقط</span>
+    </div>
+    <div class="box ok">
+      <h3>🗂️ نظام المراسلات</h3>
+      <p>يُنتج <strong>مستنداً رسمياً مرقَّماً</strong>: رقم صادر ورقم وارد، وحالة معلومة في كل لحظة،
+         وإقرار استلام باسم صاحبه ووقته، وسجل تداول لا يُعدَّل، وربط بالمقر، وبحث يرجع للقرار برقمه.</p>
+      <span class="verdict">يحلّ مشكلة الإثبات</span>
+    </div>
+  </div>
+  <div class="footnote">
+    <strong>سؤال واحد يحسم الاختيار:</strong> عند الخلاف على مكاتبة، كيف ترجعون إليها اليوم؟
+    إن كانت الإجابة «<strong>بالرقم من الدفتر</strong>» فالنظام ضروري ولا يُغني عنه البريد.
+    <br><br>
+    <strong>والحل الوسط الذي أستبعده:</strong> استخدام البريد مع كتابة الرقم في خانة الموضوع.
+    هذا انضباط يدوي بلا رقيب، وفي أول يوم ضغط عمل يصدر رقمان متطابقان دون أن يكتشفهما أحد.
+    <br><br>
+    <strong>وضعُ البريد في التصوّر:</strong> يبقى <em>قناة تنبيه</em> — يصلكم إشعار
+    «وردت إليك مكاتبة صادر ٢٠٢٦/١٤١» وتفتحون النظام. فتجتمع سرعة الوصول مع سلامة السجل.
+  </div>
+
+  <div class="section-label"><span class="bar"></span><h2>المكوّنات الأساسية</h2></div>
+  <div class="concepts">
+    <div class="concept"><div class="ic">📤</div><h3>الصادر</h3><p>المكاتبات التي أرسلتها الجهة، وأمام كل واحدة حالتها: هل وصلت؟ هل قُرئت؟ هل استُلمت رسمياً؟</p></div>
+    <div class="concept"><div class="ic">📥</div><h3>الوارد</h3><p>المكاتبات الواردة إلى الجهة، والعاجل منها متميّز بلون واضح.</p></div>
+    <div class="concept"><div class="ic">📎</div><h3>المرفقات</h3><p>صورة القرار الممسوحة ضوئياً أو ملف PDF — تُفتح وتُحمَّل من داخل المكاتبة.</p></div>
+    <div class="concept"><div class="ic">✅</div><h3>إثبات الاستلام</h3><p>زر «تم الاستلام» يسجّل الاسم والوقت — وهو البديل الفعلي لدفتر التسليم.</p></div>
+    <div class="concept"><div class="ic">🔢</div><h3>الرقم الرسمي</h3><p>لكل مكاتبة رقم صادر ورقم وارد بسنته — كالدفتر تماماً، غير أنه لا يضيع.</p></div>
+    <div class="concept"><div class="ic">📋</div><h3>التكليف</h3><p>عند التحويل يمكن إسناد مهمة بعنوانها وموعدها، ومتابعة تنفيذها من شاشة مستقلة.</p></div>
+    <div class="concept"><div class="ic">🏛️</div><h3>الربط بالمقر</h3><p>المكاتبة الخاصة بمقر معيّن تُربَط به، فتظهر لاحقاً ضمن مستندات صفحة المقر نفسه.</p></div>
+    <div class="concept"><div class="ic">🖇️</div><h3>سلسلة الرد</h3><p>الرد يبقى مرتبطاً بأصله، فتُقرأ المكاتبة وردّها معاً لا متفرّقين.</p></div>
+  </div>
+
+  <div class="section-label"><span class="bar"></span><h2>أطراف العمل على النظام</h2></div>
+  <div class="cast">
+    <div class="castbox">
+      <h3>رئاسة المصلحة</h3>
+      <div class="person">
+        <div class="av">🖊️</div>
+        <div><div class="who-name">أ. سمير — سكرتارية</div>
+        <div class="who-role">يُعِدّ المكاتبة ويرفعها للاعتماد</div></div>
+      </div>
+      <div class="person">
+        <div class="av">✅</div>
+        <div><div class="who-name">المستشار خالد — رئيس القطاع</div>
+        <div class="who-role">يعتمد ويُرسل باسم الجهة</div></div>
+      </div>
+    </div>
+    <div class="castbox">
+      <h3>المكتب الفني</h3>
+      <div class="person">
+        <div class="av">🖊️</div>
+        <div><div class="who-name">أ. محمد — سكرتارية</div>
+        <div class="who-role">يستلم الوارد ويقيّده ويربطه بالمقر</div></div>
+      </div>
+      <div class="person">
+        <div class="av">✅</div>
+        <div><div class="who-name">المستشار ياسر — رئيس المكتب</div>
+        <div class="who-role">يعتمد ويُرسل باسم الجهة</div></div>
+      </div>
+      <div class="person">
+        <div class="av">🔍</div>
+        <div><div class="who-name">م. هبة — مفتش</div>
+        <div class="who-role">تُعِدّ الردود الفنية عند التكليف</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="footnote">
+    <strong>القاعدة الحاكمة:</strong> الموظف يُعِدّ، وصاحب الصلاحية يعتمد ويُرسل باسم الجهة.
+    ولستُ أضيف بذلك تعقيداً — هذا ما يجري على الورق اليوم بالضبط، إذ
+    <strong>لا يخرج الصادر إلا بتوقيع</strong>.
+  </div>
+
+  <div class="section-label"><span class="bar"></span><h2>تجربة عملية — رحلة قرار من الرئاسة إلى المكتب الفني</h2></div>
+  <div class="sim">
+    <div class="board">
+      <div class="side" id="sideA">
+        <div class="role">الجهة الراسلة</div>
+        <div class="name">رئاسة المصلحة</div>
+        <div class="slot" id="slotA"><span class="none">— لا توجد مكاتبة —</span></div>
+      </div>
+      <div class="side" id="sideB">
+        <div class="role">الجهة المستلمة</div>
+        <div class="name">المكتب الفني</div>
+        <div class="slot" id="slotB"><span class="none">— لا توجد مكاتبة —</span></div>
+      </div>
+    </div>
+
+    <div class="stage">
+      <div class="op-card">
+        <div class="badge" id="opIcon">▶️</div>
+        <div class="txt">
+          <div class="step-no" id="opStep">جاهز للبدء</div>
+          <h4 id="opTitle">اضغطوا «الخطوة التالية»</h4>
+          <p id="opDesc">نتابع معاً قراراً يخرج من رئاسة المصلحة إلى المكتب الفني، خطوة بخطوة، ونرى ما الذي يُسجَّل في كل مرحلة.</p>
+          <span class="paper" id="opPaper" hidden></span>
+        </div>
+      </div>
+
+      <div class="controls">
+        <button class="btn-primary" id="btnNext">الخطوة التالية</button>
+        <button class="btn-ghost" id="btnReset">إعادة من البداية</button>
+        <span class="progress" id="progress">٠ / ٩</span>
+      </div>
+    </div>
+
+    <div class="ledger-wrap">
+      <table>
+        <thead>
+          <tr><th style="width:22%">الوقت</th><th style="width:46%">الإجراء المسجَّل</th><th style="width:32%">المنفِّذ</th></tr>
+        </thead>
+        <tbody id="log">
+          <tr class="empty-row"><td colspan="3">سجل التداول فارغ — وكل خطوة ستضيف سطراً هنا</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="footnote">
+    <strong>هذه السطور هي أهم ما في المنظومة كلها.</strong>
+    سجل التداول يُكتب تلقائياً مع كل خطوة، ولا يملك أحد تعديله أو حذفه.
+    وبذلك يصبح لسؤال «متى وصلت هذه المكاتبة ومَن استلمها؟» إجابة واحدة موثَّقة بدلاً من الأقوال.
+  </div>
+
+  <div class="section-label"><span class="bar"></span><h2>التوجيه: إرسال إلى · نسخة إلى · تكليف</h2></div>
+  <div class="split">
+    <div class="box ok">
+      <h3>📨 إرسال إلى</h3>
+      <p>المستلم <strong>الأصلي</strong> المسؤول عن التصرّف في المكاتبة.
+         يُقيَّد له رقم وارد، ويُطالَب بالرد إن حُدِّد ذلك، ويدخل في حساب التأخير.</p>
+      <span class="verdict">عليه مسؤولية</span>
+    </div>
+    <div class="box info">
+      <h3>📄 نسخة إلى</h3>
+      <p>مَن يُطلَع على المكاتبة <strong>للعلم فقط</strong>.
+         لا يُطالَب برد، ولا يظهر ضمن «لم يردّوا»، ولا يدخل في حساب التأخير إطلاقاً.</p>
+      <span class="verdict">للعلم فقط</span>
+    </div>
+  </div>
+  <div class="box" style="margin-top:14px; border-inline-start:4px solid var(--gold-bright)">
+    <h3>📋 التكليف — مهمة تولد من المكاتبة</h3>
+    <p>
+      عند إضافة أي مستلم يظهر مفتاحان مستقلان: <strong>«يحتاج إلى رد»</strong> بموعده،
+      و<strong>«إضافة تكليف»</strong> بعنوانه وموعده. والفرق بينهما مقصود:
+      الرد يخصّ المكاتبة نفسها، والتكليف عمل مطلوب إنجازه بسببها.
+    </p>
+    <p>
+      وتُتابَع التكليفات من شاشة مستقلة فيها <strong>تكليفاتي</strong> و<strong>تكليفات الآخرين</strong>،
+      وأمام كل تكليف: الموعد الأقصى، وتاريخ الإنجاز الفعلي، والحالة (قيد التنفيذ / مكتمل).
+    </p>
+  </div>
+  <div class="footnote warn">
+    <strong>لماذا أفصل بين الاثنين؟</strong>
+    لأن خلطهما يُفسد أهم سؤال في المتابعة: «مَن لم يردّ؟».
+    فإذا حُسِب صاحب النسخة ضمن المطالَبين بالرد، ظهر النظام وكأن هناك تأخيراً لا وجود له،
+    وفقد التنبيه قيمته سريعاً.
+  </div>
+
+  <div class="section-label"><span class="bar"></span><h2>مواقف تحدث في العمل — وكيف يتعامل النظام معها</h2></div>
+  <div class="cases">
+    <div class="case">
+      <div class="ic">🏖️</div>
+      <h3>المستشار في أجازة</h3>
+      <p>قبل سفره يسجّل أن <strong>م. هبة تنوب عنه من ١٢ إلى ١٩ أغسطس</strong>. وخلال هذه المدة ترى هبة وارده
+      في تبويب مستقل باسم «<strong>وارد الإنابة</strong>» وتتصرّف فيه. وتظل المكاتبة باسمه هو، ويسجّل النظام
+      «اعتمدت م. هبة بالنيابة عن المستشار ياسر». وبعد ١٩ أغسطس ينتهي التفويض تلقائياً.</p>
+      <span class="without">بدونه: تتكدّس المكاتبات أسبوعاً في صندوق غائب، ويتأخّر العاجل، فيعود الناس إلى الورق.</span>
+    </div>
+    <div class="case">
+      <div class="ic">↩️</div>
+      <h3>مكاتبة وصلت ناقصة</h3>
+      <p>وصل القرار دون المرفق. يضغط أ. محمد «<strong>إرجاع</strong>» ويكتب السبب:
+      «المرفق المشار إليه غير مرفوع». فترجع إلى صندوق الرئاسة والسبب ظاهر أمامهم ومسجَّل في سجل التداول.</p>
+      <span class="without">بدونه: تُهمَل المكاتبة بلا أثر، ويصير الخلاف شفهياً — وهو ما جاء النظام ليُنهيه.</span>
+    </div>
+    <div class="case">
+      <div class="ic">⏰</div>
+      <h3>مكاتبة تجاوزت مهلتها</h3>
+      <p>مضت الأيام الثلاثة دون رد، فتظهر بعلامة «<strong>متأخرة</strong>» وينبَّه الطرفان،
+      ويتبيّن <strong>عند مَن تحديداً</strong> توقّفت.</p>
+      <span class="without">هذه معلومة لا يقولها الورق إطلاقاً — لا يُعرف التأخير إلا حين يسأل أحدهم.</span>
+    </div>
+    <div class="case">
+      <div class="ic">🖨️</div>
+      <h3>الحاجة إلى نسخة ورقية</h3>
+      <p>تُطبع بختم الاعتماد و<strong>كود QR</strong>. وأي شخص يصوّر الكود تُفتح له صفحة من النظام تُظهر:
+      «صادر ٢٠٢٦/١٤١ · معتمَدة · بمعرفة المستشار خالد · ١٠ أغسطس».</p>
+      <span class="without">مطابقة الورقة للشاشة تعني سلامتها، واختلافهما يكشف التزوير فوراً.</span>
+    </div>
+  </div>
+
+  <div class="section-label"><span class="bar"></span><h2>الأولوية والمُهلة</h2></div>
+  <div class="split">
+    <div class="box ok">
+      <h3>⚡ الأولوية</h3>
+      <p>تُرسَل المكاتبة بأولوية «عادي» أو «عاجل» أو «فوري». والعاجل يظهر بلون مميّز
+        في صندوق الوارد وفي التنبيهات، فلا يضيع وسط الباقي.</p>
+      <span class="verdict">المستعجل يصل مستعجلاً</span>
+    </div>
+    <div class="box ok">
+      <h3>⏳ المُهلة</h3>
+      <p>تُحدَّد مهلة الرد <strong>لكل مستلم على حدة</strong> لا للمكاتبة كلها.
+        فإذا مضت دون رد وُسِمت «متأخرة» وظهر تنبيه، ويتبيّن <strong>عند مَن</strong> توقّفت.</p>
+      <span class="verdict">التأخير يظهر قبل أن يصير مشكلة</span>
+    </div>
+  </div>
+  <div class="footnote">
+    <strong>لماذا المهلة على المستلم لا على المكاتبة؟</strong>
+    لأن المكاتبة الواحدة قد تُرسَل إلى ثلاثة، فيردّ اثنان ويتأخّر ثالث.
+    ومهلة واحدة على المكاتبة تقول «متأخرة» فحسب، أما المهلة على المستلم فتقول
+    <strong>مَن</strong> تأخّر بالضبط — وهذه هي المعلومة المفيدة إدارياً.
+  </div>
+
+  <div class="section-label"><span class="bar"></span><h2>الصناديق والبحث والأرشفة</h2></div>
+  <div class="box">
+    <h3>تبويبات صندوق الوارد</h3>
+    <div class="tabsdemo">
+      <span class="on">مراسلاتي</span>
+      <span>الوارد العام</span>
+      <span>وارد الإنابة</span>
+      <span>مشاركات الآخرين</span>
+    </div>
+    <p>
+      <strong>مراسلاتي:</strong> ما ورد إليّ شخصياً. &nbsp;·&nbsp;
+      <strong>الوارد العام:</strong> ما ورد إلى جهتي كلها. &nbsp;·&nbsp;
+      <strong>وارد الإنابة:</strong> وارد مَن فوّضني، مفصولاً حتى لا يختلط بواردي. &nbsp;·&nbsp;
+      <strong>مشاركات الآخرين:</strong> مكاتبات أطلعني عليها زميل دون أن أكون مستلماً لها.
+    </p>
+  </div>
+
+  <div class="split" style="margin-top:14px">
+    <div class="box info">
+      <h3>🔎 البحث المتقدم</h3>
+      <p>ستة حقول: من تاريخ · إلى تاريخ · الجهة أو المرسَل إليه · <strong>رقم المكاتبة</strong> · الموضوع · النوع.</p>
+      <p>وأُصرّ على وجود <strong>رقم المكاتبة</strong> بينها، لأن القرار القديم يُطلَب برقمه لا بتاريخه.</p>
+      <span class="verdict">الرجوع للقرار بعد سنوات</span>
+    </div>
+    <div class="box info">
+      <h3>🗄️ الأرشفة والمفضلة</h3>
+      <p>تُخفى المكاتبة المنتهية من القائمة النشطة، وتُستعاد بفلتر الحالة «مؤرشف» متى شئت.</p>
+      <p><strong>وكلاهما شخصي:</strong> أرشفتك لا تُخفي المكاتبة عن زملائك، ولا تُخفي أرشفتهم شيئاً عنك.</p>
+      <span class="verdict">ترتيب شخصي لا يمسّ الآخرين</span>
+    </div>
+  </div>
+
+  <div class="section-label"><span class="bar"></span><h2>التوقيع والاعتماد</h2></div>
+  <div class="op-card" style="border-inline-start-color: var(--blue)">
+    <div class="badge" style="background: var(--blue-wash)">✍️</div>
+    <div class="txt">
+      <div class="step-no">مُجرَّب وجاهز للتنفيذ</div>
+      <h4>يخرج المستند معتمداً بتوقيع صاحب الصلاحية</h4>
+      <p>
+        يرفع صاحب الاعتماد صورة توقيعه مرة واحدة، وبعدها كلما اعتمد مستنداً
+        طبع النظام عليه خانة اعتماد تتضمّن: النص والتوقيع والاسم والتاريخ.
+        ويُحفَظ الملف الأصلي كما هو، وتُحفَظ النسخة المعتمَدة إلى جواره.
+      </p>
+      <span class="paper">🔒 صورة التوقيع محفوظة بحيث لا تُحمَّل ولا يراها أحد</span>
+    </div>
+  </div>
+
+  <div class="section-label"><span class="bar"></span><h2>كود QR — كيف نتأكد أن الورقة أصلية</h2></div>
+  <div class="qrflow">
+    <div class="qrnode">
+      <div class="ic">🖨️</div>
+      <h4>الطباعة</h4>
+      <p>يُطبع المستند وعليه كود QR ورقم مرجعي</p>
+    </div>
+    <div class="qrarrow">←</div>
+    <div class="qrnode">
+      <div class="ic">📱</div>
+      <h4>التصوير</h4>
+      <p>يصوّر أي شخص الكود بهاتفه</p>
+    </div>
+    <div class="qrarrow">←</div>
+    <div class="qrnode">
+      <div class="ic">🔎</div>
+      <h4>المقارنة</h4>
+      <p>تُفتح صفحة من النظام تُظهر رقم المكاتبة وتاريخها وحالتها ومَن اعتمدها</p>
+    </div>
+  </div>
+
+  <div class="split" style="margin-top:14px">
+    <div class="box ok">
+      <h3>الورقة سليمة</h3>
+      <p>ما هو مكتوب في الورقة يطابق ما يظهر على شاشة النظام.</p>
+      <span class="verdict">✅ مطابقة</span>
+    </div>
+    <div class="box no">
+      <h3>الورقة متلاعَب فيها</h3>
+      <p>الورقة تقول «مرفوضة» والنظام يقول «معتمَدة» — أو الكود لا يفتح شيئاً أصلاً.</p>
+      <span class="verdict">🚩 تزوير مكشوف فوراً</span>
+    </div>
+  </div>
+
+  <div class="footnote">
+    <strong>لماذا يهمّ هذا في الشكاوى بوجه خاص؟</strong>
+    لأن ورقة الشكوى تخرج من النظام مطبوعة، وتتنقّل بين المفتش والمستشار، ثم تعود ممسوحة ضوئياً وتُرفَع ثانيةً.
+    وكود QR هو ما يربط الورقة التي في يدك بأصلها في النظام طوال هذه الرحلة.
+    <br><br>
+    <strong>وأوضّح بأمانة:</strong> صورة التوقيع الملصوقة ليست توقيعاً إلكترونياً معتمداً — فهي تُنسَخ ولا تُثبت
+    عدم التعديل. وحمايتها الحقيقية هي اجتماع الختم مع سجل التداول مع كود التحقق.
+    وقد استقرّ الرأي على هذا القدر، والتوقيع الرقمي المعتمَد قرار إداري إن طُلب لاحقاً.
+  </div>
+
+  <div class="section-label"><span class="bar"></span><h2>ما لم أُدرجه في النظام — ولماذا</h2></div>
+  <div class="box">
+    <div class="ledger-wrap">
+      <table class="wont">
+        <thead><tr><th style="width:42%">لم أُدرجه</th><th style="width:58%">البديل المعتمَد</th></tr></thead>
+        <tbody>
+          <tr><td>المسح الضوئي من داخل المتصفح</td><td>يمسح الموظف ببرنامج الماسح ويرفع الملف — النتيجة نفسها دون برنامج مثبَّت على كل جهاز</td></tr>
+          <tr><td>تحرير النص في Word على الويب</td><td>محرر نصوص داخل النظام</td></tr>
+          <tr><td>الدخول بحسابات مايكروسوفت</td><td>نظام الحسابات القائم لديكم</td></tr>
+          <tr><td>توقيع رقمي بشهادة معتمدة</td><td>الختم بالتوقيع + سجل التداول + كود التحقق</td></tr>
+          <tr><td>جهاز توقيع مخصص</td><td>رفع صورة التوقيع أو الرسم على الشاشة</td></tr>
+          <tr><td>واجهة بالعربية والإنجليزية</td><td>العربية فقط — كسائر المنظومة</td></tr>
+          <tr><td>لوحة إعلانات وتقويم وهيكل تنظيمي</td><td>موديولات مستقلة، وليست من المراسلات</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <div class="footnote">
+    هذه البنود موجودة في أنظمة تجارية جاهزة، و<strong>استبعدتها عن قصد</strong> — لكل منها تكلفة أو تعقيد
+    دون مقابل حقيقي في عملكم. فإن كان أيٌّ منها مطلوباً فعلاً، أرجو إفادتي لأدرسه.
+  </div>
+
+  <div class="section-label"><span class="bar"></span><h2>أسئلة أطرحها عليكم قبل البدء</h2></div>
+  <p class="lede" style="margin-bottom:16px">
+    ثلاثة منها تُعطِّل البناء فعلاً، وسؤالان يتعلّقان بالتفضيل. وأسأل فيها جميعاً عن
+    <strong>إجراءكم الورقي القائم</strong> لا عمّا ينبغي أن يفعله النظام — فمن إجابتكم أشتقّ التصميم.
+  </p>
+  <div class="phases">
+    <div class="phase ask"><div class="no">١</div><div>
+      <h3>مَن يوقّع الصادر اليوم على الورق قبل خروجه؟</h3>
+      <p>إن كان رئيس المكتب، فستوجد خطوة اعتماد في النظام كما في التجربة أعلاه. وإن كان أي موظف يُرسل مباشرةً، حُذفت هذه الخطوة.</p>
+      <span class="why">يُعطِّل: خطوة الاعتماد والإرسال — وهي محور الشاشة كلها</span>
+    </div></div>
+    <div class="phase ask"><div class="no">٢</div><div>
+      <h3>هل سيظل الدفتر الورقي شغّالاً بجانب النظام؟ وما الذي سيمرّ على النظام؟</h3>
+      <p>إن استمرّ الدفتر، كُتب الرقم منه حتى لا يصدر رقمان متطابقان في السنة الواحدة. وإن أُوقف، ولّد النظام الرقم بنفسه.</p>
+      <span class="why">يُعطِّل: آلية الترقيم — وتغييرها بعد التشغيل مؤلم</span>
+    </div></div>
+    <div class="phase ask"><div class="no">٣</div><div>
+      <h3>هل التسلسل واحد للجهة كلها، أم لكل نوع مكاتبة تسلسله؟</h3>
+      <p>بمعنى: هل للقرارات تسلسل وللكتب الدورية تسلسل آخر، أم الجميع على تسلسل واحد؟</p>
+      <span class="why">يُعطِّل: مفتاح الترقيم — ولا يُصحَّح لاحقاً دون إعادة ترقيم</span>
+    </div></div>
+    <div class="phase"><div class="no">٤</div><div>
+      <h3>هل تحتاجون خاصية «العرض على القيادة»؟</h3>
+      <p>أي رفع المكاتبة لنظر القيادة للاطّلاع، دون تحويلها إليها ودون نقل المسؤولية عنها.</p>
+      <span class="why">لا يُعطِّل — إضافة تُبنى عند الطلب</span>
+    </div></div>
+    <div class="phase"><div class="no">٥</div><div>
+      <h3>هل تحتاجون «المشاركة» بجانب «التحويل»؟</h3>
+      <p>المشاركة إطلاع زميل على المكاتبة للقراءة فقط، دون أن يصير مستلماً لها ولا يُقيَّد له رقم وارد.</p>
+      <span class="why">لا يُعطِّل — مُدرَجة في التصوّر، وتُحذف إن لم تكن مطلوبة</span>
+    </div></div>
+  </div>
+  <div class="footnote">
+    <strong>الأسئلة الثلاثة الأولى تدور كلها حول لحظة واحدة</strong> — لحظة الاعتماد والترقيم والإرسال
+    (الخطوة ٣ في التجربة أعلاه). وإجابتها مجتمعةً تفتح الطريق أمام البناء كاملاً.
+  </div>
+
+  <div class="section-label"><span class="bar"></span><h2>مراحل التنفيذ</h2></div>
+  <div class="phases">
+    <div class="phase"><div class="no">١</div><div>
+      <h3>الأساس</h3>
+      <p>بناء الفرع الجديد في المنظومة، وتحديد الجهات وأنواع المكاتبات والصلاحيات — مَن يرى ماذا ومَن يفعل ماذا.</p>
+    </div></div>
+    <div class="phase"><div class="no">٢</div><div>
+      <h3>الوارد والصادر</h3>
+      <p>إنشاء المكاتبة وإرسالها بمرفقاتها، وصندوقا الوارد والصادر بتبويباتهما، والرد، وزر «تم الاستلام». وبعد هذه المرحلة تصير المنظومة عاملة فعلياً.</p>
+    </div></div>
+    <div class="phase"><div class="no">٣</div><div>
+      <h3>الاعتماد والتفويض</h3>
+      <p>خطوة الاعتماد قبل الإرسال، وتكليف موظف بإعداد الرد، والإرجاع بسبب، والتفويض عند الغياب.</p>
+    </div></div>
+    <div class="phase"><div class="no">٤</div><div>
+      <h3>التكليفات والمتابعة</h3>
+      <p>شاشة التكليفات وحالاتها، والأولويات، ومُهَل الرد لكل مستلم، وتنبيهات التأخير، وحالة الاستلام أمام كل مكاتبة في الصادر.</p>
+    </div></div>
+    <div class="phase"><div class="no">٥</div><div>
+      <h3>الأرشفة والمشاركة والبحث</h3>
+      <p>الأرشفة والمفضلة الشخصية، ومشاركة المكاتبة مع غير المستلمين، والبحث المتقدم بحقوله الستة.</p>
+    </div></div>
+    <div class="phase"><div class="no">٦</div><div>
+      <h3>الطباعة والختم</h3>
+      <p>طباعة المكاتبة بشكل رسمي، والختم بالتوقيع، وكود QR وصفحة التحقق العامة.</p>
+    </div></div>
+    <div class="phase"><div class="no">٧</div><div>
+      <h3>التصدير والتقارير</h3>
+      <p>تصدير قوائم المكاتبات على Excel وPDF، بنفس الفلاتر الظاهرة على الشاشة تماماً.</p>
+    </div></div>
+  </div>
+
+  <div class="footnote">
+    <strong>لكل جهة دفترها:</strong>
+    تحمل المكاتبة الواحدة <strong>رقمين</strong> — رقم صادر في دفتر الجهة الراسلة، ورقم وارد في دفتر الجهة المستلمة.
+    كالورق تماماً: يُقيَّد الكتاب صادراً عند مُرسِله، ويُختَم وارداً عند مستلمه.
+    والرقمان محفوظان على المكاتبة نفسها، فيرجع إليها كل طرف برقمه هو.
+  </div>
+
+  <div class="footnote">
+    <strong>وما بعده:</strong>
+    هذا الأساس نفسه (المستند + المسار + المرفقات + إثبات الاستلام) هو ما سيُبنى عليه
+    <strong>موديول الشكاوى</strong> — بمكننة رحلة الشكوى من الموظف إلى المفتش إلى المستشار ثم عودتها للرفع،
+    دون إعادة بناء أي شيء من جديد.
+  </div>
+</div>
+
+<script>
+(function () {
+  var STEPS = [
+    {
+      icon: "📝", step: "الخطوة ١", title: "أ. سمير يُعِدّ المسودة",
+      desc: "يكتب الموضوع والنص، ويختار المكتب الفني جهةً مستلمة، ويضع مدير المتابعة في «نسخة إلى» للعلم، ويرفق صورة القرار الممسوحة ضوئياً، ويحدّد مهلة رد ثلاثة أيام. وهي حتى الآن مسودة — بلا رقم.",
+      paper: "📎 مرفق: صورة القرار (PDF) · مهلة الرد: ٣ أيام · نسخة إلى: مدير المتابعة",
+      at: "A",
+      doc: { serial: "مسودة", subject: "قرار بشأن تنظيم العمل بمكاتب التوثيق", chips: [["draft","مسودة"],["cc","نسخة ١"],["attach","مرفق ١"]] },
+      log: null
+    },
+    {
+      icon: "⬆️", step: "الخطوة ٢", title: "يرفعها للاعتماد",
+      desc: "تنتقل المسودة إلى المستشار خالد وتظهر عنده في شاشة المسودات. وهي بلا رقم بعد — لأن المسودة قد تُلغى، والرقم المهدور يترك فجوة في سجل رسمي.",
+      paper: "⏳ في انتظار اعتماد المستشار خالد",
+      at: "A",
+      doc: { serial: "بلا رقم", subject: "قرار بشأن تنظيم العمل بمكاتب التوثيق", chips: [["pending","بانتظار الاعتماد"],["cc","نسخة ١"],["attach","مرفق ١"]] },
+      log: ["٠٩:٠٥", "رفع المسودة للاعتماد", "أ. سمير — رئاسة المصلحة"]
+    },
+    {
+      icon: "✅", step: "الخطوة ٣", title: "المستشار خالد يعتمد ويُرسل",
+      desc: "في هذه اللحظة بالذات تأخذ رقمها: صادر ٢٠٢٦/١٤١، ويُختَم عليها توقيعه واسمه وتاريخ الاعتماد. والرقم لا يتكرر ولا يتغيّر بعدها.",
+      paper: "🔢 صادر ٢٠٢٦/١٤١ · ✍️ معتمَدة بتوقيع المستشار خالد",
+      at: "A",
+      doc: { serial: "صادر ٢٠٢٦/١٤١", subject: "قرار بشأن تنظيم العمل بمكاتب التوثيق", chips: [["signed","معتمَدة"],["urgent","عاجل"],["attach","مرفق ١"]] },
+      log: ["٠٩:١٢", "الاعتماد والإرسال", "المستشار خالد — رئاسة المصلحة"]
+    },
+    {
+      icon: "🔔", step: "الخطوة ٤", title: "وصلت صندوق وارد المكتب الفني",
+      desc: "يظهر تنبيه «مكاتبة جديدة» مع عدّاد بجانب الوارد. ولأنها عاجلة تتميّز بلون واضح فوق الباقي. وهي تحمل رقم الرئاسة فقط — إذ لم يُخصَّص رقم واردنا بعد.",
+      paper: "🔴 مميَّزة بوصفها «عاجل» في الوارد",
+      at: "B",
+      doc: { serial: "صادر الرئاسة ٢٠٢٦/١٤١", subject: "قرار بشأن تنظيم العمل بمكاتب التوثيق", chips: [["new","جديدة"],["urgent","عاجل"],["attach","مرفق ١"]] },
+      log: ["٠٩:١٢", "وصول المكاتبة إلى الوارد", "المكتب الفني"]
+    },
+    {
+      icon: "👁️", step: "الخطوة ٥", title: "أ. محمد يفتحها ويقرؤها",
+      desc: "بمجرد الفتح يسجّل النظام وقت القراءة، ويرى الراسل أمام المكاتبة في صادره أنها «قُرئت».",
+      paper: "👁️ قُرئت — والراسل يرى ذلك",
+      at: "B",
+      doc: { serial: "صادر الرئاسة ٢٠٢٦/١٤١", subject: "قرار بشأن تنظيم العمل بمكاتب التوثيق", chips: [["seen","قُرئت"],["urgent","عاجل"],["attach","مرفق ١"]] },
+      log: ["٠٩:٤٠", "فتح المكاتبة وقراءتها", "أ. محمد — المكتب الفني"]
+    },
+    {
+      icon: "🧾", step: "الخطوة ٦", title: "تأكيد الاستلام وقيده في دفتر الوارد",
+      desc: "يضغط الموظف «تم الاستلام»، فتأخذ رقم وارد في دفتر المكتب الفني: ٢٠٢٦/٨٩. وهذه ليست قراءة — بل إقرار رسمي باسمه ووقته، كختم الوارد على الورقة تماماً.",
+      paper: "✅ وارد ٢٠٢٦/٨٩ — إقرار موثَّق بالاسم والوقت",
+      at: "B",
+      doc: { serial: "وارد ٢٠٢٦/٨٩", subject: "قرار بشأن تنظيم العمل بمكاتب التوثيق", chips: [["ack","تم الاستلام"],["attach","مرفق ١"]] },
+      log: ["٠٩:٤١", "تأكيد الاستلام وقيده بالوارد", "أ. محمد — المكتب الفني"]
+    },
+    {
+      icon: "🏛️", step: "الخطوة ٧", title: "ربطها بالمقر المعني",
+      desc: "القرار يخصّ مقراً بعينه، فيُربَط به. ومن هذه اللحظة يجد كل من يفتح صفحة ذلك المقر القرارَ ضمن مستنداته.",
+      paper: "🏛️ مرتبطة بـ: مكتب توثيق المنيا",
+      at: "B",
+      doc: { serial: "وارد ٢٠٢٦/٨٩", subject: "قرار بشأن تنظيم العمل بمكاتب التوثيق", chips: [["ack","تم الاستلام"],["office","مكتب توثيق المنيا"]] },
+      log: ["٠٩:٤٥", "ربط المكاتبة بمقر", "أ. محمد — المكتب الفني"]
+    },
+    {
+      icon: "📋", step: "الخطوة ٨", title: "المستشار ياسر يكلّف م. هبة بإعداد الرد",
+      desc: "المفتش هي مَن ستكتب الإفادة الفنية، فيُنشئ لها تكليفاً بعنوانه وموعده الأقصى. ويظهر التكليف عندها في شاشة التكليفات بحالة «قيد التنفيذ»، والمسودة في «مطلوب مني».",
+      paper: "📋 تكليف: إعداد الإفادة الفنية — الموعد الأقصى: ١٧ سبتمبر",
+      at: "B",
+      doc: { serial: "وارد ٢٠٢٦/٨٩", subject: "قرار بشأن تنظيم العمل بمكاتب التوثيق", chips: [["task","تكليف قيد التنفيذ"],["office","مكتب توثيق المنيا"]] },
+      log: ["١٠:٠٥", "إنشاء تكليف بإعداد الرد", "المستشار ياسر — المكتب الفني"]
+    },
+    {
+      icon: "↩️", step: "الخطوة ٩", title: "ياسر يعتمد الرد ويُرسله إلى الرئاسة",
+      desc: "بعد أن تُنهي هبة المسودة يُغلَق التكليف بحالة «مكتمل»، ويراجع ياسر ويعتمد. ويأخذ الرد رقم صادر المكتب الفني — ٢٠٢٦/٣١٨ — ويظل مرتبطاً بالمكاتبة الأصلية في سلسلة واحدة.",
+      paper: "🔗 صادر المكتب الفني ٢٠٢٦/٣١٨ — رد على وارد ٢٠٢٦/٨٩",
+      at: "A",
+      doc: { serial: "صادر المكتب الفني ٢٠٢٦/٣١٨", subject: "رد على القرار — إفادة المكتب الفني", chips: [["signed","معتمَدة"],["attach","مرفق ١"]] },
+      log: ["١١:٢٠", "اعتماد الرد وإرساله", "المستشار ياسر — المكتب الفني"]
+    }
+  ];
+
+  var AR = ["٠","١","٢","٣","٤","٥","٦","٧","٨","٩"];
+  function ar(n) { return String(n).replace(/\d/g, function (d) { return AR[+d]; }); }
+
+  var i = 0;
+  var slotA = document.getElementById("slotA"),
+      slotB = document.getElementById("slotB"),
+      sideA = document.getElementById("sideA"),
+      sideB = document.getElementById("sideB"),
+      log   = document.getElementById("log"),
+      btnNext = document.getElementById("btnNext"),
+      btnReset = document.getElementById("btnReset");
+
+  function empty() { return '<span class="none">— لا توجد مكاتبة —</span>'; }
+
+  function docHtml(d) {
+    var chips = d.chips.map(function (c) {
+      return '<span class="chip ' + c[0] + '">' + c[1] + '</span>';
+    }).join("");
+    return '<div class="doc"><div class="serial">' + d.serial + '</div>' +
+           '<div class="subj">' + d.subject + '</div>' +
+           '<div class="meta">' + chips + '</div></div>';
+  }
+
+  function render() {
+    var s = STEPS[i - 1];
+    document.getElementById("progress").textContent = ar(i) + " / " + ar(STEPS.length);
+    btnNext.disabled = (i >= STEPS.length);
+    btnNext.textContent = (i >= STEPS.length) ? "انتهت الرحلة" : "الخطوة التالية";
+
+    if (!s) {
+      slotA.innerHTML = empty(); slotB.innerHTML = empty();
+      sideA.classList.remove("active"); sideB.classList.remove("active");
+      document.getElementById("opIcon").textContent = "▶️";
+      document.getElementById("opStep").textContent = "جاهز للبدء";
+      document.getElementById("opTitle").textContent = "اضغطوا «الخطوة التالية»";
+      document.getElementById("opDesc").textContent =
+        "نتابع معاً قراراً يخرج من رئاسة المصلحة إلى المكتب الفني، خطوة بخطوة، ونرى ما الذي يُسجَّل في كل مرحلة.";
+      document.getElementById("opPaper").hidden = true;
+      log.innerHTML = '<tr class="empty-row"><td colspan="3">سجل التداول فارغ — وكل خطوة ستضيف سطراً هنا</td></tr>';
+      return;
+    }
+
+    slotA.innerHTML = (s.at === "A") ? docHtml(s.doc) : empty();
+    slotB.innerHTML = (s.at === "B") ? docHtml(s.doc) : empty();
+    sideA.classList.toggle("active", s.at === "A");
+    sideB.classList.toggle("active", s.at === "B");
+
+    document.getElementById("opIcon").textContent = s.icon;
+    document.getElementById("opStep").textContent = s.step;
+    document.getElementById("opTitle").textContent = s.title;
+    document.getElementById("opDesc").textContent = s.desc;
+    var p = document.getElementById("opPaper");
+    p.hidden = !s.paper;
+    if (s.paper) p.textContent = s.paper;
+  }
+
+  function addLog(entry) {
+    var e = log.querySelector(".empty-row");
+    if (e) log.innerHTML = "";
+    var tr = document.createElement("tr");
+    tr.innerHTML = '<td class="when">' + entry[0] + '</td><td>' + entry[1] + '</td><td class="who">' + entry[2] + '</td>';
+    log.appendChild(tr);
+  }
+
+  btnNext.addEventListener("click", function () {
+    if (i >= STEPS.length) return;
+    i++;
+    render();
+    var s = STEPS[i - 1];
+    if (s.log) addLog(s.log);
+  });
+
+  btnReset.addEventListener("click", function () { i = 0; render(); });
+
+  render();
+})();
+</script>

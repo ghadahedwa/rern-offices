@@ -32,3 +32,6 @@ _ide_helper_models.php
 # Office temp/lock files
 ~$*
 *.tmp
+
+# مصادر التوثيق الكبيرة (كراسات ولقطات فيديو) — تبقى محلية، والملخصات المكتوبة هي المتتبَّعة
+/documentation/*.pdf
