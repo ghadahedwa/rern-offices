@@ -2,6 +2,7 @@
 
 use App\Models\CorrespondenceEntity;
 use App\Models\User;
+use Database\Seeders\CorrespondenceDemoUsersSeeder;
 use Database\Seeders\CorrespondenceRolesSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
@@ -10,7 +11,7 @@ use Spatie\Permission\Models\Role;
 uses(RefreshDatabase::class);
 
 beforeEach(function () {
-    $this->seed(CorrespondenceRolesSeeder::class);
+    $this->seed(CorrespondenceDemoUsersSeeder::class);   // ينادي seeder الأدوار بنفسه
 });
 
 it('ينشئ الأدوار الثلاثة بمستوى ١', function () {
@@ -95,28 +96,30 @@ it('يعطي الحسابات الجديدة كلمة السر الموحّدة 
     }
 });
 
-it('يرفض كلمة السر الافتراضية على الإنتاج', function () {
-    // حساب بكلمة سر معروفة على الإنتاج أسوأ من فشل السكربت.
-    // يُختبَر الحارس مباشرة: db:seed على الإنتاج يطلب تأكيداً فيتوقف قبل بلوغه.
+it('لا ينشئ أي حساب على الإنتاج', function () {
+    // قرار المستخدمة: الحسابات تجريبية محلية ولا تصل الإنتاج بحال
+    User::query()->delete();
     app()['env'] = 'production';
 
-    expect(fn () => CorrespondenceRolesSeeder::resolvePassword())
-        ->toThrow(RuntimeException::class, 'CORR_SEED_PASSWORD');
+    (new CorrespondenceDemoUsersSeeder)->run();
+
+    expect(User::count())->toBe(0);
 });
 
-it('يقبل كلمة سر مضبوطة على الإنتاج', function () {
+it('يظل seeder الأدوار صالحاً على الإنتاج', function () {
+    // الأدوار إعداد رسمي — الممنوع هو الحسابات لا الأدوار
+    Role::whereIn('name', array_keys(CorrespondenceRolesSeeder::ROLES))->delete();
     app()['env'] = 'production';
-    putenv('CORR_SEED_PASSWORD=a-real-one');
 
-    expect(CorrespondenceRolesSeeder::resolvePassword())->toBe('a-real-one');
+    (new CorrespondenceRolesSeeder)->run();
 
-    putenv('CORR_SEED_PASSWORD');
+    expect(Role::whereIn('name', array_keys(CorrespondenceRolesSeeder::ROLES))->count())->toBe(3);
 });
 
 it('لا يغيّر كلمة سر حساب قائم عند إعادة التشغيل', function () {
     $before = User::where('username', 'samir')->first()->password;
 
-    $this->seed(CorrespondenceRolesSeeder::class);
+    $this->seed(CorrespondenceDemoUsersSeeder::class);
 
     expect(User::where('username', 'samir')->first()->password)->toBe($before);
 });
@@ -125,7 +128,7 @@ it('يصحّح دوراً عُدِّلت صلاحياته يدوياً', functio
     $role = Role::where('name', 'مفتش')->first();
     $role->givePermissionTo('correspondence.approve');
 
-    $this->seed(CorrespondenceRolesSeeder::class);
+    $this->seed(CorrespondenceDemoUsersSeeder::class);
 
     expect($role->fresh()->hasPermissionTo('correspondence.approve'))->toBeFalse();
 });
@@ -141,7 +144,7 @@ it('لا يصفّر محافظات حساب كان موجوداً قبل الت�
     $adopted = User::factory()->create(['username' => 'heba']);
     $adopted->governorates()->sync([$gov->id]);
 
-    $this->seed(CorrespondenceRolesSeeder::class);
+    $this->seed(CorrespondenceDemoUsersSeeder::class);
 
     expect($adopted->fresh()->governorates)->toHaveCount(1)
         ->and($mine->fresh()->governorates)->toHaveCount(1);
@@ -152,7 +155,7 @@ it('يصحّح طرفاً أو مسمّى عُدِّل يدوياً', function (
     $other = CorrespondenceEntity::where('name', 'رئاسة المصلحة')->first();
     $user->update(['correspondence_entity_id' => $other->id, 'job_title' => 'خطأ']);
 
-    $this->seed(CorrespondenceRolesSeeder::class);
+    $this->seed(CorrespondenceDemoUsersSeeder::class);
 
     expect($user->fresh()->correspondenceEntity->name)->toBe('المكتب الفني')
         ->and($user->fresh()->job_title)->toBe('مفتش فني');
