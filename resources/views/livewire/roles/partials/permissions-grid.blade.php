@@ -86,16 +86,19 @@
                  }"
                  class="rounded-xl border border-zinc-300 dark:border-zinc-600 overflow-hidden">
 
-                {{-- رأس الفرع --}}
-                <div class="flex items-center justify-between px-4 py-3 bg-zinc-100 dark:bg-zinc-800 border-b border-zinc-200 dark:border-zinc-700">
+                {{-- رأس الفرع — خلفية ذهبية خفيفة.
+                     ⚠️ كان `bg-zinc-100 dark:bg-zinc-800`، ورأس المجموعة `bg-zinc-50 dark:bg-zinc-800`:
+                     أي **لونان متطابقان في الوضع الليلي**، فيختفي التدرّج بين الفرع ومجموعاته تماماً.
+                     الذهبي لون النظام أصلاً، فيفرّق المستويين بلا إدخال لون جديد. --}}
+                <div class="flex items-center justify-between px-4 py-3 bg-[#c9a847]/[0.14] dark:bg-[#c9a847]/16 border-b border-[#c9a847]/30">
                     <button type="button" @click="open = !open" class="flex items-center gap-2 flex-1 text-start">
                         <div class="w-1.5 h-5 bg-[#c9a847] rounded-full"></div>
-                        <span class="text-sm font-bold text-zinc-700 dark:text-zinc-200">{{ __($branchKey) }}</span>
-                        <svg class="w-4 h-4 text-zinc-400 transition-transform" :class="{ 'rotate-180': open }" viewBox="0 0 20 20">
+                        <span class="text-sm font-bold text-[#7a6215] dark:text-[#e0c46a]">{{ __($branchKey) }}</span>
+                        <svg class="w-4 h-4 text-[#c9a847]/70 transition-transform" :class="{ 'rotate-180': open }" viewBox="0 0 20 20">
                             <path d="M5 8l5 5 5-5" fill="none" stroke="currentColor"/>
                         </svg>
                     </button>
-                    <button type="button" @click="toggleAll()" class="text-xs text-[#c9a847] hover:text-[#b8962e] font-medium shrink-0">
+                    <button type="button" @click="toggleAll()" class="text-xs text-[#8a6f1f] dark:text-[#d8b856] hover:underline font-medium shrink-0">
                         <span x-text="allChecked ? 'إلغاء كل الفرع' : 'تحديد كل الفرع'"></span>
                     </button>
                 </div>
@@ -120,7 +123,8 @@
                                  }">
 
                                 {{-- رأس المجموعة مع تحديد الكل --}}
-                                <div class="flex items-center justify-between px-4 py-2.5 bg-zinc-50 dark:bg-zinc-800 border-b border-zinc-200 dark:border-zinc-700">
+                                {{-- أخفّ من رأس الفرع: zinc-800/50 لا zinc-800، وإلا تساوى المستويان ليلاً --}}
+                                <div class="flex items-center justify-between px-4 py-2.5 bg-zinc-50 dark:bg-zinc-800/50 border-b border-zinc-200 dark:border-zinc-700">
                                     <span class="text-xs font-semibold text-zinc-600 dark:text-zinc-400 uppercase tracking-wide">
                                         {{ $groupName }}
                                     </span>
@@ -131,20 +135,22 @@
                                 </div>
 
                                 {{-- الصلاحيات --}}
-                                <div class="grid grid-cols-2 gap-px bg-zinc-100 dark:bg-zinc-700">
+                                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-px bg-zinc-100 dark:bg-zinc-700">
+                                    {{-- تدرّج الخط مقصود: الفرع text-sm bold ← المجموعة text-xs semibold
+                                         ← التصريح text-[11px]. فالتصريح أصغر من عنوان مجموعته دائماً. --}}
                                     @foreach($groupPermissions as $permission)
-                                        <label class="flex items-center gap-3 px-4 py-3 bg-white dark:bg-zinc-900 hover:bg-zinc-50 dark:hover:bg-zinc-800 cursor-pointer transition">
+                                        <label class="flex items-center gap-2.5 px-3 py-2.5 bg-white dark:bg-zinc-900 hover:bg-zinc-50 dark:hover:bg-zinc-800 cursor-pointer transition">
                                             <input
                                                 type="checkbox"
                                                 wire:model="selectedPermissions"
                                                 value="{{ $permission->name }}"
-                                                class="w-4 h-4 rounded accent-[#c9a847] shrink-0"
+                                                class="w-3.5 h-3.5 rounded accent-[#c9a847] shrink-0"
                                             />
                                             <div class="flex flex-col min-w-0">
-                                                <span class="text-sm text-zinc-800 dark:text-zinc-100 leading-tight">
+                                                <span class="text-[11px] text-zinc-800 dark:text-zinc-100 leading-snug">
                                                     {{ $labels[$permission->name] ?? $permission->name }}
                                                 </span>
-                                                <span class="text-xs text-zinc-400 dark:text-zinc-500 font-mono truncate">
+                                                <span class="text-[10px] text-zinc-400 dark:text-zinc-500 font-mono truncate">
                                                     {{ $permission->name }}
                                                 </span>
                                             </div>

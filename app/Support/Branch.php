@@ -68,7 +68,17 @@ class Branch
         ));
     }
 
-    /** الفرع الحالي من اسم الـ route؛ يرجع للفرع الافتراضي لو مفيش تطابق. */
+    /** مفتاح الجلسة الذي يحفظ آخر فرع زاره المستخدم. */
+    public const SESSION_KEY = 'branch.last';
+
+    /**
+     * الفرع الحالي من اسم الـ route.
+     *
+     * وللشاشات التي لا تنتمي لفرع — الملف الشخصي والمظهر والأمان (`profile.edit`
+     * و`appearance.edit` و`security.edit`) — **نبقى في الفرع الذي جاء منه المستخدم**.
+     * ⚠️ قبل هذا كانت تسقط على `defaultKeyFor()` = أوّل فرع متاح، فيجد مَن دخل
+     *    «المظهر» نفسه في قائمة المقرات — وهي شاشة شخصية لا تخصّ فرعاً بحال.
+     */
     public static function current(): ?string
     {
         $routeName = request()->route()?->getName();
@@ -77,13 +87,45 @@ class Branch
             foreach (static::all() as $key => $branch) {
                 foreach ($branch['route_patterns'] ?? [] as $pattern) {
                     if (Str::is($pattern, $routeName)) {
+                        static::remember($key);
+
                         return $key;
                     }
                 }
             }
         }
 
+        // ⚠️ يُعاد فحص الصلاحية: قيمة الجلسة قد تكون من قبل تغيير أدوار المستخدم
+        $last = static::recalled();
+        if ($last !== null && static::canAccess($last)) {
+            return $last;
+        }
+
         return static::defaultKeyFor();
+    }
+
+    /** يحفظ الفرع الحالي في الجلسة — للرجوع إليه في شاشة لا تنتمي لفرع. */
+    protected static function remember(string $key): void
+    {
+        if (! request()->hasSession()) {
+            return;
+        }
+
+        if (session(static::SESSION_KEY) !== $key) {
+            session([static::SESSION_KEY => $key]);
+        }
+    }
+
+    /** آخر فرع محفوظ في الجلسة، إن وُجدت جلسة وكان الفرع معرَّفاً. */
+    protected static function recalled(): ?string
+    {
+        if (! request()->hasSession()) {
+            return null;
+        }
+
+        $key = session(static::SESSION_KEY);
+
+        return is_string($key) && static::config($key) !== null ? $key : null;
     }
 
     /** أول فرع متاح للمستخدم (الافتراضي). */
