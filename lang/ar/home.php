@@ -57,6 +57,7 @@ return [
     'branch_offices'      => 'إدارة المقرات',
     'branch_meetings'     => 'الاجتماعات',
     'branch_warehouses'   => 'المخازن',
+    'branch_correspondence' => 'المراسلات',
     'branch_system'       => 'إدارة النظام',
     'switch_branch'       => 'تبديل الفرع',
     'system_dashboard'    => 'لوحة تحكم النظام',

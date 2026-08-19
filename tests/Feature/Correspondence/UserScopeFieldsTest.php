@@ -62,6 +62,24 @@ function anEntity(string $name = 'رئاسة المصلحة'): CorrespondenceEnt
     );
 }
 
+// ── العناوين لها ترجمات ──────────────────────────────────
+
+it('لكل عنوان في PermissionGroups ترجمة عربية', function () {
+    // __() تُرجع المفتاح نفسه إن غابت الترجمة، فيظهر «home.branch_x» عنواناً في شاشة الأدوار
+    foreach (array_keys(PermissionGroups::GROUPS) as $branchKey) {
+        expect(__($branchKey))->not->toBe($branchKey, "الترجمة غائبة: {$branchKey}");
+    }
+});
+
+it('يعرض عنوان المراسلات بالعربية في شبكة صلاحيات الأدوار', function () {
+    $this->actingAs(scopeSuperAdmin());
+    corrRole();
+
+    Livewire::test(\App\Livewire\Roles\Create::class)
+        ->assertSee('المراسلات')
+        ->assertDontSee('home.branch_correspondence');
+});
+
 // ── مفتاح الأقسام: العنوان لا بادئة الصلاحية ─────────────
 
 it('يُظهر المحافظات لدور السيارات — البادئة وحدها كانت ستفوّته', function () {
