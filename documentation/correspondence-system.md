@@ -131,12 +131,38 @@ attachments (polymorphic):
 
 document_actions (polymorphic — سجل التداول):
   id, actionable_type, actionable_id,
-  action(string),   ← created|sent|received|acknowledged|replied|rejected|shared|assigned|stamped|closed|archived
+  action(string),   ← الكتالوج الكامل أدناه
+  status(string),   🆕 ← حالة المكاتبة **بعد** هذا الفعل
   from_user_id(FK users, nullable), to_user_id(FK users, nullable),
   on_behalf_of(FK users, nullable),      ← الأصيل عند التفويض (قاعدة ٨)
+  from_user_name(string), to_user_name(string, nullable),   🆕 ← لقطة
+  from_job_title(string, nullable),                          🆕 ← لقطة
+  from_entity_id(FK correspondence_entities, nullable),      🆕
   notes(text, nullable), created_at
   INDEX(actionable_type, actionable_id)
 ```
+
+### تتبّع المكاتبة — ثلاث قواعد تُبنى مع الجدول لا بعده
+
+**١ · `status` عمود لا استنتاج.** استنباط الحالة من `action` ينكسر في موضعين: فعل لا يغيّر الحالة (`shared`, `stamped`, `viewed`)، وتغيير أسماء الحالات لاحقاً يجعل السجل القديم يُقرأ خطأً. العمود يجعل الخط الزمني يشرح نفسه.
+
+**٢ · لقطة الاسم والمسمّى بجانب المفتاح.** المفاتيح `nullable`، فحذف موظف أو نقله يترك «—» مكان **مَن كانت عنده** — وهذا غير مقبول في سجل رسمي. والمسمّى تحديداً: خالد كان «رئيس القطاع» لحظة الاعتماد، وترقيته لاحقاً لا يجوز أن يُعيد كتابة ختم قديم. نفس مبدأ البوابة (`nullOnDelete` لحفظ التاريخ) لكن مع حفظ **النصّ** لا المفتاح وحده.
+
+**٣ · السجل append-only.** لا `update` ولا `delete` ولا حذف تعاقبي مع المكاتبة (سلة المحذوفات لا تمسّه). سجل قابل للتعديل ليس دليلاً.
+
+### كتالوج الأفعال — مقيس على خطوات الـexplainer
+```
+created · sent · approved 🆕 · rejected · received · viewed 🆕 · acknowledged
+forwarded 🆕 · assigned · assignment_completed 🆕 · replied
+linked_office 🆕 · shared · stamped · delegated 🆕 · closed · archived
+```
+⚠️ **الخمسة المعلَّمة 🆕 كانت غائبة، وخطوات في السيناريو المعروض على العميل تعتمد عليها**: «فتح المكاتبة وقراءتها» (خطوة ٥) · «ربط المكاتبة بمقر» (٧) · «إغلاق التكليف» (٩) · الاعتماد المنفصل عن الإرسال (٣) · التحويل الداخلي.
+📌 **القاعدة: كل خطوة في الـexplainer لها فعل في الكتالوج.** الـexplainer وعدٌ للعميل، ونقصُ فعلٍ يعني خطوةً لا تظهر في السجل.
+
+### ما يُشتَق بلا أعمدة إضافية
+- **«عند مين الآن»** = `to_user_id` لآخر فعل حيازة (`sent`/`forwarded`/`assigned`).
+- **«قعدت عند كلٍّ كم»** = الفرق بين طابعَي وقت متتاليين. وهذا ما يجيب عن **«مَن عطّلها»** — وهو السؤال التشغيلي الذي لا تجيبه قائمةُ أحداث بلا مدد.
+- ⚠️ الاشتقاق يصحّ فقط إن كان السجل **كاملاً**: أي انتقال لا يُسجَّل يظهر كفراغ زمني يُحمَّل على الشخص الخطأ.
 
 ## القوائم المرجعية
 ```
