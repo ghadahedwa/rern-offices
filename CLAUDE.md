@@ -557,16 +557,65 @@ php artisan db:seed --class=FeedbackDemoSeeder
 
 ---
 
+---
+
+## موديول المراسلات 🔨 **قيد البناء — المرحلة أ منجزة**
+
+**المرجع الواحد للبناء: [`documentation/correspondence-system.md`](documentation/correspondence-system.md)** — كل قرار وكل قاعدة وأثر كسرها مكتوب فيه. لا تبنِ من `plan-correspondence.md` (سجل اشتقاق).
+
+### المُنجَز في الكود
+```
+app/Livewire/Correspondence/
+  Entities/{Index,Create}.php        ← أطراف المراسلات (CRUD بنمط OfficeTypes)
+  {Inbox,Outbox,Drafts,Assignments,Delegations}.php   ← سقالة بحراسة حقيقية
+  Concerns/IsPlaceholderScreen.php   ← trait السقالة
+  MenuCounters.php                   ← عدّادات المنيو (wire:poll.300s)
+app/Support/
+  CorrespondenceCounters.php         ← singleton memoized — المصدر الواحد للأرقام
+  PermissionGroups.php               ← تجميع الصلاحيات: تقرأه شبكة الأدوار وفورم المستخدم
+app/Models/CorrespondenceEntity.php
+database/seeders/CorrespondenceRolesSeeder.php        ← ٣ أدوار
+database/seeders/CorrespondenceDemoUsersSeeder.php    ← ٥ حسابات · يرفض production
+```
+- **الفرع** `correspondence` في `config/branches.php` · دخوله `correspondence.inbox`.
+- **أطراف المراسلات تسكن فرع «إدارة النظام»** (`correspondence.settings`) كباقي القوائم المرجعية.
+- **عمودان على `users`**: `correspondence_entity_id` (النطاق) + `job_title` (يُطبع في ختم الاعتماد).
+- حسابات فحص محلية: `samir` `khaled` `mohamed` `yasser` `heba` — السر `1234`.
+
+### ⚠️ قواعد لا تُكسر
+- **المسمّى الوظيفي ليس الدور** — خالد وياسر نفس الدور بمسمّيين مختلفين.
+- **مفتاح الأقسام المشروطة عنوان التصاريح لا بادئة الصلاحية** — البادئة تخطئ في اتجاهين: تفوّت دور `Vehicles` (يحتاج المحافظات بلا `offices.`) وتصطاد `offices.settings` خطأً (تحت إدارة النظام بلا نطاق).
+- **super-admin: التجاوز يعطي صلاحية ولا يعطي طرفاً** — يرى كل الجهات ولا يُنشئ ولا يعتمد، فالرقم يُسحب من دفتر طرف و`from_entity_id = NULL` يفسد مفتاح الترقيم.
+- **الرمز تابع صاحب الدفتر لا المكاتبة** — المكاتبة الواحدة برمزين (صادر الراسل · وارد المستلم).
+- **لا بريد إلكتروني إطلاقاً** — التنبيه داخل النظام: عدّاد ثم جرس (بعد المرحلة د).
+- **⚠️ أي `route()` في الـlayout يُحاط بحارس `Route::has`** — الظرف أوقع النظام بـ500 على **كل الصفحات** بـcache راوتات قديم.
+- **الأدوار تُنشأ من الشاشة لا من الهجرات** — الكود لا يفحص اسم دور إلا `super-admin`.
+
+### المتبقّي
+1. **أ-٢ أنواع المكاتبات** — آخر قائمة مرجعية، نفس نمط الأطراف، بلا صلاحية جديدة. **التالي.**
+2. **جدول `correspondences`** ⛔ **موقوف على س٦**: التسلسل واحد للجهة أم لكل نوع دفتره؟ (يحدّد الـ`UNIQUE`)، ومعه: هل الرقم عدد صحيح دائماً أم فيه «١٤١ مكرر»؟ — **صورة صفحة من دفتر الصادر تحسم الاثنين**.
+3. مؤجَّل: المشاركة (قرار العميل) · الجرس · قفل رمز الطرف · دين الأدوار القديم (`Boss` فاضي · صلاحيات ميتة مسنَدة · أسماء إنجليزية).
+
+### الاختبارات
+`php artisan test tests/Feature/Correspondence` — **٤٩ اختباراً** (`EntitiesTest` · `UserScopeFieldsTest` · `RolesSeederTest` · `BranchScaffoldTest`) + `tests/Feature/BranchContextTest.php`.
+📌 كلها كُسِرت عمداً وتأكّد سقوطها قبل الاعتماد — انظر قاعدة الكسر في `.claude` memory.
+
+---
+
 ## أوامر السيرفر المعلقة
 بعد كل `git push` يجب تذكير المستخدم بتشغيل على السيرفر:
 ```bash
-git pull
-composer install --no-dev
+cd /var/www/rern-offices && git pull
 php artisan migrate --force
 php artisan config:cache
 php artisan route:cache
 php artisan view:cache
 ```
+⚠️ **الأربعة دائماً — لا تُختصر بحسب نوع الدفعة.** 2026-08-19: أُبلغت المستخدمة أن دفعة ملف لغة تحتاج `view:cache` وحده (صحيح لها)، فصار ذلك ما نُفِّذ في الدفعة التالية — التي أضافت راوتات وفرعاً في config. النتيجة: **٥٠٠ على كل الصفحات**.
+📌 **تكلفة أمر cache زائد صفر، وتكلفة أمر ناقص النظام واقف.**
+📌 **للتشخيص:** `grep -a ERROR storage/logs/laravel.log | tail -3 | cut -c1-500` — الرسالة في أول السطر، و`tail` وحده يعطي الـstack trace بلا الرسالة.
+📌 **وللتحقق:** قارن `ls -l bootstrap/cache/` بـ`git log -1 --format=%cd` — cache أقدم من آخر commit يعني نشراً ناقصاً.
+`composer install --no-dev` عند إضافة حزم فقط · `npm run build` يُنفَّذ **محلياً** و`public/build` متتبَّع في الريبو.
 
 ---
 
