@@ -4,6 +4,7 @@ use App\Models\CorrespondenceEntity;
 use App\Models\User;
 use Database\Seeders\CorrespondenceRolesSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Hash;
 use Spatie\Permission\Models\Role;
 
 uses(RefreshDatabase::class);
@@ -85,6 +86,31 @@ it('خالد وياسر بنفس الدور وطرفين مختلفين ومسم
     expect($khaled->roles->first()->name)->toBe($yasser->roles->first()->name)
         ->and($khaled->correspondence_entity_id)->not->toBe($yasser->correspondence_entity_id)
         ->and($khaled->job_title)->not->toBe($yasser->job_title);
+});
+
+it('يعطي الحسابات الجديدة كلمة السر الموحّدة محلياً', function () {
+    foreach (['samir', 'mohamed', 'yasser', 'heba'] as $username) {
+        expect(Hash::check('1234', User::where('username', $username)->first()->password))
+            ->toBeTrue("كلمة سر «{$username}» ليست الموحّدة");
+    }
+});
+
+it('يرفض كلمة السر الافتراضية على الإنتاج', function () {
+    // حساب بكلمة سر معروفة على الإنتاج أسوأ من فشل السكربت.
+    // يُختبَر الحارس مباشرة: db:seed على الإنتاج يطلب تأكيداً فيتوقف قبل بلوغه.
+    app()['env'] = 'production';
+
+    expect(fn () => CorrespondenceRolesSeeder::resolvePassword())
+        ->toThrow(RuntimeException::class, 'CORR_SEED_PASSWORD');
+});
+
+it('يقبل كلمة سر مضبوطة على الإنتاج', function () {
+    app()['env'] = 'production';
+    putenv('CORR_SEED_PASSWORD=a-real-one');
+
+    expect(CorrespondenceRolesSeeder::resolvePassword())->toBe('a-real-one');
+
+    putenv('CORR_SEED_PASSWORD');
 });
 
 it('لا يغيّر كلمة سر حساب قائم عند إعادة التشغيل', function () {

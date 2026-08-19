@@ -45,6 +45,28 @@ class PermissionGroups
         ],
     ];
 
+    /**
+     * ترتيب العرض داخل المجموعة — `Permission::all()` يعطي ترتيب الإدخال (id)،
+     * وهو ترتيب زرعٍ لا ترتيب قراءة. المذكور هنا يظهر بهذا الترتيب،
+     * وغير المذكور يليه بترتيبه الأصلي.
+     *
+     * ترتيب المراسلات مقصود: القدرات المشتركة أولاً، ثم ما يخصّ رئيس الجهة،
+     * فيقرأ المدير الفرق بين الأدوار الثلاثة من أعلى الجدول إلى أسفله.
+     */
+    public const DISPLAY_ORDER = [
+        'correspondence.index',
+        'correspondence.view',
+        'correspondence.create',
+        'correspondence.attachments',
+        'correspondence.export',
+        'correspondence.assign',
+        'correspondence.approve',
+        'correspondence.stamp',
+        'correspondence.delegate',
+        'correspondence.delete',
+        'correspondence.share',
+    ];
+
     /** العنوان الذي يستلزم اختيار محافظات (نطاقه محافظة). */
     public const GOVERNORATE_BRANCH = 'home.branch_offices';
 
@@ -61,12 +83,22 @@ class PermissionGroups
     {
         return collect(self::GROUPS)
             ->map(fn (array $subGroups) => collect($subGroups)
-                ->map(fn (array $matcher) => $permissions->filter(
-                    fn ($permission) => self::matches($permission->name, $matcher)
-                ))
+                ->map(fn (array $matcher) => $permissions
+                    ->filter(fn ($permission) => self::matches($permission->name, $matcher))
+                    ->sortBy(fn ($permission) => self::displayRank($permission->name))
+                    ->values()
+                )
                 ->all()
             )
             ->all();
+    }
+
+    /** موضع الصلاحية في ترتيب العرض — غير المذكورة تُدفَع إلى الآخر بترتيبها الأصلي. */
+    protected static function displayRank(string $permissionName): int
+    {
+        $rank = array_search($permissionName, self::DISPLAY_ORDER, true);
+
+        return $rank === false ? PHP_INT_MAX : $rank;
     }
 
     /** هل ضمن هذه الصلاحيات ما يقع تحت العنوان المعطى؟ */

@@ -80,6 +80,46 @@ it('يعرض عنوان المراسلات بالعربية في شبكة صلا
         ->assertDontSee('home.branch_correspondence');
 });
 
+// ── ترتيب العرض في شبكة الصلاحيات ────────────────────────
+
+it('يعرض صلاحيات المراسلات بترتيب القراءة لا بترتيب الزرع', function () {
+    // Permission::all() يعطي ترتيب id — أي ترتيب الهجرة، وهو ليس ترتيباً يُقرأ.
+    // المشترك أولاً ثم ما يخصّ رئيس الجهة، فيُقرأ الفرق بين الأدوار من أعلى لأسفل.
+    foreach (PermissionGroups::DISPLAY_ORDER as $name) {
+        Permission::findOrCreate($name, 'web');
+    }
+
+    $rendered = PermissionGroups::group(Permission::all())['home.branch_correspondence']['المراسلات']
+        ->pluck('name')->all();
+
+    expect($rendered)->toBe([
+        'correspondence.index',
+        'correspondence.view',
+        'correspondence.create',
+        'correspondence.attachments',
+        'correspondence.export',
+        'correspondence.assign',
+        'correspondence.approve',
+        'correspondence.stamp',
+        'correspondence.delegate',
+        'correspondence.delete',
+        'correspondence.share',
+    ]);
+});
+
+it('يدفع صلاحية غير مذكورة في الترتيب إلى الآخر لا يحذفها', function () {
+    foreach (PermissionGroups::DISPLAY_ORDER as $name) {
+        Permission::findOrCreate($name, 'web');
+    }
+    Permission::findOrCreate('correspondence.future_thing', 'web');
+
+    $rendered = PermissionGroups::group(Permission::all())['home.branch_correspondence']['المراسلات']
+        ->pluck('name')->all();
+
+    expect($rendered)->toHaveCount(12)
+        ->and(end($rendered))->toBe('correspondence.future_thing');
+});
+
 // ── مفتاح الأقسام: العنوان لا بادئة الصلاحية ─────────────
 
 it('يُظهر المحافظات لدور السيارات — البادئة وحدها كانت ستفوّته', function () {

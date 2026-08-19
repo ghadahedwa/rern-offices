@@ -78,6 +78,32 @@ class CorrespondenceRolesSeeder extends Seeder
         }
     }
 
+    /**
+     * كلمة سر الحسابات الجديدة.
+     *
+     * محلياً: `1234` موحّدة — حسابات تجريبية يُشتغَل بها بسرعة.
+     * ⚠️ على الإنتاج: تُرفَض الافتراضية ويجب ضبط `CORR_SEED_PASSWORD`.
+     *    وإن كان الـconfig مخزَّناً فلن يُقرأ `.env`، فترتفع نفس الاستثناء —
+     *    وهذا هو الاتجاه الآمن: التوقّف لا إنشاء حساب بكلمة سر معروفة.
+     */
+    public static function resolvePassword(): string
+    {
+        $configured = env('CORR_SEED_PASSWORD');
+
+        if (filled($configured)) {
+            return $configured;
+        }
+
+        if (app()->environment('production')) {
+            throw new \RuntimeException(
+                'على الإنتاج لا تُنشأ حسابات بكلمة سر افتراضية. اضبط CORR_SEED_PASSWORD ثم أعد التشغيل: '
+                .'CORR_SEED_PASSWORD=... php artisan db:seed --class=CorrespondenceRolesSeeder --force'
+            );
+        }
+
+        return '1234';
+    }
+
     private function seedUsers(): void
     {
         $rows = [];
@@ -93,7 +119,7 @@ class CorrespondenceRolesSeeder extends Seeder
             $adopted  = (bool) $user;
 
             if (! $user) {
-                $password = Str::random(10);
+                $password = self::resolvePassword();
                 $user     = User::create([
                     'name'     => $spec['name'],
                     'username' => $spec['username'],
