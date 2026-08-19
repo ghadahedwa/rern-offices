@@ -96,6 +96,16 @@ it('يخفي الظرف عن مستخدم فرع آخر', function () {
     expect(app(CorrespondenceCounters::class)->envelopeVisible())->toBeFalse();
 });
 
+it('يخفي الظرف إن لم يكن الراوت مسجَّلاً — الظرف في الـlayout فيُسقط كل شاشة', function () {
+    // وقع فعلاً على الإنتاج: نُشر الكود وlم يُعَد بناء route:cache، فوقع النظام كله.
+    // بهذا الحارس أسوأ الأثر أيقونة غائبة لا نظام واقف.
+    $this->actingAs(corrUser(['correspondence.index']));
+
+    app('router')->setRoutes(new \Illuminate\Routing\RouteCollection);
+
+    expect(app(CorrespondenceCounters::class)->envelopeVisible())->toBeFalse();
+});
+
 it('يخفي الظرف عن مدير القوائم المرجعية وحده', function () {
     // correspondence.settings يدير الأطراف ولا صندوق وارد له
     $this->actingAs(corrUser(['correspondence.settings']));

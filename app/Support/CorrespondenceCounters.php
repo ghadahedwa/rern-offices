@@ -3,6 +3,7 @@
 namespace App\Support;
 
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Route;
 
 /**
  * عدّادات المراسلات — المصدر الواحد للأرقام المعروضة.
@@ -57,8 +58,19 @@ class CorrespondenceCounters
     /** هل يُعرَض الظرف لهذا المستخدم؟ */
     public function envelopeVisible(): bool
     {
-        // ⚠️ `correspondence.index` وحدها — لا `correspondence.settings`:
-        //    مدير القوائم المرجعية لا صندوق وارد له.
+        // ⚠️ فحص الراوت قبل الصلاحية — الظرف في **الـlayout**، فراوتٌ غائب فيه
+        //    يُسقط كل شاشة في النظام لا شاشة المراسلات. وقد وقع فعلاً (2026-08-19):
+        //    نُشر الكود و`route:cache` لم يُعَد بناؤه، فصار الظرف يطلب راوتاً غير مخزَّن
+        //    فوقع النظام على كل من يملك الصلاحية. وهو الموضع الوحيد الذي يعتمد على
+        //    الراوت دون الـconfig، فلم يحمِه غياب الفرع من الإعدادات المخزَّنة.
+        //    بهذا الحارس يصير أسوأ أثرٍ للنشر الناقص **أيقونةً غائبة** لا نظاماً واقفاً.
+        if (! Route::has('correspondence.inbox')) {
+            return false;
+        }
+
+
+        // `correspondence.index` وحدها — لا `correspondence.settings`:
+        // مدير القوائم المرجعية لا صندوق وارد له.
         return (bool) Auth::user()?->can('correspondence.index');
     }
 
