@@ -1,0 +1,704 @@
+<title>شرح موديول الشكاوى</title>
+<style>
+  :root {
+    --bg: #f7f4ec; --surface: #ffffff; --surface-2: #fbf8f1; --border: #e7e0d0;
+    --ink: #2b2620; --ink-soft: #6b6355;
+    --gold: #b8962e; --gold-bright: #c9a847; --gold-wash: #f6eecf;
+    --green: #2f8f5b; --green-wash: #e7f3ec;
+    --red: #c0492f; --red-wash: #f7e8e3;
+    --amber: #b3701a; --amber-wash: #fbeed8;
+    --blue: #2f6f9f; --blue-wash: #e6eff6;
+    --shadow: 0 1px 2px rgba(43,38,32,.06), 0 8px 24px rgba(43,38,32,.05);
+    --radius: 14px;
+    --font: "Segoe UI", Tahoma, "Noto Kufi Arabic", "Dubai", system-ui, sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #1a1713; --surface: #241f19; --surface-2: #2c261f; --border: #3a332a;
+      --ink: #f3ece0; --ink-soft: #b3a894; --gold: #d9b74e; --gold-bright: #e0c96a;
+      --gold-wash: #33291454; --green: #5cc98a; --green-wash: #17301f;
+      --red: #e08466; --red-wash: #3a201a; --amber: #e0a45c; --amber-wash: #33260f;
+      --blue: #7fb4dc; --blue-wash: #17262f;
+      --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.35);
+    }
+  }
+  :root[data-theme="light"] {
+    --bg: #f7f4ec; --surface: #ffffff; --surface-2: #fbf8f1; --border: #e7e0d0;
+    --ink: #2b2620; --ink-soft: #6b6355; --gold: #b8962e; --gold-bright: #c9a847;
+    --gold-wash: #f6eecf; --green: #2f8f5b; --green-wash: #e7f3ec; --red: #c0492f;
+    --red-wash: #f7e8e3; --amber: #b3701a; --amber-wash: #fbeed8;
+    --blue: #2f6f9f; --blue-wash: #e6eff6;
+    --shadow: 0 1px 2px rgba(43,38,32,.06), 0 8px 24px rgba(43,38,32,.05);
+  }
+  :root[data-theme="dark"] {
+    --bg: #1a1713; --surface: #241f19; --surface-2: #2c261f; --border: #3a332a;
+    --ink: #f3ece0; --ink-soft: #b3a894; --gold: #d9b74e; --gold-bright: #e0c96a;
+    --gold-wash: #33291454; --green: #5cc98a; --green-wash: #17301f; --red: #e08466;
+    --red-wash: #3a201a; --amber: #e0a45c; --amber-wash: #33260f;
+    --blue: #7fb4dc; --blue-wash: #17262f;
+    --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.35);
+  }
+
+  * { box-sizing: border-box; }
+  html { direction: rtl; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font-family: var(--font); line-height: 1.75; -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 940px; margin: 0 auto; padding: clamp(20px, 4vw, 48px) clamp(16px, 4vw, 32px) 64px; }
+
+  .eyebrow {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-size: 13px; font-weight: 600; letter-spacing: .04em;
+    color: var(--gold); background: var(--gold-wash);
+    padding: 5px 12px; border-radius: 999px; margin-bottom: 18px;
+  }
+  .eyebrow::before { content: "🚩"; font-size: 14px; }
+  h1 { font-size: clamp(28px, 5vw, 42px); line-height: 1.3; margin: 0 0 12px; font-weight: 800; letter-spacing: -.01em; text-wrap: balance; }
+  h1 .accent { color: var(--gold); }
+  .lede { font-size: clamp(16px, 2.4vw, 19px); color: var(--ink-soft); max-width: 64ch; margin: 0; }
+
+  .section-label { display: flex; align-items: center; gap: 12px; margin: 48px 0 20px; }
+  .section-label .bar { width: 5px; height: 22px; background: var(--gold-bright); border-radius: 99px; }
+  .section-label h2 { font-size: clamp(19px, 3vw, 23px); margin: 0; font-weight: 750; }
+
+  .pains { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 14px; }
+  .pain {
+    background: var(--surface); border: 1px solid var(--border);
+    border-inline-start: 4px solid var(--red);
+    border-radius: var(--radius); padding: 16px 18px; box-shadow: var(--shadow);
+  }
+  .pain h3 { margin: 0 0 5px; font-size: 15px; font-weight: 700; }
+  .pain p { margin: 0; font-size: 13.5px; color: var(--ink-soft); line-height: 1.6; }
+
+  /* خط سير الشكوى */
+  .pipeline { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; position: relative; }
+  .station {
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 14px 12px; text-align: center; box-shadow: var(--shadow);
+    transition: background .3s, border-color .3s; position: relative;
+  }
+  .station .ic { font-size: 24px; }
+  .station h4 { margin: 6px 0 2px; font-size: 14px; font-weight: 750; }
+  .station p { margin: 0; font-size: 12px; color: var(--ink-soft); line-height: 1.5; }
+  .station.done { border-color: var(--green); background: var(--green-wash); }
+  .station.on { border-color: var(--gold-bright); background: var(--gold-wash); box-shadow: 0 0 0 3px var(--gold-wash), var(--shadow); }
+  .station .tick { position: absolute; inset-inline-end: 8px; inset-block-start: 8px; font-size: 13px; color: var(--green); }
+
+  /* عدّاد المهلة */
+  .meter { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 18px; box-shadow: var(--shadow); }
+  .meter .top { display: flex; flex-wrap: wrap; align-items: baseline; gap: 10px; margin-bottom: 9px; }
+  .meter .lbl { font-size: 13px; font-weight: 700; }
+  .meter .days { font-size: 20px; font-weight: 800; font-variant-numeric: tabular-nums; }
+  .meter .state { font-size: 12px; font-weight: 700; padding: 3px 10px; border-radius: 999px; margin-inline-start: auto; }
+  .meter .track { height: 10px; border-radius: 99px; background: var(--surface-2); border: 1px solid var(--border); overflow: hidden; }
+  .meter .fill { height: 100%; transition: width .4s ease, background .4s; }
+  .meter.ok .days, .meter.ok .lbl { color: var(--green); }
+  .meter.ok .state { background: var(--green-wash); color: var(--green); }
+  .meter.ok .fill { background: var(--green); }
+  .meter.near .days, .meter.near .lbl { color: var(--amber); }
+  .meter.near .state { background: var(--amber-wash); color: var(--amber); }
+  .meter.near .fill { background: var(--amber); }
+  .meter.late .days, .meter.late .lbl { color: var(--red); }
+  .meter.late .state { background: var(--red-wash); color: var(--red); }
+  .meter.late .fill { background: var(--red); }
+  .meter .note { margin: 8px 0 0; font-size: 12.5px; color: var(--ink-soft); }
+
+  .sim { background: var(--surface); border: 1px solid var(--border); border-radius: 18px; box-shadow: var(--shadow); overflow: hidden; }
+  .simhead { padding: 18px clamp(16px, 3vw, 26px); display: grid; gap: 14px; }
+
+  .doc {
+    background: var(--surface-2); border: 1px solid var(--border);
+    border-inline-start: 4px solid var(--gold-bright);
+    border-radius: 11px; padding: 13px 15px; animation: pop .3s ease;
+  }
+  @keyframes pop { from { opacity: 0; transform: scale(.97); } to { opacity: 1; transform: none; } }
+  .doc .serial { font-size: 12px; font-weight: 800; color: var(--gold); font-variant-numeric: tabular-nums; }
+  .doc .subj { font-size: 15px; font-weight: 750; margin: 3px 0 8px; line-height: 1.45; }
+  .doc .meta { display: flex; flex-wrap: wrap; gap: 5px; }
+
+  .chip { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 700; padding: 3px 9px; border-radius: 999px; white-space: nowrap; }
+  .chip.reg { background: var(--gold-wash); color: var(--gold); }
+  .chip.rev { background: var(--blue-wash); color: var(--blue); }
+  .chip.ret { background: var(--red-wash); color: var(--red); }
+  .chip.ok  { background: var(--green-wash); color: var(--green); }
+  .chip.ext { background: var(--surface); color: var(--ink-soft); border: 1px solid var(--border); }
+  .chip.res { background: var(--amber-wash); color: var(--amber); }
+
+  .stage { padding: 20px clamp(16px, 3vw, 26px); border-top: 1px solid var(--border); display: flex; flex-direction: column; gap: 16px; }
+  .op-card {
+    background: var(--surface-2); border: 1px solid var(--border);
+    border-inline-start: 4px solid var(--gold-bright);
+    border-radius: 12px; padding: 15px 17px; display: flex; gap: 14px; align-items: flex-start; min-height: 96px;
+  }
+  .op-card .badge { flex: none; width: 42px; height: 42px; border-radius: 10px; display: grid; place-items: center; font-size: 20px; background: var(--gold-wash); }
+  .op-card .txt { flex: 1; }
+  .op-card .txt .step-no { font-size: 12px; font-weight: 700; color: var(--gold); letter-spacing: .03em; }
+  .op-card .txt h4 { margin: 2px 0 4px; font-size: 16px; font-weight: 750; }
+  .op-card .txt p { margin: 0; font-size: 14px; color: var(--ink-soft); line-height: 1.6; }
+  .op-card .txt .paper {
+    display: inline-flex; align-items: center; gap: 5px; margin-top: 8px; font-size: 12px; color: var(--ink-soft);
+    background: var(--surface); border: 1px dashed var(--border); border-radius: 7px; padding: 3px 9px;
+  }
+
+  .controls { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+  button {
+    font-family: inherit; font-size: 15px; font-weight: 700; cursor: pointer;
+    border-radius: 10px; padding: 11px 22px; border: 1px solid transparent;
+    transition: transform .08s, background .2s, opacity .2s;
+  }
+  button:active { transform: translateY(1px); }
+  button:focus-visible { outline: 3px solid var(--gold-bright); outline-offset: 2px; }
+  .btn-primary { background: var(--gold-bright); color: #241f00; }
+  .btn-primary:hover { background: var(--gold); }
+  .btn-primary:disabled { opacity: .45; cursor: not-allowed; }
+  .btn-ghost { background: transparent; color: var(--ink-soft); border-color: var(--border); }
+  .btn-ghost:hover { color: var(--ink); border-color: var(--ink-soft); }
+  .progress { margin-inline-start: auto; font-size: 13px; color: var(--ink-soft); font-variant-numeric: tabular-nums; }
+
+  .ledger-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 13.5px; min-width: 520px; }
+  thead th { text-align: start; font-weight: 700; color: var(--ink-soft); padding: 10px 14px; border-bottom: 1px solid var(--border); font-size: 12.5px; white-space: nowrap; }
+  tbody td { padding: 11px 14px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr { animation: rowIn .35s ease; }
+  @keyframes rowIn { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
+  .when { font-variant-numeric: tabular-nums; color: var(--ink-soft); white-space: nowrap; font-size: 12.5px; }
+  .who { color: var(--ink-soft); font-size: 13px; }
+  .empty-row td { text-align: center; color: var(--ink-soft); padding: 26px; font-size: 13.5px; }
+
+  .split { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .box { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px 20px; box-shadow: var(--shadow); }
+  .box.ok { border-inline-start: 4px solid var(--green); }
+  .box.no { border-inline-start: 4px solid var(--red); }
+  .box.info { border-inline-start: 4px solid var(--blue); }
+  .box.warn { border-inline-start: 4px solid var(--amber); }
+  .box h3 { margin: 0 0 8px; font-size: 15.5px; font-weight: 750; }
+  .box p { margin: 0 0 6px; font-size: 14px; color: var(--ink-soft); line-height: 1.65; }
+  .box p:last-of-type { margin-bottom: 0; }
+  .box .verdict { display: block; margin-top: 10px; font-size: 13.5px; font-weight: 700; }
+  .box.ok .verdict { color: var(--green); }
+  .box.no .verdict { color: var(--red); }
+  .box.info .verdict { color: var(--blue); }
+  .box.warn .verdict { color: var(--amber); }
+
+  .cases { display: grid; grid-template-columns: repeat(auto-fit, minmax(262px, 1fr)); gap: 14px; }
+  .case {
+    background: var(--surface); border: 1px solid var(--border);
+    border-inline-start: 4px solid var(--gold-bright);
+    border-radius: var(--radius); padding: 18px 20px; box-shadow: var(--shadow);
+  }
+  .case .ic { font-size: 24px; }
+  .case h3 { margin: 8px 0 6px; font-size: 15.5px; font-weight: 750; }
+  .case p { margin: 0 0 8px; font-size: 13.5px; color: var(--ink-soft); line-height: 1.65; }
+  .case .without { display: block; font-size: 13px; color: var(--red); background: var(--red-wash); border-radius: 8px; padding: 8px 11px; line-height: 1.55; }
+
+  .phases { display: grid; gap: 10px; }
+  .phase {
+    display: grid; grid-template-columns: auto 1fr; gap: 15px; align-items: start;
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 15px 18px; box-shadow: var(--shadow);
+  }
+  .phase.ask { border-inline-start: 4px solid var(--gold-bright); }
+  .phase .no { flex: none; width: 30px; height: 30px; border-radius: 9px; display: grid; place-items: center; background: var(--gold-wash); color: var(--gold); font-weight: 800; font-size: 14px; }
+  .phase h3 { margin: 3px 0 3px; font-size: 15px; font-weight: 750; }
+  .phase p { margin: 0; font-size: 13.5px; color: var(--ink-soft); line-height: 1.6; }
+  .phase .why { display: block; margin-top: 7px; font-size: 12.5px; color: var(--ink-soft); background: var(--surface-2); border: 1px dashed var(--border); border-radius: 8px; padding: 7px 10px; line-height: 1.55; }
+
+  .wont { width: 100%; }
+  .wont td { font-size: 13.5px; }
+  .wont td:first-child { color: var(--ink-soft); }
+  .wont td:last-child { font-weight: 600; }
+
+  .footnote {
+    margin-top: 40px; padding: 20px 22px; background: var(--surface-2);
+    border: 1px solid var(--border); border-radius: var(--radius);
+    font-size: 14px; color: var(--ink-soft); line-height: 1.7;
+  }
+  .footnote strong { color: var(--ink); }
+  .footnote + .footnote { margin-top: 14px; }
+  .footnote.alert { border-inline-start: 4px solid var(--red); }
+  .footnote.assume { border-inline-start: 4px solid var(--amber); }
+
+  @media (max-width: 700px) { .pipeline { grid-template-columns: 1fr 1fr; } }
+  @media (max-width: 620px) {
+    .split { grid-template-columns: 1fr; }
+    @keyframes rowIn { from {opacity:0;} to {opacity:1;} }
+  }
+  @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+</style>
+
+<div class="wrap">
+  <header>
+    <span class="eyebrow">موديول الشكاوى الإدارية — عرض توضيحي</span>
+    <h1>شكوى تصل، فتُفحَص وتُعتمَد و<span class="accent">يُرفَع الرد عليها في موعده</span></h1>
+    <p class="lede">
+      أعرض هنا تصوّري لموديول الشكاوى الداخلي: دورة عمل ثابتة تبدأ بتقييد الشكوى الواردة،
+      وتمرّ بفحص المفتش واعتماد المستشار، وتنتهي برفع الرد وإثباته — تحت
+      <strong>مهلة ملزمة تعدّ تنازلياً</strong> وسجل تداول يوثّق كل خطوة.
+    </p>
+  </header>
+
+  <div class="footnote assume" style="margin-top:26px">
+    <strong>من أين تصل الشكوى إلينا:</strong>
+    <br><br>
+    المواطن يقدّم شكواه على <strong>بوابة الشكاوى</strong>، فتصل إلى <strong>برنامج «قطاع الفساد»</strong> داخل الوزارة،
+    ومنه تُوجَّه شكاوى قطاع الشهر العقاري والتوثيق إلى <strong>المكتب الفني</strong> — وهنا يبدأ عمل النظام.
+    <br><br>
+    ⭐ <strong>نقطة تعاملنا هي البرنامج</strong> لا المواطن ولا البوابة: نستلم منه الشكوى، ونعيد إليه الرد.
+    <strong>ودفتر الشكاوى واحد بالمكتب الفني</strong> يعود إلى واحد مع كل سنة.
+  </div>
+
+  <div class="section-label"><span class="bar"></span><h2>المشكلة التي يعالجها الموديول</h2></div>
+  <div class="pains">
+    <div class="pain">
+      <h3>المهلة تمرّ دون أن يشعر أحد</h3>
+      <p>الشكوى لها موعد ردّ ملزم، ولا شيء على الورق يقول إن الموعد يقترب ولا عند مَن توقّفت.</p>
+    </div>
+    <div class="pain">
+      <h3>لا يُعرف أين وصلت</h3>
+      <p>«عند المفتش» أم «عند المستشار» أم «رُفعت»؟ الإجابة اليوم بالسؤال شفهياً لا بالرجوع إلى سجل.</p>
+    </div>
+    <div class="pain">
+      <h3>لا شيء يُقاس</h3>
+      <p>كم شكوى وردت؟ وكم كانت صحيحة؟ وما متوسط زمن الرد؟ وأي مقر تتكرّر شكاواه؟ — لا إجابة رقمية.</p>
+    </div>
+  </div>
+
+  <div class="section-label"><span class="bar"></span><h2>لماذا موديول مستقل لا نوع من المكاتبات؟</h2></div>
+  <div class="split">
+    <div class="box info">
+      <h3>✉️ المراسلات</h3>
+      <p><strong>مسار حر:</strong> أي جهة تكاتب أي جهة.<br>
+         <strong>مهلة داخلية</strong> اختيارية.<br>
+         تنتهي بـ«مغلقة» داخل النظام.<br>
+         لا نتيجة تُقاس.</p>
+      <span class="verdict">تبادل مستندات</span>
+    </div>
+    <div class="box warn">
+      <h3>🚩 الشكاوى</h3>
+      <p><strong>مسار ثابت:</strong> لا يعتمد المستشار قبل فحص المفتش.<br>
+         <strong>مهلة خارجية ملزمة</strong> يُحاسَب على تجاوزها.<br>
+         تنتهي بـ<strong>«رُفع الرد»</strong> — بإثبات خارج النظام.<br>
+         لها <strong>نتيجة</strong>: صحيحة / جزئياً / غير صحيحة.</p>
+      <span class="verdict">دورة عمل مُلزِمة</span>
+    </div>
+  </div>
+  <div class="footnote">
+    <strong>ومع ذلك فالأساس التقني واحد.</strong>
+    المرفقات وسجل التداول والختم بالتوقيع وكود التحقق و«الإرجاع بسبب» و«التفويض عند الغياب» —
+    كلها تُبنى مرة واحدة في المراسلات، ويستعملها هذا الموديول كما هي دون إعادة بناء.
+    ولهذا أوصي ببناء المراسلات أولاً.
+  </div>
+
+  <div class="section-label"><span class="bar"></span><h2>تجربة عملية — رحلة شكوى من ورودها إلى رفع الرد</h2></div>
+  <div class="sim">
+    <div class="simhead">
+      <div class="pipeline">
+        <div class="station" id="st0"><div class="tick" hidden>✔</div><div class="ic">🗂️</div><h4>التقييد</h4><p>الموظف</p></div>
+        <div class="station" id="st1"><div class="tick" hidden>✔</div><div class="ic">🔍</div><h4>الفحص</h4><p>المفتش</p></div>
+        <div class="station" id="st2"><div class="tick" hidden>✔</div><div class="ic">✅</div><h4>الاعتماد</h4><p>المستشار</p></div>
+        <div class="station" id="st3"><div class="tick" hidden>✔</div><div class="ic">📤</div><h4>الرفع</h4><p>على المنظومة</p></div>
+      </div>
+
+      <div class="meter ok" id="meter">
+        <div class="top">
+          <span class="lbl">زمن الدورة حتى الآن</span>
+          <span class="days" id="days">لم تبدأ</span>
+          <span class="state" id="mstate">في الانتظار</span>
+        </div>
+        <div class="track"><div class="fill" id="fill" style="width:0%"></div></div>
+        <p class="note" id="mnote">يُحسب من يوم الاستلام إلى يوم الرفع — ويُعرف منه أين تطول الرحلة فعلياً.</p>
+      </div>
+
+      <div id="docSlot"><div class="doc" style="opacity:.55"><div class="serial">— لم تُقيَّد شكوى بعد —</div></div></div>
+    </div>
+
+    <div class="stage">
+      <div class="op-card">
+        <div class="badge" id="opIcon">▶️</div>
+        <div class="txt">
+          <div class="step-no" id="opStep">جاهز للبدء</div>
+          <h4 id="opTitle">اضغطوا «الخطوة التالية»</h4>
+          <p id="opDesc">نتابع معاً شكوى واردة من المنظومة، ونرى ما الذي يُسجَّل في كل مرحلة، وكيف تتناقص المهلة.</p>
+          <span class="paper" id="opPaper" hidden></span>
+        </div>
+      </div>
+      <div class="controls">
+        <button class="btn-primary" id="btnNext">الخطوة التالية</button>
+        <button class="btn-ghost" id="btnReset">إعادة من البداية</button>
+        <span class="progress" id="progress">٠ / ٩</span>
+      </div>
+    </div>
+
+    <div class="ledger-wrap">
+      <table>
+        <thead><tr><th style="width:20%">اليوم</th><th style="width:48%">الإجراء المسجَّل</th><th style="width:32%">المنفِّذ</th></tr></thead>
+        <tbody id="log"><tr class="empty-row"><td colspan="3">سجل التداول فارغ — وكل خطوة ستضيف سطراً هنا</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="footnote">
+    <strong>لاحظوا الخطوة الخامسة بوجه خاص.</strong>
+    المستشار أعاد الشكوى إلى المفتش بملاحظات مكتوبة، فرجع خط السير خطوةً إلى الوراء.
+    وهذا يحدث في العمل كثيراً، والورق لا يُسجّله: تُعاد الورقة شفهياً فلا يبقى أثر لسبب الإعادة ولا لوقتها.
+    وهنا يبقى الاثنان في السجل، <strong>والمهلة تستمرّ في العدّ خلال ذلك</strong>.
+  </div>
+
+  <div class="section-label"><span class="bar"></span><h2>ما الذي تكسبه الميكنة تحديداً؟</h2></div>
+  <div class="box">
+    <div class="ledger-wrap">
+      <table class="wont">
+        <thead><tr><th style="width:46%">اليوم — على الورق</th><th style="width:54%">بعد الميكنة</th></tr></thead>
+        <tbody>
+          <tr><td>الملف يُطبع في أول الرحلة ويتنقّل بين ثلاثة مكاتب</td><td>التداول داخل النظام، <strong>والطباعة مرة واحدة في آخره</strong> — أو لا طباعة إطلاقاً</td></tr>
+          <tr><td>لا يُعرف مكان الملف إلا بالسؤال عنه</td><td>حالته معلومة في كل لحظة، ومَن هي عنده الآن</td></tr>
+          <tr><td>رأي المفتش وتأشيرة المستشار ورقتان قد تُفقدان</td><td>محفوظتان في السجل ولا تُعدَّلان بعد رفعهما</td></tr>
+          <tr><td>سبب إعادة الشكوى للمفتش يُقال شفهياً فلا يبقى منه أثر</td><td>مكتوب ومؤرَّخ في سجل التداول</td></tr>
+          <tr><td>لا يُعرف كم شكوى وردت ولا كم حُفظت ولا كم استغرقت</td><td>أرقام تُقاس ويُبنى عليها</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <div class="split" style="margin-top:14px">
+    <div class="box ok">
+      <h3>⏱️ زمن الدورة — يُقاس بلا حاجة إلى مهلة</h3>
+      <p>من يوم الاستلام إلى يوم الرفع، وزمن كل مرحلة على حدة.
+         فيُعرَف <strong>أين تطول الرحلة فعلياً</strong>: عند المفتش أم عند المستشار أم في الرفع.</p>
+      <span class="verdict">معلومة لا يقولها الورق</span>
+    </div>
+    <div class="box warn">
+      <h3>⏳ وهل توجد مهلة ملزمة؟</h3>
+      <p>لا أعلم بعد — وهو أحد أسئلتي أدناه. فلم أبنِ عليها شيئاً:
+         الحقل موجود اختيارياً، وآلية التنبيه المتدرّج <strong>مؤجَّلة حتى تتأكد</strong>.</p>
+      <span class="verdict">لا أبني على ما لم يثبت</span>
+    </div>
+  </div>
+
+  <div class="section-label"><span class="bar"></span><h2>مواقف تحدث في العمل</h2></div>
+  <div class="cases">
+    <div class="case">
+      <div class="ic">🔁</div>
+      <h3>شكوى وصلت مرتين</h3>
+      <p>تُوجَّه الشكوى نفسها من البرنامج مرة أخرى، فيقيّدها موظف آخر دون أن يدري.
+         النظام <strong>يرفض الرقم المكرَّر</strong> ويعرض الشكوى الأصلية وحالتها.</p>
+      <span class="without">بدونه: يخرج ردّان مختلفان على شكوى واحدة، وهو أسوأ ما قد يصل إلى البرنامج.</span>
+    </div>
+    <div class="case">
+      <div class="ic">🏖️</div>
+      <h3>المستشار في أجازة</h3>
+      <p>يسجّل قبل سفره مَن ينوب عنه ومدة النيابة، فيرى النائب ما هو معروض للتأشير
+         موسوماً «<strong>بالنيابة عن</strong>»، ويُسجَّل الإجراء باسمه هو مع الإشارة إلى الأصيل.</p>
+      <span class="without">بدونه: تقف الشكاوى أسبوعاً كاملاً في انتظار غائب — وجهة القرار شخص واحد.</span>
+    </div>
+    <div class="case">
+      <div class="ic">🏛️</div>
+      <h3>مقر تتكرّر شكاواه</h3>
+      <p>كل شكوى تُربَط بالمقر الذي تخصّه، فتتراكم في صفحته.
+         ويظهر في اللوحة <strong>أكثر المقرات شكاوى</strong> ونسبة ما ثبتت صحّته منها.</p>
+      <span class="without">بدونه: تُعالَج كل شكوى منفردة، ولا يُرى النمط المتكرّر أبداً.</span>
+    </div>
+    <div class="case">
+      <div class="ic">🖨️</div>
+      <h3>الورقة تخرج وتعود</h3>
+      <p>يُطبع الرد بختم الاعتماد و<strong>كود QR</strong>، ويتنقّل ثم يعود ممسوحاً ضوئياً ويُرفَع.
+         والكود يربط الورقة بأصلها في النظام طوال الرحلة.</p>
+      <span class="without">بدونه: لا شيء يثبت أن الورقة التي رُفعت هي التي اعتُمدت.</span>
+    </div>
+  </div>
+
+  <div class="footnote">
+    <strong>لماذا كود التحقق هنا أهمّ منه في المراسلات؟</strong>
+    لأن ورقة الشكوى تخرج مطبوعة، وتتنقّل بين المفتش والمستشار، ثم تعود ممسوحة ضوئياً وتُرفَع.
+    وبصمة الملف الرقمية لا تصلح في هذه الدورة: الورقة نفسها إذا مُسحت مرتين أعطت بصمتين مختلفتين.
+    أما الكود المطبوع فيبقى واحداً مهما تكرّر المسح.
+    <br><br>
+    <strong>وأوضّح بأمانة:</strong> صورة التوقيع الملصوقة ليست توقيعاً إلكترونياً معتمداً — فهي تُنسَخ ولا تُثبت
+    عدم التعديل. وحمايتها الحقيقية اجتماع الختم مع سجل التداول مع كود التحقق.
+  </div>
+
+  <div class="section-label"><span class="bar"></span><h2>ما يقيسه الموديول</h2></div>
+  <div class="pains" style="grid-template-columns: repeat(auto-fit, minmax(165px,1fr))">
+    <div class="pain" style="border-inline-start-color: var(--gold-bright)"><h3>عدد الشكاوى</h3><p>بالتصنيف والمحافظة والفترة</p></div>
+    <div class="pain" style="border-inline-start-color: var(--gold-bright)"><h3>توزيع القرارات</h3><p>ونسبة ما انتهى بالحفظ</p></div>
+    <div class="pain" style="border-inline-start-color: var(--gold-bright)"><h3>زمن الدورة</h3><p>ومتوسط كل مرحلة على حدة</p></div>
+    <div class="pain" style="border-inline-start-color: var(--gold-bright)"><h3>ما زال مفتوحاً</h3><p>وعند مَن هو الآن</p></div>
+    <div class="pain" style="border-inline-start-color: var(--gold-bright)"><h3>أكثر المقرات شكاوى</h3><p>مرتّبة، مع توزيع قراراتها</p></div>
+  </div>
+  <div class="footnote">
+    <strong>وسؤال إداري لا يمكن طرحه اليوم أصلاً:</strong>
+    إن كانت أغلب الشكاوى تنتهي بالحفظ، فهل ذلك <em>لأنها بلا أساس</em> أم <em>لأن المتابعة تنقطع</em>؟
+    ولا سبيل إلى الإجابة إلا بسجل يقول: كم وردت، وبأي قرار انتهت، وفي كم يوماً.
+    <br><br>
+    <strong>وفائدة أخرى:</strong> عندنا بالفعل تقييمات المواطنين للمقرات من بوابة رأي المواطن.
+    والمقر الذي يجتمع فيه <strong>تقييم منخفض</strong> و<strong>شكاوى متكرّرة</strong> إشارة إدارية
+    أقوى بكثير من كل مؤشر بمفرده. وأقترح جمع الاثنين في صفحة المقر بعد التشغيل.
+  </div>
+
+  <div class="section-label"><span class="bar"></span><h2>ما لم أُدرجه — ولماذا</h2></div>
+  <div class="box">
+    <div class="ledger-wrap">
+      <table class="wont">
+        <thead><tr><th style="width:42%">لم أُدرجه</th><th style="width:58%">السبب أو البديل</th></tr></thead>
+        <tbody>
+          <tr><td>استقبال شكاوى المواطنين مباشرةً</td><td>قرار قائم: التوجيه إلى المنظومة الحكومية الموحدة، لا بناء منظومة موازية</td></tr>
+          <tr><td>الربط الآلي بالمنظومة عبر واجهة برمجية</td><td>يحتاج قراراً وجهة تقنية من الطرف الآخر — الرفع يدوي مع تسجيل إثباته</td></tr>
+          <tr><td>التحقيق الإداري مع موظف</td><td>مسار قانوني له جهته وأصوله — <strong>خارج هذا الموديول</strong> (وهو السؤال ٤ أدناه)</td></tr>
+          <tr><td>إشعار المشتكي مباشرةً</td><td>الرد يُرفَع على المنظومة وهي التي تُبلغه</td></tr>
+          <tr><td>نظام أدوار جديد</td><td>يستعمل نظام المستويات القائم: المفتش يفحص والمستشار يعتمد</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="section-label"><span class="bar"></span><h2>أسئلة أطرحها عليكم قبل البدء</h2></div>
+  <p class="lede" style="margin-bottom:16px">
+    اثنان منها يحدّدان شكل الموديول، والباقي قوائم تُدار. وأسأل فيها جميعاً عن
+    <strong>إجراءكم القائم اليوم</strong> لا عمّا ينبغي أن يفعله النظام.
+  </p>
+  <div class="phases">
+    <div class="phase ask"><div class="no">١</div><div>
+      <h3>هل يؤشّر المستشار داخل النظام، أم يظلّ يوقّع بخطه على ورقة مطبوعة؟</h3>
+      <p>إن قُبل أن يؤشّر في النظام ويختم النظام توقيعه، خرجت الطباعة من أول الرحلة وبقيت مرة واحدة في آخرها
+         — أو انتفت أصلاً. وإن لزم التوقيع بخط اليد، بقيت دورة الطباعة والمسح كما هي وصار النظام متتبِّعاً للورقة لا بديلاً عنها.</p>
+      <span class="why">⭐ <strong>يحدّد مدى الميكنة نفسها</strong> — وهو قرار إداري لا تقني؛ الحلّ جاهز في الحالتين</span>
+    </div></div>
+    <div class="phase ask"><div class="no">٢</div><div>
+      <h3>ما أنواع القرارات غير الحفظ؟</h3>
+      <p>ذكرتم أنكم ستوافونني بها. وقد جعلتُ القرارات <strong>قائمة تُدار من شاشة الإعدادات</strong> لهذا السبب:
+         كل نوع جديد يُضاف بصف واحد، بلا تعديل في البرنامج ولا إعادة نشر.</p>
+      <span class="why">البناء يمضي بالحفظ وحده، لكن الشاشة تظل ناقصة حتى تصل بقيّة الأنواع</span>
+    </div></div>
+    <div class="phase"><div class="no">٣</div><div>
+      <h3>هل يفرض البرنامج مهلة للرد؟</h3>
+      <p>إن وُجدت، أضفتُ التنبيه المتدرّج قبل الموعد بوقت يكفي للتصرّف. وإن لم توجد، بقي قياس زمن الدورة وحده.</p>
+      <span class="why">لا يُعطِّل — الحقل موجود اختيارياً والآلية مؤجَّلة</span>
+    </div></div>
+    <div class="phase"><div class="no">٤</div><div>
+      <h3>ما الاسم الرسمي الدقيق للبرنامج؟ وهل ترد شكاوى من جهة أخرى غيره؟</h3>
+      <p>حتى يُثبَّت في قائمة المصادر بالاسم الصحيح.</p>
+      <span class="why">لا يُعطِّل — قائمة تُزرَع وتُدار</span>
+    </div></div>
+    <div class="phase"><div class="no">٥</div><div>
+      <h3>هل تحتفظون ببيانات المشتكي؟ ولأي مدة؟</h3>
+      <p>الاسم والهاتف والرقم القومي — أحتفظ بها أم أكتفي برقم الشكوى وموضوعها؟</p>
+      <span class="why">لا يُعطِّل — يحدّد مدة الاحتفاظ والتنظيف التلقائي</span>
+    </div></div>
+    <div class="phase"><div class="no">٦</div><div>
+      <h3>يوجد لديكم تصنيف رسمي لموضوعات الشكاوى؟</h3>
+      <p>إن وُجد استعملته كما هو، وإلّا اقترحت تصنيفاً مبدئياً يُعدَّل لاحقاً.</p>
+      <span class="why">لا يُعطِّل — قائمة تُزرَع وتُدار</span>
+    </div></div>
+  </div>
+
+  <div class="section-label"><span class="bar"></span><h2>مراحل التنفيذ</h2></div>
+  <div class="phases">
+    <div class="phase"><div class="no">٠</div><div>
+      <h3>شرط مسبق: أساس المراسلات</h3>
+      <p>المرفقات وسجل التداول والختم وصفحة التحقق تُبنى في موديول المراسلات وتخدم الاثنين. وبناء الموديولين على التوازي يُنتج جدولين متشابهين ثم دمجاً مؤلماً.</p>
+    </div></div>
+    <div class="phase"><div class="no">١</div><div>
+      <h3>الأساس</h3>
+      <p>الفرع الجديد، ومصادر الشكاوى وتصنيفاتها، والصلاحيات، ونطاق الرؤية بالمحافظة.</p>
+    </div></div>
+    <div class="phase"><div class="no">٢</div><div>
+      <h3>التقييد والمسار</h3>
+      <p>تسجيل الشكوى الواردة وترقيمها، والقائمة وصفحة التفاصيل، والإحالة إلى المفتش، وشاشة «مطلوب مني».</p>
+    </div></div>
+    <div class="phase"><div class="no">٣</div><div>
+      <h3>الرأي والقرار والرفع</h3>
+      <p>رأي المفتش، والتأشير بالقرار من القائمة، والإعادة بملاحظات، وتسجيل الرفع وإثباته، وشاشة إدارة القرارات. وبعد هذه المرحلة يصير الموديول عاملاً فعلياً.</p>
+    </div></div>
+    <div class="phase"><div class="no">٤</div><div>
+      <h3>الطباعة والختم</h3>
+      <p>إخراج الملف جاهزاً للرفع، وختمه بتوقيع المستشار، وكود QR وصفحة التحقق.</p>
+    </div></div>
+    <div class="phase"><div class="no">٥</div><div>
+      <h3>القياس والتصدير</h3>
+      <p>لوحة المؤشرات وتوزيع القرارات وزمن الدورة، والتصدير على Excel وPDF مع إقفال بيانات المشتكي افتراضياً، وربط الشكاوى بصفحة المقر.</p>
+    </div></div>
+  </div>
+
+  <div class="footnote">
+    <strong>خلاصة ما أطلبه:</strong> إجابة السؤالين الأولين — هل يؤشّر المستشار داخل النظام،
+    وما أنواع القرارات غير الحفظ. وبهما يصير هذا التصوّر خطة قابلة للتنفيذ.
+  </div>
+</div>
+
+<script>
+(function () {
+  var REF = 13; // طول الدورة في هذا المثال — لرسم الشريط فقط
+
+  var STEPS = [
+    { icon:"🗂️", station:0, day:0, step:"الخطوة ١", title:"استلام الشكوى من البرنامج وتقييدها",
+      desc:"يستلم الموظف الشكوى الموجَّهة إلينا من برنامج قطاع الفساد، ويقيّدها: رقمها في البرنامج، وتاريخ الاستلام، وموضوعها ومضمونها، والمقر الذي تخصّه إن حُدِّد. وعند التقييد تأخذ رقمها في دفتر المكتب الفني.",
+      paper:"🔢 شكوى ٢٠٢٦/٤٧ · رقمها في البرنامج: SH-2026-88214",
+      doc:{ serial:"شكوى ٢٠٢٦/٤٧", subject:"تأخير في إنجاز إجراء توثيق — مكتب توثيق المنيا",
+            chips:[["reg","مقيَّدة"],["ext","برنامج قطاع الفساد"]] },
+      log:["اليوم ٠","استلام الشكوى وتقييدها","أ. سمير — موظف المكتب الفني"] },
+
+    { icon:"📨", station:1, day:1, step:"الخطوة ٢", title:"الإحالة إلى المفتش المختص",
+      desc:"تُحال إلى المفتش المختص، فتظهر عنده في «مطلوب مني». والإحالة تُسجَّل باسم مَن أحال ووقتها — وهو ما يقابل تسليم الملف الورقي اليوم.",
+      paper:"👤 أُحيلت إلى: م. هبة — مفتش",
+      doc:{ serial:"شكوى ٢٠٢٦/٤٧", subject:"تأخير في إنجاز إجراء توثيق — مكتب توثيق المنيا",
+            chips:[["rev","عند المفتش"],["ext","برنامج قطاع الفساد"]] },
+      log:["اليوم ١","إحالة الشكوى إلى مفتش","أ. سمير — موظف المكتب الفني"] },
+
+    { icon:"🔍", station:1, day:4, step:"الخطوة ٣", title:"المفتش تفحص مضمون الشكوى",
+      desc:"تطّلع على موضوع الشكوى وتتحقّق من سير الإجراء محلّها، وترفع ما يؤيّد ذلك من مستندات ضمن مرفقات الشكوى.",
+      paper:"📎 أُضيفت مستندات مؤيّدة",
+      doc:{ serial:"شكوى ٢٠٢٦/٤٧", subject:"تأخير في إنجاز إجراء توثيق — مكتب توثيق المنيا",
+            chips:[["rev","عند المفتش"],["ext","برنامج قطاع الفساد"]] },
+      log:["اليوم ٤","فحص مضمون الشكوى ورفع المستندات","م. هبة — مفتش"] },
+
+    { icon:"📝", station:2, day:6, step:"الخطوة ٤", title:"المفتش تُضمّ رأيها",
+      desc:"تكتب رأيها في مضمون الشكوى — وهو ما يقابل الورقة التي تُضمّ للملف اليوم — ثم ترفعها إلى المستشار. ويُحفَظ الرأي في السجل ولا يُعدَّل بعد رفعه.",
+      paper:"🖊️ ضُمّ رأي المفتش — ورقة مستقلة في الملف",
+      doc:{ serial:"شكوى ٢٠٢٦/٤٧", subject:"تأخير في إنجاز إجراء توثيق — مكتب توثيق المنيا",
+            chips:[["rev","عند المستشار"],["res","رأي المفتش مُضاف"]] },
+      log:["اليوم ٦","إبداء الرأي في مضمون الشكوى ورفعها","م. هبة — مفتش"] },
+
+    { icon:"↩️", station:2, day:8, step:"الخطوة ٥", title:"المستشار يعيدها بملاحظات",
+      desc:"يرى المستشار أن الرأي لم يوضّح المدة التي استغرقها الإجراء فعلياً، فيعيدها بسبب مكتوب. ويرجع خط السير خطوةً إلى الوراء.",
+      paper:"📌 سبب الإعادة: بيان المدة الفعلية للإجراء غير مذكور",
+      doc:{ serial:"شكوى ٢٠٢٦/٤٧", subject:"تأخير في إنجاز إجراء توثيق — مكتب توثيق المنيا",
+            chips:[["ret","مُعادة بملاحظات"]] },
+      log:["اليوم ٨","إعادة الشكوى بملاحظات","المستشار — جهة القرار النهائي"] },
+
+    { icon:"✏️", station:1, day:10, step:"الخطوة ٦", title:"المفتش تستكمل رأيها",
+      desc:"تضيف المدة الفعلية للإجراء ومقارنتها بالمدة المقرّرة، وترفعه ثانيةً. ويبقى في السجل أن الرأي مرّ بجولتين وسبب الإعادة — وهذه معلومة لا يحفظها الملف الورقي.",
+      paper:"📎 استُكمل الرأي — الجولة الثانية",
+      doc:{ serial:"شكوى ٢٠٢٦/٤٧", subject:"تأخير في إنجاز إجراء توثيق — مكتب توثيق المنيا",
+            chips:[["rev","عند المستشار"],["res","رأي المفتش مُستكمَل"]] },
+      log:["اليوم ١٠","استكمال الرأي وإعادة رفعه","م. هبة — مفتش"] },
+
+    { icon:"✅", station:2, day:12, step:"الخطوة ٧", title:"المستشار يؤشّر بالقرار النهائي",
+      desc:"يراجع الشكوى ورأي المفتش، ويؤشّر بالقرار من قائمة القرارات المعتمدة — وهنا: الحفظ — مع بيان أسبابه، فيُختَم بتوقيعه واسمه وتاريخه.",
+      paper:"⚖️ القرار: الحفظ · ✍️ بتوقيع المستشار",
+      doc:{ serial:"شكوى ٢٠٢٦/٤٧", subject:"تأخير في إنجاز إجراء توثيق — مكتب توثيق المنيا",
+            chips:[["ok","صدر القرار"],["res","الحفظ"]] },
+      log:["اليوم ١٢","التأشير بالقرار النهائي وختمه","المستشار — جهة القرار النهائي"] },
+
+    { icon:"📤", station:3, day:13, step:"الخطوة ٨", title:"رفع الرد على برنامج قطاع الفساد",
+      desc:"يخرج الملف من النظام جاهزاً بكود التحقق، فيرفعه الموظف على البرنامج ويسجّل رقم الرفع وتاريخه. وهذه — لا صدور القرار — هي نهاية الرحلة الحقيقية.",
+      paper:"📤 إثبات الرفع: UP-2026-5591",
+      doc:{ serial:"شكوى ٢٠٢٦/٤٧", subject:"تأخير في إنجاز إجراء توثيق — مكتب توثيق المنيا",
+            chips:[["ok","رُفع الرد"],["res","الحفظ"]] },
+      log:["اليوم ١٣","رفع الرد على البرنامج وتسجيل إثباته","أ. سمير — موظف المكتب الفني"] },
+
+    { icon:"🔒", station:3, day:13, step:"الخطوة ٩", title:"إغلاق الشكوى",
+      desc:"تُغلَق بعد ثبوت الرفع، وتبقى بسجلها كاملاً: جولتا الرأي، وسبب الإعادة، والقرار، وزمن الدورة ثلاثة عشر يوماً موزَّعاً على مراحله — وكلها أرقام تدخل لوحة المؤشرات.",
+      paper:"📊 زمن الدورة: ١٣ يوماً — منها ٥ عند المفتش و٦ عند المستشار",
+      doc:{ serial:"شكوى ٢٠٢٦/٤٧", subject:"تأخير في إنجاز إجراء توثيق — مكتب توثيق المنيا",
+            chips:[["ok","مغلقة"],["res","الحفظ"]] },
+      log:["اليوم ١٣","إغلاق الشكوى","أ. سمير — موظف المكتب الفني"] }
+  ];
+
+  var AR = ["٠","١","٢","٣","٤","٥","٦","٧","٨","٩"];
+  function ar(n) { return String(n).replace(/\d/g, function (d) { return AR[+d]; }); }
+
+  var i = 0;
+  var log = document.getElementById("log"),
+      btnNext = document.getElementById("btnNext"),
+      btnReset = document.getElementById("btnReset"),
+      meter = document.getElementById("meter"),
+      docSlot = document.getElementById("docSlot");
+
+  function stations(active) {
+    for (var s = 0; s < 4; s++) {
+      var el = document.getElementById("st" + s);
+      el.classList.toggle("on", active === s);
+      el.classList.toggle("done", active !== null && s < active);
+      el.querySelector(".tick").hidden = !(active !== null && s < active);
+    }
+  }
+
+  var STATION_NOTE = [
+    "الشكوى عند الموظف — يُحسب زمن هذه المرحلة كما يُحسب زمن ما بعدها.",
+    "الشكوى عند المفتش — وزمن بقائها عنده يُقاس على حدة.",
+    "الشكوى عند المستشار — جهة القرار النهائي.",
+    "الشكوى في مرحلة الرفع على البرنامج — وهي نهاية الدورة."
+  ];
+
+  function setMeter(day, station, done) {
+    var pct = Math.max(0, Math.min(100, (day / REF) * 100));
+    document.getElementById("fill").style.width = pct + "%";
+    document.getElementById("days").textContent = day === 0 ? "اليوم ٠" : ar(day) + " يوماً";
+    var cls = done ? "ok" : "near",
+        state = done ? "اكتملت الدورة" : "جارية";
+    meter.className = "meter " + cls;
+    document.getElementById("mstate").textContent = state;
+    document.getElementById("mnote").textContent = done
+      ? "اكتملت الدورة في ثلاثة عشر يوماً — والنظام يقيسها دون حاجة إلى مهلة مقرَّرة."
+      : STATION_NOTE[station];
+  }
+
+  function docHtml(d) {
+    var chips = d.chips.map(function (c) {
+      return '<span class="chip ' + c[0] + '">' + c[1] + '</span>';
+    }).join("");
+    return '<div class="doc"><div class="serial">' + d.serial + '</div>' +
+           '<div class="subj">' + d.subject + '</div>' +
+           '<div class="meta">' + chips + '</div></div>';
+  }
+
+  function render() {
+    var s = STEPS[i - 1];
+    document.getElementById("progress").textContent = ar(i) + " / " + ar(STEPS.length);
+    btnNext.disabled = (i >= STEPS.length);
+    btnNext.textContent = (i >= STEPS.length) ? "انتهت الرحلة" : "الخطوة التالية";
+
+    if (!s) {
+      stations(null);
+      document.getElementById("fill").style.width = "0%";
+      meter.className = "meter ok";
+      document.getElementById("days").textContent = "لم تبدأ";
+      document.getElementById("mstate").textContent = "في الانتظار";
+      document.getElementById("mnote").textContent =
+        "يُحسب من يوم الاستلام إلى يوم الرفع — ويُعرف منه أين تطول الرحلة فعلياً.";
+      docSlot.innerHTML = '<div class="doc" style="opacity:.55"><div class="serial">— لم تُقيَّد شكوى بعد —</div></div>';
+      document.getElementById("opIcon").textContent = "▶️";
+      document.getElementById("opStep").textContent = "جاهز للبدء";
+      document.getElementById("opTitle").textContent = "اضغطوا «الخطوة التالية»";
+      document.getElementById("opDesc").textContent =
+        "نتابع معاً شكوى واردة من المنظومة، ونرى ما الذي يُسجَّل في كل مرحلة، وكيف تتناقص المهلة.";
+      document.getElementById("opPaper").hidden = true;
+      log.innerHTML = '<tr class="empty-row"><td colspan="3">سجل التداول فارغ — وكل خطوة ستضيف سطراً هنا</td></tr>';
+      return;
+    }
+
+    stations(s.station);
+    setMeter(s.day, s.station, i >= STEPS.length);
+    docSlot.innerHTML = docHtml(s.doc);
+
+    document.getElementById("opIcon").textContent = s.icon;
+    document.getElementById("opStep").textContent = s.step;
+    document.getElementById("opTitle").textContent = s.title;
+    document.getElementById("opDesc").textContent = s.desc;
+    var p = document.getElementById("opPaper");
+    p.hidden = !s.paper;
+    if (s.paper) p.textContent = s.paper;
+  }
+
+  function addLog(entry) {
+    var e = log.querySelector(".empty-row");
+    if (e) log.innerHTML = "";
+    var tr = document.createElement("tr");
+    tr.innerHTML = '<td class="when">' + entry[0] + '</td><td>' + entry[1] + '</td><td class="who">' + entry[2] + '</td>';
+    log.appendChild(tr);
+  }
+
+  btnNext.addEventListener("click", function () {
+    if (i >= STEPS.length) return;
+    i++;
+    render();
+    var s = STEPS[i - 1];
+    if (s.log) addLog(s.log);
+  });
+
+  btnReset.addEventListener("click", function () { i = 0; render(); });
+
+  render();
+})();
+</script>
