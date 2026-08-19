@@ -164,6 +164,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::livewire('item-units/{itemUnit}/edit', \App\Livewire\Warehouses\Units\Create::class)->name('item-units.edit');
     });
 
+    // إعدادات المراسلات (أطراف المراسلات) — صلاحية correspondence.settings
+    // تسكن فرع «إدارة النظام» كباقي القوائم المرجعية، لا فرعاً خاصاً — فرع المراسلات
+    // يُنشأ مع شاشات الوارد والصادر لا قبلها.
+    Route::middleware('permission:correspondence.settings')->group(function () {
+        Route::livewire('correspondence-entities', \App\Livewire\Correspondence\Entities\Index::class)->name('correspondence-entities.index');
+        Route::livewire('correspondence-entities/create', \App\Livewire\Correspondence\Entities\Create::class)->name('correspondence-entities.create');
+        Route::livewire('correspondence-entities/{entity}/edit', \App\Livewire\Correspondence\Entities\Create::class)->name('correspondence-entities.edit');
+    });
+
     // إعدادات المقرات (القوائم المرجعية للمقرات والسيارات) — صلاحية offices.settings
     Route::middleware('permission:offices.settings')->group(function () {
         Route::livewire('office-types', \App\Livewire\OfficeTypes\Index::class)->name('office-types.index');

@@ -37,6 +37,19 @@
         'meetings.edit'   => 'تعديل اجتماع',
         'meetings.delete' => 'حذف اجتماع',
 
+        'correspondence.index'       => 'عرض صناديق المراسلات',
+        'correspondence.view'        => 'عرض تفاصيل مكاتبة',
+        'correspondence.create'      => 'إنشاء مكاتبة والرد عليها',
+        'correspondence.approve'     => 'الاعتماد والإرسال باسم الجهة',
+        'correspondence.delegate'    => 'إدارة التفويض (الإنابة)',
+        'correspondence.assign'      => 'إنشاء التكليفات ومتابعتها',
+        'correspondence.share'       => 'مشاركة مكاتبة مع غير مستلم',
+        'correspondence.delete'      => 'حذف مكاتبة',
+        'correspondence.export'      => 'تصدير وطباعة المكاتبات',
+        'correspondence.attachments' => 'رفع وتنزيل مرفقات المراسلات',
+        'correspondence.stamp'       => 'ختم مستند بالتوقيع',
+        'correspondence.settings'    => 'إدارة أطراف المراسلات',
+
         'warehouses.index'       => 'عرض قوائم المخازن والأرصدة والحركات',
         'warehouses.view'        => 'عرض تفاصيل حركة/مستند',
         'warehouses.create'      => 'إضافة (رصيد افتتاحي / وارد / نقل)',
@@ -47,26 +60,10 @@
         'warehouses.settings'    => 'إدارة إعدادات المخازن (المخازن / الأصناف / الأنواع / الوحدات)',
     ];
 
-    // الصلاحيات مجمّعة حسب الفرع ← مجموعات فرعية (موديولات)
+    // الصلاحيات مجمّعة حسب الفرع ← من المصدر الواحد App\Support\PermissionGroups،
+    // وهو نفسه الذي تقرأه الأقسام المشروطة في فورم المستخدم. تعريفان منفصلان يفترقان.
     // الصلاحيات العامة بلا namespace (index/view/... و manage-*) مخفية — ميتة لا يفحصها الكود
-    $branches = [
-        'home.branch_offices' => [
-            'المحافظات'         => $permissions->filter(fn($p) => str_starts_with($p->name, 'governorates.')),
-            'المقرات'           => $permissions->filter(fn($p) => str_starts_with($p->name, 'offices.') && $p->name !== 'offices.settings'),
-            'السيارات المتنقلة' => $permissions->filter(fn($p) => str_starts_with($p->name, 'vehicles.')),
-            'المطالبات'         => $permissions->filter(fn($p) => str_starts_with($p->name, 'claims.')),
-        ],
-        'home.branch_meetings' => [
-            'الاجتماعات'        => $permissions->filter(fn($p) => str_starts_with($p->name, 'meetings.')),
-        ],
-        'home.branch_warehouses' => [
-            'المخازن'           => $permissions->filter(fn($p) => str_starts_with($p->name, 'warehouses.') && $p->name !== 'warehouses.settings'),
-        ],
-        'home.branch_system' => [
-            'إعدادات المقرات'   => $permissions->filter(fn($p) => $p->name === 'offices.settings'),
-            'إعدادات المخازن'   => $permissions->filter(fn($p) => $p->name === 'warehouses.settings'),
-        ],
-    ];
+    $branches = \App\Support\PermissionGroups::group($permissions);
 @endphp
 
 <div class="flex flex-col gap-6">

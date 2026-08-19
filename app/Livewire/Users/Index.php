@@ -19,6 +19,7 @@ class Index extends Component
 
     public string $search = '';
     public string $roleFilter = '';
+    public string $entityFilter = '';
 
     public function mount(): void
     {
@@ -31,6 +32,11 @@ class Index extends Component
     }
 
     public function updatingRoleFilter(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatingEntityFilter(): void
     {
         $this->resetPage();
     }
@@ -55,9 +61,10 @@ class Index extends Component
 
     public function render()
     {
-        $roles = Role::orderBy('name')->get();
+        $roles    = Role::orderBy('name')->get();
+        $entities = \App\Models\CorrespondenceEntity::orderBy('order')->orderBy('id')->get();
 
-        $users = User::with(['roles', 'governorates'])
+        $users = User::with(['roles', 'governorates', 'correspondenceEntity'])
             ->when($this->search, function ($q) {
                 $like = '%'.\App\Support\ArabicText::normalize($this->search).'%';
                 $q->where(function ($w) use ($like) {
@@ -66,9 +73,10 @@ class Index extends Component
                 });
             })
             ->when($this->roleFilter, fn($q) => $q->role($this->roleFilter))
+            ->when($this->entityFilter, fn($q) => $q->where('correspondence_entity_id', $this->entityFilter))
             ->oldest()
             ->paginate(10);
 
-        return view('livewire.users.index', compact('users', 'roles'));
+        return view('livewire.users.index', compact('users', 'roles', 'entities'));
     }
 }

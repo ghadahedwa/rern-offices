@@ -1,0 +1,83 @@
+<div class="p-6 max-w-2xl mx-auto space-y-6">
+
+    <div class="flex items-center justify-between">
+        <h1 class="text-2xl font-semibold text-zinc-800 dark:text-zinc-100">
+            {{ $entity?->exists ? __('home.corr_entity_edit') : __('home.corr_entity_add') }}
+        </h1>
+        <a href="{{ route('correspondence-entities.index') }}" wire:navigate
+           class="text-sm text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 transition">
+            ← {{ __('home.back') }}
+        </a>
+    </div>
+
+    <div class="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-700 shadow-sm p-6">
+        <form wire:submit="save" class="space-y-5">
+
+            {{-- الاسم --}}
+            <div class="flex flex-col gap-1">
+                <label class="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                    {{ __('home.corr_entity_name') }} <span class="text-red-500">*</span>
+                </label>
+                <input type="text" wire:model="name" autocomplete="off"
+                       class="border border-zinc-300 dark:border-zinc-600 rounded-lg px-3 py-2 text-sm w-full bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-[#c9a847]" />
+                @error('name') <p class="text-red-500 text-xs">{{ $message }}</p> @enderror
+            </div>
+
+            {{-- الرمز --}}
+            <div class="flex flex-col gap-1">
+                <label class="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                    {{ __('home.corr_entity_code') }} <span class="text-red-500">*</span>
+                </label>
+                <input type="text" wire:model.live="code" autocomplete="off" maxlength="8"
+                       class="border border-zinc-300 dark:border-zinc-600 rounded-lg px-3 py-2 text-sm w-full bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-[#c9a847]" />
+                <p class="text-xs text-zinc-500 dark:text-zinc-400">
+                    {{ __('home.corr_entity_code_hint') }}
+                    <span class="font-medium text-[#b8962e] dark:text-[#d8b856]">
+                        {{ __('home.corr_entity_code_sample', ['code' => $code ?: '—']) }}
+                    </span>
+                </p>
+                @if($entity?->exists)
+                    <p class="text-xs text-amber-700 dark:text-amber-500">⚠️ {{ __('home.corr_entity_code_change_warning') }}</p>
+                @endif
+                @error('code') <p class="text-red-500 text-xs">{{ $message }}</p> @enderror
+            </div>
+
+            {{-- الترتيب --}}
+            <div class="flex flex-col gap-1">
+                <label class="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                    {{ __('home.corr_entity_order') }} <span class="text-red-500">*</span>
+                </label>
+                <input type="number" wire:model="order" min="0"
+                       class="border border-zinc-300 dark:border-zinc-600 rounded-lg px-3 py-2 text-sm w-full bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-[#c9a847]" />
+                <p class="text-xs text-zinc-500 dark:text-zinc-400">{{ __('home.corr_entity_order_hint') }}</p>
+                @error('order') <p class="text-red-500 text-xs">{{ $message }}</p> @enderror
+            </div>
+
+            {{-- الحالة --}}
+            <label class="flex items-start gap-3 cursor-pointer">
+                <input type="checkbox" wire:model="is_active"
+                       class="mt-0.5 w-4 h-4 rounded border-zinc-300 dark:border-zinc-600 text-[#c9a847] focus:ring-[#c9a847]" />
+                <span>
+                    <span class="block text-sm font-medium text-zinc-700 dark:text-zinc-300">{{ __('home.corr_entity_is_active') }}</span>
+                    <span class="block text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">{{ __('home.corr_entity_is_active_hint') }}</span>
+                </span>
+            </label>
+
+            <div class="flex items-center gap-3 pt-2">
+                <button type="submit"
+                        class="bg-[#c9a847] hover:bg-[#b8962e] text-white text-sm font-medium px-5 py-2 rounded-lg transition">
+                    {{ __('home.save') }}
+                </button>
+                <a href="{{ route('correspondence-entities.index') }}" wire:navigate
+                   class="text-sm text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 transition">
+                    {{ __('home.cancel') }}
+                </a>
+            </div>
+
+        </form>
+    </div>
+
+    {{-- keepalive: يجدد الـ snapshot والـ CSRF كل 10 دقائق --}}
+    <div x-data x-init="setInterval(() => $wire.$refresh(), 600000)" class="hidden"></div>
+
+</div>

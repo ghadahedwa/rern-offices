@@ -1,0 +1,591 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>موك-أب شاشات المراسلات</title>
+<style>
+  :root{
+    --gold:#c9a847; --gold-dark:#b8962e;
+    --z50:#fafafa; --z100:#f4f4f5; --z200:#e4e4e7; --z300:#d4d4d8;
+    --z400:#a1a1aa; --z500:#71717a; --z600:#52525b; --z700:#3f3f46; --z800:#27272a;
+    --bg:#f1f1f3;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; background:var(--bg); color:var(--z800);
+    font-family:"Segoe UI","Tahoma",system-ui,sans-serif;
+    font-size:15px; line-height:1.75;
+  }
+  .wrap{max-width:1180px;margin:0 auto;padding:28px 20px 80px}
+
+  /* ترويسة الصفحة */
+  .pagehead{
+    background:#fff;border:1px solid var(--z200);border-radius:14px;
+    padding:22px 24px;margin-bottom:26px;box-shadow:0 1px 2px rgba(0,0,0,.04)
+  }
+  .pagehead h1{margin:0 0 8px;font-size:22px;color:var(--z800)}
+  .pagehead p{margin:0;color:var(--z600);font-size:14px}
+  .warnbar{
+    margin-top:14px;background:#fdf7e6;border:1px solid #eadfb8;border-radius:10px;
+    padding:10px 14px;font-size:13.5px;color:#7a6415
+  }
+
+  /* عنوان قسم بنمط النظام */
+  .seclabel{display:flex;align-items:center;gap:12px;margin:34px 0 14px}
+  .seclabel .bar{width:4px;height:22px;background:var(--gold);border-radius:99px;flex:0 0 auto}
+  .seclabel h2{margin:0;font-size:16px;font-weight:600;color:var(--z600);letter-spacing:.3px}
+  .note{
+    background:#fff;border:1px solid var(--z200);border-right:3px solid var(--gold);
+    border-radius:10px;padding:12px 16px;margin:0 0 16px;font-size:14px;color:var(--z600)
+  }
+  .note b{color:var(--z800)}
+
+  /* بطاقة شاشة */
+  .screen{
+    background:#fff;border:1px solid var(--z200);border-radius:14px;
+    box-shadow:0 1px 3px rgba(0,0,0,.05);overflow:hidden;margin-bottom:8px
+  }
+  .screen .top{
+    display:flex;align-items:center;justify-content:space-between;gap:14px;
+    padding:16px 20px;border-bottom:1px solid var(--z100)
+  }
+  .screen .top h3{margin:0;font-size:18px;font-weight:600}
+  .btn{
+    display:inline-flex;align-items:center;gap:7px;background:var(--gold);color:#fff;
+    font-size:13.5px;font-weight:500;padding:8px 15px;border-radius:9px;border:0;cursor:default
+  }
+  .btn.ghost{background:#fff;color:var(--z700);border:1px solid var(--z300)}
+  .btn.gold-ghost{background:#fff;color:var(--gold-dark);border:1px solid var(--gold)}
+
+  /* الجداول */
+  table{width:100%;border-collapse:collapse;font-size:14px;text-align:right}
+  thead{background:var(--z50);color:var(--z500);font-size:12px}
+  th{padding:11px 16px;font-weight:500;white-space:nowrap;border-bottom:1px solid var(--z200)}
+  td{padding:12px 16px;border-bottom:1px solid var(--z100);vertical-align:middle}
+  tbody tr:last-child td{border-bottom:0}
+  .num{color:var(--z400)}
+  .strong{font-weight:600}
+  .dash{color:var(--z400)}
+  tr.hl{background:#fdfaf0}
+
+  /* شارات */
+  .chip{
+    display:inline-block;padding:2px 9px;border-radius:99px;font-size:12px;
+    background:var(--z100);color:var(--z600);margin:2px 0
+  }
+  .chip.gold{background:rgba(201,168,71,.16);color:var(--gold-dark);font-weight:500}
+  .chip.blue{background:#e8effb;color:#2c5aa8}
+  .chip.green{background:#e7f5ec;color:#256b42}
+  .chips{display:flex;flex-wrap:wrap;gap:4px}
+  .rowbtn{
+    display:inline-block;font-size:12px;padding:5px 11px;border-radius:7px;
+    border:1px solid var(--z300);color:var(--z700);margin-inline-end:6px
+  }
+
+  /* شريط الفلاتر */
+  .filters{display:flex;flex-wrap:wrap;gap:10px;padding:14px 20px;background:var(--z50);border-bottom:1px solid var(--z100)}
+  .fake-input,select.real{
+    background:#fff;border:1px solid var(--z300);border-radius:9px;
+    padding:8px 12px;font-size:13.5px;color:var(--z700);min-width:170px;
+    font-family:inherit
+  }
+  .fake-input.grow{flex:1;min-width:220px;color:var(--z400)}
+
+  /* السايدبار */
+  .sbwrap{display:flex;gap:0;min-height:340px}
+  .sb{width:250px;flex:0 0 auto;background:#fff;border-inline-end:1px solid var(--z200);padding:14px 0}
+  .sb .brand{padding:6px 18px 14px;font-weight:600;color:var(--z800);border-bottom:1px solid var(--z100);margin-bottom:10px}
+  .sb .grp{padding:10px 18px 4px;font-size:11.5px;color:var(--z400)}
+  .sb a{
+    display:flex;align-items:center;gap:9px;padding:8px 18px;font-size:14px;
+    color:var(--z600);text-decoration:none
+  }
+  .sb a.on{background:rgba(201,168,71,.12);color:var(--gold-dark);font-weight:600;
+    border-inline-start:3px solid var(--gold)}
+  .sb a.dim{color:var(--z400)}
+  .sb .ic{width:18px;text-align:center}
+  .sb .badge{
+    margin-inline-start:auto;background:#d64545;color:#fff;font-size:11px;
+    min-width:19px;height:19px;border-radius:99px;display:grid;place-items:center;padding:0 5px
+  }
+  .sbbody{flex:1;padding:22px;background:var(--z50);color:var(--z500);font-size:13.5px}
+
+  /* الفورم */
+  .form{padding:20px}
+  .frow{display:flex;flex-wrap:wrap;gap:16px;margin-bottom:16px}
+  .fld{flex:1;min-width:220px}
+  .fld label{display:block;font-size:13px;font-weight:500;color:var(--z700);margin-bottom:5px}
+  .cond{
+    border:1px dashed var(--gold);background:#fdfaf0;border-radius:11px;
+    padding:14px 16px;margin-bottom:16px
+  }
+  .cond .tag{
+    display:inline-block;background:var(--gold);color:#fff;font-size:11.5px;
+    padding:2px 9px;border-radius:99px;margin-bottom:9px
+  }
+  .hidden{display:none}
+  .govbox{display:flex;flex-wrap:wrap;gap:7px}
+  .govbox span{
+    border:1px solid var(--z300);border-radius:7px;padding:5px 10px;
+    font-size:12.5px;color:var(--z600);background:#fff
+  }
+
+  /* شبكة الصلاحيات */
+  .permgrid{padding:20px;display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(250px,1fr))}
+  .permcard{border:1px solid var(--z200);border-radius:11px;overflow:hidden}
+  .permcard h4{
+    margin:0;padding:10px 14px;background:var(--z50);font-size:13.5px;
+    color:var(--z600);border-bottom:1px solid var(--z200);font-weight:600
+  }
+  .permcard h4 .flag{
+    float:left;font-size:11px;font-weight:500;padding:1px 8px;border-radius:99px;
+    background:rgba(201,168,71,.18);color:var(--gold-dark)
+  }
+  .permcard h4 .flag.off{background:var(--z100);color:var(--z400)}
+  .permcard .sub{
+    font-size:11.5px;color:var(--z400);font-weight:600;
+    padding:9px 14px 0;border-top:1px solid var(--z100);margin-top:4px
+  }
+  .permcard .sub:first-of-type{border-top:0;margin-top:0}
+  .permcard ul{margin:0;padding:6px 14px 10px;list-style:none;font-size:13px;color:var(--z600)}
+  .permcard li{padding:3px 0;display:flex;align-items:center;gap:8px}
+  .box{width:14px;height:14px;border:1.5px solid var(--z300);border-radius:4px;flex:0 0 auto}
+  .box.on{background:var(--gold);border-color:var(--gold);position:relative}
+  .box.on::after{content:"";position:absolute;inset:2px 3px 4px 3px;border:solid #fff;
+    border-width:0 0 2px 2px;transform:rotate(-45deg)}
+
+  /* جدول التفريق */
+  .legend{background:#fff;border:1px solid var(--z200);border-radius:14px;overflow:hidden;margin-bottom:8px}
+  .legend th{background:var(--z50)}
+  .legend td:first-child{font-weight:600;white-space:nowrap}
+  code{background:var(--z100);padding:1px 6px;border-radius:5px;font-size:12.5px;direction:ltr;display:inline-block}
+  .foot{margin-top:36px;color:var(--z500);font-size:13.5px;text-align:center}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="pagehead">
+    <h1>موك-أب شاشات المراسلات — الأدوار والمستخدمون والأطراف</h1>
+    <p>أربع شاشات كما ستظهر داخل النظام، بأعمدة الشاشات الحقيقية وألوانها.</p>
+    <div class="warnbar">
+      ⚠️ <b>شكل فقط.</b> لا قاعدة بيانات ولا أزرار تعمل ولا هجرات — ملف HTML مستقل لا يمسّ كود النظام.
+      الحقل الوحيد الذي يعمل هو <b>مبدّل الدور</b> في شاشة إضافة مستخدم، ليُرى كيف تظهر الأقسام وتختفي.
+    </div>
+  </div>
+
+  <!-- ═══ أربع كلمات كانت تتلخبط ═══ -->
+  <div class="seclabel"><span class="bar"></span><h2>أربع كلمات لا تُخلَط</h2></div>
+  <div class="legend">
+    <table>
+      <thead><tr><th>الكلمة</th><th>ما هي</th><th>مثال</th><th>مين بيعملها</th></tr></thead>
+      <tbody>
+        <tr>
+          <td>الصلاحية</td>
+          <td>ماذا أستطيع أن أفعل — الكود يفحصها بالاسم</td>
+          <td><code>correspondence.approve</code></td>
+          <td>الكود، بهجرة</td>
+        </tr>
+        <tr>
+          <td>الدور</td>
+          <td>حزمة صلاحيات تُسنَد لشخص — الكود لا يعرف اسمه</td>
+          <td>رئيس جهة</td>
+          <td>أنتِ، من شاشة الأدوار</td>
+        </tr>
+        <tr class="hl">
+          <td>المسمّى الوظيفي</td>
+          <td>نصّ يُعرَض ويُطبع في ختم الاعتماد — لا يعطي صلاحية</td>
+          <td>رئيس القطاع</td>
+          <td>أنتِ، من شاشة المستخدمين</td>
+        </tr>
+        <tr>
+          <td>الطرف (الجهة)</td>
+          <td>صاحب دفتر الصادر والوارد — <b>أين</b> لا <b>ماذا</b></td>
+          <td>رئاسة المصلحة</td>
+          <td>أنتِ، من شاشة الأطراف</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="note">
+    الصف المظلَّل هو الجديد الذي طلبه العميل. ولاحظي أن <b>خالد وياسر لهما نفس الدور</b> (رئيس جهة)
+    و<b>مسمّيان مختلفان</b> (رئيس القطاع · رئيس المكتب) — ولهذا المسمّى عمود مستقل لا يُغني عنه الدور.
+  </p>
+
+  <!-- ═══ ١ · السايدبار ═══ -->
+  <div class="seclabel"><span class="bar"></span><h2>١ · الفرع في السايدبار</h2></div>
+  <p class="note">
+    ده الـ«تاب» الذي سألتِ عنه: <b>فرع مستقل</b>. موظف المراسلات لا يرى المقرات ولا المخازن أصلاً —
+    الفروع الرمادية لا تظهر له لأن دوره لا يحمل صلاحياتها.
+  </p>
+  <div class="screen">
+    <div class="sbwrap">
+      <nav class="sb">
+        <div class="brand">منظومة الشهر العقاري</div>
+        <div class="grp">الفروع</div>
+        <a class="dim"><span class="ic">🏢</span> المقرات</a>
+        <a class="dim"><span class="ic">📅</span> الاجتماعات</a>
+        <a class="dim"><span class="ic">📦</span> المخازن</a>
+        <a class="on"><span class="ic">✉️</span> المراسلات</a>
+        <div class="grp">المراسلات</div>
+        <a><span class="ic">📥</span> الوارد <span class="badge">٣</span></a>
+        <a><span class="ic">📤</span> الصادر</a>
+        <a><span class="ic">📝</span> المسودات <span class="badge">١</span></a>
+        <a><span class="ic">📋</span> التكليفات</a>
+        <a><span class="ic">🤝</span> التفويض</a>
+        <a><span class="ic">🏛️</span> الأطراف</a>
+        <a><span class="ic">🏷️</span> أنواع المكاتبات</a>
+      </nav>
+      <div class="sbbody">
+        <b style="color:var(--z700)">البادچ الأحمر</b> هو التنبيه الذي اتفقنا عليه — بلا بريد وبلا جرس في البداية.
+        <br><br>
+        «الوارد ٣» = ثلاث مكاتبات وصلت ولم تُقيَّد بعد. الرقم يتحدّث مع كل تنقّل في النظام،
+        و<code>wire:poll.60s</code> للجالس على شاشة واحدة.
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ ٢ · شاشة الأطراف ═══ -->
+  <div class="seclabel"><span class="bar"></span><h2>٢ · شاشة الأطراف — «إمكانية إضافة أطراف جديدة»</h2></div>
+  <p class="note">
+    طلب العميل الأول. الطرف الجديد <b>يأخذ دفتره الخاص تلقائياً</b> — لا كود إضافي، فالترقيم مبنيّ على
+    (الطرف + السنة) من الأساس. وعمود «المستخدمون» يوصّل لقائمة موظفي الطرف — وهذا «تحت كل طرف».
+  </p>
+  <div class="screen">
+    <div class="top">
+      <h3>الأطراف</h3>
+      <span class="btn">＋ إضافة طرف</span>
+    </div>
+    <table>
+      <thead>
+        <tr><th>#</th><th>اسم الطرف</th><th>الرمز</th><th>المستخدمون</th><th>الحالة</th><th>الإجراءات</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="num">١</td>
+          <td class="strong">رئاسة المصلحة</td>
+          <td><span class="chip gold">رئاسة</span></td>
+          <td><span class="chip blue">٢ مستخدمين</span></td>
+          <td><span class="chip green">مُفعَّل</span></td>
+          <td><span class="rowbtn">تعديل</span><span class="rowbtn">حذف</span></td>
+        </tr>
+        <tr>
+          <td class="num">٢</td>
+          <td class="strong">المكتب الفني</td>
+          <td><span class="chip gold">فني</span></td>
+          <td><span class="chip blue">٣ مستخدمين</span></td>
+          <td><span class="chip green">مُفعَّل</span></td>
+          <td><span class="rowbtn">تعديل</span><span class="rowbtn">حذف</span></td>
+        </tr>
+        <tr class="hl">
+          <td class="num">٣</td>
+          <td class="strong">مثال: إدارة التفتيش <span class="chip gold">طرف مُضاف</span></td>
+          <td><span class="chip gold">تفتيش</span></td>
+          <td><span class="chip blue">٠ مستخدمين</span></td>
+          <td><span class="chip green">مُفعَّل</span></td>
+          <td><span class="rowbtn">تعديل</span><span class="rowbtn">حذف</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="note">
+    <b>الرمز</b> يظهر بادئةً على الرقم لمنع الخلط بصرياً: «رئاسة ٢٠٢٦/١٤١» و«فني ٢٠٢٦/٣١٨» —
+    لأن الطرفين قد يحملان الرقم ١٤١ في نفس السنة، وكلٌّ في دفتره.
+  </p>
+
+  <!-- ═══ ٣ · شاشة المستخدمين ═══ -->
+  <div class="seclabel"><span class="bar"></span><h2>٣ · شاشة المستخدمين — «تعديل اسم ووظيفة المستخدمين»</h2></div>
+  <p class="note">
+    طلب العميل الثاني. شاشة <b>واحدة</b> لكل مستخدمي النظام — لا شاشة منفصلة للمراسلات، وإلا صار
+    للشخص الواحد حسابان وضاعت المساءلة. والعمودان الجديدان: <b>المسمّى الوظيفي</b> و<b>الطرف</b>.
+  </p>
+  <div class="screen">
+    <div class="top">
+      <h3>المستخدمون</h3>
+      <span class="btn">＋ إضافة مستخدم</span>
+    </div>
+    <div class="filters">
+      <span class="fake-input grow">🔍 بحث بالاسم أو اسم المستخدم…</span>
+      <span class="fake-input">الطرف: الكل ▾</span>
+      <span class="fake-input">الدور: الكل ▾</span>
+    </div>
+    <table>
+      <thead>
+        <tr><th>#</th><th>الاسم</th><th>اسم المستخدم</th><th>الدور</th><th>المسمّى الوظيفي</th><th>الطرف</th><th>المحافظات</th><th>الإجراءات</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="num">١</td><td class="strong">أ. سمير</td><td>samir</td>
+          <td><span class="chip">سكرتارية</span></td>
+          <td>سكرتير أول</td>
+          <td><span class="chip gold">رئاسة المصلحة</span></td>
+          <td class="dash">—</td>
+          <td><span class="rowbtn">تعديل</span></td>
+        </tr>
+        <tr class="hl">
+          <td class="num">٢</td><td class="strong">أ. خالد</td><td>khaled</td>
+          <td><span class="chip">رئيس جهة</span></td>
+          <td><b>رئيس القطاع</b></td>
+          <td><span class="chip gold">رئاسة المصلحة</span></td>
+          <td class="dash">—</td>
+          <td><span class="rowbtn">تعديل</span></td>
+        </tr>
+        <tr>
+          <td class="num">٣</td><td class="strong">أ. محمد</td><td>mohamed</td>
+          <td><span class="chip">سكرتارية</span></td>
+          <td>سكرتير</td>
+          <td><span class="chip gold">المكتب الفني</span></td>
+          <td class="dash">—</td>
+          <td><span class="rowbtn">تعديل</span></td>
+        </tr>
+        <tr class="hl">
+          <td class="num">٤</td><td class="strong">المستشار ياسر</td><td>yasser</td>
+          <td><span class="chip">رئيس جهة</span></td>
+          <td><b>رئيس المكتب</b></td>
+          <td><span class="chip gold">المكتب الفني</span></td>
+          <td class="dash">—</td>
+          <td><span class="rowbtn">تعديل</span></td>
+        </tr>
+        <tr>
+          <td class="num">٥</td><td class="strong">أ. هبة</td><td>heba</td>
+          <td><span class="chip">مفتش</span></td>
+          <td>مفتش فني</td>
+          <td><span class="chip gold">المكتب الفني</span></td>
+          <td class="dash">—</td>
+          <td><span class="rowbtn">تعديل</span></td>
+        </tr>
+        <tr style="background:var(--z50)">
+          <td class="num">٦</td><td class="strong">م. أحمد</td><td>ahmed</td>
+          <td><span class="chip">مفتش مقرات</span></td>
+          <td>مفتش</td>
+          <td class="dash">—</td>
+          <td><span class="chip blue">المنيا</span> <span class="chip blue">أسيوط</span></td>
+          <td><span class="rowbtn">تعديل</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="note">
+    قارني <b>الصفوف ١–٥</b> (مراسلات: لها طرف وبلا محافظات) بـ<b>الصف ٦</b> (مقرات: له محافظات وبلا طرف).
+    نفس الجدول، ولا حقل زائد على أحد — وهذا هو «فكّ تعقيد المستخدمين».
+    والصفّان المظلَّلان: <b>نفس الدور، مسمّيان مختلفان</b>.
+  </p>
+
+  <!-- ═══ ٤ · فورم المستخدم ═══ -->
+  <div class="seclabel"><span class="bar"></span><h2>٤ · إضافة مستخدم — الأقسام تظهر حسب الدور</h2></div>
+  <p class="note">
+    <b>بدّلي الدور من القائمة</b> وشوفي القسم السفلي بيتغيّر. ده الجزء الوحيد الشغّال في الصفحة،
+    وهو اللي بيوضّح إن موظف المراسلات <b>لا يرى مربّع المحافظات الـ٢٧ أصلاً</b>.
+  </p>
+  <div class="screen">
+    <div class="top"><h3>إضافة مستخدم</h3><span class="btn ghost">إلغاء</span></div>
+    <div class="form">
+      <div class="frow">
+        <div class="fld"><label>الاسم</label><span class="fake-input" style="display:block">أ. خالد</span></div>
+        <div class="fld"><label>اسم المستخدم</label><span class="fake-input" style="display:block">khaled</span></div>
+      </div>
+      <div class="frow">
+        <div class="fld"><label>كلمة السر</label><span class="fake-input" style="display:block">•••••••</span></div>
+        <div class="fld">
+          <label>الدور ← <b style="color:var(--gold-dark)">بدّليه</b></label>
+          <select class="real" id="rolepick" style="display:block;width:100%">
+            <option value="head">رئيس جهة</option>
+            <option value="sec">سكرتارية</option>
+            <option value="insp">مفتش</option>
+            <option value="offices">مفتش مقرات</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="cond" id="corrblock">
+        <span class="tag">يظهر لأن الدور فيه صلاحيات مراسلات</span>
+        <div class="frow" style="margin-bottom:0">
+          <div class="fld"><label>الطرف</label><span class="fake-input" style="display:block">رئاسة المصلحة ▾</span></div>
+          <div class="fld"><label>المسمّى الوظيفي</label><span class="fake-input" style="display:block">رئيس القطاع</span></div>
+        </div>
+      </div>
+
+      <div class="cond hidden" id="govblock">
+        <span class="tag">يظهر لأن الدور فيه صلاحيات مقرات</span>
+        <label>المحافظات</label>
+        <div class="govbox">
+          <span>☑ المنيا</span><span>☑ أسيوط</span><span>☐ سوهاج</span><span>☐ قنا</span>
+          <span>☐ الأقصر</span><span>☐ أسوان</span><span>☐ بني سويف</span><span>☐ الفيوم</span>
+          <span class="dash">… وباقي المحافظات</span>
+        </div>
+      </div>
+
+      <span class="btn">حفظ</span>
+    </div>
+  </div>
+
+  <!-- ═══ ٥ · شاشة الأدوار ═══ -->
+  <div class="seclabel"><span class="bar"></span><h2>٥ · شاشة الأدوار — كما هي اليوم، بمجموعة جديدة</h2></div>
+  <p class="note">
+    الشاشة موجودة بالفعل ولا تتغيّر. الجديد <b>مجموعة «المراسلات» في شبكة الصلاحيات</b> فقط.
+    والأدوار الثلاثة <b>تُنشَأ من هنا بأسمائك</b> — الكود لا يُنشئ دوراً واحداً.
+  </p>
+  <div class="screen">
+    <div class="top"><h3>الأدوار</h3><span class="btn">＋ إضافة دور</span></div>
+    <table>
+      <thead><tr><th>#</th><th>اسم الدور</th><th>المستوى</th><th>الصلاحيات</th><th>الإجراءات</th></tr></thead>
+      <tbody>
+        <tr>
+          <td class="num">١</td>
+          <td class="strong">سكرتارية</td>
+          <td><span class="chip">١</span></td>
+          <td><div class="chips">
+            <span class="chip">index</span><span class="chip">view</span><span class="chip">create</span>
+            <span class="chip">attachments</span><span class="chip">share</span><span class="chip">export</span>
+          </div></td>
+          <td><span class="rowbtn">تعديل</span><span class="rowbtn">حذف</span></td>
+        </tr>
+        <tr class="hl">
+          <td class="num">٢</td>
+          <td class="strong">رئيس جهة</td>
+          <td><span class="chip">١</span></td>
+          <td><div class="chips">
+            <span class="chip">index</span><span class="chip">view</span><span class="chip">create</span>
+            <span class="chip">attachments</span><span class="chip">share</span><span class="chip">export</span>
+            <span class="chip gold">approve</span><span class="chip gold">stamp</span>
+            <span class="chip gold">assign</span><span class="chip gold">delegate</span><span class="chip gold">delete</span>
+          </div></td>
+          <td><span class="rowbtn">تعديل</span><span class="rowbtn">حذف</span></td>
+        </tr>
+        <tr>
+          <td class="num">٣</td>
+          <td class="strong">مفتش</td>
+          <td><span class="chip">١</span></td>
+          <td><div class="chips">
+            <span class="chip">index</span><span class="chip">view</span><span class="chip">create</span>
+            <span class="chip">attachments</span><span class="chip">share</span>
+          </div></td>
+          <td><span class="rowbtn">تعديل</span><span class="rowbtn">حذف</span></td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="permgrid">
+      <div class="permcard">
+        <h4><span class="flag">← المحافظات</span> إدارة المقرات</h4>
+        <div class="sub">المحافظات</div>
+        <ul><li><span class="box"></span> عرض · إضافة · تعديل · حذف</li></ul>
+        <div class="sub">المقرات</div>
+        <ul><li><span class="box"></span> عرض · إنشاء · تعديل · تصدير · دليل التليفونات</li></ul>
+        <div class="sub">السيارات المتنقلة</div>
+        <ul><li><span class="box"></span> عرض · إنشاء · تعديل · تصدير</li></ul>
+        <div class="sub">المطالبات</div>
+        <ul><li><span class="box"></span> عرض · تعديل · تصدير</li></ul>
+      </div>
+      <div class="permcard">
+        <h4><span class="flag off">بلا نطاق</span> الاجتماعات</h4>
+        <div class="sub">الاجتماعات</div>
+        <ul><li><span class="box"></span> عرض · إنشاء · تعديل · حذف</li></ul>
+      </div>
+      <div class="permcard">
+        <h4><span class="flag off">بلا نطاق</span> المخازن</h4>
+        <div class="sub">المخازن</div>
+        <ul><li><span class="box"></span> الأرصدة · الحركات · المرفقات · تصدير</li></ul>
+      </div>
+      <div class="permcard" style="border-color:var(--gold)">
+        <h4 style="background:#fdfaf0"><span class="flag">← الطرف والمسمّى</span> المراسلات <span class="chip gold">جديد</span></h4>
+        <div class="sub">المراسلات</div>
+        <ul>
+          <li><span class="box on"></span> عرض الصناديق</li>
+          <li><span class="box on"></span> عرض مكاتبة</li>
+          <li><span class="box on"></span> إنشاء ورد</li>
+          <li><span class="box on"></span> المرفقات · مشاركة · تصدير</li>
+          <li><span class="box on"></span> اعتماد وإرسال</li>
+          <li><span class="box on"></span> ختم بالتوقيع</li>
+          <li><span class="box on"></span> تكليفات · تفويض · حذف</li>
+        </ul>
+      </div>
+      <div class="permcard">
+        <h4><span class="flag off">بلا نطاق</span> إدارة النظام</h4>
+        <div class="sub">إعدادات المقرات</div>
+        <ul><li><span class="box"></span> القوائم المرجعية للمقرات</li></ul>
+        <div class="sub">إعدادات المخازن</div>
+        <ul><li><span class="box"></span> المخازن · الأصناف · الوحدات</li></ul>
+        <div class="sub">إعدادات المراسلات <span class="chip gold">جديد</span></div>
+        <ul><li><span class="box"></span> إدارة الأطراف وأنواع المكاتبات</li></ul>
+      </div>
+    </div>
+  </div>
+  <p class="note">
+    <b>المستوى</b> عمود موجود بالفعل ومعناه «نشاط مَن أرى» — ولذلك <b>أدوار المراسلات كلها بمستوى ١</b>،
+    والمستوى يُضبط من السلّم الإداري (مفتش / مستشار / رئيس) لا من أدوار الفروع.
+  </p>
+
+  <!-- ═══ ٦ · خريطة الظهور ═══ -->
+  <div class="seclabel"><span class="bar"></span><h2>٦ · خريطة الظهور — أي عنوان يُظهر أي قسم</h2></div>
+  <p class="note">
+    الفورم لا يسأل «هو مراسلات أم مقرات؟» — يسأل <b>صلاحيات دوره واقعة تحت أي عنوان؟</b>
+    فلا حقل «النوع» على المستخدم ولا على الدور، والمنطق كلّه مُشتَق.
+  </p>
+  <div class="legend">
+    <table>
+      <thead><tr><th>عنوان التصاريح</th><th>ما تحته</th><th>القسم الذي يظهر في فورم المستخدم</th></tr></thead>
+      <tbody>
+        <tr class="hl">
+          <td>إدارة المقرات</td>
+          <td>المحافظات · المقرات · السيارات المتنقلة · المطالبات</td>
+          <td><span class="chip gold">مربّع المحافظات</span></td>
+        </tr>
+        <tr><td>الاجتماعات</td><td>الاجتماعات</td><td class="dash">— لا قسم</td></tr>
+        <tr><td>المخازن</td><td>المخازن</td><td class="dash">— لا قسم</td></tr>
+        <tr class="hl">
+          <td>المراسلات</td>
+          <td>المراسلات</td>
+          <td><span class="chip gold">الطرف + المسمّى الوظيفي</span></td>
+        </tr>
+        <tr><td>إدارة النظام</td><td>إعدادات المقرات · المخازن · المراسلات</td><td class="dash">— لا قسم</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p class="note" style="border-right-color:#d64545">
+    ⚠️ <b>لماذا المفتاح هو العنوان لا اسم الصلاحية؟</b> لأن قاعدة «الصلاحية تبدأ بـ<code>offices.</code>»
+    تُخطئ في اتجاهين، وكلاهما مُثبَت من الأدوار الفعلية:
+    <br>• <b>تفوّت:</b> دور <code>Vehicles</code> صلاحياته <code>vehicles.*</code> فقط — بلا <code>offices.</code> — فلا يرى المحافظات
+    وهو يحتاجها لاثني عشر تقرير سيارات.
+    <br>• <b>تصطاد خطأً:</b> <code>offices.settings</code> تبدأ بـ<code>offices.</code> لكنها تحت <b>إدارة النظام</b>
+    ولا علاقة لها بمحافظة — فتُظهر المربّع لمن لا يحتاجه.
+  </p>
+
+  <div class="seclabel"><span class="bar"></span><h2>القاعدة مطبَّقة على الأدوار الفعلية</h2></div>
+  <div class="legend">
+    <table>
+      <thead><tr><th>الدور</th><th>تصاريحه من عنوان</th><th>يظهر له</th></tr></thead>
+      <tbody>
+        <tr><td>Inspector</td><td>إدارة المقرات (المقرات + المطالبات)</td><td><span class="chip gold">المحافظات</span></td></tr>
+        <tr><td>Judge</td><td>إدارة المقرات</td><td><span class="chip gold">المحافظات</span></td></tr>
+        <tr><td>Reporting Person</td><td>إدارة المقرات (+ المحافظات)</td><td><span class="chip gold">المحافظات</span></td></tr>
+        <tr><td>Head of</td><td>إدارة المقرات (عرض فقط)</td><td><span class="chip gold">المحافظات</span></td></tr>
+        <tr class="hl"><td>Vehicles · Vehicles2</td><td>إدارة المقرات (السيارات وحدها)</td><td><span class="chip gold">المحافظات</span></td></tr>
+        <tr><td>Boss office</td><td>الاجتماعات + دليل التليفونات</td><td><span class="chip gold">المحافظات</span></td></tr>
+        <tr><td>Boss</td><td class="dash">لا صلاحية واحدة</td><td class="dash">لا قسم — ولا شاشة</td></tr>
+        <tr class="hl"><td>سكرتارية · رئيس جهة · مفتش</td><td>المراسلات</td><td><span class="chip gold">الطرف + المسمّى الوظيفي</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="note">
+    ومَن أخذ العنوانين معاً (مقرات <b>و</b>مراسلات) يظهر له <b>القسمان</b> — وهذا صحيح، فهو يعمل في الفرعين فعلاً.
+    <br>⚠️ <b>التجميع مصدره واحد:</b> هو المكتوب اليوم في <code>permissions-grid.blade.php</code>، ويُرفَع إلى موضع مشترك
+    تقرأه <b>شبكة الأدوار وفورم المستخدم معاً</b> — وإلا افترقا مع أول تعديل.
+  </p>
+
+  <div class="foot">
+    موك-أب للفهم والعرض — <b>لا يمثّل كوداً منفَّذاً</b>. المرجع الواحد للبناء: <code>correspondence-system.md</code>
+  </div>
+</div>
+
+<script>
+  var blocks = { corr: document.getElementById('corrblock'), gov: document.getElementById('govblock') };
+  document.getElementById('rolepick').addEventListener('change', function (e) {
+    var isOffices = e.target.value === 'offices';
+    blocks.corr.classList.toggle('hidden', isOffices);
+    blocks.gov.classList.toggle('hidden', !isOffices);
+  });
+</script>
+</body>
+</html>

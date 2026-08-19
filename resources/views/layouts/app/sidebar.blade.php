@@ -278,6 +278,27 @@
                     </div>
                     @endif
 
+                    {{-- إعدادات المراسلات (أطراف المراسلات) — صلاحية correspondence.settings --}}
+                    @if(auth()->user()?->can('correspondence.settings'))
+                    <div x-data="{ open: {{ request()->routeIs('correspondence-entities.*') ? 'true' : 'false' }} }">
+                        <button @click="open = !open"
+                            class="nested-menu-btn flex items-center w-full px-3 py-2 font-medium rounded text-zinc-600 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-zinc-900 dark:hover:text-white transition-colors">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-gray-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
+                            </svg>
+                            <span class="ml-2">{{ __('home.corr_settings') }}</span>
+                            <svg class="ml-auto w-4 h-4 transition-transform" :class="{ 'rotate-180': open }" viewBox="0 0 20 20">
+                                <path d="M5 8l5 5 5-5" fill="none" stroke="currentColor"/>
+                            </svg>
+                        </button>
+                        <div x-show="open" x-transition class="ml-6 mt-1 space-y-1 overflow-hidden [&_[data-content]]:text-xs! [&_[data-content]]:min-w-0">
+                            <flux:sidebar.item icon="building-library" :href="route('correspondence-entities.index')" :current="request()->routeIs('correspondence-entities.*')" wire:navigate>
+                                {{ __('home.corr_entities_title') }}
+                            </flux:sidebar.item>
+                        </div>
+                    </div>
+                    @endif
+
                     {{-- إعدادات المقرات (القوائم المرجعية للمقرات والسيارات) --}}
                     @if(auth()->user()?->can('offices.settings'))
                     <div x-data="{ open: {{ request()->routeIs('office-types.*') || request()->routeIs('location-descriptions.*') || request()->routeIs('work-systems.*') || request()->routeIs('working-hours.*') || request()->routeIs('connection-types.*') || request()->routeIs('device-types.*') || request()->routeIs('contractual-statuses.*') || request()->routeIs('structural-conditions.*') || request()->routeIs('disabilities-access.*') || request()->routeIs('fire-safety.*') || request()->routeIs('document-photocopying-services.*') || request()->routeIs('buffet-services.*') || request()->routeIs('cleanliness-contracts.*') || request()->routeIs('microfilm-options.*') || request()->routeIs('vehicle-types.*') || request()->routeIs('vehicle-brands.*') || request()->routeIs('vehicle-work-systems.*') || request()->routeIs('vehicle-working-hours.*') || request()->routeIs('vehicle-device-types.*') ? 'true' : 'false' }} }">

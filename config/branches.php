@@ -138,12 +138,16 @@ return [
             'vehicle-work-systems.*',
             'vehicle-working-hours.*',
             'vehicle-device-types.*',
+            // إعدادات المراسلات (أطراف المراسلات — قائمة مرجعية).
+            // فرع المراسلات المستقل يُنشأ مع شاشات الوارد والصادر لا قبلها.
+            'correspondence-entities.*',
         ],
         'super_admin_only' => false,
         'permissions' => [
             // المستخدمون والأدوار للسوبر أدمن فقط حالياً؛ offices.settings/warehouses.settings يفتح الفرع لمدير الإعدادات
             'offices.settings',
             'warehouses.settings',
+            'correspondence.settings',
         ],
     ],
 

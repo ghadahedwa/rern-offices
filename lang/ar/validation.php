@@ -163,6 +163,13 @@ return [
     ],
 
     'attributes' => [
+        // المراسلات — أطراف
+        'code'                  => 'الرمز',
+        'order'                 => 'الترتيب',
+        'is_active'             => 'الحالة',
+        'correspondence_entity_id' => 'الطرف',
+        'job_title'             => 'المسمّى الوظيفي',
+
         'name'                  => 'الاسم',
         'username'              => 'اسم المستخدم',
         'email'                 => 'البريد الإلكتروني',
