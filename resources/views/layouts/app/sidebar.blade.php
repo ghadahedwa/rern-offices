@@ -205,6 +205,25 @@
 
                     @endif {{-- /branch: warehouses --}}
 
+                    @if($currentBranch === 'correspondence')
+                    {{-- زر «مكاتبة جديدة»: الإنشاء فعل لا مكان، فزرّ لا بند —
+                         وهو نمط المشروع (زرّ «إضافة» في رأس كل قائمة). سقالة حتى تُبنى الشاشة. --}}
+                    @if(auth()->user()?->can('correspondence.create'))
+                        <div class="px-1 pb-2">
+                            <span class="flex items-center justify-center gap-2 w-full bg-[#c9a847]/15 text-[#b8962e] dark:text-[#d8b856] border border-[#c9a847]/40 text-xs font-semibold px-3 py-2 rounded-lg cursor-not-allowed"
+                                  title="{{ __('home.corr_placeholder_note') }}">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
+                                </svg>
+                                {{ __('home.corr_new') }}
+                            </span>
+                        </div>
+                    @endif
+
+                    {{-- العدّادات مكوّن Livewire بـpoll — داخل الفرع وحده --}}
+                    @livewire('correspondence.menu-counters')
+                    @endif {{-- /branch: correspondence --}}
+
                     @if($currentBranch === 'feedback')
                     <flux:sidebar.item icon="squares-2x2" :href="route('feedback-results.dashboard')" :current="request()->routeIs('feedback-results.dashboard')" wire:navigate>
                         {{ __('home.fr_dashboard') }}
@@ -388,6 +407,29 @@
             <flux:sidebar.toggle class="lg:hidden text-[#c9a847]" icon="bars-2" inset="left" />
 
             <flux:spacer />
+
+            {{-- ✉️ الظرف — المؤشّر الوحيد الظاهر لمن يعمل في فرع آخر.
+                 قائمة الفروع dropdown مقفول، فعدّادٌ عليها يكون مدفوناً.
+                 blade لا Livewire: يتحدّث مع كل تنقّل (الشريط ليس داخل @persist)،
+                 والـpoll محصور في عدّادات منيو الفرع. ولا قائمة منسدلة — تلك شغل الجرس. --}}
+            @php $counters = app(\App\Support\CorrespondenceCounters::class); @endphp
+            @if($counters->envelopeVisible())
+                @php $inboxCount = $counters->inbox(); @endphp
+                <a href="{{ route('correspondence.inbox') }}" wire:navigate
+                   class="relative flex items-center justify-center w-9 h-9 rounded-lg hover:bg-black/10 transition"
+                   title="{{ $inboxCount > 0 ? __('home.corr_envelope_title', ['count' => $inboxCount]) : __('home.corr_envelope_empty') }}">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-white" fill="none"
+                         viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                              d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75"/>
+                    </svg>
+                    @if($inboxCount > 0)
+                        <span class="absolute -top-0.5 -end-0.5 min-w-[18px] h-[18px] px-1 rounded-full bg-red-600 text-white text-[10px] font-bold grid place-items-center">
+                            {{ $inboxCount > 99 ? '99+' : $inboxCount }}
+                        </span>
+                    @endif
+                </a>
+            @endif
 
             {{-- User dropdown with gold styling --}}
             <flux:dropdown position="bottom" align="end">

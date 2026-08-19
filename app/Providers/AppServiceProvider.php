@@ -19,7 +19,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        // singleton: الظرف وبنود المنيو يقرأون نفس الأرقام في الطلب الواحد،
+        // فالحفظ داخل الكائن يمنع استعلامين لرقم واحد.
+        $this->app->singleton(\App\Support\CorrespondenceCounters::class);
     }
 
     /**

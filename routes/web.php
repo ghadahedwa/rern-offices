@@ -164,6 +164,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::livewire('item-units/{itemUnit}/edit', \App\Livewire\Warehouses\Units\Create::class)->name('item-units.edit');
     });
 
+    // فرع المراسلات — الشاشات سقالة حتى تُنشأ جداول المكاتبات (س٦).
+    // الحراسة حقيقية من الآن: كل شاشة بصلاحيتها، والفرع له default_route قائم.
+    Route::livewire('correspondence/inbox', \App\Livewire\Correspondence\Inbox::class)->name('correspondence.inbox');
+    Route::livewire('correspondence/outbox', \App\Livewire\Correspondence\Outbox::class)->name('correspondence.outbox');
+    Route::livewire('correspondence/drafts', \App\Livewire\Correspondence\Drafts::class)->name('correspondence.drafts');
+    Route::livewire('correspondence/assignments', \App\Livewire\Correspondence\Assignments::class)->name('correspondence.assignments');
+    Route::livewire('correspondence/delegations', \App\Livewire\Correspondence\Delegations::class)->name('correspondence.delegations');
+
     // إعدادات المراسلات (أطراف المراسلات) — صلاحية correspondence.settings
     // تسكن فرع «إدارة النظام» كباقي القوائم المرجعية، لا فرعاً خاصاً — فرع المراسلات
     // يُنشأ مع شاشات الوارد والصادر لا قبلها.

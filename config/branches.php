@@ -85,6 +85,27 @@ return [
         ],
     ],
 
+    // المراسلات — الوارد والصادر والمسودات والتكليفات والتفويض.
+    // ⚠️ `correspondence-entities.*` (أطراف المراسلات) تبقى في فرع «إدارة النظام»
+    //    كباقي القوائم المرجعية — والنمط هنا `correspondence.*` بنقطة، فلا يطابقها.
+    'correspondence' => [
+        'label'         => 'home.branch_correspondence',
+        'icon'          => 'envelope',
+        'default_route' => 'correspondence.inbox',
+        'entries' => [
+            'correspondence.inbox' => 'correspondence.index',
+        ],
+        'route_patterns' => [
+            'correspondence.*',
+        ],
+        'super_admin_only' => false,
+        'permissions' => [
+            'correspondence.index',
+            'correspondence.create',
+            'correspondence.export',
+        ],
+    ],
+
     // نتائج بوابة رأي المواطن — للسوبر أدمن فقط حالياً.
     // عند التوسيع: احذف super_admin_only وأضف 'feedback.view' في permissions.
     'feedback' => [
