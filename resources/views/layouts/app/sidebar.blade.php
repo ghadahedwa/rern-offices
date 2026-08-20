@@ -104,64 +104,72 @@
                         $canVehicleReports = auth()->user()?->hasRole('super-admin') || auth()->user()?->can('vehicles.export');
                         $canClaimsReports  = auth()->user()?->hasRole('super-admin') || auth()->user()?->can('claims.export');
                     @endphp
-                    @if($canOfficeReports || $canVehicleReports || $canClaimsReports)
-                    <div x-data="{ open: {{ request()->routeIs('reports.*') ? 'true' : 'false' }} }">
-                        <button @click="open = !open"
-                            class="nested-menu-btn flex items-center w-full px-3 py-2 font-medium rounded text-zinc-600 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-zinc-900 dark:hover:text-white transition-colors">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-gray-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/>
-                            </svg>
-                            <span class="ml-2">{{ __('home.reports') }}</span>
-                            <svg class="ml-auto w-4 h-4 transition-transform" :class="{ 'rotate-180': open }" viewBox="0 0 20 20">
-                                <path d="M5 8l5 5 5-5" fill="none" stroke="currentColor"/>
-                            </svg>
-                        </button>
-                        <div x-show="open" x-transition class="ml-6 mt-1 space-y-1">
-                            @if($canOfficeReports)
-                            <flux:sidebar.item icon="document-text" :href="route('reports.office-pdf')" :current="request()->routeIs('reports.office-pdf')" wire:navigate>
-                                {{ __('home.report_office_pdf_title') }}
-                            </flux:sidebar.item>
-                            <flux:sidebar.item icon="document-duplicate" :href="route('reports.multi-office')" :current="request()->routeIs('reports.multi-office')" wire:navigate>
-                                {{ __('home.report_multi_title') }}
-                            </flux:sidebar.item>
-                            <flux:sidebar.item icon="table-cells" :href="route('reports.offices-by-type')" :current="request()->routeIs('reports.offices-by-type')" wire:navigate>
-                                {{ __('home.report_by_type_menu') }}
-                            </flux:sidebar.item>
-                            <flux:sidebar.item icon="computer-desktop" :href="route('reports.device-count')" :current="request()->routeIs('reports.device-count')" wire:navigate>
-                                {{ __('home.report_devices_title') }}
-                            </flux:sidebar.item>
-                            <flux:sidebar.item icon="chart-bar" :href="route('reports.stats-comparison')" :current="request()->routeIs('reports.stats-comparison')" wire:navigate>
-                                {{ __('home.report_stats_menu') }}
-                            </flux:sidebar.item>
-                            @endif
-                            @if($canVehicleReports)
-                            <flux:sidebar.item icon="truck" :href="route('reports.multi-vehicle')" :current="request()->routeIs('reports.multi-vehicle')" wire:navigate>
-                                {{ __('home.report_vehicle_multi_title') }}
-                            </flux:sidebar.item>
-                            <flux:sidebar.item icon="wrench-screwdriver" :href="route('reports.vehicle-device-count')" :current="request()->routeIs('reports.vehicle-device-count')" wire:navigate>
-                                {{ __('home.report_vehicle_devices_title') }}
-                            </flux:sidebar.item>
-                            <flux:sidebar.item icon="chart-pie" :href="route('reports.vehicle-status')" :current="request()->routeIs('reports.vehicle-status')" wire:navigate>
-                                {{ __('home.report_vehicle_status_title') }}
-                            </flux:sidebar.item>
-                            <flux:sidebar.item icon="calendar-days" :href="route('reports.vehicle-coverage')" :current="request()->routeIs('reports.vehicle-coverage')" wire:navigate>
-                                {{ __('home.report_vehicle_coverage_title') }}
-                            </flux:sidebar.item>
-                            <flux:sidebar.item icon="identification" :href="route('reports.vehicle-licenses')" :current="request()->routeIs('reports.vehicle-licenses')" wire:navigate>
-                                {{ __('home.report_vehicle_licenses_title') }}
-                            </flux:sidebar.item>
-                            @endif
-                            @if($canClaimsReports)
-                            <flux:sidebar.item icon="banknotes" :href="route('reports.claims-statement')" :current="request()->routeIs('reports.claims-statement')" wire:navigate>
-                                {{ __('home.claims_statement_title') }}
-                            </flux:sidebar.item>
-                            <flux:sidebar.item icon="scale" :href="route('reports.claims-summary')" :current="request()->routeIs('reports.claims-summary')" wire:navigate>
-                                {{ __('home.claims_summary_title') }}
-                            </flux:sidebar.item>
-                            @endif
+                    {{-- ثلاث قوائم تقارير مستقلة (لا قائمة واحدة بـ١٢ بنداً مسطّحاً).
+                         كل قائمة تُفتح وحدها حين تكون الصفحة الحالية من راوتاتها،
+                         فلا يبحث المستخدم في تقارير نوع آخر عن التقرير الذي هو فيه.
+                         ⚠️ راوت تقرير جديد يُضاف لقائمة `$routes` الخاصة بمجموعته
+                            وإلا فُتحت المجموعة الخاطئة (أو لم تُفتح واحدة). --}}
+                    @php
+                        $reportGroups = [
+                            [
+                                'can'    => $canOfficeReports,
+                                'label'  => 'home.reports_offices',
+                                'routes' => ['reports.office-pdf', 'reports.multi-office', 'reports.offices-by-type', 'reports.device-count', 'reports.stats-comparison'],
+                                'items'  => [
+                                    ['reports.office-pdf',      'document-text',     'home.report_office_pdf_title'],
+                                    ['reports.multi-office',    'document-duplicate', 'home.report_multi_title'],
+                                    ['reports.offices-by-type', 'table-cells',       'home.report_by_type_menu'],
+                                    ['reports.device-count',    'computer-desktop',  'home.report_devices_title'],
+                                    ['reports.stats-comparison', 'chart-bar',        'home.report_stats_menu'],
+                                ],
+                            ],
+                            [
+                                'can'    => $canVehicleReports,
+                                'label'  => 'home.reports_vehicles',
+                                'routes' => ['reports.multi-vehicle', 'reports.vehicle-device-count', 'reports.vehicle-status', 'reports.vehicle-coverage', 'reports.vehicle-licenses'],
+                                'items'  => [
+                                    ['reports.multi-vehicle',        'truck',               'home.report_vehicle_multi_title'],
+                                    ['reports.vehicle-device-count', 'wrench-screwdriver',  'home.report_vehicle_devices_title'],
+                                    ['reports.vehicle-status',       'chart-pie',           'home.report_vehicle_status_title'],
+                                    ['reports.vehicle-coverage',     'calendar-days',       'home.report_vehicle_coverage_title'],
+                                    ['reports.vehicle-licenses',     'identification',      'home.report_vehicle_licenses_title'],
+                                ],
+                            ],
+                            [
+                                'can'    => $canClaimsReports,
+                                'label'  => 'home.reports_claims',
+                                'routes' => ['reports.claims-statement', 'reports.claims-summary'],
+                                'items'  => [
+                                    ['reports.claims-statement', 'banknotes', 'home.claims_statement_title'],
+                                    ['reports.claims-summary',   'scale',     'home.claims_summary_title'],
+                                ],
+                            ],
+                        ];
+                    @endphp
+
+                    @foreach($reportGroups as $group)
+                        @if($group['can'])
+                        <div x-data="{ open: {{ request()->routeIs(...$group['routes']) ? 'true' : 'false' }} }">
+                            <button @click="open = !open"
+                                class="nested-menu-btn flex items-center w-full px-3 py-2 font-medium rounded text-zinc-600 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-zinc-900 dark:hover:text-white transition-colors">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-gray-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/>
+                                </svg>
+                                <span class="ml-2">{{ __($group['label']) }}</span>
+                                <svg class="ml-auto w-4 h-4 transition-transform" :class="{ 'rotate-180': open }" viewBox="0 0 20 20">
+                                    <path d="M5 8l5 5 5-5" fill="none" stroke="currentColor"/>
+                                </svg>
+                            </button>
+                            <div x-show="open" x-transition class="ml-6 mt-1 space-y-1">
+                                @foreach($group['items'] as [$routeName, $icon, $labelKey])
+                                <flux:sidebar.item :icon="$icon" :href="route($routeName)" :current="request()->routeIs($routeName)" wire:navigate>
+                                    {{ __($labelKey) }}
+                                </flux:sidebar.item>
+                                @endforeach
+                            </div>
                         </div>
-                    </div>
-                    @endif
+                        @endif
+                    @endforeach
                     @endif {{-- /branch: offices --}}
 
                     @if($currentBranch === 'meetings')
