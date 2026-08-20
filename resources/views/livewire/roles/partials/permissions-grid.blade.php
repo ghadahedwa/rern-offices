@@ -73,16 +73,36 @@
     $branches = \App\Support\PermissionGroups::group($permissions);
 @endphp
 
-<div class="flex flex-col gap-6">
+<div class="flex flex-col gap-6" x-data>
+    {{-- فتح/طي الكل — الفروع مقفولة افتراضياً (ستة فروع تطوّل الصفحة بلا طائل)،
+         فلازم طريقة واحدة تفتحها كلها لمن يريد المسح البصري. --}}
+    <div class="flex items-center justify-end gap-3 -mb-2">
+        <button type="button" @click="$dispatch('branches-toggle', { open: true })"
+                class="text-xs text-[#c9a847] hover:text-[#b8962e] transition font-medium">
+            فتح الكل
+        </button>
+        <span class="text-zinc-300 dark:text-zinc-600">·</span>
+        <button type="button" @click="$dispatch('branches-toggle', { open: false })"
+                class="text-xs text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 transition font-medium">
+            طي الكل
+        </button>
+    </div>
+
     @foreach($branches as $branchKey => $groups)
         @php
             $branchPermNames = collect($groups)->flatMap(fn($g) => $g->pluck('name'))->unique()->values();
+            // الفرع الذي للدور فيه صلاحية يُفتح: في شاشة التعديل تظهر صورة الدور
+            // بلا تنقيب، وفي شاشة الإضافة (بلا تحديد) تبقى الفروع كلها مطوية.
+            $branchOpen = $branchPermNames->intersect($selectedPermissions ?? [])->isNotEmpty();
         @endphp
         @if($branchPermNames->isNotEmpty())
             <div x-data="{
-                    open: true,
+                    open: @js($branchOpen),
                     branchNames: @js($branchPermNames->toArray()),
                     get allChecked() { return this.branchNames.every(p => $wire.selectedPermissions.includes(p)); },
+                    // عدّاد المطوي: بلا هذا يصير الفرع المقفول صندوقاً أسود — لا تعرف
+                    // أفيه صلاحيات للدور أم لا إلا بفتح الستة واحداً واحداً.
+                    get selectedCount() { return this.branchNames.filter(p => $wire.selectedPermissions.includes(p)).length; },
                     toggleAll() {
                         if (this.allChecked) {
                             $wire.selectedPermissions = $wire.selectedPermissions.filter(p => !this.branchNames.includes(p));
@@ -91,6 +111,7 @@
                         }
                     }
                  }"
+                 x-on:branches-toggle.window="open = $event.detail.open"
                  class="rounded-xl border border-zinc-300 dark:border-zinc-600 overflow-hidden">
 
                 {{-- رأس الفرع — خلفية ذهبية خفيفة.
@@ -101,6 +122,9 @@
                     <button type="button" @click="open = !open" class="flex items-center gap-2 flex-1 text-start">
                         <div class="w-1.5 h-5 bg-[#c9a847] rounded-full"></div>
                         <span class="text-sm font-bold text-[#7a6215] dark:text-[#e0c46a]">{{ __($branchKey) }}</span>
+                        <span x-show="selectedCount > 0"
+                              x-text="selectedCount + ' من ' + {{ $branchPermNames->count() }}"
+                              class="text-[10px] px-1.5 py-0.5 rounded-full bg-[#c9a847] text-white font-medium shrink-0"></span>
                         <svg class="w-4 h-4 text-[#c9a847]/70 transition-transform" :class="{ 'rotate-180': open }" viewBox="0 0 20 20">
                             <path d="M5 8l5 5 5-5" fill="none" stroke="currentColor"/>
                         </svg>
