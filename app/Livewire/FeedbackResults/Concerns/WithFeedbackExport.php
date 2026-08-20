@@ -2,6 +2,7 @@
 
 namespace App\Livewire\FeedbackResults\Concerns;
 
+use App\Support\FeedbackResults\FeedbackAccess;
 use Flux\Flux;
 use Illuminate\Support\Facades\Auth;
 use Maatwebsite\Excel\Facades\Excel;
@@ -107,7 +108,8 @@ trait WithFeedbackExport
             $params['q'] = $this->search;
         }
 
-        if (property_exists($this, 'showTrashed') && $this->showTrashed) {
+        // viewingTrash لا showTrashed: السلة لمن يملك الحذف، والقيمة تصل من الـURL
+        if (method_exists($this, 'viewingTrash') && $this->viewingTrash()) {
             $params['trashed'] = 1;
         }
 
@@ -129,13 +131,19 @@ trait WithFeedbackExport
         return [];
     }
 
+    /** للقالب: مَن له العرض بلا تصدير لا يرى أزرار الملفات أصلاً. */
+    public function canExport(): bool
+    {
+        return FeedbackAccess::canExport(Auth::user());
+    }
+
     /**
-     * حارس ثانٍ: التصدير يصل في طلب مستقل عن mount، فلا يكفي فحص الدخول للشاشة.
-     * نفس منطق applyBulk في WithBulkDelete.
+     * حارس ثانٍ: التصدير يصل في طلب مستقل عن mount، فلا يكفي فحص الدخول للشاشة
+     * (ولا إخفاء الزر من القالب). نفس منطق applyBulk في WithBulkDelete.
      */
     protected function guardExport(): void
     {
-        abort_unless(Auth::user()?->hasRole('super-admin'), 403);
+        abort_unless($this->canExport(), 403);
     }
 
     /**

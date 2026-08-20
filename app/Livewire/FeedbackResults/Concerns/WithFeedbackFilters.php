@@ -4,6 +4,7 @@ namespace App\Livewire\FeedbackResults\Concerns;
 
 use App\Models\Governorate;
 use App\Models\Office;
+use App\Support\FeedbackResults\FeedbackAccess;
 use App\Support\FeedbackResults\FeedbackFilterSet;
 use App\Support\FeedbackResults\FeedbackScope;
 use Carbon\CarbonImmutable;
@@ -20,8 +21,9 @@ use Livewire\Attributes\Url;
  * والـ trait يبنيه من خصائص المكوّن — عشان كنترولرات التصدير (خارج Livewire)
  * تفلتر بنفس الكود بالضبط، فلا يخرج الملف بأرقام تخالف الشاشة.
  *
- * ملاحظة نطاق: الشاشات حالياً super-admin فقط، لكن FeedbackScope هو النقطة
- * الوحيدة اللي هتتوسّع فيها فلترة محافظات المستخدم عند فتح الموديول لأدوار أخرى.
+ * ملاحظة نطاق: الفلاتر تضيّق النطاق ولا توسّعه — الحدّ الأعلى لما يراه المستخدم
+ * يفرضه FeedbackScope داخل كلاسات الاستعلام، فقيمة `gov` مدسوسة في الرابط
+ * لا تُخرج صفاً واحداً خارج محافظاته.
  */
 trait WithFeedbackFilters
 {
@@ -187,20 +189,40 @@ trait WithFeedbackFilters
         return FeedbackScope::apply($query, Auth::user());
     }
 
+    /** محافظات المستخدم — null لبلا حدّ (super-admin). تُقرأ مرة في الطلب. */
+    protected function scopedGovernorateIds(): ?array
+    {
+        return FeedbackAccess::governorateIds(Auth::user());
+    }
+
+    /** قائمة المحافظات في الفلتر = ما يراه المستخدم فعلاً، لا كل المحافظات. */
     #[Computed]
     public function governorateOptions()
     {
-        return Governorate::orderBy('order')->orderBy('name')->get(['id', 'name']);
+        $allowed = $this->scopedGovernorateIds();
+
+        return Governorate::when($allowed !== null, fn ($q) => $q->whereIn('id', $allowed))
+            ->orderBy('order')->orderBy('name')->get(['id', 'name']);
     }
 
     /**
      * مقرات المحافظة المختارة — كل المقرات لا العامة فقط، لأن رأياً قديماً
      * قد يكون معلّقاً على مقر تغيّر نوعه لاحقاً فيلزم أن يظل قابلاً للفلترة.
+     *
+     * ⚠️ مقيَّدة بنطاق المستخدم أيضاً: `?gov=` يأتي من الـURL، فبلا هذا القيد
+     *    يقرأ مَن يعدّل الرابط أسماء مقرات محافظة ليست له (الأرقام مفلترة
+     *    بـFeedbackScope، لكن القائمة نفسها كانت ستُبنى بلا قيد).
      */
     #[Computed]
     public function officeOptions()
     {
         if ($this->governorate_id === '') {
+            return collect();
+        }
+
+        $allowed = $this->scopedGovernorateIds();
+
+        if ($allowed !== null && ! in_array((int) $this->governorate_id, $allowed, true)) {
             return collect();
         }
 

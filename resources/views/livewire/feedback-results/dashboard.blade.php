@@ -326,7 +326,9 @@
         @endif
     </div>
 
-    {{-- ملخص المحاولات المرفوضة --}}
+    {{-- ملخص المحاولات المرفوضة — خلف feedback.rejected مثل شاشته
+         (الأرقام نفسها محروسة في DashboardReport::rejectedSummary فلا تخرج في الملف) --}}
+    @can('feedback.rejected')
     <div class="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-sm p-5">
         <div class="flex items-center justify-between gap-3 mb-5">
             <div class="flex items-center gap-3">
@@ -345,5 +347,6 @@
             @endforeach
         </div>
     </div>
+    @endcan
 
 </div>

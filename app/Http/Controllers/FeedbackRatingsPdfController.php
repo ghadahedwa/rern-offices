@@ -23,12 +23,13 @@ class FeedbackRatingsPdfController extends Controller
 
         $filters  = FeedbackFilterSet::fromRequest($request);
         $personal = $request->boolean('personal');
+        $trashed  = $this->viewingTrash($request);
 
         $query = RatingsQuery::build(
             $filters,
             $request->user(),
             $this->param($request, 'q'),
-            $request->boolean('trashed'),
+            $trashed,
         );
 
         $total = (clone $query)->count();
@@ -45,7 +46,7 @@ class FeedbackRatingsPdfController extends Controller
             'total'         => $total,
             'maxRows'       => self::MAX_ROWS,
             'personal'      => $personal,
-            'trashed'       => $request->boolean('trashed'),
+            'trashed'       => $trashed,
             'filters'       => $filters,
             'waitTimes'     => FeedbackRating::WAIT_TIMES_SHORT,
             'criteria'      => FeedbackRating::CRITERIA,

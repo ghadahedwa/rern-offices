@@ -225,6 +225,9 @@
                     @endif {{-- /branch: correspondence --}}
 
                     @if($currentBranch === 'feedback')
+                    {{-- الشاشات الثلاث بـfeedback.view، والمرفوضات بصلاحيتها المستقلة —
+                         رابط يؤدي إلى ٤٠٣ أسوأ من غيابه --}}
+                    @can('feedback.view')
                     <flux:sidebar.item icon="squares-2x2" :href="route('feedback-results.dashboard')" :current="request()->routeIs('feedback-results.dashboard')" wire:navigate>
                         {{ __('home.fr_dashboard') }}
                     </flux:sidebar.item>
@@ -236,10 +239,13 @@
                     <flux:sidebar.item icon="light-bulb" :href="route('feedback-results.suggestions')" :current="request()->routeIs('feedback-results.suggestions')" wire:navigate>
                         {{ __('home.fr_suggestions') }}
                     </flux:sidebar.item>
+                    @endcan
 
+                    @can('feedback.rejected')
                     <flux:sidebar.item icon="shield-exclamation" :href="route('feedback-results.rejected')" :current="request()->routeIs('feedback-results.rejected')" wire:navigate>
                         {{ __('home.fr_rejected') }}
                     </flux:sidebar.item>
+                    @endcan
                     @endif {{-- /branch: feedback --}}
 
                     @if($currentBranch === 'system')

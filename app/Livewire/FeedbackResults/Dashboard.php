@@ -6,6 +6,7 @@ use App\Exports\FeedbackDashboardExport;
 use App\Livewire\FeedbackResults\Concerns\WithFeedbackExport;
 use App\Livewire\FeedbackResults\Concerns\WithFeedbackFilters;
 use App\Support\FeedbackResults\DashboardReport;
+use App\Support\FeedbackResults\FeedbackAccess;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
@@ -25,7 +26,7 @@ class Dashboard extends Component
 
     public function mount(): void
     {
-        abort_unless(Auth::user()?->hasRole('super-admin'), 403);
+        abort_unless(FeedbackAccess::canView(Auth::user()), 403);
     }
 
     public function report(): DashboardReport

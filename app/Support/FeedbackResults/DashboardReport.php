@@ -291,9 +291,18 @@ final class DashboardReport
         return ['notes' => $notes, 'others' => $others];
     }
 
-    /** ملخص المحاولات المرفوضة حسب السبب — نفس فلترة شاشة المرفوضات. */
+    /**
+     * ملخص المحاولات المرفوضة حسب السبب — نفس فلترة شاشة المرفوضات.
+     *
+     * ⚠️ الحارس هنا لا في القالب: اللوحة تُطبع وتُصدَّر من نفس الدالة،
+     *    فإخفاء البطاقة من الشاشة وحدها كان يُخرج الأرقام في الملف.
+     */
     public function rejectedSummary()
     {
+        if (! FeedbackAccess::canViewRejected($this->user)) {
+            return collect();
+        }
+
         return RejectedAttemptsQuery::build($this->filters, $this->user)
             ->selectRaw('reason, COUNT(*) as total')
             ->groupBy('reason')

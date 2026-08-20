@@ -19,7 +19,7 @@
         @include('livewire.feedback-results.includes.export-bar')
     </div>
 
-    @if($showTrashed)
+    @if($this->viewingTrash())
         <p class="text-xs text-zinc-500 dark:text-zinc-400 border-r-2 border-[#c9a847] pr-3">
             {{ __('home.fr_trash_note') }}
         </p>
@@ -102,7 +102,7 @@
                     @if($expanded === $suggestion->id)
                         {{-- border-t-0!: يلغي فاصل divide-y فيلتحم بالصف الأعلى · border-b-2: يقفل الكتلة --}}
                         <tr class="bg-[#c9a847]/10 dark:bg-[#c9a847]/15 border-t-0! border-b-2 border-b-zinc-300 dark:border-b-zinc-600">
-                            <td colspan="8" class="px-4 pt-0 pb-5">
+                            <td colspan="{{ $this->canDelete() ? 8 : 7 }}" class="px-4 pt-0 pb-5">
                               <div class="rounded-lg border border-[#c9a847]/30 bg-white dark:bg-zinc-900 p-5 shadow-sm">
                                 <div class="flex items-center gap-3 mb-4">
                                     <div class="w-1 h-5 bg-[#c9a847] rounded-full"></div>
@@ -147,7 +147,7 @@
                     @endif
                 @empty
                     <tr>
-                        <td colspan="8" class="px-4 py-10 text-center text-zinc-400">{{ __('home.fr_no_suggestions') }}</td>
+                        <td colspan="{{ $this->canDelete() ? 8 : 7 }}" class="px-4 py-10 text-center text-zinc-400">{{ __('home.fr_no_suggestions') }}</td>
                     </tr>
                 @endforelse
             </tbody>

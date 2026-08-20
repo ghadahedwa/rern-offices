@@ -88,7 +88,7 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="8" class="px-4 py-10 text-center text-zinc-400">{{ __('home.fr_no_rejected') }}</td>
+                        <td colspan="{{ $this->canDelete() ? 8 : 7 }}" class="px-4 py-10 text-center text-zinc-400">{{ __('home.fr_no_rejected') }}</td>
                     </tr>
                 @endforelse
             </tbody>

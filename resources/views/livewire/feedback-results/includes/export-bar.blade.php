@@ -1,10 +1,12 @@
 {{-- أزرار التصدير المشتركة لشاشات نتائج رأي المواطن.
-     الملف يخرج بنفس الفلاتر والبحث والترتيب المعروضة الآن — لا بكل البيانات. --}}
+     الملف يخرج بنفس الفلاتر والبحث والترتيب المعروضة الآن — لا بكل البيانات.
+     ⚠️ الإخفاء هنا للواجهة فقط؛ الحارس الفعلي في guardExport/guardPdf. --}}
 @php
     $hasPdf      = $this->exportHasPdf();
     $hasPersonal = $this->exportHasPersonalData();
 @endphp
 
+@if($this->canExport())
 <div class="flex flex-wrap items-center gap-2">
     <button type="button" wire:click="exportExcel" wire:loading.attr="disabled" wire:target="exportExcel"
             class="inline-flex items-center gap-1.5 text-xs px-3 py-2 rounded-lg border border-zinc-300 dark:border-zinc-600 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition disabled:opacity-50 whitespace-nowrap">
@@ -38,3 +40,4 @@
         {{ __('home.fr_export_preparing') }}
     </span>
 </div>
+@endif

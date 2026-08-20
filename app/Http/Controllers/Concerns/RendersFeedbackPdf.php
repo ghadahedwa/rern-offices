@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Concerns;
 
+use App\Support\FeedbackResults\FeedbackAccess;
 use Illuminate\Http\Request;
 use Mpdf\Config\ConfigVariables;
 use Mpdf\Config\FontVariables;
@@ -20,12 +21,25 @@ trait RendersFeedbackPdf
     protected const MAX_ROWS = 2000;
 
     /**
-     * حارس ثانٍ فوق middleware('role:super-admin') — الراوت قد يُفتح مباشرة
-     * برابط منسوخ، فلا يكفي أن الشاشة نفسها محمية.
+     * حارس ثانٍ فوق middleware الراوت — الرابط قد يُفتح منسوخاً في تبويب آخر،
+     * فلا يكفي أن الشاشة نفسها محمية.
+     *
+     * ⚠️ التقرير المطبوع **تصدير** لا عرض: ملف يخرج من النظام ويُتداول،
+     *    فيُفحص بـfeedback.export لا بـfeedback.view. والنطاق يسري تلقائياً
+     *    لأن الكنترولر يمرّر `$request->user()` لكلاسات الاستعلام.
      */
     protected function guardPdf(Request $request): void
     {
-        abort_unless($request->user()?->hasRole('super-admin'), 403);
+        abort_unless(FeedbackAccess::canExport($request->user()), 403);
+    }
+
+    /**
+     * سلة المحذوفات في التقرير — لمن يملك الحذف وحده.
+     * `?trashed=1` يصل من الرابط، فمَن له التصدير بلا حذف لا يطبع سلة.
+     */
+    protected function viewingTrash(Request $request): bool
+    {
+        return $request->boolean('trashed') && FeedbackAccess::canDelete($request->user());
     }
 
     /** قيمة نصية من الـ URL قد تصل مصفوفة — نتجاهلها بدل الانهيار. */

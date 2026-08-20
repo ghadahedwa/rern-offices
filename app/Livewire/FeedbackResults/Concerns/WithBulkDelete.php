@@ -2,6 +2,7 @@
 
 namespace App\Livewire\FeedbackResults\Concerns;
 
+use App\Support\FeedbackResults\FeedbackAccess;
 use Flux\Flux;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -48,6 +49,17 @@ trait WithBulkDelete
         return in_array(SoftDeletes::class, class_uses_recursive($this->bulkModel()), true);
     }
 
+    /**
+     * هل نعرض سلة المحذوفات الآن؟ **السلة لمن يملك الحذف وحده.**
+     *
+     * ⚠️ لا يكفي إخفاء الزر: `showTrashed` مربوطة بالـURL (`?trashed=1`)
+     *    فتصل من العميل — والقراءة تمرّ من هنا لا من الخاصية مباشرة.
+     */
+    public function viewingTrash(): bool
+    {
+        return $this->showTrashed && $this->canDelete();
+    }
+
     /** يُستدعى من bulkQuery في المكوّن: سلة المحذوفات أم الصفوف الحية. */
     protected function applyTrashScope(Builder $query): Builder
     {
@@ -55,11 +67,15 @@ trait WithBulkDelete
             return $query;
         }
 
-        return $this->showTrashed ? $query->onlyTrashed() : $query;
+        return $this->viewingTrash() ? $query->onlyTrashed() : $query;
     }
 
     public function toggleTrashed(): void
     {
+        if (! $this->canDelete()) {
+            return;
+        }
+
         $this->showTrashed = ! $this->showTrashed;
         $this->clearSelection();
         $this->resetPage();
@@ -202,10 +218,17 @@ trait WithBulkDelete
         return $ids === [] ? null : $query->whereIn($query->getModel()->getQualifiedKeyName(), $ids);
     }
 
+    /** للقالب: مَن له العرض بلا حذف لا يرى مربّعات التحديد ولا السلة أصلاً. */
+    public function canDelete(): bool
+    {
+        return FeedbackAccess::canDelete(Auth::user());
+    }
+
     private function applyBulk(string $action): void
     {
-        // حارس ثانٍ: الإجراء يصل في طلب مستقل عن mount، فلا يكفي فحص الدخول للشاشة.
-        abort_unless(Auth::user()?->hasRole('super-admin'), 403);
+        // حارس ثانٍ: الإجراء يصل في طلب مستقل عن mount، فلا يكفي فحص الدخول
+        // للشاشة ولا إخفاء الأزرار من القالب.
+        abort_unless($this->canDelete(), 403);
 
         if ($action !== 'delete' && ! $this->usesSoftDeletes()) {
             abort(403);
@@ -268,7 +291,7 @@ trait WithBulkDelete
                     'from'           => $this->from,
                     'to'             => $this->to,
                     'search'         => $this->search,
-                    'trashed'        => $this->showTrashed,
+                    'trashed'        => $this->viewingTrash(),
                 ]),
             ])
             ->log(__('home.fr_bulk_log_'.$event).' — '.$this->bulkSubject());

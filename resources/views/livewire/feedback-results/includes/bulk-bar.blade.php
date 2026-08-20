@@ -2,7 +2,7 @@
      يتوقّع: $pageIds (معرّفات الصفحة كنصوص) و$total (إجمالي المطابق للفلتر). --}}
 @php
     $bulkCount = $this->selectedCount();
-    $inTrash   = $this->usesSoftDeletes() && $showTrashed;
+    $inTrash   = $this->usesSoftDeletes() && $this->viewingTrash();
     $btn       = 'inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-md border transition';
 @endphp
 

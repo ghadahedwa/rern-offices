@@ -116,8 +116,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->middleware('role_or_permission:super-admin|offices.settings|warehouses.settings')
         ->name('system-dashboard');
 
-    // نتائج بوابة رأي المواطن — فرع مستقل، super-admin فقط حالياً
-    Route::middleware('role:super-admin')
+    // نتائج بوابة رأي المواطن — فرع مستقل. الدخول بـfeedback.view،
+    // والمستخدم غير السوبر أدمن يرى **بيانات محافظاته وحدها** (FeedbackScope).
+    // ⚠️ التصدير وطباعة الـPDF بـfeedback.export والحذف بـfeedback.delete —
+    //    محروسة داخل الإجراء نفسه لأنها تصل في طلب مستقل عن فتح الشاشة.
+    // ⚠️ الـmiddleware مصفاة خشنة (مَن يدخل الفرع أصلاً)، والحارس الفعلي في mount()
+    //    لكل شاشة — لأن «المحاولات المرفوضة» تُفتح بـfeedback.rejected وحدها.
+    Route::middleware('role_or_permission:super-admin|feedback.view|feedback.rejected')
         ->prefix('feedback-results')
         ->name('feedback-results.')
         ->group(function () {

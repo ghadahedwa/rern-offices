@@ -44,6 +44,30 @@ return [
         ],
     ],
 
+    // نتائج بوابة رأي المواطن — بعد المقرات مباشرة: نطاقه نفس نطاقها (المحافظة)
+    // وقارئه هو قارئها، فيقع في المنيو بجوارها لا في آخر القائمة.
+    'feedback' => [
+        'label'         => 'home.branch_feedback',
+        'icon'          => 'chat-bubble-left-right',
+        'default_route' => 'feedback-results.dashboard',
+        // مَن له المرفوضات وحدها يدخل عليها مباشرة — اللوحة تردّه ٤٠٣
+        'entries' => [
+            'feedback-results.dashboard' => 'feedback.view',
+            'feedback-results.rejected'  => 'feedback.rejected',
+        ],
+        'route_patterns' => [
+            // ملاحظة: البوابة العامة اسمها 'feedback.*' — النمط ده بيخصّ الشاشات الإدارية فقط
+            'feedback-results.*',
+        ],
+        'super_admin_only' => false,
+        'permissions' => [
+            'feedback.view',
+            'feedback.export',
+            'feedback.delete',
+            'feedback.rejected',
+        ],
+    ],
+
     'meetings' => [
         'label'         => 'home.branch_meetings',
         'icon'          => 'calendar-days',
@@ -104,23 +128,6 @@ return [
             'correspondence.create',
             'correspondence.export',
         ],
-    ],
-
-    // نتائج بوابة رأي المواطن — للسوبر أدمن فقط حالياً.
-    // عند التوسيع: احذف super_admin_only وأضف 'feedback.view' في permissions.
-    'feedback' => [
-        'label'         => 'home.branch_feedback',
-        'icon'          => 'chat-bubble-left-right',
-        'default_route' => 'feedback-results.dashboard',
-        'entries' => [
-            'feedback-results.dashboard' => null,
-        ],
-        'route_patterns' => [
-            // ملاحظة: البوابة العامة اسمها 'feedback.*' — النمط ده بيخصّ الشاشات الإدارية فقط
-            'feedback-results.*',
-        ],
-        'super_admin_only' => true,
-        'permissions' => [],
     ],
 
     'system' => [

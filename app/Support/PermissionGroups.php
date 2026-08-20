@@ -28,6 +28,10 @@ class PermissionGroups
             'السيارات المتنقلة' => ['prefix' => 'vehicles.'],
             'المطالبات'         => ['prefix' => 'claims.'],
         ],
+        // نفس ترتيب config/branches.php — شبكة الأدوار والمنيو يقرآن ترتيباً واحداً
+        'home.branch_feedback' => [
+            'رأي المواطن'       => ['prefix' => 'feedback.'],
+        ],
         'home.branch_meetings' => [
             'الاجتماعات'        => ['prefix' => 'meetings.'],
         ],
@@ -67,8 +71,17 @@ class PermissionGroups
         'correspondence.share',
     ];
 
-    /** العنوان الذي يستلزم اختيار محافظات (نطاقه محافظة). */
-    public const GOVERNORATE_BRANCH = 'home.branch_offices';
+    /**
+     * العناوين التي تستلزم اختيار محافظات (نطاقها محافظة).
+     *
+     * ⚠️ قائمة لا قيمة واحدة: نتائج رأي المواطن مربوطة بالمحافظات مثل المقرات
+     *    تماماً (نفس pivot `governorate_user`)، فدور بـ`feedback.view` وحدها
+     *    يحتاج المحافظات — ولولا وجوده هنا لحُفظ المستخدم بلا محافظة فلا يرى شيئاً.
+     */
+    public const GOVERNORATE_BRANCHES = [
+        'home.branch_offices',
+        'home.branch_feedback',
+    ];
 
     /** العنوان الذي يستلزم اختيار طرف ومسمّى وظيفي (نطاقه جهة). */
     public const ENTITY_BRANCH = 'home.branch_correspondence';
@@ -117,10 +130,18 @@ class PermissionGroups
         return false;
     }
 
-    /** هل يستلزم هذا الدور اختيار محافظات؟ */
+    /** هل يستلزم هذا الدور اختيار محافظات؟ (أي عنوان نطاقه محافظة يكفي) */
     public static function needsGovernorates(iterable $permissionNames): bool
     {
-        return self::hasBranch($permissionNames, self::GOVERNORATE_BRANCH);
+        $names = is_array($permissionNames) ? $permissionNames : iterator_to_array($permissionNames);
+
+        foreach (self::GOVERNORATE_BRANCHES as $branchKey) {
+            if (self::hasBranch($names, $branchKey)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /** هل يستلزم هذا الدور اختيار طرف ومسمّى وظيفي؟ */

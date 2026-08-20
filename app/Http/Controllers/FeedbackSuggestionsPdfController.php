@@ -22,12 +22,13 @@ class FeedbackSuggestionsPdfController extends Controller
 
         $filters  = FeedbackFilterSet::fromRequest($request);
         $personal = $request->boolean('personal');
+        $trashed  = $this->viewingTrash($request);
 
         $query = SuggestionsQuery::build(
             $filters,
             $request->user(),
             $this->param($request, 'q'),
-            $request->boolean('trashed'),
+            $trashed,
         );
 
         $total = (clone $query)->count();
@@ -44,7 +45,7 @@ class FeedbackSuggestionsPdfController extends Controller
             'total'       => $total,
             'maxRows'     => self::MAX_ROWS,
             'personal'    => $personal,
-            'trashed'     => $request->boolean('trashed'),
+            'trashed'     => $trashed,
             'filters'     => $filters,
             'generatedAt' => now(),
         ], 'feedback-suggestions', landscape: true);

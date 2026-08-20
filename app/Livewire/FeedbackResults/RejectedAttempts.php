@@ -8,6 +8,7 @@ use App\Livewire\FeedbackResults\Concerns\WithFeedbackExport;
 use App\Livewire\FeedbackResults\Concerns\WithFeedbackFilters;
 use App\Models\FeedbackRejectedAttempt;
 use App\Services\FeedbackGate;
+use App\Support\FeedbackResults\FeedbackAccess;
 use App\Support\FeedbackResults\RejectedAttemptsQuery;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
@@ -37,7 +38,25 @@ class RejectedAttempts extends Component
 
     public function mount(): void
     {
-        abort_unless(Auth::user()?->hasRole('super-admin'), 403);
+        abort_unless(FeedbackAccess::canViewRejected(Auth::user()), 403);
+    }
+
+    /**
+     * الشاشة كلها خلف `feedback.rejected`، فكل إجراء فيها يشترطها **فوق** صلاحيته.
+     * ⚠️ الإجراءات تصل في طلبات مستقلة عن `mount`، فلا يكفي حارس الدخول.
+     */
+    public function canDelete(): bool
+    {
+        return FeedbackAccess::canDelete(Auth::user())
+            && FeedbackAccess::canViewRejected(Auth::user());
+    }
+
+    protected function guardExport(): void
+    {
+        abort_unless(
+            FeedbackAccess::canExport(Auth::user()) && FeedbackAccess::canViewRejected(Auth::user()),
+            403,
+        );
     }
 
     public function updatingSearch(): void

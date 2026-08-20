@@ -8,6 +8,7 @@ use App\Livewire\FeedbackResults\Concerns\WithFeedbackExport;
 use App\Livewire\FeedbackResults\Concerns\WithFeedbackFilters;
 use App\Livewire\FeedbackResults\Concerns\WithFeedbackSorting;
 use App\Models\FeedbackSuggestion;
+use App\Support\FeedbackResults\FeedbackAccess;
 use App\Support\FeedbackResults\SuggestionsQuery;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
@@ -31,7 +32,7 @@ class Suggestions extends Component
 
     public function mount(): void
     {
-        abort_unless(Auth::user()?->hasRole('super-admin'), 403);
+        abort_unless(FeedbackAccess::canView(Auth::user()), 403);
     }
 
     /** topics_count متاح للترتيب لأن withCount يضيفه كعمود في الاستعلام. */
@@ -63,7 +64,7 @@ class Suggestions extends Component
     /** الاستعلام المفلتر — مصدر واحد لما يُعرض ولما يُحذف جماعياً ولما يُصدَّر. */
     protected function bulkQuery(): Builder
     {
-        return SuggestionsQuery::build($this->filterSet(), Auth::user(), $this->search, $this->showTrashed);
+        return SuggestionsQuery::build($this->filterSet(), Auth::user(), $this->search, $this->viewingTrash());
     }
 
     /* ── التصدير ── */
