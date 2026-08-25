@@ -885,6 +885,8 @@ return [
     'item_unit_in_use_warning'    => 'لا يمكن حذف الوحدة لأنها مستخدمة في :count صنف.',
     'item_units_title'            => 'وحدات الأصناف',
     'item_unit'                   => 'الوحدة',
+    'item_unit_all'               => '— كل الوحدات —',
+    'item_unit_none'              => 'بلا وحدة',
     'item_unit_created'           => 'تم إضافة الوحدة',
     'item_unit_updated'           => 'تم تعديل الوحدة',
     'item_unit_deleted'           => 'تم حذف الوحدة',

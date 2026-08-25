@@ -4,6 +4,7 @@ namespace App\Livewire\Warehouses\Items;
 
 use App\Models\Item;
 use App\Models\ItemCategory;
+use App\Models\ItemUnit;
 use App\Models\WarehouseIncomingItem;
 use App\Models\WarehouseTransferItem;
 use App\Support\ArabicDigits;
@@ -25,6 +26,10 @@ class Index extends Component
     /** معرّف قسم، أو 'none' للأصناف بلا قسم، أو '' للكل. */
     #[Url(as: 'category', except: '')]
     public string $categoryFilter = '';
+
+    /** معرّف وحدة، أو 'none' للأصناف بلا وحدة، أو '' للكل. */
+    #[Url(as: 'unit', except: '')]
+    public string $unitFilter = '';
 
     /** 'yes' نشط · 'no' غير نشط · '' الكل. */
     #[Url(as: 'status', except: '')]
@@ -48,6 +53,11 @@ class Index extends Component
     }
 
     public function updatingCategoryFilter(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatingUnitFilter(): void
     {
         $this->resetPage();
     }
@@ -96,6 +106,8 @@ class Index extends Component
             // الفلتر يصل من الرابط، فقيمة غير 'none' وغير رقمية تُهمَل ولا تُمرَّر لاستعلام
             ->when($this->categoryFilter === 'none', fn ($q) => $q->whereNull('items.item_category_id'))
             ->when(ctype_digit($this->categoryFilter), fn ($q) => $q->where('items.item_category_id', (int) $this->categoryFilter))
+            ->when($this->unitFilter === 'none', fn ($q) => $q->whereNull('items.item_unit_id'))
+            ->when(ctype_digit($this->unitFilter), fn ($q) => $q->where('items.item_unit_id', (int) $this->unitFilter))
             // قيمة غير 'yes'/'no' تُهمَل — وإلا فسّرها المقارِن «غير نشط» صامتاً
             ->when(
                 in_array($this->statusFilter, ['yes', 'no'], true),
@@ -125,6 +137,7 @@ class Index extends Component
         return view('livewire.warehouses.items.index', [
             'items'      => $items,
             'categories' => ItemCategory::orderBy('order')->orderBy('name')->get(),
+            'units'      => ItemUnit::orderBy('name')->get(),
             'canManage'  => Auth::user()?->can('warehouses.settings'),
         ]);
     }

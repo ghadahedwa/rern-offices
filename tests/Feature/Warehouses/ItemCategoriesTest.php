@@ -338,6 +338,73 @@ it('يتجاهل قيمة فلتر تالفة تصل من الرابط', functio
         ->assertSee('صنف بلا تصنيف');
 });
 
+// ── فلتر الوحدة ──────────────────────────────────────────
+
+it('يفلتر الأصناف بالوحدة', function () {
+    $category = registryCategoryForFilters();
+    $piece    = ItemUnit::firstOrCreate(['name' => 'قطعة']);
+    $device   = ItemUnit::firstOrCreate(['name' => 'جهاز']);
+    Item::create(['name' => 'حبر توشيبا', 'item_category_id' => $category->id, 'item_unit_id' => $piece->id]);
+    Item::create(['name' => 'ماكينة تصوير', 'item_category_id' => $category->id, 'item_unit_id' => $device->id]);
+    $this->actingAs(categoriesManager());
+
+    Livewire::test(ItemIndex::class)
+        ->set('unitFilter', (string) $device->id)
+        ->assertSee('ماكينة تصوير')
+        ->assertDontSee('حبر توشيبا');
+});
+
+it('يعرض الأصناف بلا وحدة عند اختيار «بلا وحدة»', function () {
+    $category = registryCategoryForFilters();
+    $piece    = ItemUnit::firstOrCreate(['name' => 'قطعة']);
+    Item::create(['name' => 'حبر توشيبا', 'item_category_id' => $category->id, 'item_unit_id' => $piece->id]);
+    Item::create(['name' => 'صنف بلا وحدة', 'item_category_id' => $category->id, 'item_unit_id' => null]);
+    $this->actingAs(categoriesManager());
+
+    Livewire::test(ItemIndex::class)
+        ->set('unitFilter', 'none')
+        ->assertSee('صنف بلا وحدة')
+        ->assertDontSee('حبر توشيبا');
+});
+
+it('يتجاهل قيمة وحدة تالفة تصل من الرابط', function () {
+    $category = registryCategoryForFilters();
+    $piece    = ItemUnit::firstOrCreate(['name' => 'قطعة']);
+    Item::create(['name' => 'حبر توشيبا', 'item_category_id' => $category->id, 'item_unit_id' => $piece->id]);
+    Item::create(['name' => 'صنف بلا وحدة', 'item_category_id' => $category->id, 'item_unit_id' => null]);
+    $this->actingAs(categoriesManager());
+
+    Livewire::withQueryParams(['unit' => 'قطعة'])
+        ->test(ItemIndex::class)
+        ->assertOk()
+        ->assertSee('حبر توشيبا')
+        ->assertSee('صنف بلا وحدة');
+});
+
+it('يجمع فلتر الوحدة مع القسم والحالة والبحث معاً', function () {
+    // البحث يُضاف بـOR داخلياً — لو لم يُلفّ بمجموعته لابتلع بقية الفلاتر
+    $photo  = ItemCategory::create(['name' => 'مخزن التصوير', 'order' => 1]);
+    $fixed  = ItemCategory::create(['name' => 'مخزن المستديم', 'order' => 2]);
+    $device = ItemUnit::firstOrCreate(['name' => 'جهاز']);
+    $piece  = ItemUnit::firstOrCreate(['name' => 'قطعة']);
+
+    Item::create(['name' => 'حبر توشيبا مطلوب', 'item_category_id' => $photo->id, 'item_unit_id' => $device->id, 'is_active' => true]);
+    Item::create(['name' => 'حبر توشيبا متوقف', 'item_category_id' => $photo->id, 'item_unit_id' => $device->id, 'is_active' => false]);
+    Item::create(['name' => 'حبر توشيبا قطعة',  'item_category_id' => $photo->id, 'item_unit_id' => $piece->id,  'is_active' => true]);
+    Item::create(['name' => 'حبر توشيبا مستديم', 'item_category_id' => $fixed->id, 'item_unit_id' => $device->id, 'is_active' => true]);
+    $this->actingAs(categoriesManager());
+
+    Livewire::test(ItemIndex::class)
+        ->set('categoryFilter', (string) $photo->id)
+        ->set('unitFilter', (string) $device->id)
+        ->set('statusFilter', 'yes')
+        ->set('search', 'توشيبا')
+        ->assertSee('حبر توشيبا مطلوب')
+        ->assertDontSee('حبر توشيبا متوقف')
+        ->assertDontSee('حبر توشيبا قطعة')
+        ->assertDontSee('حبر توشيبا مستديم');
+});
+
 // ── فلتر الحالة ──────────────────────────────────────────
 
 it('يفلتر الأصناف النشطة وحدها', function () {
