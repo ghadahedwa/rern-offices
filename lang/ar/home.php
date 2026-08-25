@@ -939,6 +939,7 @@ return [
     'wh_duplicate_item'           => 'لا يمكن تكرار نفس الصنف أكثر من مرة',
     'wh_stock'                    => 'الأرصدة',
     'wh_all_warehouses'           => 'كل المخازن',
+    'wh_all_types'                => '— كل الأنواع —',
     'wh_quantity'                 => 'الكمية',
     'wh_current_balance'          => 'الرصيد الحالي',
     'wh_incoming'                 => 'الوارد',

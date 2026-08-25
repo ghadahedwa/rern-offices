@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Warehouses;
 
+use App\Models\ItemCategory;
 use App\Models\Warehouse;
 use App\Models\WarehouseStock;
 use App\Support\ArabicText;
@@ -20,6 +21,9 @@ class Stock extends Component
     public string $search = '';
     public string $warehouseFilter = '';
 
+    /** معرّف قسم، أو 'none' للأصناف بلا قسم، أو '' للكل. */
+    public string $categoryFilter = '';
+
     public function mount(): void
     {
         abort_unless(Auth::user()?->can('warehouses.index'), 403);
@@ -35,6 +39,11 @@ class Stock extends Component
         $this->resetPage();
     }
 
+    public function updatingCategoryFilter(): void
+    {
+        $this->resetPage();
+    }
+
     public function render()
     {
         $stocks = WarehouseStock::query()
@@ -42,18 +51,22 @@ class Stock extends Component
             ->join('items', 'warehouse_stocks.item_id', '=', 'items.id')
             ->select('warehouse_stocks.*')
             ->when($this->warehouseFilter, fn ($q) => $q->where('warehouse_stocks.warehouse_id', $this->warehouseFilter))
+            // قسم الصنف لا المخزن: القسم صفة على الصنف نفسه، فيصل عبر الـjoin القائم
+            ->when($this->categoryFilter === 'none', fn ($q) => $q->whereNull('items.item_category_id'))
+            ->when(ctype_digit($this->categoryFilter), fn ($q) => $q->where('items.item_category_id', (int) $this->categoryFilter))
             ->when($this->search, fn ($q) => $q->whereRaw(
                 ArabicText::sqlNormalize('items.name').' LIKE ?',
                 ['%'.ArabicText::normalize($this->search).'%']
             ))
-            ->with(['warehouse.type', 'item.unit'])
+            ->with(['warehouse.type', 'item.unit', 'item.category'])
             ->orderBy('warehouses.name')
             ->orderBy('items.name')
             ->paginate(20);
 
         return view('livewire.warehouses.stock', [
             'stocks'     => $stocks,
-            'warehouses' => Warehouse::orderBy('name')->get(),
+            'warehouses' => Warehouse::ordered()->get(),
+            'categories' => ItemCategory::orderBy('order')->orderBy('name')->get(),
         ]);
     }
 }

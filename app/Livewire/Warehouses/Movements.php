@@ -3,6 +3,7 @@
 namespace App\Livewire\Warehouses;
 
 use App\Models\Item;
+use App\Models\ItemCategory;
 use App\Models\Warehouse;
 use App\Models\WarehouseMovement;
 use App\Support\ArabicText;
@@ -21,6 +22,10 @@ class Movements extends Component
     public string $search = '';
     public string $warehouseFilter = '';
     public string $itemFilter = '';
+
+    /** معرّف قسم، أو 'none' للحركات على أصناف بلا قسم، أو '' للكل. */
+    public string $categoryFilter = '';
+
     public string $typeFilter = '';
     public string $dateFrom = '';
     public string $dateTo = '';
@@ -43,6 +48,15 @@ class Movements extends Component
     public function updatingItemFilter(): void
     {
         $this->resetPage();
+    }
+
+    public function updatingCategoryFilter(): void
+    {
+        $this->resetPage();
+
+        // ⚠️ الصنف المختار قد لا ينتمي للقسم الجديد، فيبقى مُطبَّقاً ولا يظهر
+        //    في المنسدلة — فتُعرض شاشةٌ فارغة بلا سببٍ ظاهر للمستخدم.
+        $this->itemFilter = '';
     }
 
     public function updatingTypeFilter(): void
@@ -77,6 +91,9 @@ class Movements extends Component
             }))
             ->when($this->warehouseFilter, fn ($q) => $q->where('warehouse_movements.warehouse_id', $this->warehouseFilter))
             ->when($this->itemFilter, fn ($q) => $q->where('warehouse_movements.item_id', $this->itemFilter))
+            // قسم الصنف لا المخزن — يصل عبر الـjoin القائم على items
+            ->when($this->categoryFilter === 'none', fn ($q) => $q->whereNull('items.item_category_id'))
+            ->when(ctype_digit($this->categoryFilter), fn ($q) => $q->where('items.item_category_id', (int) $this->categoryFilter))
             ->when($this->typeFilter, fn ($q) => $q->where('warehouse_movements.type', $this->typeFilter))
             ->when($this->dateFrom, fn ($q) => $q->whereDate('warehouse_movements.created_at', '>=', $this->dateFrom))
             ->when($this->dateTo, fn ($q) => $q->whereDate('warehouse_movements.created_at', '<=', $this->dateTo))
@@ -87,8 +104,15 @@ class Movements extends Component
 
         return view('livewire.warehouses.movements', [
             'movements'  => $movements,
-            'warehouses' => Warehouse::orderBy('name')->get(),
-            'items'      => Item::orderBy('name')->get(),
+            'warehouses' => Warehouse::ordered()->get(),
+            // منسدلة الأصناف تتبع القسم المختار — ٣٧٧ صنفاً في قائمة واحدة
+            // مسطّحة لا تُتصفَّح، وحصرُها في القسم هو ما يجعل الفلتر صالحاً
+            'items' => Item::query()
+                ->when($this->categoryFilter === 'none', fn ($q) => $q->whereNull('item_category_id'))
+                ->when(ctype_digit($this->categoryFilter), fn ($q) => $q->where('item_category_id', (int) $this->categoryFilter))
+                ->orderBy('name')
+                ->get(),
+            'categories' => ItemCategory::orderBy('order')->orderBy('name')->get(),
         ]);
     }
 }

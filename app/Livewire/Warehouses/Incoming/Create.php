@@ -117,8 +117,8 @@ class Create extends Component
         return view('livewire.warehouses.incoming.create', [
             'warehouses' => Warehouse::with('type')
                 ->whereHas('type', fn ($q) => $q->where('level', 1))
-                ->where('is_active', true)
-                ->orderBy('name')
+                ->where('warehouses.is_active', true)
+                ->ordered()
                 ->get(),
             'items' => Item::where('is_active', true)->orderBy('name')->get(),
         ]);

@@ -5,6 +5,7 @@ namespace App\Livewire\Warehouses\Manage;
 use App\Models\Warehouse;
 use App\Models\WarehouseIncoming;
 use App\Models\WarehouseTransfer;
+use App\Models\WarehouseType;
 use App\Support\ArabicText;
 use Flux\Flux;
 use Illuminate\Support\Facades\Auth;
@@ -21,6 +22,9 @@ class Index extends Component
 
     public string $search = '';
 
+    /** معرّف نوع مخزن، أو '' للكل. */
+    public string $typeFilter = '';
+
     public bool $showDelete = false;
     public ?int $deletingId = null;
     public string $deletingLabel = '';
@@ -32,6 +36,11 @@ class Index extends Component
     }
 
     public function updatingSearch(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatingTypeFilter(): void
     {
         $this->resetPage();
     }
@@ -71,14 +80,18 @@ class Index extends Component
         $warehouses = Warehouse::query()
             ->with(['type', 'governorate'])
             ->when($this->search, fn ($q) => $q->whereRaw(
-                ArabicText::sqlNormalize('name').' LIKE ?',
+                ArabicText::sqlNormalize('warehouses.name').' LIKE ?',
                 ['%'.ArabicText::normalize($this->search).'%']
             ))
-            ->orderBy('name')
+            // قيمة غير رقمية تصل من العميل تُهمَل ولا تُمرَّر لاستعلام
+            ->when(ctype_digit($this->typeFilter), fn ($q) => $q->where('warehouses.warehouse_type_id', (int) $this->typeFilter))
+            ->ordered()
             ->paginate(15);
 
         return view('livewire.warehouses.manage.index', [
             'warehouses' => $warehouses,
+            // بترتيب المستوى نفسه المعتمد في عرض المخازن — لا أبجدياً
+            'types'      => WarehouseType::orderBy('level')->orderBy('order')->get(),
             'canManage'  => Auth::user()?->can('warehouses.settings'),
         ]);
     }

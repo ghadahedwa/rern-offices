@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -32,6 +33,31 @@ class Warehouse extends Model
     public function stocks(): HasMany
     {
         return $this->hasMany(WarehouseStock::class);
+    }
+
+    /**
+     * ترتيب عرض المخازن المعتمد: **المستوى ثم المحافظة ثم الاسم**.
+     *
+     * ⚠️ يُستعمل في كل شاشة تعرض مخازن (قوائم وفلاتر ومنسدلات) — القاعدة واحدة،
+     *    فالترتيب الأبجدي وحده يبعثر الرئيسي بين الفروع بلا معنى تنظيمي.
+     *    وضعُه نطاقاً على الموديل يمنع تفرّق القاعدة على عشرة مواضع.
+     *
+     * ⚠️ الانضمامان `left` لا `inner`: محافظة المخزن اختيارية (المخزن الرئيسي
+     *    بلا محافظة)، والانضمام الداخلي كان يُسقطه من كل قائمة.
+     *
+     * ⚠️ و`select('warehouses.*')` ضروري: بلا حصرٍ للأعمدة يطغى `id` الجدولين
+     *    المنضمّين على `id` المخزن فيصير كل صف يحمل معرّف نوعه أو محافظته.
+     */
+    public function scopeOrdered(Builder $query): Builder
+    {
+        return $query
+            ->leftJoin('warehouse_types', 'warehouses.warehouse_type_id', '=', 'warehouse_types.id')
+            ->leftJoin('governorates', 'warehouses.governorate_id', '=', 'governorates.id')
+            ->select('warehouses.*')
+            ->orderBy('warehouse_types.level')
+            ->orderBy('governorates.order')
+            ->orderBy('governorates.name')
+            ->orderBy('warehouses.name');
     }
 
     /** المستوى الهرمي للمخزن (من نوعه) — 1=رئيسي. */

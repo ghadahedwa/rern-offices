@@ -130,7 +130,7 @@ class Create extends Component
         }
 
         return view('livewire.warehouses.transfers.create', [
-            'warehouses' => Warehouse::where('is_active', true)->orderBy('name')->get(),
+            'warehouses' => Warehouse::where('warehouses.is_active', true)->ordered()->get(),
             'items'      => Item::where('is_active', true)->orderBy('name')->get(),
             'stocks'     => $stocks,
         ]);

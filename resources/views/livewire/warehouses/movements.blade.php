@@ -18,6 +18,15 @@
             @endforeach
         </select>
 
+        <select wire:model.live="categoryFilter"
+                class="border border-zinc-300 dark:border-zinc-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-[#c9a847]">
+            <option value="">{{ __('home.item_category_all') }}</option>
+            @foreach($categories as $category)
+                <option value="{{ $category->id }}">{{ $category->name }}</option>
+            @endforeach
+            <option value="none">{{ __('home.item_category_none') }}</option>
+        </select>
+
         <select wire:model.live="itemFilter"
                 class="border border-zinc-300 dark:border-zinc-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-[#c9a847]">
             <option value="">— {{ __('home.item') }} —</option>
