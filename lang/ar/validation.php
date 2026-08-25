@@ -190,6 +190,7 @@ return [
         'warehouse_type_id'     => 'نوع المخزن',
         'governorate_id'        => 'المحافظة',
         'item_unit_id'          => 'الوحدة',
+        'item_category_id'      => 'القسم',
         'min_stock'             => 'الحد الأدنى',
         'warehouse_id'          => 'المخزن',
         'from_warehouse_id'     => 'المخزن المصدر',

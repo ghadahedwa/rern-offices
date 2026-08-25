@@ -146,6 +146,7 @@ return [
             'items.*',
             'warehouse-types.*',
             'item-units.*',
+            'item-categories.*',
             // إعدادات المقرات (القوائم المرجعية للمقرات والسيارات) — تهيئة يديرها الأدمن
             'office-types.*',
             'location-descriptions.*',

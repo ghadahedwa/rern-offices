@@ -160,6 +160,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::livewire('items/create', \App\Livewire\Warehouses\Items\Create::class)->name('items.create');
         Route::livewire('items/{item}/edit', \App\Livewire\Warehouses\Items\Create::class)->name('items.edit');
 
+        Route::livewire('item-categories', \App\Livewire\Warehouses\Categories\Index::class)->name('item-categories.index');
+        Route::livewire('item-categories/create', \App\Livewire\Warehouses\Categories\Create::class)->name('item-categories.create');
+        Route::livewire('item-categories/{itemCategory}/edit', \App\Livewire\Warehouses\Categories\Create::class)->name('item-categories.edit');
+
         Route::livewire('warehouse-types', \App\Livewire\Warehouses\Types\Index::class)->name('warehouse-types.index');
         Route::livewire('warehouse-types/create', \App\Livewire\Warehouses\Types\Create::class)->name('warehouse-types.create');
         Route::livewire('warehouse-types/{warehouseType}/edit', \App\Livewire\Warehouses\Types\Create::class)->name('warehouse-types.edit');

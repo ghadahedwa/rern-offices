@@ -10,15 +10,24 @@ class Item extends Model
 {
     protected $fillable = [
         'name',
+        'item_category_id',
+        'code',
         'item_unit_id',
         'min_stock',
+        'order',
         'is_active',
     ];
 
     protected $casts = [
         'min_stock' => 'integer',
+        'order'     => 'integer',
         'is_active' => 'boolean',
     ];
+
+    public function category(): BelongsTo
+    {
+        return $this->belongsTo(ItemCategory::class, 'item_category_id');
+    }
 
     public function unit(): BelongsTo
     {

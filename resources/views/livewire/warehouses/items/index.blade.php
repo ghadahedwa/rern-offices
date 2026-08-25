@@ -14,11 +14,27 @@
         @endif
     </div>
 
-    {{-- Search --}}
-    <div class="max-w-sm">
+    {{-- Search + filters --}}
+    <div class="flex flex-wrap items-center gap-3">
         <input wire:model.live.debounce.300ms="search" type="text"
                placeholder="{{ __('home.search') }}"
-               class="w-full border border-zinc-300 dark:border-zinc-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-[#c9a847]" />
+               class="max-w-sm flex-1 min-w-50 border border-zinc-300 dark:border-zinc-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-[#c9a847]" />
+
+        <select wire:model.live="categoryFilter"
+                class="border border-zinc-300 dark:border-zinc-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-[#c9a847]">
+            <option value="">{{ __('home.item_category_all') }}</option>
+            @foreach($categories as $category)
+                <option value="{{ $category->id }}">{{ $category->name }}</option>
+            @endforeach
+            <option value="none">{{ __('home.item_category_none') }}</option>
+        </select>
+
+        <select wire:model.live="statusFilter"
+                class="border border-zinc-300 dark:border-zinc-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-[#c9a847]">
+            <option value="">— {{ __('home.warehouse_status') }} —</option>
+            <option value="yes">{{ __('home.warehouse_active') }}</option>
+            <option value="no">{{ __('home.warehouse_inactive') }}</option>
+        </select>
     </div>
 
     {{-- Table --}}
@@ -28,6 +44,7 @@
                 <tr>
                     <th class="px-4 py-3 font-medium">#</th>
                     <th class="px-4 py-3 font-medium">{{ __('home.item_name') }}</th>
+                    <th class="px-4 py-3 font-medium">{{ __('home.item_category') }}</th>
                     <th class="px-4 py-3 font-medium">{{ __('home.item_unit') }}</th>
                     <th class="px-4 py-3 font-medium">{{ __('home.item_min_stock') }}</th>
                     <th class="px-4 py-3 font-medium">{{ __('home.warehouse_status') }}</th>
@@ -40,7 +57,19 @@
                 @forelse($items as $item)
                     <tr class="hover:bg-zinc-50 dark:hover:bg-zinc-800 transition">
                         <td class="px-4 py-3 text-zinc-500">{{ $items->firstItem() + $loop->index }}</td>
-                        <td class="px-4 py-3 font-medium text-zinc-800 dark:text-zinc-100">{{ $item->name }}</td>
+                        <td class="px-4 py-3 font-medium text-zinc-800 dark:text-zinc-100">
+                            {{ $item->name }}
+                            @if($item->code)
+                                <span class="mr-2 inline-flex items-center px-1.5 py-0.5 rounded text-[11px] font-normal text-zinc-500 bg-zinc-100 dark:text-zinc-400 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700">{{ $item->code }}</span>
+                            @endif
+                        </td>
+                        <td class="px-4 py-3">
+                            @if($item->category)
+                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium text-[#8a7020] bg-[#c9a847]/15 dark:text-[#e0c76b] dark:bg-[#c9a847]/10">{{ $item->category->name }}</span>
+                            @else
+                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium text-amber-700 bg-amber-100 dark:text-amber-300 dark:bg-amber-900/30">{{ __('home.item_category_none') }}</span>
+                            @endif
+                        </td>
                         <td class="px-4 py-3 text-zinc-600 dark:text-zinc-300">{{ $item->unit?->name ?? '—' }}</td>
                         <td class="px-4 py-3 text-zinc-600 dark:text-zinc-300">{{ $item->min_stock ?? '—' }}</td>
                         <td class="px-4 py-3">
@@ -68,7 +97,7 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="{{ $canManage ? 6 : 5 }}" class="px-4 py-10 text-center text-zinc-400">
+                        <td colspan="{{ $canManage ? 7 : 6 }}" class="px-4 py-10 text-center text-zinc-400">
                             {{ __('home.no_data') }}
                         </td>
                     </tr>

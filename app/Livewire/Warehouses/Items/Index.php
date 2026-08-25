@@ -3,13 +3,16 @@
 namespace App\Livewire\Warehouses\Items;
 
 use App\Models\Item;
+use App\Models\ItemCategory;
 use App\Models\WarehouseIncomingItem;
 use App\Models\WarehouseTransferItem;
+use App\Support\ArabicDigits;
 use App\Support\ArabicText;
 use Flux\Flux;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
+use Livewire\Attributes\Url;
 use Livewire\Component;
 use Livewire\WithPagination;
 
@@ -18,6 +21,14 @@ use Livewire\WithPagination;
 class Index extends Component
 {
     use WithPagination;
+
+    /** معرّف قسم، أو 'none' للأصناف بلا قسم، أو '' للكل. */
+    #[Url(as: 'category', except: '')]
+    public string $categoryFilter = '';
+
+    /** 'yes' نشط · 'no' غير نشط · '' الكل. */
+    #[Url(as: 'status', except: '')]
+    public string $statusFilter = '';
 
     public string $search = '';
 
@@ -32,6 +43,16 @@ class Index extends Component
     }
 
     public function updatingSearch(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatingCategoryFilter(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatingStatusFilter(): void
     {
         $this->resetPage();
     }
@@ -69,17 +90,42 @@ class Index extends Component
     public function render()
     {
         $items = Item::query()
-            ->with('unit')
-            ->when($this->search, fn ($q) => $q->whereRaw(
-                ArabicText::sqlNormalize('name').' LIKE ?',
-                ['%'.ArabicText::normalize($this->search).'%']
-            ))
-            ->orderBy('name')
+            ->leftJoin('item_categories', 'items.item_category_id', '=', 'item_categories.id')
+            ->select('items.*')
+            ->with(['unit', 'category'])
+            // الفلتر يصل من الرابط، فقيمة غير 'none' وغير رقمية تُهمَل ولا تُمرَّر لاستعلام
+            ->when($this->categoryFilter === 'none', fn ($q) => $q->whereNull('items.item_category_id'))
+            ->when(ctype_digit($this->categoryFilter), fn ($q) => $q->where('items.item_category_id', (int) $this->categoryFilter))
+            // قيمة غير 'yes'/'no' تُهمَل — وإلا فسّرها المقارِن «غير نشط» صامتاً
+            ->when(
+                in_array($this->statusFilter, ['yes', 'no'], true),
+                fn ($q) => $q->where('items.is_active', $this->statusFilter === 'yes')
+            )
+            // البحث يشمل رقم الصنف: الموظف يعرف أصناف الدفتر العقاري بأرقامها.
+            // كلمة البحث تُحوَّل لأرقام هندية لأن العمود مخزَّن بها.
+            ->when($this->search, function ($q) {
+                $term = ArabicText::normalize($this->search);
+
+                $q->where(fn ($sub) => $sub
+                    ->whereRaw(ArabicText::sqlNormalize('items.name').' LIKE ?', ['%'.$term.'%'])
+                    ->orWhereRaw(
+                        ArabicText::sqlNormalize('items.code').' LIKE ?',
+                        ['%'.ArabicDigits::toArabic($term).'%']
+                    ));
+            })
+            // ترتيب القسم ثم ترتيب الصنف داخله ثم الاسم — الترتيب الأبجدي وحده
+            // يزيح سطور البيان المطبوع مع كل صنف جديد. والأصناف بلا قسم في الآخر.
+            ->orderByRaw('CASE WHEN items.item_category_id IS NULL THEN 1 ELSE 0 END')
+            ->orderBy('item_categories.order')
+            ->orderBy('item_categories.name')
+            ->orderBy('items.order')
+            ->orderBy('items.name')
             ->paginate(15);
 
         return view('livewire.warehouses.items.index', [
-            'items'     => $items,
-            'canManage' => Auth::user()?->can('warehouses.settings'),
+            'items'      => $items,
+            'categories' => ItemCategory::orderBy('order')->orderBy('name')->get(),
+            'canManage'  => Auth::user()?->can('warehouses.settings'),
         ]);
     }
 }
