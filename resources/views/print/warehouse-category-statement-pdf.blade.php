@@ -100,9 +100,12 @@
                     @foreach([0, 1] as $group)
                         <th style="width:{{ $hasCodes ? '5%' : '7%' }}">{{ __('home.wh_statement_serial') }}</th>
                         @if($hasCodes)
-                            <th style="width:10%">{{ __('home.wh_statement_code_short') }}</th>
+                            {{-- ⚠️ عرض هذا العمود مقيس: بـ١٠٪ ينكسر «رقم الصنف» ثلاثة
+                                 أسطر، وبـ١٢٪ يدخل سطراً، وأُخذ ١٣٪ بهامش. ولا يكلّف ورقة:
+                                 «الدفتر العقاري» ثلاث أوراق قبله وبعده. --}}
+                            <th style="width:13%">{{ __('home.item_code') }}</th>
                         @endif
-                        <th style="width:{{ $hasCodes ? '25%' : '26%' }}">{{ __('home.item_name') }}</th>
+                        <th style="width:{{ $hasCodes ? '22%' : '26%' }}">{{ __('home.item_name') }}</th>
                         <th style="width:{{ $hasCodes ? '10%' : '17%' }}">{{ __('home.wh_statement_count_print') }}</th>
                     @endforeach
                 @else
