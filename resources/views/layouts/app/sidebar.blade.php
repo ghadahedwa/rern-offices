@@ -205,6 +205,12 @@
                         {{ __('home.wh_movements') }}
                     </flux:sidebar.item>
 
+                    @if(auth()->user()?->can('warehouses.export'))
+                    <flux:sidebar.item icon="document-text" :href="route('warehouses.statement')" :current="request()->routeIs('warehouses.statement')" wire:navigate>
+                        {{ __('home.wh_statement') }}
+                    </flux:sidebar.item>
+                    @endif
+
                     @if(auth()->user()?->hasRole('super-admin') || auth()->user()?->can('warehouses.create'))
                     <flux:sidebar.item icon="clipboard-document-list" :href="route('warehouses.opening-balances')" :current="request()->routeIs('warehouses.opening-balances')" wire:navigate>
                         {{ __('home.wh_opening_balances') }}

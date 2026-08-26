@@ -82,6 +82,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->middleware('permission:warehouses.index')
         ->name('warehouses.movements');
 
+    // بيان بأرصدة القسم — شاشة معاينة وكنترولر طباعة، وفلتراهما في الرابط
+    Route::livewire('warehouses/statement', \App\Livewire\Warehouses\Statement::class)
+        ->middleware('permission:warehouses.export')
+        ->name('warehouses.statement');
+
+    Route::get('warehouses/statement/pdf', \App\Http\Controllers\WarehouseCategoryStatementPdfController::class)
+        ->middleware('permission:warehouses.export')
+        ->name('warehouses.statement.pdf');
+
     // دليل الهاتف للمقرات — صلاحية offices.phone-directory (تُفحص داخل mount)
     Route::livewire('offices-phone-directory', \App\Livewire\Reports\PhoneDirectory::class)->name('offices.phone-directory');
 

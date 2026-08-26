@@ -19,6 +19,9 @@ class Create extends Component
     public string $name = '';
     public ?int $warehouse_type_id = null;
     public ?int $governorate_id = null;
+
+    /** سطر الجهة في ترويسة البيان المطبوع — فارغاً يُحذف السطر لا يُستبدل. */
+    public string $letterhead = '';
     public bool $is_active = true;
 
     public function mount(?Warehouse $warehouse = null): void
@@ -30,6 +33,7 @@ class Create extends Component
             $this->name              = $warehouse->name;
             $this->warehouse_type_id = $warehouse->warehouse_type_id;
             $this->governorate_id    = $warehouse->governorate_id;
+            $this->letterhead        = (string) $warehouse->letterhead;
             $this->is_active         = $warehouse->is_active;
         }
     }
@@ -40,6 +44,7 @@ class Create extends Component
             'name'              => ['required', 'string', 'max:255'],
             'warehouse_type_id' => ['required', 'exists:warehouse_types,id'],
             'governorate_id'    => ['nullable', 'exists:governorates,id'],
+            'letterhead'        => ['nullable', 'string', 'max:255'],
             'is_active'         => ['boolean'],
         ];
     }

@@ -189,6 +189,7 @@ return [
         'level'                 => 'المستوى',
         'warehouse_type_id'     => 'نوع المخزن',
         'governorate_id'        => 'المحافظة',
+        'letterhead'            => 'الجهة في ترويسة البيان',
         'item_unit_id'          => 'الوحدة',
         'item_category_id'      => 'القسم',
         'min_stock'             => 'الحد الأدنى',

@@ -901,6 +901,9 @@ return [
     'warehouse_name'              => 'اسم المخزن',
     'warehouse_governorate'       => 'المحافظة',
     'warehouse_status'            => 'الحالة',
+    'warehouse_letterhead'        => 'الجهة في ترويسة البيان المطبوع',
+    'warehouse_letterhead_hint'   => 'السطر الثالث تحت «وزارة العدل» و«مصلحة الشهر العقاري والتوثيق» في بيان الأرصدة — جهةُ هذا المخزن وحده. يُترك فارغاً فيُحذف السطر، ولا يُستبدل بجهة مخزنٍ آخر.',
+    'wh_statement_no_letterhead'  => 'هذا المخزن بلا جهة في ترويسة البيان، فسيُطبع بسطرين. تُضاف من «إدارة المخازن».',
     'warehouse_active'            => 'نشط',
     'warehouse_inactive'         => 'غير نشط',
     'warehouse_created'           => 'تم إضافة المخزن',
@@ -1197,4 +1200,27 @@ return [
     'corr_entity_updated'         => 'تم تعديل الطرف',
     'corr_entity_deleted'         => 'تم حذف الطرف',
     'corr_entity_delete_warning'  => 'لكل طرف دفتر صادر ووارد مستقل. إن كان له مكاتبات فالأفضل إيقافه لا حذفه، حتى لا تفقد أرقامه المرجعية.',
+    // ── بيان بأرصدة القسم (تقرير مطبوع بصورة الدفتر الورقي) ──
+    'wh_statement'                => 'بيان بأرصدة قسم',
+    'wh_statement_title'          => 'بيان بأرصدة :category',
+    'wh_statement_pick'           => 'اختر المخزن والقسم ليظهر البيان.',
+    'wh_statement_print'          => 'طباعة البيان',
+    'wh_statement_empty'          => 'لا أصناف مفعَّلة في هذا القسم.',
+    'wh_statement_count'          => 'الرصيد',
+    // ⚠️ الورقة المطبوعة تقول «العدد» لا «الرصيد» — النموذج المطبوع الذي
+    //    بيد الموظف كذلك، والشاشة تبقى على مفردة النظام
+    'wh_statement_count_print'    => 'العدد',
+    'wh_statement_serial'         => 'م',
+    // ⚠️ في صورة العمودين يضيق العمود فينكسر «رقم الصنف» سطرين — والاسم
+    //    المختصر مقيس، لا يُبدَّل بغيره إلا بقياس (mpdf يضيّق العمود على
+    //    محتواه فلا يمنع الانكسارَ توسيعُ العمود ولا تصغيرُ الخط)
+    'wh_statement_code_short'      => 'الرقم',
+    'wh_statement_total'          => 'الإجمالي',
+    'wh_statement_rows'           => 'عدد الأصناف',
+    'wh_statement_ministry'       => 'وزارة العدل',
+    'wh_statement_authority'      => 'مصلحة الشهر العقاري والتوثيق',
+    'wh_statement_regards'        => 'وتفضلوا سيادتكم بقبول وافر الاحترام ،،،،،',
+    'wh_statement_written_on'     => 'تحريرا في      /      / :year',
+    'wh_statement_keeper'         => 'امين المخزن',
+    'wh_statement_manager'        => 'مدير عام الإدارة',
 ];
