@@ -13,6 +13,7 @@ class Warehouse extends Model
         'name',
         'governorate_id',
         'warehouse_type_id',
+        'letterhead',
         'is_active',
     ];
 
@@ -58,6 +59,20 @@ class Warehouse extends Model
      * تقرأه scopeOrdered وتقرأه الشاشة التي ترجع للافتراضي بعد ترتيبٍ مخصّص.
      */
     public function scopeApplyDefaultOrdering(Builder $query): Builder
+    {
+        return self::displayOrder($query);
+    }
+
+    /**
+     * قاعدة الترتيب وحدها على **أي** استعلام ضامٍّ `warehouse_types`
+     * و`governorates` — ولو لم يكن استعلاماً على المخازن نفسها.
+     *
+     * ⚠️ شاشة الأرصدة تستعلم عن `warehouse_stocks` لا عن `warehouses`، فلا
+     *    يبلغها النطاق (scope) أصلاً. وبلا هذه الدالة كانت تسقط للترتيب
+     *    الأبجدي وحده فيتبعثر الرئيسي بين الفروع — والقاعدة تصير قاعدتين.
+     *    (نظير `Item::statementOrder` تماماً، ولنفس السبب.)
+     */
+    public static function displayOrder(Builder $query): Builder
     {
         return $query
             ->orderBy('warehouse_types.level')

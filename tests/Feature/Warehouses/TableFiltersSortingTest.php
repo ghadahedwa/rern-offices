@@ -474,6 +474,36 @@ function tblOrderedItem(string $name, ?string $categoryName, int $categoryOrder 
     ]);
 }
 
+it('يرتّب مخازن الأرصدة بقاعدة العرض الموحّدة لا أبجدياً', function () {
+    // «أسوان الفرعي» يسبق «يونيو الرئيسي» أبجدياً، والقاعدة تقدّم الرئيسي بمستواه
+    [$main, $sub] = tblTwoWarehouses();
+    $item = tblOrderedItem('صنف', 'مخزن التصوير', 1);
+    WarehouseStock::create(['warehouse_id' => $sub->id, 'item_id' => $item->id, 'quantity' => 1]);
+    WarehouseStock::create(['warehouse_id' => $main->id, 'item_id' => $item->id, 'quantity' => 2]);
+    $this->actingAs(tblUser());
+
+    expect(Livewire::test(Stock::class)->viewData('stocks')->pluck('warehouse.name')->all())
+        ->toBe(['يونيو الرئيسي', 'أسوان الفرعي']);
+});
+
+it('يعود ترتيب الأرصدة للقاعدة الموحّدة بعد دورة ضغط كاملة على رأس المخزن', function () {
+    [$main, $sub] = tblTwoWarehouses();
+    $item = tblOrderedItem('صنف', 'مخزن التصوير', 1);
+    WarehouseStock::create(['warehouse_id' => $sub->id, 'item_id' => $item->id, 'quantity' => 1]);
+    WarehouseStock::create(['warehouse_id' => $main->id, 'item_id' => $item->id, 'quantity' => 2]);
+    $this->actingAs(tblUser());
+
+    $component = Livewire::test(Stock::class);
+
+    // تصاعدي أبجدي: الفرعي أولاً
+    expect($component->call('sort', 'warehouse')->viewData('stocks')->pluck('warehouse.name')->all())
+        ->toBe(['أسوان الفرعي', 'يونيو الرئيسي']);
+
+    // ثم تنازلي، ثم العودة للافتراضي
+    $component->call('sort', 'warehouse');
+    expect($component->call('sort', 'warehouse')->viewData('stocks')->pluck('warehouse.name')->all())
+        ->toBe(['يونيو الرئيسي', 'أسوان الفرعي']);
+});
 it('يرتّب الأرصدة بترتيب الدفتر لا أبجدياً', function () {
     // «ياء» في القسم الأول و«ألف» في الثاني — الأبجدي يعكسهما
     [$main] = tblTwoWarehouses();

@@ -111,10 +111,17 @@ class Stock extends Component
         ];
     }
 
-    /** المخزن أولاً، وداخله ترتيب الدفتر (القسم ثم ترتيب الصنف) لا الأبجدي. */
+    /**
+     * المخزن أولاً بقاعدة العرض الموحّدة (المستوى ثم المحافظة ثم الاسم)،
+     * وداخله ترتيب الدفتر (القسم ثم ترتيب الصنف) لا الأبجدي.
+     *
+     * ⚠️ كان المخزن يُرتَّب باسمه وحده هنا، بينما `Warehouse::ordered()` هي
+     *    القاعدة في ست شاشات ومنسدلات — فكان الرئيسي يقع بين الفروع في هذه
+     *    الشاشة وحدها. ومَن أراد الأبجدي يضغط رأس عمود «المخزن».
+     */
     protected function defaultOrder(Builder $query): Builder
     {
-        return Item::statementOrder($query->orderBy('warehouses.name'));
+        return Item::statementOrder(Warehouse::displayOrder($query));
     }
 
     public function render()
@@ -125,6 +132,10 @@ class Stock extends Component
             // مضمومان لأجل الترتيب: الأقسام لترتيب الدفتر، والوحدات لعمود الوحدة
             ->leftJoin('item_categories', 'items.item_category_id', '=', 'item_categories.id')
             ->leftJoin('item_units', 'items.item_unit_id', '=', 'item_units.id')
+            // ولأجل قاعدة عرض المخازن: المستوى من النوع والترتيب من المحافظة.
+            // ⚠️ `left` لا `inner`: المخزن الرئيسي بلا محافظة، والداخلي يُسقط صفوفه كلها.
+            ->leftJoin('warehouse_types', 'warehouses.warehouse_type_id', '=', 'warehouse_types.id')
+            ->leftJoin('governorates', 'warehouses.governorate_id', '=', 'governorates.id')
             ->select('warehouse_stocks.*')
             // قيمة غير رقمية تصل من الرابط تُهمَل — وإلا خرجت شاشة فارغة بلا سبب ظاهر
             ->when(ctype_digit($this->warehouseFilter), fn ($q) => $q->where('warehouse_stocks.warehouse_id', (int) $this->warehouseFilter))
@@ -141,9 +152,7 @@ class Stock extends Component
             ->when($this->lowOnly, fn ($q) => $q
                 ->whereNotNull('items.min_stock')
                 ->whereColumn('warehouse_stocks.quantity', '<=', 'items.min_stock')
-                ->whereExists(fn ($sub) => $sub->from('warehouse_types')
-                    ->whereColumn('warehouse_types.id', 'warehouses.warehouse_type_id')
-                    ->where('warehouse_types.level', 1)))
+                ->where('warehouse_types.level', 1))
             // البحث يشمل رقم الصنف كشاشة الأصناف: الموظف يعرف أصناف الدفتر
             // العقاري بأرقامها. والرقم مخزَّن بأرقام هندية فتُحوَّل كلمة البحث
             ->when($this->search, function ($q) {
