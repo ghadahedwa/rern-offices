@@ -220,3 +220,108 @@ it('يطبّق عدد الصفوف المختار على جدول التاب', f
     $component->set('perPage', '25');
     expect($component->viewData('stocks')->count())->toBe(20);
 });
+
+// ── فلاتر تاب الأرصدة ────────────────────────────────────
+
+function ptItemIn(string $name, string $categoryName, ?int $minStock = null): Item
+{
+    return Item::create([
+        'name'             => $name,
+        'item_unit_id'     => ItemUnit::firstOrCreate(['name' => 'قطعة'])->id,
+        'item_category_id' => \App\Models\ItemCategory::firstOrCreate(['name' => $categoryName], ['order' => 1])->id,
+        'min_stock'        => $minStock,
+    ]);
+}
+
+it('يفلتر أرصدة المخزن بقسم الصنف', function () {
+    $w = ptWarehouse();
+    ptStock($w, ptItemIn('حبر توشيبا', 'مخزن التصوير'), 5);
+    ptStock($w, ptItemIn('بونطة شنيور', 'مخزن المستديم'), 9);
+    $this->actingAs(ptUser());
+
+    $photo = \App\Models\ItemCategory::where('name', 'مخزن التصوير')->first();
+
+    $rows = Livewire::test(Show::class, ['warehouse' => $w])
+        ->set('categoryFilter', (string) $photo->id)
+        ->viewData('stocks');
+
+    expect($rows->pluck('quantity')->all())->toBe([5]);
+});
+
+it('يفصل الرصيد الصفر عن الرصيد الموجب', function () {
+    $w = ptWarehouse();
+    ptStock($w, ptItem('حبر'), 0);
+    ptStock($w, ptItem('ورق'), 12);
+    $this->actingAs(ptUser());
+
+    $component = Livewire::test(Show::class, ['warehouse' => $w]);
+
+    expect($component->set('balanceFilter', 'zero')->viewData('stocks')->pluck('quantity')->all())->toBe([0])
+        ->and($component->set('balanceFilter', 'positive')->viewData('stocks')->pluck('quantity')->all())->toBe([12]);
+});
+
+it('يعرض ما بلغ حدّه الأدنى وحده في المخزن الرئيسي', function () {
+    $w = ptWarehouse();
+    ptStock($w, ptItemIn('حبر', 'التصوير', 10), 3);   // تحت الحد
+    ptStock($w, ptItemIn('ورق', 'التصوير', 10), 40);  // فوقه
+    ptStock($w, ptItemIn('دبابيس', 'التصوير', null), 1); // بلا حدّ — خارج الفلتر
+    $this->actingAs(ptUser());
+
+    $rows = Livewire::test(Show::class, ['warehouse' => $w])
+        ->set('lowOnly', true)
+        ->viewData('stocks');
+
+    expect($rows->pluck('quantity')->all())->toBe([3]);
+});
+
+it('لا يطبّق فلتر الحد الأدنى على مخزن غير رئيسي ولو من الرابط', function () {
+    // ⚠️ الحد الأدنى قاعدةٌ على الرئيسي وحده — والفلتر يصل من الرابط لا من الخانة فقط
+    $branch = ptWarehouse('فرعي', 3);
+    ptStock($branch, ptItemIn('حبر', 'التصوير', 10), 3);
+    ptStock($branch, ptItemIn('ورق', 'التصوير', 10), 40);
+    $this->actingAs(ptUser());
+
+    $rows = Livewire::withQueryParams(['low' => '1'])
+        ->test(Show::class, ['warehouse' => $branch])
+        ->viewData('stocks');
+
+    expect($rows->total())->toBe(2);
+});
+
+it('يحصر منسدلة الأقسام في أقسام أصناف هذا المخزن', function () {
+    // قسمٌ بلا صنف في هذا المخزن يُوهم أن الشاشة فارغة لخلل لا لغياب الصنف
+    $w = ptWarehouse();
+    ptStock($w, ptItemIn('حبر توشيبا', 'مخزن التصوير'), 5);
+    \App\Models\ItemCategory::firstOrCreate(['name' => 'مخزن السيارات'], ['order' => 9]);
+    $this->actingAs(ptUser());
+
+    $names = Livewire::test(Show::class, ['warehouse' => $w])->viewData('categories')->pluck('name')->all();
+
+    expect($names)->toBe(['مخزن التصوير']);
+});
+
+it('يعرض الأصناف بلا قسم عند اختيار «بلا قسم» ويتجاهل قيمة تالفة', function () {
+    $w = ptWarehouse();
+    ptStock($w, ptItemIn('حبر توشيبا', 'مخزن التصوير'), 5);
+    ptStock($w, ptItem('صنف بلا قسم'), 9);
+    $this->actingAs(ptUser());
+
+    $component = Livewire::test(Show::class, ['warehouse' => $w]);
+
+    expect($component->set('categoryFilter', 'none')->viewData('stocks')->pluck('quantity')->all())->toBe([9])
+        // قيمة نصّية ليست 'none' تصل من الرابط — تُهمَل بدل إفراغ الشاشة
+        ->and($component->set('categoryFilter', 'التصوير')->viewData('stocks')->total())->toBe(2);
+});
+
+it('يفلتر بالوحدة ويتجاهل قيمة وحدة تالفة', function () {
+    $w   = ptWarehouse();
+    $box = ItemUnit::firstOrCreate(['name' => 'دفتر']);
+    ptStock($w, ptItem('حبر'), 5);
+    ptStock($w, Item::create(['name' => 'دفتر يومية', 'item_unit_id' => $box->id]), 9);
+    $this->actingAs(ptUser());
+
+    $component = Livewire::test(Show::class, ['warehouse' => $w]);
+
+    expect($component->set('unitFilter', (string) $box->id)->viewData('stocks')->pluck('quantity')->all())->toBe([9])
+        ->and($component->set('unitFilter', 'دفتر')->viewData('stocks')->total())->toBe(2);
+});

@@ -979,6 +979,9 @@ return [
     'wh_type_transfer_in'         => 'استلام (نقل)',
     'wh_low_stock_alert'          => 'أصناف وصلت للحد الأدنى',
     'wh_below_min_stock'          => 'تحت الحد الأدنى',
+    'wh_balance_positive'         => 'أكبر من صفر',
+    'wh_balance_zero'             => 'صفر',
+    'wh_below_min_only'           => 'تحت الحد الأدنى فقط',
     'wh_main_warehouse_only'      => 'الوارد يُسجَّل على المخزن الرئيسي فقط',
     'wh_no_main_warehouse'        => 'لا يوجد مخزن رئيسي — أنشئ مخزناً نوعه «رئيسي» أولاً',
 

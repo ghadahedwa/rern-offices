@@ -1,8 +1,40 @@
 <div class="space-y-4">
 
-    <x-filter-bar :active="$this->hasActiveFilters()" :per-page-options="$this->perPageOptions()" :columns="2">
+    {{-- Filters --}}
+    <x-filter-bar :active="$this->hasActiveFilters()" :per-page-options="$this->perPageOptions()" :columns="4">
         <x-filter-input :label="__('home.search')" wire:model.live.debounce.300ms="search"
                         placeholder="{{ __('home.item_name') }}" />
+
+        <x-filter-select :label="__('home.item_category')" wire:model.live="categoryFilter">
+            <option value="">{{ __('home.item_category_all') }}</option>
+            @foreach($categories as $category)
+                <option value="{{ $category->id }}">{{ $category->name }}</option>
+            @endforeach
+            <option value="none">{{ __('home.item_category_none') }}</option>
+        </x-filter-select>
+
+        <x-filter-select :label="__('home.item_unit')" wire:model.live="unitFilter">
+            <option value="">{{ __('home.item_unit_all') }}</option>
+            @foreach($units as $unit)
+                <option value="{{ $unit->id }}">{{ $unit->name }}</option>
+            @endforeach
+            <option value="none">{{ __('home.item_unit_none') }}</option>
+        </x-filter-select>
+
+        <x-filter-select :label="__('home.wh_current_balance')" wire:model.live="balanceFilter">
+            <option value="">—</option>
+            <option value="positive">{{ __('home.wh_balance_positive') }}</option>
+            <option value="zero">{{ __('home.wh_balance_zero') }}</option>
+        </x-filter-select>
+
+        @if($warehouse->isMain())
+            {{-- الحد الأدنى قاعدةٌ على المخزن الرئيسي وحده، فلا خانة له في غيره --}}
+            <label class="sm:col-span-2 lg:col-span-4 inline-flex items-center gap-2 text-sm text-zinc-600 dark:text-zinc-300 cursor-pointer">
+                <input type="checkbox" wire:model.live="lowOnly"
+                       class="rounded border-zinc-300 dark:border-zinc-600 text-[#c9a847] focus:ring-[#c9a847]">
+                {{ __('home.wh_below_min_only') }}
+            </label>
+        @endif
     </x-filter-bar>
 
     <div class="overflow-x-auto rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-sm">

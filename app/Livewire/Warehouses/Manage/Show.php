@@ -55,6 +55,23 @@ class Show extends Component
     #[Url(as: 'type', except: '')]
     public string $typeFilter = '';
 
+    // فلاتر تاب الأرصدة
+    /** معرّف قسم، أو 'none' لأصناف بلا قسم، أو '' للكل. */
+    #[Url(as: 'category', except: '')]
+    public string $categoryFilter = '';
+
+    /** معرّف وحدة، أو 'none' لأصناف بلا وحدة، أو '' للكل. */
+    #[Url(as: 'unit', except: '')]
+    public string $unitFilter = '';
+
+    /** 'positive' أكبر من صفر · 'zero' صفر · '' الكل. */
+    #[Url(as: 'balance', except: '')]
+    public string $balanceFilter = '';
+
+    /** الأصناف التي بلغت حدّها الأدنى — للمخزن الرئيسي وحده. */
+    #[Url(as: 'low', except: false)]
+    public bool $lowOnly = false;
+
     public bool $showViewIncoming = false;
     public ?WarehouseIncoming $viewingIncoming = null;
 
@@ -132,9 +149,29 @@ class Show extends Component
         $this->resetPage();
     }
 
+    public function updatingCategoryFilter(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatingUnitFilter(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatingBalanceFilter(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatingLowOnly(): void
+    {
+        $this->resetPage();
+    }
+
     public function resetFilters(): void
     {
-        $this->reset('search', 'itemFilter', 'typeFilter', 'dateFrom', 'dateTo');
+        $this->reset('search', 'itemFilter', 'typeFilter', 'categoryFilter', 'unitFilter', 'balanceFilter', 'lowOnly', 'dateFrom', 'dateTo');
         $this->resetPage();
     }
 
@@ -142,7 +179,8 @@ class Show extends Component
     public function hasActiveFilters(): bool
     {
         return match ($this->tab) {
-            'stock'     => $this->search !== '',
+            'stock'     => $this->search !== '' || $this->categoryFilter !== ''
+                || $this->unitFilter !== '' || $this->balanceFilter !== '' || $this->lowOnly,
             'movements' => $this->itemFilter !== '' || $this->typeFilter !== '' || $this->hasDateFilter(),
             default     => $this->search !== '' || $this->hasDateFilter(),
         };
@@ -218,6 +256,19 @@ class Show extends Component
                 ArabicText::sqlNormalize('items.name').' LIKE ?',
                 ['%'.ArabicText::normalize($this->search).'%']
             ))
+            // القيم تصل من الرابط — غير 'none' وغير الرقمية تُهمَل
+            ->when($this->categoryFilter === 'none', fn ($q) => $q->whereNull('items.item_category_id'))
+            ->when(ctype_digit($this->categoryFilter), fn ($q) => $q->where('items.item_category_id', (int) $this->categoryFilter))
+            ->when($this->unitFilter === 'none', fn ($q) => $q->whereNull('items.item_unit_id'))
+            ->when(ctype_digit($this->unitFilter), fn ($q) => $q->where('items.item_unit_id', (int) $this->unitFilter))
+            // «صفر» تشمل ما دونه: الرصيد السالب خطأ بيانات، وإخفاؤه أسوأ من إظهاره
+            ->when($this->balanceFilter === 'zero', fn ($q) => $q->where('warehouse_stocks.quantity', '<=', 0))
+            ->when($this->balanceFilter === 'positive', fn ($q) => $q->where('warehouse_stocks.quantity', '>', 0))
+            // ⚠️ الحد الأدنى قاعدةٌ على المخزن الرئيسي وحده (كشارة الجدول تماماً)،
+            //    والفحص هنا لا في القالب فقط — الفلتر يصل من الرابط أيضاً
+            ->when($this->lowOnly && $this->warehouse->isMain(), fn ($q) => $q
+                ->whereNotNull('items.min_stock')
+                ->whereColumn('warehouse_stocks.quantity', '<=', 'items.min_stock'))
             ->with('item.unit')
             ->tap(fn ($q) => $this->applySorting($q, 'warehouse_stocks.id'))
             ->paginate($this->perPage(), ['*'], 'stockPage');
@@ -294,7 +345,25 @@ class Show extends Component
             'movements' => $this->tab === 'movements' ? $this->movementsList() : null,
             'incomings' => $this->tab === 'incoming' ? $this->incomingList() : null,
             'transfers' => $this->tab === 'transfers' ? $this->transfersList() : null,
-            'types'     => self::MOVEMENT_TYPES,
+            'types'      => self::MOVEMENT_TYPES,
+            // أقسام ووحدات أصناف هذا المخزن وحدها — قائمةٌ بخيارات لا صفوف خلفها
+            // في مخزنٍ بعينه تُوهم المستخدم أن الشاشة فارغة لخللٍ لا لغياب الصنف
+            'categories' => \App\Models\ItemCategory::whereIn(
+                'id',
+                WarehouseStock::query()
+                    ->where('warehouse_stocks.warehouse_id', $this->warehouse->id)
+                    ->join('items', 'warehouse_stocks.item_id', '=', 'items.id')
+                    ->whereNotNull('items.item_category_id')
+                    ->select('items.item_category_id')
+            )->orderBy('order')->orderBy('name')->get(),
+            'units' => \App\Models\ItemUnit::whereIn(
+                'id',
+                WarehouseStock::query()
+                    ->where('warehouse_stocks.warehouse_id', $this->warehouse->id)
+                    ->join('items', 'warehouse_stocks.item_id', '=', 'items.id')
+                    ->whereNotNull('items.item_unit_id')
+                    ->select('items.item_unit_id')
+            )->orderBy('name')->get(),
         ]);
     }
 }
