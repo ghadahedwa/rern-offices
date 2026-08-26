@@ -379,3 +379,82 @@ it('يعرض منتقي عدد الصفوف ورؤوس الأعمدة القاب
         ->assertSeeHtml('wire:model.live="perPage"')
         ->assertSeeHtml('wire:click="sort(\'name\')"');
 });
+
+// ── فلاتر شاشة الأرصدة العامة ────────────────────────────
+
+function tblStockedItem(string $name, ?string $code = null, ?int $minStock = null): Item
+{
+    return Item::create([
+        'name'         => $name,
+        'code'         => $code,
+        'min_stock'    => $minStock,
+        'item_unit_id' => ItemUnit::firstOrCreate(['name' => 'قطعة'])->id,
+    ]);
+}
+
+it('يفلتر الأرصدة بالوحدة ويتجاهل قيمة تالفة', function () {
+    [$main] = tblTwoWarehouses();
+    $book = ItemUnit::firstOrCreate(['name' => 'دفتر']);
+    WarehouseStock::create(['warehouse_id' => $main->id, 'item_id' => tblStockedItem('حبر')->id, 'quantity' => 5]);
+    WarehouseStock::create([
+        'warehouse_id' => $main->id,
+        'item_id'      => Item::create(['name' => 'دفتر يومية', 'item_unit_id' => $book->id])->id,
+        'quantity'     => 9,
+    ]);
+    $this->actingAs(tblUser());
+
+    $component = Livewire::test(Stock::class);
+
+    expect($component->set('unitFilter', (string) $book->id)->viewData('stocks')->pluck('quantity')->all())->toBe([9])
+        ->and($component->set('unitFilter', 'دفتر')->viewData('stocks')->total())->toBe(2);
+});
+
+it('يفصل الرصيد الصفر عن الموجب في شاشة الأرصدة', function () {
+    [$main] = tblTwoWarehouses();
+    WarehouseStock::create(['warehouse_id' => $main->id, 'item_id' => tblStockedItem('حبر')->id, 'quantity' => 0]);
+    WarehouseStock::create(['warehouse_id' => $main->id, 'item_id' => tblStockedItem('ورق')->id, 'quantity' => 12]);
+    $this->actingAs(tblUser());
+
+    $component = Livewire::test(Stock::class);
+
+    expect($component->set('balanceFilter', 'zero')->viewData('stocks')->pluck('quantity')->all())->toBe([0])
+        ->and($component->set('balanceFilter', 'positive')->viewData('stocks')->pluck('quantity')->all())->toBe([12]);
+});
+
+it('يقصر فلتر الحد الأدنى على صفوف المخازن الرئيسية', function () {
+    // ⚠️ الشرط على نوع مخزن الصف نفسه — صفٌّ في فرعٍ تحت الحد لا يُعدّ تنبيهاً
+    [$main, $branch] = tblTwoWarehouses();
+    $item = tblStockedItem('حبر', null, 10);
+    WarehouseStock::create(['warehouse_id' => $main->id, 'item_id' => $item->id, 'quantity' => 3]);
+    WarehouseStock::create(['warehouse_id' => $branch->id, 'item_id' => $item->id, 'quantity' => 2]);
+    $this->actingAs(tblUser());
+
+    $rows = Livewire::test(Stock::class)->set('lowOnly', true)->viewData('stocks');
+
+    expect($rows->total())->toBe(1)
+        ->and($rows->first()->warehouse_id)->toBe($main->id);
+});
+
+it('يستثني الأصناف بلا حدّ أدنى من فلتر الحد الأدنى', function () {
+    [$main] = tblTwoWarehouses();
+    WarehouseStock::create(['warehouse_id' => $main->id, 'item_id' => tblStockedItem('حبر', null, 10)->id, 'quantity' => 3]);
+    WarehouseStock::create(['warehouse_id' => $main->id, 'item_id' => tblStockedItem('دبابيس', null, null)->id, 'quantity' => 1]);
+    $this->actingAs(tblUser());
+
+    $rows = Livewire::test(Stock::class)->set('lowOnly', true)->viewData('stocks');
+
+    expect($rows->pluck('quantity')->all())->toBe([3]);
+});
+
+it('يبحث في الأرصدة برقم الصنف بأرقام إنجليزية أو هندية', function () {
+    // الرقم مخزَّن بأرقام هندية، والموظف قد يكتبه بالإنجليزية
+    [$main] = tblTwoWarehouses();
+    WarehouseStock::create(['warehouse_id' => $main->id, 'item_id' => tblStockedItem('ملف خاص', '٥٤ ق')->id, 'quantity' => 5]);
+    WarehouseStock::create(['warehouse_id' => $main->id, 'item_id' => tblStockedItem('ورق تصوير', '٧٧')->id, 'quantity' => 9]);
+    $this->actingAs(tblUser());
+
+    $component = Livewire::test(Stock::class);
+
+    expect($component->set('search', '54')->viewData('stocks')->pluck('quantity')->all())->toBe([5])
+        ->and($component->set('search', '٥٤')->viewData('stocks')->pluck('quantity')->all())->toBe([5]);
+});

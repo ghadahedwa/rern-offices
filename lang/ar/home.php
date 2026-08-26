@@ -982,6 +982,7 @@ return [
     'wh_balance_positive'         => 'أكبر من صفر',
     'wh_balance_zero'             => 'صفر',
     'wh_below_min_only'           => 'تحت الحد الأدنى فقط',
+    'wh_low_stock_main_only'      => 'في المخازن الرئيسية',
     'wh_main_warehouse_only'      => 'الوارد يُسجَّل على المخزن الرئيسي فقط',
     'wh_no_main_warehouse'        => 'لا يوجد مخزن رئيسي — أنشئ مخزناً نوعه «رئيسي» أولاً',
 
