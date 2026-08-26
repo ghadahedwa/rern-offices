@@ -2,15 +2,20 @@
 
 namespace App\Livewire\Warehouses\Manage;
 
+use App\Livewire\Concerns\WithDateRange;
+use App\Livewire\Concerns\WithPerPage;
+use App\Livewire\Concerns\WithTableSorting;
 use App\Models\Warehouse;
 use App\Models\WarehouseIncoming;
 use App\Models\WarehouseMovement;
 use App\Models\WarehouseStock;
 use App\Models\WarehouseTransfer;
 use App\Support\ArabicText;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
+use Livewire\Attributes\Url;
 use Livewire\Component;
 use Livewire\WithPagination;
 
@@ -18,32 +23,41 @@ use Livewire\WithPagination;
 #[Title('بروفايل المخزن')]
 class Show extends Component
 {
-    use WithPagination;
+    use WithDateRange;
+    use WithPagination {
+        resetPage as protected basePaginationReset;
+    }
+    use WithPerPage;
+    use WithTableSorting;
+
+    /** أنواع الحركة المعروفة — القيمة تصل من الرابط فتُحصر فيها. */
+    public const MOVEMENT_TYPES = ['opening', 'incoming', 'transfer_out', 'transfer_in'];
 
     public Warehouse $warehouse;
-    public string $tab = 'stock';
     public bool $canEdit = false;
 
-    // تاب الأرصدة
-    public string $stockSearch = '';
+    #[Url(as: 'tab', except: 'stock')]
+    public string $tab = 'stock';
 
-    // تاب سجل الحركات
-    public string $movItemFilter = '';
-    public string $movTypeFilter = '';
-    public string $movDateFrom = '';
-    public string $movDateTo = '';
+    /**
+     * فلاتر مشتركة بين التابات — لا فلتر لكل تاب.
+     *
+     * تابٌ واحد معروض في كل لحظة، وتغييرُ التاب يمسح الفلاتر (سطر البحث في
+     * الأرصدة يعني اسم صنف وفي النقل يعني اسم مخزن — إبقاؤه بين التابين يُخرج
+     * شاشة فارغة بلا سبب ظاهر). فالتوحيد يختصر ١١ خاصية إلى خمس بلا خسارة.
+     */
+    #[Url(as: 'q', except: '')]
+    public string $search = '';
 
-    // تاب الوارد (رئيسي فقط)
-    public string $incSearch = '';
-    public string $incDateFrom = '';
-    public string $incDateTo = '';
+    #[Url(as: 'item', except: '')]
+    public string $itemFilter = '';
+
+    #[Url(as: 'type', except: '')]
+    public string $typeFilter = '';
+
     public bool $showViewIncoming = false;
     public ?WarehouseIncoming $viewingIncoming = null;
 
-    // تاب النقل
-    public string $transSearch = '';
-    public string $transDateFrom = '';
-    public string $transDateTo = '';
     public bool $showViewTransfer = false;
     public ?WarehouseTransfer $viewingTransfer = null;
 
@@ -54,74 +68,130 @@ class Show extends Component
         $this->warehouse = $warehouse->load('type', 'governorate', 'stocks.item');
         $this->canEdit   = (bool) Auth::user()?->can('warehouses.settings');
 
-        if ($this->tab === 'incoming' && ! $this->warehouse->isMain()) {
+        // التاب يصل من الرابط أيضاً — يُفحص هنا لا في setTab وحدها
+        if (! in_array($this->tab, $this->validTabs(), true)) {
             $this->tab = 'stock';
         }
     }
 
-    public function setTab(string $tab): void
+    /** @return array<int, string> */
+    protected function validTabs(): array
     {
-        $validTabs = ['stock', 'movements', 'transfers'];
+        $tabs = ['stock', 'movements', 'transfers'];
+
+        // الوارد يُسجَّل على المخزن الرئيسي وحده، فلا تاب له في غيره
         if ($this->warehouse->isMain()) {
-            $validTabs[] = 'incoming';
+            $tabs[] = 'incoming';
         }
 
-        $this->tab = in_array($tab, $validTabs, true) ? $tab : 'stock';
+        return $tabs;
     }
 
-    public function updatingStockSearch(): void
+    public function setTab(string $tab): void
     {
-        $this->resetPage('stockPage');
+        $this->tab = in_array($tab, $this->validTabs(), true) ? $tab : 'stock';
+
+        // الفلاتر والترتيب يخصّان جدول التاب السابق — أعمدة التاب الجديد غيرها
+        $this->resetFilters();
+        $this->resetSort();
     }
 
-    public function updatingMovItemFilter(): void
+    /** مُرقِّم التاب المعروض — لكل تاب مُرقِّمه حتى لا يتداخل ترقيم جدولين. */
+    protected function tabPageName(): string
     {
-        $this->resetPage('movPage');
+        return match ($this->tab) {
+            'movements' => 'movPage',
+            'incoming'  => 'incPage',
+            'transfers' => 'transPage',
+            default     => 'stockPage',
+        };
     }
 
-    public function updatingMovTypeFilter(): void
+    /**
+     * ⚠️ الـtraits المشتركة تنادي resetPage() بلا اسم، والصفحة هنا مُرقِّم
+     *    مسمّى — فبلا هذا التوجيه يُصفَّر مُرقِّم 'page' الذي لا يستعمله أحد،
+     *    ويبقى المستخدم على صفحة ٣ من نتيجةٍ صارت صفحة واحدة.
+     */
+    public function resetPage($pageName = null)
     {
-        $this->resetPage('movPage');
+        return $this->basePaginationReset($pageName ?? $this->tabPageName());
     }
 
-    public function updatingMovDateFrom(): void
+    public function updatingSearch(): void
     {
-        $this->resetPage('movPage');
+        $this->resetPage();
     }
 
-    public function updatingMovDateTo(): void
+    public function updatingItemFilter(): void
     {
-        $this->resetPage('movPage');
+        $this->resetPage();
     }
 
-    public function updatingIncSearch(): void
+    public function updatingTypeFilter(): void
     {
-        $this->resetPage('incPage');
+        $this->resetPage();
     }
 
-    public function updatingIncDateFrom(): void
+    public function resetFilters(): void
     {
-        $this->resetPage('incPage');
+        $this->reset('search', 'itemFilter', 'typeFilter', 'dateFrom', 'dateTo');
+        $this->resetPage();
     }
 
-    public function updatingIncDateTo(): void
+    /** الفلاتر المعروضة تختلف بالتاب، فكذلك حساب «هل من فلتر مفعّل؟». */
+    public function hasActiveFilters(): bool
     {
-        $this->resetPage('incPage');
+        return match ($this->tab) {
+            'stock'     => $this->search !== '',
+            'movements' => $this->itemFilter !== '' || $this->typeFilter !== '' || $this->hasDateFilter(),
+            default     => $this->search !== '' || $this->hasDateFilter(),
+        };
     }
 
-    public function updatingTransSearch(): void
+    protected function sortableColumns(): array
     {
-        $this->resetPage('transPage');
+        return match ($this->tab) {
+            'movements' => [
+                'item'          => 'items.name',
+                'type'          => 'warehouse_movements.type',
+                'quantity'      => 'warehouse_movements.quantity',
+                'balance_after' => 'warehouse_movements.balance_after',
+                'date'          => 'warehouse_movements.created_at',
+            ],
+            'incoming' => [
+                'received_at' => 'warehouse_incomings.received_at',
+                'supplier'    => 'warehouse_incomings.supplier_name',
+                'items_count' => 'items_count',
+            ],
+            'transfers' => [
+                'transferred_at' => 'warehouse_transfers.transferred_at',
+                'from'           => 'w_from.name',
+                'to'             => 'w_to.name',
+                'document_type'  => 'warehouse_transfers.document_type',
+                'items_count'    => 'items_count',
+            ],
+            default => [
+                'item'     => 'items.name',
+                'unit'     => 'item_units.name',
+                'quantity' => 'warehouse_stocks.quantity',
+            ],
+        };
     }
 
-    public function updatingTransDateFrom(): void
+    protected function defaultOrder(Builder $query): Builder
     {
-        $this->resetPage('transPage');
-    }
-
-    public function updatingTransDateTo(): void
-    {
-        $this->resetPage('transPage');
+        return match ($this->tab) {
+            'movements' => $query
+                ->orderByDesc('warehouse_movements.created_at')
+                ->orderByDesc('warehouse_movements.id'),
+            'incoming' => $query
+                ->orderByDesc('warehouse_incomings.received_at')
+                ->orderByDesc('warehouse_incomings.id'),
+            'transfers' => $query
+                ->orderByDesc('warehouse_transfers.transferred_at')
+                ->orderByDesc('warehouse_transfers.id'),
+            default => $query->orderBy('items.name'),
+        };
     }
 
     public function viewIncoming(int $id): void
@@ -139,30 +209,34 @@ class Show extends Component
     protected function stockList()
     {
         return WarehouseStock::query()
-            ->where('warehouse_id', $this->warehouse->id)
+            ->where('warehouse_stocks.warehouse_id', $this->warehouse->id)
             ->join('items', 'warehouse_stocks.item_id', '=', 'items.id')
+            // مضموم لأجل الترتيب بالوحدة؛ والعرض يبقى على العلاقة المحمَّلة
+            ->leftJoin('item_units', 'items.item_unit_id', '=', 'item_units.id')
             ->select('warehouse_stocks.*')
-            ->when($this->stockSearch, fn ($q) => $q->whereRaw(
+            ->when($this->search, fn ($q) => $q->whereRaw(
                 ArabicText::sqlNormalize('items.name').' LIKE ?',
-                ['%'.ArabicText::normalize($this->stockSearch).'%']
+                ['%'.ArabicText::normalize($this->search).'%']
             ))
             ->with('item.unit')
-            ->orderBy('items.name')
-            ->paginate(15, ['*'], 'stockPage');
+            ->tap(fn ($q) => $this->applySorting($q, 'warehouse_stocks.id'))
+            ->paginate($this->perPage(), ['*'], 'stockPage');
     }
 
     protected function movementsList()
     {
         return WarehouseMovement::query()
-            ->where('warehouse_id', $this->warehouse->id)
-            ->when($this->movItemFilter, fn ($q) => $q->where('item_id', $this->movItemFilter))
-            ->when($this->movTypeFilter, fn ($q) => $q->where('type', $this->movTypeFilter))
-            ->when($this->movDateFrom, fn ($q) => $q->whereDate('created_at', '>=', $this->movDateFrom))
-            ->when($this->movDateTo, fn ($q) => $q->whereDate('created_at', '<=', $this->movDateTo))
+            ->where('warehouse_movements.warehouse_id', $this->warehouse->id)
+            ->join('items', 'warehouse_movements.item_id', '=', 'items.id')
+            ->select('warehouse_movements.*')
+            // القيم تصل من الرابط — غير الرقمية وغير المعروفة تُهمَل
+            ->when(ctype_digit($this->itemFilter), fn ($q) => $q->where('warehouse_movements.item_id', (int) $this->itemFilter))
+            ->when(in_array($this->typeFilter, self::MOVEMENT_TYPES, true), fn ($q) => $q->where('warehouse_movements.type', $this->typeFilter))
+            // ⚠️ created_at لحظة مخزَّنة بـUTC والفلتر يوم بتوقيت القاهرة
+            ->tap(fn ($q) => $this->applyTimestampRange($q, 'warehouse_movements.created_at'))
             ->with(['item', 'user'])
-            ->orderByDesc('created_at')
-            ->orderByDesc('id')
-            ->paginate(20, ['*'], 'movPage');
+            ->tap(fn ($q) => $this->applySorting($q, 'warehouse_movements.id'))
+            ->paginate($this->perPage(), ['*'], 'movPage');
     }
 
     protected function incomingList()
@@ -172,17 +246,16 @@ class Show extends Component
         }
 
         return WarehouseIncoming::query()
-            ->where('warehouse_id', $this->warehouse->id)
-            ->when($this->incSearch, fn ($q) => $q->whereRaw(
-                ArabicText::sqlNormalize('supplier_name').' LIKE ?',
-                ['%'.ArabicText::normalize($this->incSearch).'%']
+            ->where('warehouse_incomings.warehouse_id', $this->warehouse->id)
+            ->when($this->search, fn ($q) => $q->whereRaw(
+                ArabicText::sqlNormalize('warehouse_incomings.supplier_name').' LIKE ?',
+                ['%'.ArabicText::normalize($this->search).'%']
             ))
-            ->when($this->incDateFrom, fn ($q) => $q->where('received_at', '>=', $this->incDateFrom))
-            ->when($this->incDateTo, fn ($q) => $q->where('received_at', '<=', $this->incDateTo))
-            ->with('items')
-            ->orderByDesc('received_at')
-            ->orderByDesc('id')
-            ->paginate(15, ['*'], 'incPage');
+            // received_at يومٌ كتبه المستخدم (مصبوب 'date') — بلا تحويل توقيت
+            ->tap(fn ($q) => $this->applyDayRange($q, 'warehouse_incomings.received_at'))
+            ->withCount('items')
+            ->tap(fn ($q) => $this->applySorting($q, 'warehouse_incomings.id'))
+            ->paginate($this->perPage(), ['*'], 'incPage');
     }
 
     protected function transfersList()
@@ -195,24 +268,23 @@ class Show extends Component
             ->join('warehouses as w_from', 'warehouse_transfers.from_warehouse_id', '=', 'w_from.id')
             ->join('warehouses as w_to', 'warehouse_transfers.to_warehouse_id', '=', 'w_to.id')
             ->select('warehouse_transfers.*')
-            ->when($this->transSearch, fn ($q) => $q->where(function ($q) {
+            ->when($this->search, fn ($q) => $q->where(function ($q) {
                 $q->whereRaw(
                     ArabicText::sqlNormalize('w_from.name').' LIKE ?',
-                    ['%'.ArabicText::normalize($this->transSearch).'%']
+                    ['%'.ArabicText::normalize($this->search).'%']
                 )->orWhereRaw(
                     ArabicText::sqlNormalize('w_to.name').' LIKE ?',
-                    ['%'.ArabicText::normalize($this->transSearch).'%']
+                    ['%'.ArabicText::normalize($this->search).'%']
                 )->orWhereRaw(
                     ArabicText::sqlNormalize('warehouse_transfers.document_type').' LIKE ?',
-                    ['%'.ArabicText::normalize($this->transSearch).'%']
+                    ['%'.ArabicText::normalize($this->search).'%']
                 );
             }))
-            ->when($this->transDateFrom, fn ($q) => $q->where('warehouse_transfers.transferred_at', '>=', $this->transDateFrom))
-            ->when($this->transDateTo, fn ($q) => $q->where('warehouse_transfers.transferred_at', '<=', $this->transDateTo))
-            ->with(['fromWarehouse', 'toWarehouse', 'items'])
-            ->orderByDesc('warehouse_transfers.transferred_at')
-            ->orderByDesc('warehouse_transfers.id')
-            ->paginate(15, ['*'], 'transPage');
+            ->tap(fn ($q) => $this->applyDayRange($q, 'warehouse_transfers.transferred_at'))
+            ->with(['fromWarehouse', 'toWarehouse'])
+            ->withCount('items')
+            ->tap(fn ($q) => $this->applySorting($q, 'warehouse_transfers.id'))
+            ->paginate($this->perPage(), ['*'], 'transPage');
     }
 
     public function render()
@@ -222,6 +294,7 @@ class Show extends Component
             'movements' => $this->tab === 'movements' ? $this->movementsList() : null,
             'incomings' => $this->tab === 'incoming' ? $this->incomingList() : null,
             'transfers' => $this->tab === 'transfers' ? $this->transfersList() : null,
+            'types'     => self::MOVEMENT_TYPES,
         ]);
     }
 }

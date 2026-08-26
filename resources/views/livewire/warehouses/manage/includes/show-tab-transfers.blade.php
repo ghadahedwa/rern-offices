@@ -1,30 +1,26 @@
 <div class="space-y-4">
 
     {{-- Filters --}}
-    <div class="flex flex-wrap items-center gap-3">
-        <div class="max-w-sm flex-1 min-w-50">
-            <input wire:model.live.debounce.300ms="transSearch" type="text"
-                   placeholder="{{ __('home.search') }}"
-                   class="w-full border border-zinc-300 dark:border-zinc-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-[#c9a847]" />
-        </div>
-        <div class="flex items-center gap-2 shrink-0">
-            <span class="text-xs text-zinc-400 dark:text-zinc-500">{{ __('home.wh_date_from') }}</span>
-            <input wire:model.live="transDateFrom" type="date"
-                   class="border border-zinc-300 dark:border-zinc-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-[#c9a847]" />
-            <span class="text-xs text-zinc-400 dark:text-zinc-500">{{ __('home.wh_date_to') }}</span>
-            <input wire:model.live="transDateTo" type="date"
-                   class="border border-zinc-300 dark:border-zinc-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-[#c9a847]" />
-        </div>
-    </div>
+    <x-filter-bar :active="$this->hasActiveFilters()" :per-page-options="$this->perPageOptions()" :columns="3">
+        <x-filter-input :label="__('home.search')" wire:model.live.debounce.300ms="search"
+                        placeholder="{{ __('home.warehouse') }} / {{ __('home.wh_document_type') }}" />
+
+        <x-filter-input type="date" :label="__('home.wh_date_from')" wire:model.live="dateFrom" />
+        <x-filter-input type="date" :label="__('home.wh_date_to')" wire:model.live="dateTo" />
+
+        <x-slot:shortcuts>
+            <x-period-shortcuts :options="$this->periodOptions()" :active="$this->activePeriod()" />
+        </x-slot:shortcuts>
+    </x-filter-bar>
 
     <div class="overflow-x-auto rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-sm">
         <table class="w-full text-sm text-right">
             <thead class="bg-zinc-50 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 text-xs uppercase">
                 <tr>
-                    <th class="px-4 py-3 font-medium">{{ __('home.wh_transferred_at') }}</th>
-                    <th class="px-4 py-3 font-medium">{{ __('home.wh_from_warehouse') }}</th>
-                    <th class="px-4 py-3 font-medium">{{ __('home.wh_to_warehouse') }}</th>
-                    <th class="px-4 py-3 font-medium">{{ __('home.items_title') }}</th>
+                    @include('livewire.partials.sortable-th', ['column' => 'transferred_at', 'label' => __('home.wh_transferred_at')])
+                    @include('livewire.partials.sortable-th', ['column' => 'from',           'label' => __('home.wh_from_warehouse')])
+                    @include('livewire.partials.sortable-th', ['column' => 'to',             'label' => __('home.wh_to_warehouse')])
+                    @include('livewire.partials.sortable-th', ['column' => 'items_count',    'label' => __('home.items_title')])
                     <th class="px-4 py-3 font-medium">{{ __('home.actions') }}</th>
                 </tr>
             </thead>
@@ -44,7 +40,7 @@
                                 <span class="text-xs text-blue-600">({{ __('home.wh_type_transfer_in') }})</span>
                             @endif
                         </td>
-                        <td class="px-4 py-3 text-zinc-600 dark:text-zinc-300">{{ $transfer->items->count() }}</td>
+                        <td class="px-4 py-3 text-zinc-600 dark:text-zinc-300">{{ $transfer->items_count }}</td>
                         <td class="px-4 py-3">
                             <button wire:click="viewTransfer({{ $transfer->id }})"
                                     class="inline-flex items-center text-xs px-3 py-1.5 rounded-md border border-zinc-300 dark:border-zinc-600 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition">
