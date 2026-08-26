@@ -36,12 +36,12 @@
                 <tr>
                     @include('livewire.feedback-results.includes.bulk-th', ['pageIds' => $pageIds])
                     <th class="px-3 py-3 font-medium w-[4%] hidden 2xl:table-cell">#</th>
-                    @include('livewire.feedback-results.includes.sortable-th', [
+                    @include('livewire.partials.sortable-th', [
                         'column' => 'created_at', 'label' => __('home.fr_date'), 'thClass' => 'w-[11%]',
                     ])
                     <th class="px-3 py-3 font-medium w-[22%]">{{ __('home.fr_office') }}</th>
                     <th class="px-3 py-3 font-medium w-[18%]">{{ __('home.fr_citizen') }}</th>
-                    @include('livewire.feedback-results.includes.sortable-th', [
+                    @include('livewire.partials.sortable-th', [
                         'column' => 'topics_count', 'label' => __('home.fr_topics_count'), 'thClass' => 'w-[10%]',
                     ])
                     <th class="px-3 py-3 font-medium w-[25%] hidden xl:table-cell">{{ __('home.fr_other_suggestion') }}</th>

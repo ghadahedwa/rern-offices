@@ -1,4 +1,10 @@
-{{-- رأس عمود قابل للترتيب — يحتاج: $column, $label, و(اختياري) $thClass --}}
+{{--
+    رأس عمود قابل للترتيب — يحتاج: $column, $label, و(اختياري) $thClass.
+    يعمل مع المكوّنات التي تستخدم App\Livewire\Concerns\WithTableSorting
+    (دورة ثلاثية: تصاعدي ← تنازلي ← الترتيب الافتراضي) ومع
+    App\Livewire\FeedbackResults\Concerns\WithFeedbackSorting (دورة ثنائية)،
+    فكلاهما يوفّر $sortBy و$sortDir ودالة sort().
+--}}
 <th class="px-3 py-3 font-medium {{ $thClass ?? '' }}">
     <button type="button" wire:click="sort('{{ $column }}')"
             class="inline-flex items-center gap-1 transition hover:text-[#c9a847]

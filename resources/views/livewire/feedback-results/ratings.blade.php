@@ -37,13 +37,13 @@
                 <tr>
                     @include('livewire.feedback-results.includes.bulk-th', ['pageIds' => $pageIds])
                     <th class="px-3 py-3 font-medium w-[5%] hidden 2xl:table-cell">#</th>
-                    @include('livewire.feedback-results.includes.sortable-th', [
+                    @include('livewire.partials.sortable-th', [
                         'column' => 'created_at', 'label' => __('home.fr_date'), 'thClass' => 'w-[12%]',
                     ])
                     <th class="px-3 py-3 font-medium w-[26%]">{{ __('home.fr_office') }}</th>
                     <th class="px-3 py-3 font-medium w-[20%]">{{ __('home.fr_citizen') }}</th>
                     <th class="px-3 py-3 font-medium w-[11%] hidden xl:table-cell">{{ __('home.fr_wait_time') }}</th>
-                    @include('livewire.feedback-results.includes.sortable-th', [
+                    @include('livewire.partials.sortable-th', [
                         'column' => 'overall_rating', 'label' => __('home.fr_overall_rating'), 'thClass' => 'w-[15%]',
                     ])
                     <th class="px-3 py-3 font-medium w-[7%]">{{ __('home.fr_details') }}</th>

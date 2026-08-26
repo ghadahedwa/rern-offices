@@ -15,36 +15,32 @@
     </div>
 
     {{-- Search + filters --}}
-    <div class="flex flex-wrap items-center gap-3">
-        <input wire:model.live.debounce.300ms="search" type="text"
-               placeholder="{{ __('home.search') }}"
-               class="max-w-sm flex-1 min-w-50 border border-zinc-300 dark:border-zinc-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-[#c9a847]" />
+    <x-filter-bar :active="$this->hasActiveFilters()" :per-page-options="$this->perPageOptions()">
+        <x-filter-input :label="__('home.search')" wire:model.live.debounce.300ms="search"
+                        placeholder="{{ __('home.item_name') }} / {{ __('home.item_code') }}" />
 
-        <select wire:model.live="categoryFilter"
-                class="border border-zinc-300 dark:border-zinc-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-[#c9a847]">
+        <x-filter-select :label="__('home.item_category')" wire:model.live="categoryFilter">
             <option value="">{{ __('home.item_category_all') }}</option>
             @foreach($categories as $category)
                 <option value="{{ $category->id }}">{{ $category->name }}</option>
             @endforeach
             <option value="none">{{ __('home.item_category_none') }}</option>
-        </select>
+        </x-filter-select>
 
-        <select wire:model.live="unitFilter"
-                class="border border-zinc-300 dark:border-zinc-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-[#c9a847]">
+        <x-filter-select :label="__('home.item_unit')" wire:model.live="unitFilter">
             <option value="">{{ __('home.item_unit_all') }}</option>
             @foreach($units as $unit)
                 <option value="{{ $unit->id }}">{{ $unit->name }}</option>
             @endforeach
             <option value="none">{{ __('home.item_unit_none') }}</option>
-        </select>
+        </x-filter-select>
 
-        <select wire:model.live="statusFilter"
-                class="border border-zinc-300 dark:border-zinc-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-[#c9a847]">
-            <option value="">— {{ __('home.warehouse_status') }} —</option>
+        <x-filter-select :label="__('home.warehouse_status')" wire:model.live="statusFilter">
+            <option value="">—</option>
             <option value="yes">{{ __('home.warehouse_active') }}</option>
             <option value="no">{{ __('home.warehouse_inactive') }}</option>
-        </select>
-    </div>
+        </x-filter-select>
+    </x-filter-bar>
 
     {{-- Table --}}
     <div class="overflow-x-auto rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-sm">
@@ -52,11 +48,11 @@
             <thead class="bg-zinc-50 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 text-xs uppercase">
                 <tr>
                     <th class="px-4 py-3 font-medium">#</th>
-                    <th class="px-4 py-3 font-medium">{{ __('home.item_name') }}</th>
-                    <th class="px-4 py-3 font-medium">{{ __('home.item_category') }}</th>
-                    <th class="px-4 py-3 font-medium">{{ __('home.item_unit') }}</th>
-                    <th class="px-4 py-3 font-medium">{{ __('home.item_min_stock') }}</th>
-                    <th class="px-4 py-3 font-medium">{{ __('home.warehouse_status') }}</th>
+                    @include('livewire.partials.sortable-th', ['column' => 'name',      'label' => __('home.item_name')])
+                    @include('livewire.partials.sortable-th', ['column' => 'category',  'label' => __('home.item_category')])
+                    @include('livewire.partials.sortable-th', ['column' => 'unit',      'label' => __('home.item_unit')])
+                    @include('livewire.partials.sortable-th', ['column' => 'min_stock', 'label' => __('home.item_min_stock')])
+                    @include('livewire.partials.sortable-th', ['column' => 'status',    'label' => __('home.warehouse_status')])
                     @if($canManage)
                         <th class="px-4 py-3 font-medium">{{ __('home.actions') }}</th>
                     @endif

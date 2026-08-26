@@ -3,13 +3,18 @@
 namespace App\Livewire\Warehouses\Transfers;
 
 use App\Exceptions\WarehouseException;
+use App\Livewire\Concerns\WithDateRange;
+use App\Livewire\Concerns\WithPerPage;
+use App\Livewire\Concerns\WithTableSorting;
 use App\Models\WarehouseTransfer;
 use App\Support\ArabicText;
 use App\Support\WarehouseLedger;
 use Flux\Flux;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
+use Livewire\Attributes\Url;
 use Livewire\Component;
 use Livewire\WithPagination;
 
@@ -17,11 +22,13 @@ use Livewire\WithPagination;
 #[Title('النقل بين المخازن')]
 class Index extends Component
 {
+    use WithDateRange;
     use WithPagination;
+    use WithPerPage;
+    use WithTableSorting;
 
+    #[Url(as: 'q', except: '')]
     public string $search = '';
-    public string $dateFrom = '';
-    public string $dateTo = '';
 
     public bool $showDelete = false;
     public ?int $deletingId = null;
@@ -41,14 +48,33 @@ class Index extends Component
         $this->resetPage();
     }
 
-    public function updatingDateFrom(): void
+    public function resetFilters(): void
     {
+        $this->reset('search', 'dateFrom', 'dateTo');
         $this->resetPage();
     }
 
-    public function updatingDateTo(): void
+    public function hasActiveFilters(): bool
     {
-        $this->resetPage();
+        return $this->search !== '' || $this->hasDateFilter();
+    }
+
+    protected function sortableColumns(): array
+    {
+        return [
+            'transferred_at' => 'warehouse_transfers.transferred_at',
+            'from'           => 'w_from.name',
+            'to'             => 'w_to.name',
+            'document_type'  => 'warehouse_transfers.document_type',
+            'items_count'    => 'items_count',
+        ];
+    }
+
+    protected function defaultOrder(Builder $query): Builder
+    {
+        return $query
+            ->orderByDesc('warehouse_transfers.transferred_at')
+            ->orderByDesc('warehouse_transfers.id');
     }
 
     public function view(int $id): void
@@ -104,12 +130,12 @@ class Index extends Component
                     ['%'.ArabicText::normalize($this->search).'%']
                 );
             }))
-            ->when($this->dateFrom, fn ($q) => $q->where('warehouse_transfers.transferred_at', '>=', $this->dateFrom))
-            ->when($this->dateTo, fn ($q) => $q->where('warehouse_transfers.transferred_at', '<=', $this->dateTo))
-            ->with(['fromWarehouse', 'toWarehouse', 'items'])
-            ->orderByDesc('warehouse_transfers.transferred_at')
-            ->orderByDesc('warehouse_transfers.id')
-            ->paginate(15);
+            // transferred_at يومٌ كتبه المستخدم (مصبوب 'date') — بلا تحويل توقيت
+            ->tap(fn ($q) => $this->applyDayRange($q, 'warehouse_transfers.transferred_at'))
+            ->with(['fromWarehouse', 'toWarehouse'])
+            ->withCount('items')
+            ->tap(fn ($q) => $this->applySorting($q, 'warehouse_transfers.id'))
+            ->paginate($this->perPage());
 
         return view('livewire.warehouses.transfers.index', [
             'transfers' => $transfers,

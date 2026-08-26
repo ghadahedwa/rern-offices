@@ -2,14 +2,19 @@
 
 namespace App\Livewire\Warehouses;
 
+use App\Livewire\Concerns\WithDateRange;
+use App\Livewire\Concerns\WithPerPage;
+use App\Livewire\Concerns\WithTableSorting;
 use App\Models\Item;
 use App\Models\ItemCategory;
 use App\Models\Warehouse;
 use App\Models\WarehouseMovement;
 use App\Support\ArabicText;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
+use Livewire\Attributes\Url;
 use Livewire\Component;
 use Livewire\WithPagination;
 
@@ -17,18 +22,29 @@ use Livewire\WithPagination;
 #[Title('سجل الحركات')]
 class Movements extends Component
 {
+    use WithDateRange;
     use WithPagination;
+    use WithPerPage;
+    use WithTableSorting;
 
+    /** أنواع الحركة المعروفة — القيمة تصل من الرابط فتُحصر فيها. */
+    public const TYPES = ['opening', 'incoming', 'transfer_out', 'transfer_in'];
+
+    #[Url(as: 'q', except: '')]
     public string $search = '';
+
+    #[Url(as: 'wh', except: '')]
     public string $warehouseFilter = '';
+
+    #[Url(as: 'item', except: '')]
     public string $itemFilter = '';
 
     /** معرّف قسم، أو 'none' للحركات على أصناف بلا قسم، أو '' للكل. */
+    #[Url(as: 'category', except: '')]
     public string $categoryFilter = '';
 
+    #[Url(as: 'type', except: '')]
     public string $typeFilter = '';
-    public string $dateFrom = '';
-    public string $dateTo = '';
 
     public function mount(): void
     {
@@ -64,14 +80,35 @@ class Movements extends Component
         $this->resetPage();
     }
 
-    public function updatingDateFrom(): void
+    public function resetFilters(): void
     {
+        $this->reset('search', 'warehouseFilter', 'itemFilter', 'categoryFilter', 'typeFilter', 'dateFrom', 'dateTo');
         $this->resetPage();
     }
 
-    public function updatingDateTo(): void
+    public function hasActiveFilters(): bool
     {
-        $this->resetPage();
+        return $this->search !== '' || $this->warehouseFilter !== '' || $this->itemFilter !== ''
+            || $this->categoryFilter !== '' || $this->typeFilter !== '' || $this->hasDateFilter();
+    }
+
+    protected function sortableColumns(): array
+    {
+        return [
+            'date'           => 'warehouse_movements.created_at',
+            'warehouse'      => 'warehouses.name',
+            'item'           => 'items.name',
+            'type'           => 'warehouse_movements.type',
+            'quantity'       => 'warehouse_movements.quantity',
+            'balance_after'  => 'warehouse_movements.balance_after',
+        ];
+    }
+
+    protected function defaultOrder(Builder $query): Builder
+    {
+        return $query
+            ->orderByDesc('warehouse_movements.created_at')
+            ->orderByDesc('warehouse_movements.id');
     }
 
     public function render()
@@ -89,18 +126,18 @@ class Movements extends Component
                     ['%'.ArabicText::normalize($this->search).'%']
                 );
             }))
-            ->when($this->warehouseFilter, fn ($q) => $q->where('warehouse_movements.warehouse_id', $this->warehouseFilter))
-            ->when($this->itemFilter, fn ($q) => $q->where('warehouse_movements.item_id', $this->itemFilter))
+            // القيم تصل من الرابط — غير الرقمية تُهمَل ولا تُمرَّر لاستعلام
+            ->when(ctype_digit($this->warehouseFilter), fn ($q) => $q->where('warehouse_movements.warehouse_id', (int) $this->warehouseFilter))
+            ->when(ctype_digit($this->itemFilter), fn ($q) => $q->where('warehouse_movements.item_id', (int) $this->itemFilter))
             // قسم الصنف لا المخزن — يصل عبر الـjoin القائم على items
             ->when($this->categoryFilter === 'none', fn ($q) => $q->whereNull('items.item_category_id'))
             ->when(ctype_digit($this->categoryFilter), fn ($q) => $q->where('items.item_category_id', (int) $this->categoryFilter))
-            ->when($this->typeFilter, fn ($q) => $q->where('warehouse_movements.type', $this->typeFilter))
-            ->when($this->dateFrom, fn ($q) => $q->whereDate('warehouse_movements.created_at', '>=', $this->dateFrom))
-            ->when($this->dateTo, fn ($q) => $q->whereDate('warehouse_movements.created_at', '<=', $this->dateTo))
+            ->when(in_array($this->typeFilter, self::TYPES, true), fn ($q) => $q->where('warehouse_movements.type', $this->typeFilter))
+            // ⚠️ created_at لحظة مخزَّنة بـUTC والفلتر يوم بتوقيت القاهرة — التحويل في WithDateRange
+            ->tap(fn ($q) => $this->applyTimestampRange($q, 'warehouse_movements.created_at'))
             ->with(['warehouse', 'item', 'user'])
-            ->orderByDesc('warehouse_movements.created_at')
-            ->orderByDesc('warehouse_movements.id')
-            ->paginate(20);
+            ->tap(fn ($q) => $this->applySorting($q, 'warehouse_movements.id'))
+            ->paginate($this->perPage());
 
         return view('livewire.warehouses.movements', [
             'movements'  => $movements,
@@ -113,6 +150,7 @@ class Movements extends Component
                 ->orderBy('name')
                 ->get(),
             'categories' => ItemCategory::orderBy('order')->orderBy('name')->get(),
+            'types'      => self::TYPES,
         ]);
     }
 }

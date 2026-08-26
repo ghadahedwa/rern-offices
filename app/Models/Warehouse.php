@@ -50,14 +50,33 @@ class Warehouse extends Model
      */
     public function scopeOrdered(Builder $query): Builder
     {
+        return $query->withOrderingJoins()->applyDefaultOrdering();
+    }
+
+    /**
+     * الترتيب وحده على استعلامٍ مُنضمٍّ سلفاً — مصدر واحد لقاعدة الترتيب
+     * تقرأه scopeOrdered وتقرأه الشاشة التي ترجع للافتراضي بعد ترتيبٍ مخصّص.
+     */
+    public function scopeApplyDefaultOrdering(Builder $query): Builder
+    {
         return $query
-            ->leftJoin('warehouse_types', 'warehouses.warehouse_type_id', '=', 'warehouse_types.id')
-            ->leftJoin('governorates', 'warehouses.governorate_id', '=', 'governorates.id')
-            ->select('warehouses.*')
             ->orderBy('warehouse_types.level')
             ->orderBy('governorates.order')
             ->orderBy('governorates.name')
             ->orderBy('warehouses.name');
+    }
+
+    /**
+     * الانضمامان وحدهما بلا ترتيب — لشاشةٍ يختار فيها المستخدم عمود الترتيب
+     * (النوع أو المحافظة) فيحتاج الأعمدة المنضمّة دون فرض الترتيب الافتراضي.
+     * الشرحان أعلاه (left ولا inner · حصر الأعمدة) يسريان عليه كما هما.
+     */
+    public function scopeWithOrderingJoins(Builder $query): Builder
+    {
+        return $query
+            ->leftJoin('warehouse_types', 'warehouses.warehouse_type_id', '=', 'warehouse_types.id')
+            ->leftJoin('governorates', 'warehouses.governorate_id', '=', 'governorates.id')
+            ->select('warehouses.*');
     }
 
     /** المستوى الهرمي للمخزن (من نوعه) — 1=رئيسي. */

@@ -2,6 +2,8 @@
 
 namespace App\Livewire\Warehouses\Items;
 
+use App\Livewire\Concerns\WithPerPage;
+use App\Livewire\Concerns\WithTableSorting;
 use App\Models\Item;
 use App\Models\ItemCategory;
 use App\Models\ItemUnit;
@@ -10,6 +12,7 @@ use App\Models\WarehouseTransferItem;
 use App\Support\ArabicDigits;
 use App\Support\ArabicText;
 use Flux\Flux;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
@@ -22,6 +25,11 @@ use Livewire\WithPagination;
 class Index extends Component
 {
     use WithPagination;
+    use WithPerPage;
+    use WithTableSorting;
+
+    #[Url(as: 'q', except: '')]
+    public string $search = '';
 
     /** معرّف قسم، أو 'none' للأصناف بلا قسم، أو '' للكل. */
     #[Url(as: 'category', except: '')]
@@ -34,8 +42,6 @@ class Index extends Component
     /** 'yes' نشط · 'no' غير نشط · '' الكل. */
     #[Url(as: 'status', except: '')]
     public string $statusFilter = '';
-
-    public string $search = '';
 
     public bool $showDelete = false;
     public ?int $deletingId = null;
@@ -65,6 +71,44 @@ class Index extends Component
     public function updatingStatusFilter(): void
     {
         $this->resetPage();
+    }
+
+    public function resetFilters(): void
+    {
+        $this->reset('search', 'categoryFilter', 'unitFilter', 'statusFilter');
+        $this->resetPage();
+    }
+
+    public function hasActiveFilters(): bool
+    {
+        return $this->search !== '' || $this->categoryFilter !== ''
+            || $this->unitFilter !== '' || $this->statusFilter !== '';
+    }
+
+    protected function sortableColumns(): array
+    {
+        return [
+            'name'      => 'items.name',
+            'code'      => 'items.code',
+            'category'  => ['item_categories.order', 'item_categories.name'],
+            'unit'      => 'item_units.name',
+            'min_stock' => 'items.min_stock',
+            'status'    => 'items.is_active',
+        ];
+    }
+
+    /**
+     * ترتيب القسم ثم ترتيب الصنف داخله ثم الاسم — الترتيب الأبجدي وحده
+     * يزيح سطور البيان المطبوع مع كل صنف جديد. والأصناف بلا قسم في الآخر.
+     */
+    protected function defaultOrder(Builder $query): Builder
+    {
+        return $query
+            ->orderByRaw('CASE WHEN items.item_category_id IS NULL THEN 1 ELSE 0 END')
+            ->orderBy('item_categories.order')
+            ->orderBy('item_categories.name')
+            ->orderBy('items.order')
+            ->orderBy('items.name');
     }
 
     protected function isInUse(int $id): bool
@@ -101,6 +145,8 @@ class Index extends Component
     {
         $items = Item::query()
             ->leftJoin('item_categories', 'items.item_category_id', '=', 'item_categories.id')
+            // الوحدة مضمومة لأجل الترتيب بها؛ والعرض يبقى على العلاقة المحمَّلة
+            ->leftJoin('item_units', 'items.item_unit_id', '=', 'item_units.id')
             ->select('items.*')
             ->with(['unit', 'category'])
             // الفلتر يصل من الرابط، فقيمة غير 'none' وغير رقمية تُهمَل ولا تُمرَّر لاستعلام
@@ -125,14 +171,8 @@ class Index extends Component
                         ['%'.ArabicDigits::toArabic($term).'%']
                     ));
             })
-            // ترتيب القسم ثم ترتيب الصنف داخله ثم الاسم — الترتيب الأبجدي وحده
-            // يزيح سطور البيان المطبوع مع كل صنف جديد. والأصناف بلا قسم في الآخر.
-            ->orderByRaw('CASE WHEN items.item_category_id IS NULL THEN 1 ELSE 0 END')
-            ->orderBy('item_categories.order')
-            ->orderBy('item_categories.name')
-            ->orderBy('items.order')
-            ->orderBy('items.name')
-            ->paginate(15);
+            ->tap(fn ($q) => $this->applySorting($q, 'items.id'))
+            ->paginate($this->perPage());
 
         return view('livewire.warehouses.items.index', [
             'items'      => $items,

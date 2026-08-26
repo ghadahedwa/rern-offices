@@ -2,15 +2,19 @@
 
 namespace App\Livewire\Warehouses\Manage;
 
+use App\Livewire\Concerns\WithPerPage;
+use App\Livewire\Concerns\WithTableSorting;
 use App\Models\Warehouse;
 use App\Models\WarehouseIncoming;
 use App\Models\WarehouseTransfer;
 use App\Models\WarehouseType;
 use App\Support\ArabicText;
 use Flux\Flux;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
+use Livewire\Attributes\Url;
 use Livewire\Component;
 use Livewire\WithPagination;
 
@@ -19,10 +23,14 @@ use Livewire\WithPagination;
 class Index extends Component
 {
     use WithPagination;
+    use WithPerPage;
+    use WithTableSorting;
 
+    #[Url(as: 'q', except: '')]
     public string $search = '';
 
     /** معرّف نوع مخزن، أو '' للكل. */
+    #[Url(as: 'type', except: '')]
     public string $typeFilter = '';
 
     public bool $showDelete = false;
@@ -43,6 +51,37 @@ class Index extends Component
     public function updatingTypeFilter(): void
     {
         $this->resetPage();
+    }
+
+    public function resetFilters(): void
+    {
+        $this->reset('search', 'typeFilter');
+        $this->resetPage();
+    }
+
+    public function hasActiveFilters(): bool
+    {
+        return $this->search !== '' || $this->typeFilter !== '';
+    }
+
+    /**
+     * الأعمدة المنضمّة (النوع/المحافظة) مسموح الترتيب بها لأن
+     * withOrderingJoins() يضمّها للاستعلام على كل حال.
+     */
+    protected function sortableColumns(): array
+    {
+        return [
+            'name'        => 'warehouses.name',
+            // بالمستوى لا بالاسم: «رئيسي» قبل «إقليمي» قبل «فرعي» ترتيبٌ ذو معنى
+            'type'        => ['warehouse_types.level', 'warehouse_types.order'],
+            'governorate' => ['governorates.order', 'governorates.name'],
+            'status'      => 'warehouses.is_active',
+        ];
+    }
+
+    protected function defaultOrder(Builder $query): Builder
+    {
+        return $query->applyDefaultOrdering();
     }
 
     protected function isInUse(int $id): bool
@@ -78,6 +117,7 @@ class Index extends Component
     public function render()
     {
         $warehouses = Warehouse::query()
+            ->withOrderingJoins()
             ->with(['type', 'governorate'])
             ->when($this->search, fn ($q) => $q->whereRaw(
                 ArabicText::sqlNormalize('warehouses.name').' LIKE ?',
@@ -85,8 +125,8 @@ class Index extends Component
             ))
             // قيمة غير رقمية تصل من العميل تُهمَل ولا تُمرَّر لاستعلام
             ->when(ctype_digit($this->typeFilter), fn ($q) => $q->where('warehouses.warehouse_type_id', (int) $this->typeFilter))
-            ->ordered()
-            ->paginate(15);
+            ->tap(fn ($q) => $this->applySorting($q, 'warehouses.id'))
+            ->paginate($this->perPage());
 
         return view('livewire.warehouses.manage.index', [
             'warehouses' => $warehouses,

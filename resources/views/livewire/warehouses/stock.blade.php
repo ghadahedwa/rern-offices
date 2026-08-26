@@ -6,28 +6,25 @@
     </div>
 
     {{-- Filters --}}
-    <div class="flex flex-wrap items-end gap-3">
-        <div class="max-w-sm flex-1 min-w-50">
-            <input wire:model.live.debounce.300ms="search" type="text"
-                   placeholder="{{ __('home.search') }}"
-                   class="w-full border border-zinc-300 dark:border-zinc-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-[#c9a847]" />
-        </div>
-        <select wire:model.live="warehouseFilter"
-                class="border border-zinc-300 dark:border-zinc-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-[#c9a847]">
+    <x-filter-bar :active="$this->hasActiveFilters()" :per-page-options="$this->perPageOptions()" :columns="3">
+        <x-filter-input :label="__('home.search')" wire:model.live.debounce.300ms="search"
+                        placeholder="{{ __('home.item_name') }}" />
+
+        <x-filter-select :label="__('home.warehouse')" wire:model.live="warehouseFilter">
             <option value="">{{ __('home.wh_all_warehouses') }}</option>
             @foreach($warehouses as $wh)
                 <option value="{{ $wh->id }}">{{ $wh->name }}</option>
             @endforeach
-        </select>
-        <select wire:model.live="categoryFilter"
-                class="border border-zinc-300 dark:border-zinc-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-[#c9a847]">
+        </x-filter-select>
+
+        <x-filter-select :label="__('home.item_category')" wire:model.live="categoryFilter">
             <option value="">{{ __('home.item_category_all') }}</option>
             @foreach($categories as $category)
                 <option value="{{ $category->id }}">{{ $category->name }}</option>
             @endforeach
             <option value="none">{{ __('home.item_category_none') }}</option>
-        </select>
-    </div>
+        </x-filter-select>
+    </x-filter-bar>
 
     {{-- Table --}}
     <div class="overflow-x-auto rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-sm">
@@ -35,10 +32,10 @@
             <thead class="bg-zinc-50 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 text-xs uppercase">
                 <tr>
                     <th class="px-4 py-3 font-medium">#</th>
-                    <th class="px-4 py-3 font-medium">{{ __('home.warehouse') }}</th>
-                    <th class="px-4 py-3 font-medium">{{ __('home.item_name') }}</th>
-                    <th class="px-4 py-3 font-medium">{{ __('home.item_unit') }}</th>
-                    <th class="px-4 py-3 font-medium">{{ __('home.wh_current_balance') }}</th>
+                    @include('livewire.partials.sortable-th', ['column' => 'warehouse', 'label' => __('home.warehouse')])
+                    @include('livewire.partials.sortable-th', ['column' => 'item',      'label' => __('home.item_name')])
+                    @include('livewire.partials.sortable-th', ['column' => 'unit',      'label' => __('home.item_unit')])
+                    @include('livewire.partials.sortable-th', ['column' => 'quantity',  'label' => __('home.wh_current_balance')])
                 </tr>
             </thead>
             <tbody class="divide-y divide-zinc-100 dark:divide-zinc-700">

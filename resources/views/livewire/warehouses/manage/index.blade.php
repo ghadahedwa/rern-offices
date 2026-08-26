@@ -15,19 +15,17 @@
     </div>
 
     {{-- Search + filters --}}
-    <div class="flex flex-wrap items-center gap-3">
-        <input wire:model.live.debounce.300ms="search" type="text"
-               placeholder="{{ __('home.search') }}"
-               class="max-w-sm flex-1 min-w-50 border border-zinc-300 dark:border-zinc-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-[#c9a847]" />
+    <x-filter-bar :active="$this->hasActiveFilters()" :per-page-options="$this->perPageOptions()" :columns="2">
+        <x-filter-input :label="__('home.search')" wire:model.live.debounce.300ms="search"
+                        placeholder="{{ __('home.warehouse_name') }}" />
 
-        <select wire:model.live="typeFilter"
-                class="border border-zinc-300 dark:border-zinc-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-[#c9a847]">
+        <x-filter-select :label="__('home.warehouse_type')" wire:model.live="typeFilter">
             <option value="">{{ __('home.wh_all_types') }}</option>
             @foreach($types as $type)
                 <option value="{{ $type->id }}">{{ $type->name }}</option>
             @endforeach
-        </select>
-    </div>
+        </x-filter-select>
+    </x-filter-bar>
 
     {{-- Table --}}
     <div class="overflow-x-auto rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-sm">
@@ -35,10 +33,10 @@
             <thead class="bg-zinc-50 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 text-xs uppercase">
                 <tr>
                     <th class="px-4 py-3 font-medium">#</th>
-                    <th class="px-4 py-3 font-medium">{{ __('home.warehouse_name') }}</th>
-                    <th class="px-4 py-3 font-medium">{{ __('home.warehouse_type') }}</th>
-                    <th class="px-4 py-3 font-medium">{{ __('home.warehouse_governorate') }}</th>
-                    <th class="px-4 py-3 font-medium">{{ __('home.warehouse_status') }}</th>
+                    @include('livewire.partials.sortable-th', ['column' => 'name',        'label' => __('home.warehouse_name')])
+                    @include('livewire.partials.sortable-th', ['column' => 'type',        'label' => __('home.warehouse_type')])
+                    @include('livewire.partials.sortable-th', ['column' => 'governorate', 'label' => __('home.warehouse_governorate')])
+                    @include('livewire.partials.sortable-th', ['column' => 'status',      'label' => __('home.warehouse_status')])
                     @if($canManage)
                         <th class="px-4 py-3 font-medium">{{ __('home.actions') }}</th>
                     @endif

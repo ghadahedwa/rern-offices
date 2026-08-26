@@ -276,6 +276,43 @@ $lbl = 'block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1'
 
 ---
 
+## جداول النظام: الفلاتر والترتيب وعدد الصفوف (بنية مشتركة) ✅
+
+بنية واحدة تخدم أي شاشة جدول جديدة — لا تُكتب فلاتر ولا ترتيب من الصفر.
+
+```
+app/Support/TableSort.php                    ← تطبيق الترتيب بقائمة بيضاء (يقرأه FeedbackSort أيضاً)
+app/Livewire/Concerns/WithTableSorting.php   ← $sortBy/$sortDir في الرابط + دورة الضغط
+app/Livewire/Concerns/WithPerPage.php        ← عدد الصفوف في الرابط (١٥/٢٥/٥٠/١٠٠)
+app/Livewire/Concerns/WithDateRange.php      ← فلتر فترة + اختصارات جاهزة + دالتا التطبيق
+resources/views/components/filter-bar.blade.php       ← إطار الفلاتر + زر المسح + منتقي الصفوف
+resources/views/components/filter-select|filter-input ← عناصر الفلتر بستايل موحّد
+resources/views/components/period-shortcuts.blade.php ← أزرار الفترة
+resources/views/livewire/partials/sortable-th.blade.php ← رأس عمود قابل للترتيب (مشترك)
+```
+
+**الاستعمال:** المكوّن يوفّر `sortableColumns()` (خريطة مفتاح الرابط ← عمود SQL) و`defaultOrder()`
+و`resetFilters()` و`hasActiveFilters()`، والقالب:
+```blade
+<x-filter-bar :active="$this->hasActiveFilters()" :per-page-options="$this->perPageOptions()">…</x-filter-bar>
+@include('livewire.partials.sortable-th', ['column' => 'name', 'label' => __('home.…')])
+```
+
+### ⚠️ قواعد لا تُكسر
+- **اسم عمود الترتيب يأتي من الرابط** — لا يُمرَّر لـ`orderBy` إلا بعد خريطة `sortableColumns()`. المفتاح المجهول يسقط إلى **الترتيب الافتراضي للشاشة** لا إلى عمود عشوائي.
+- **الترتيب الافتراضي ذو معنى تنظيمي** (المخازن: المستوى ثم المحافظة · الأصناف: القسم ثم ترتيب الصنف)، ولذلك **دورة الضغط ثلاثية**: تصاعدي ← تنازلي ← الافتراضي. بلا الحالة الثالثة يفقده المستخدم بضغطة ولا يستعيده إلا بمسح الرابط. مصدر ترتيب المخازن الواحد: `Warehouse::scopeApplyDefaultOrdering` (و`ordered()` = `withOrderingJoins()` + هي).
+- **كل قيمة فلتر تصل من الرابط تُفحَص**: `ctype_digit` للمعرّفات، وقائمة بيضاء لأنواع الحركة، وعدد الصفوف يُحصر في `PER_PAGE_OPTIONS`. القيمة التالفة **تُهمَل ولا تُمرَّر** — تمريرها يُخرج شاشة فارغة بلا سبب ظاهر للمستخدم.
+- **لعمود التاريخ دالتان لا واحدة، والخلط بينهما يخفي صفوفاً:**
+  - `applyTimestampRange` للحظة مخزَّنة UTC (`warehouse_movements.created_at`) — طرفا اليوم يُحوَّلان من توقيت القاهرة عبر `LocalTime::dayStart/dayAfter`. **حركة الواحدة فجراً بالقاهرة محفوظة في اليوم السابق بـUTC**، وكانت تغيب عن فلتر يومها.
+  - `applyDayRange` ليوم كتبه المستخدم (`received_at` · `transferred_at` المصبوبان `'date'`) — بلا تحويل توقيت.
+  - وكلاهما **نطاق مفتوح على الأعلى** (`< اليوم التالي`) لا `whereDate` ولا `<=`: الدالة على العمود تمنع الفهرس، و`<=` تُسقط يوم النهاية حين يُخزَّن اليوم كـ`'... 00:00:00'` (يقع على sqlite في الاختبارات).
+- **فئات Tailwind لا تُركَّب بالنص** (`lg:grid-cols-{{ $n }}`) — البناء لا يراها. الفئات صريحة في `match` داخل `filter-bar`. وأي تعديل يحتاج `npm run build`.
+
+### الشاشات المطبَّق عليها (المخازن)
+إدارة المخازن · الأصناف · الأرصدة · سجل الحركات · الوارد · النقل — كلها فلاترها في الرابط
+(`?q=&wh=&category=&type=&from=&to=&sort=&dir=&per=`) فرابط «الرئيسي + المستديم» صار قابلاً للمشاركة.
+الوارد والنقل يعدّان الأصناف بـ`withCount('items')` (لا تحميل البنود لعدّها) والعدد عمود قابل للترتيب.
+
 ## هيكل الملفات المهم
 ```
 app/
@@ -475,7 +512,7 @@ feedback-results.rejected      → /feedback-results/rejected     (RejectedAttem
 - التاريخ قادم من الـ URL فيُمرَّر على `parsedDate()` — قيمة تالفة تُهمَل ولا تُسقط الصفحة.
 
 ### الترتيب
-`Concerns\WithFeedbackSorting` + قالب `includes/sortable-th.blade.php`. المكوّن يوفّر `sortableColumns()` من ثابت `SORTABLE` على كلاس الاستعلام، والتنفيذ في `FeedbackSort::apply()`.
+`Concerns\WithFeedbackSorting` + القالب المشترك `livewire.partials.sortable-th` (انتقل من `includes/` ليخدم جداول المخازن معه). المكوّن يوفّر `sortableColumns()` من ثابت `SORTABLE` على كلاس الاستعلام، والتنفيذ في `FeedbackSort::apply()` (وهو نفسه يفوّض لـ`App\Support\TableSort`؛ يبقى فيه ما يخصّ الموديول: السقوط إلى `created_at` والاتجاه الافتراضي تنازلي).
 ⚠️ اسم العمود يأتي من الـ URL (الشاشة **ورابط الـ PDF** على السواء) — **لا يُمرَّر لـ `orderBy` إلا بعد التحقق من القائمة البيضاء**، وإلا صار حقن SQL عبر الرابط. مغطّى باختبارين.
 
 ### البحث

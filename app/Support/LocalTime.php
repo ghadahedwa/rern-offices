@@ -72,4 +72,37 @@ class LocalTime
     {
         return $value ? self::date($value).' — '.self::time($value) : '—';
     }
+
+    /**
+     * بداية اليوم المحلي (مصر) كلحظةٍ صالحة لمقارنة عمود طابع زمني مخزَّن بـUTC.
+     *
+     * ⚠️ لا يُقارَن عمود طابع زمني بتاريخٍ مجرّد: المستخدم يكتب يوماً بتوقيت
+     *    القاهرة والعمود مخزَّن UTC — فحركة الواحدة فجراً بالقاهرة محفوظة في
+     *    اليوم السابق بـUTC، وتغيب عن فلتر يومها الذي وقعت فيه فعلاً.
+     * ⚠️ والفرق ٢ أو ٣ ساعات حسب التوقيت الصيفي، فلا تصلح إزاحة ثابتة.
+     *
+     * التاريخ قد يصل من الرابط تالفاً — يُهمَل بدل إسقاط الصفحة.
+     */
+    public static function dayStart(?string $date): ?Carbon
+    {
+        if ($date === null || trim($date) === '') {
+            return null;
+        }
+
+        try {
+            return Carbon::parse(trim($date), self::timezone())->startOfDay()->utc();
+        } catch (\Throwable) {
+            return null;
+        }
+    }
+
+    /**
+     * بداية اليوم المحلي التالي كلحظة UTC — ليكون الحدّ الأعلى مفتوحاً (`<`)
+     * فيدخل يوم النهاية كاملاً بلا دالة DATE() على العمود (وهي تمنع الفهرس
+     * وتحوّل الفلترة إلى مسح كامل للجدول).
+     */
+    public static function dayAfter(?string $date): ?Carbon
+    {
+        return self::dayStart($date)?->addDay();
+    }
 }
