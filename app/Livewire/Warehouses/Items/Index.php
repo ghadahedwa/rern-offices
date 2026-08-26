@@ -97,18 +97,10 @@ class Index extends Component
         ];
     }
 
-    /**
-     * ترتيب القسم ثم ترتيب الصنف داخله ثم الاسم — الترتيب الأبجدي وحده
-     * يزيح سطور البيان المطبوع مع كل صنف جديد. والأصناف بلا قسم في الآخر.
-     */
+    /** ترتيب الدفتر — تعريفه الواحد في Item::statementOrder. */
     protected function defaultOrder(Builder $query): Builder
     {
-        return $query
-            ->orderByRaw('CASE WHEN items.item_category_id IS NULL THEN 1 ELSE 0 END')
-            ->orderBy('item_categories.order')
-            ->orderBy('item_categories.name')
-            ->orderBy('items.order')
-            ->orderBy('items.name');
+        return Item::statementOrder($query);
     }
 
     protected function isInUse(int $id): bool

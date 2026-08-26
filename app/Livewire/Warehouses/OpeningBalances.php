@@ -85,7 +85,7 @@ class OpeningBalances extends Component
     {
         return view('livewire.warehouses.opening-balances', [
             'warehouses' => Warehouse::with('type')->where('warehouses.is_active', true)->ordered()->get(),
-            'items'      => Item::where('is_active', true)->orderBy('name')->get(),
+            'items'      => Item::where('items.is_active', true)->inStatementOrder()->get(),
         ]);
     }
 }

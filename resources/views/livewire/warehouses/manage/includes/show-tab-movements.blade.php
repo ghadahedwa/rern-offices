@@ -4,8 +4,8 @@
     <x-filter-bar :active="$this->hasActiveFilters()" :per-page-options="$this->perPageOptions()">
         <x-filter-select :label="__('home.item')" wire:model.live="itemFilter">
             <option value="">—</option>
-            @foreach($warehouse->stocks as $s)
-                <option value="{{ $s->item_id }}">{{ $s->item?->name }}</option>
+            @foreach($movementItems as $movementItem)
+                <option value="{{ $movementItem->id }}">{{ $movementItem->name }}</option>
             @endforeach
         </x-filter-select>
 

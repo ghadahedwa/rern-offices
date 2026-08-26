@@ -4,6 +4,7 @@ namespace App\Livewire\Warehouses;
 
 use App\Livewire\Concerns\WithPerPage;
 use App\Livewire\Concerns\WithTableSorting;
+use App\Models\Item;
 use App\Models\ItemCategory;
 use App\Models\ItemUnit;
 use App\Models\Warehouse;
@@ -110,9 +111,10 @@ class Stock extends Component
         ];
     }
 
+    /** المخزن أولاً، وداخله ترتيب الدفتر (القسم ثم ترتيب الصنف) لا الأبجدي. */
     protected function defaultOrder(Builder $query): Builder
     {
-        return $query->orderBy('warehouses.name')->orderBy('items.name');
+        return Item::statementOrder($query->orderBy('warehouses.name'));
     }
 
     public function render()
@@ -120,7 +122,8 @@ class Stock extends Component
         $stocks = WarehouseStock::query()
             ->join('warehouses', 'warehouse_stocks.warehouse_id', '=', 'warehouses.id')
             ->join('items', 'warehouse_stocks.item_id', '=', 'items.id')
-            // مضموم لأجل الترتيب بالوحدة؛ والعرض يبقى على العلاقات المحمَّلة
+            // مضمومان لأجل الترتيب: الأقسام لترتيب الدفتر، والوحدات لعمود الوحدة
+            ->leftJoin('item_categories', 'items.item_category_id', '=', 'item_categories.id')
             ->leftJoin('item_units', 'items.item_unit_id', '=', 'item_units.id')
             ->select('warehouse_stocks.*')
             // قيمة غير رقمية تصل من الرابط تُهمَل — وإلا خرجت شاشة فارغة بلا سبب ظاهر

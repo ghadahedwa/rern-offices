@@ -120,7 +120,7 @@ class Create extends Component
                 ->where('warehouses.is_active', true)
                 ->ordered()
                 ->get(),
-            'items' => Item::where('is_active', true)->orderBy('name')->get(),
+            'items' => Item::where('items.is_active', true)->inStatementOrder()->get(),
         ]);
     }
 }

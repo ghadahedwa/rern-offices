@@ -325,3 +325,38 @@ it('يفلتر بالوحدة ويتجاهل قيمة وحدة تالفة', func
     expect($component->set('unitFilter', (string) $box->id)->viewData('stocks')->pluck('quantity')->all())->toBe([9])
         ->and($component->set('unitFilter', 'دفتر')->viewData('stocks')->total())->toBe(2);
 });
+
+// ── ترتيب الدفتر داخل البروفايل ──────────────────────────
+
+function ptOrderedItem(string $name, string $categoryName, int $categoryOrder): Item
+{
+    return Item::create([
+        'name'             => $name,
+        'item_unit_id'     => ItemUnit::firstOrCreate(['name' => 'قطعة'])->id,
+        'item_category_id' => \App\Models\ItemCategory::firstOrCreate(['name' => $categoryName], ['order' => $categoryOrder])->id,
+    ]);
+}
+
+it('يرتّب أرصدة البروفايل بترتيب الدفتر لا أبجدياً', function () {
+    $w = ptWarehouse();
+    ptStock($w, ptOrderedItem('ياء', 'مخزن التصوير', 1), 1);
+    ptStock($w, ptOrderedItem('ألف', 'مخزن المستديم', 2), 2);
+    $this->actingAs(ptUser());
+
+    expect(Livewire::test(Show::class, ['warehouse' => $w])->viewData('stocks')->pluck('item.name')->all())
+        ->toBe(['ياء', 'ألف']);
+});
+
+it('يرتّب منسدلة أصناف تاب الحركات بترتيب الدفتر', function () {
+    // ⚠️ كانت تقرأ علاقة stocks مباشرةً — أي بترتيب إدراج الصفوف لا بترتيبٍ معلن
+    $w = ptWarehouse();
+    ptStock($w, ptOrderedItem('ألف', 'مخزن المستديم', 2), 1);
+    ptStock($w, ptOrderedItem('ياء', 'مخزن التصوير', 1), 2);
+    $this->actingAs(ptUser());
+
+    $names = Livewire::withQueryParams(['tab' => 'movements'])
+        ->test(Show::class, ['warehouse' => $w])
+        ->viewData('movementItems')->pluck('name')->all();
+
+    expect($names)->toBe(['ياء', 'ألف']);
+});

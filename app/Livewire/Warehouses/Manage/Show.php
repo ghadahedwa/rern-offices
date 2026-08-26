@@ -5,6 +5,7 @@ namespace App\Livewire\Warehouses\Manage;
 use App\Livewire\Concerns\WithDateRange;
 use App\Livewire\Concerns\WithPerPage;
 use App\Livewire\Concerns\WithTableSorting;
+use App\Models\Item;
 use App\Models\Warehouse;
 use App\Models\WarehouseIncoming;
 use App\Models\WarehouseMovement;
@@ -228,7 +229,8 @@ class Show extends Component
             'transfers' => $query
                 ->orderByDesc('warehouse_transfers.transferred_at')
                 ->orderByDesc('warehouse_transfers.id'),
-            default => $query->orderBy('items.name'),
+            // تاب الأرصدة: ترتيب الدفتر لا الأبجدي (كشاشة الأصناف والأرصدة)
+            default => Item::statementOrder($query),
         };
     }
 
@@ -249,7 +251,8 @@ class Show extends Component
         return WarehouseStock::query()
             ->where('warehouse_stocks.warehouse_id', $this->warehouse->id)
             ->join('items', 'warehouse_stocks.item_id', '=', 'items.id')
-            // مضموم لأجل الترتيب بالوحدة؛ والعرض يبقى على العلاقة المحمَّلة
+            // مضمومان لأجل الترتيب: الأقسام لترتيب الدفتر، والوحدات لعمود الوحدة
+            ->leftJoin('item_categories', 'items.item_category_id', '=', 'item_categories.id')
             ->leftJoin('item_units', 'items.item_unit_id', '=', 'item_units.id')
             ->select('warehouse_stocks.*')
             ->when($this->search, fn ($q) => $q->whereRaw(
@@ -345,7 +348,15 @@ class Show extends Component
             'movements' => $this->tab === 'movements' ? $this->movementsList() : null,
             'incomings' => $this->tab === 'incoming' ? $this->incomingList() : null,
             'transfers' => $this->tab === 'transfers' ? $this->transfersList() : null,
-            'types'      => self::MOVEMENT_TYPES,
+            'types' => self::MOVEMENT_TYPES,
+            // ⚠️ كانت المنسدلة تقرأ علاقة stocks مباشرةً — أي بترتيب إدراج
+            //    الصفوف في القاعدة لا بترتيبٍ معلن. أصنافُ هذا المخزن بترتيب الدفتر:
+            'movementItems' => Item::query()
+                ->whereIn('items.id', WarehouseStock::query()
+                    ->where('warehouse_id', $this->warehouse->id)
+                    ->select('item_id'))
+                ->inStatementOrder()
+                ->get(),
             // أقسام ووحدات أصناف هذا المخزن وحدها — قائمةٌ بخيارات لا صفوف خلفها
             // في مخزنٍ بعينه تُوهم المستخدم أن الشاشة فارغة لخللٍ لا لغياب الصنف
             'categories' => \App\Models\ItemCategory::whereIn(

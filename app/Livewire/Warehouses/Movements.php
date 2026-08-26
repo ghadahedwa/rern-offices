@@ -145,9 +145,9 @@ class Movements extends Component
             // منسدلة الأصناف تتبع القسم المختار — ٣٧٧ صنفاً في قائمة واحدة
             // مسطّحة لا تُتصفَّح، وحصرُها في القسم هو ما يجعل الفلتر صالحاً
             'items' => Item::query()
-                ->when($this->categoryFilter === 'none', fn ($q) => $q->whereNull('item_category_id'))
-                ->when(ctype_digit($this->categoryFilter), fn ($q) => $q->where('item_category_id', (int) $this->categoryFilter))
-                ->orderBy('name')
+                ->when($this->categoryFilter === 'none', fn ($q) => $q->whereNull('items.item_category_id'))
+                ->when(ctype_digit($this->categoryFilter), fn ($q) => $q->where('items.item_category_id', (int) $this->categoryFilter))
+                ->inStatementOrder()
                 ->get(),
             'categories' => ItemCategory::orderBy('order')->orderBy('name')->get(),
             'types'      => self::TYPES,

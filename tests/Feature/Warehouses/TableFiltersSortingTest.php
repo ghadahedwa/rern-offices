@@ -458,3 +458,58 @@ it('يبحث في الأرصدة برقم الصنف بأرقام إنجليزي
     expect($component->set('search', '54')->viewData('stocks')->pluck('quantity')->all())->toBe([5])
         ->and($component->set('search', '٥٤')->viewData('stocks')->pluck('quantity')->all())->toBe([5]);
 });
+
+// ── ترتيب الدفتر في عروض الأصناف ─────────────────────────
+
+/** صنفٌ في قسمٍ برقمٍ معيّن — لاختبار ترتيب الدفتر لا الأبجدي. */
+function tblOrderedItem(string $name, ?string $categoryName, int $categoryOrder = 1, int $itemOrder = 1): Item
+{
+    return Item::create([
+        'name'             => $name,
+        'order'            => $itemOrder,
+        'item_unit_id'     => ItemUnit::firstOrCreate(['name' => 'قطعة'])->id,
+        'item_category_id' => $categoryName
+            ? \App\Models\ItemCategory::firstOrCreate(['name' => $categoryName], ['order' => $categoryOrder])->id
+            : null,
+    ]);
+}
+
+it('يرتّب الأرصدة بترتيب الدفتر لا أبجدياً', function () {
+    // «ياء» في القسم الأول و«ألف» في الثاني — الأبجدي يعكسهما
+    [$main] = tblTwoWarehouses();
+    WarehouseStock::create(['warehouse_id' => $main->id, 'item_id' => tblOrderedItem('ياء', 'مخزن التصوير', 1)->id, 'quantity' => 1]);
+    WarehouseStock::create(['warehouse_id' => $main->id, 'item_id' => tblOrderedItem('ألف', 'مخزن المستديم', 2)->id, 'quantity' => 2]);
+    $this->actingAs(tblUser());
+
+    expect(Livewire::test(Stock::class)->viewData('stocks')->pluck('item.name')->all())
+        ->toBe(['ياء', 'ألف']);
+});
+
+it('يحترم ترتيب الصنف داخل قسمه قبل اسمه', function () {
+    [$main] = tblTwoWarehouses();
+    WarehouseStock::create(['warehouse_id' => $main->id, 'item_id' => tblOrderedItem('ياء', 'مخزن التصوير', 1, 1)->id, 'quantity' => 1]);
+    WarehouseStock::create(['warehouse_id' => $main->id, 'item_id' => tblOrderedItem('ألف', 'مخزن التصوير', 1, 2)->id, 'quantity' => 2]);
+    $this->actingAs(tblUser());
+
+    expect(Livewire::test(Stock::class)->viewData('stocks')->pluck('item.name')->all())
+        ->toBe(['ياء', 'ألف']);
+});
+
+it('يضع الأصناف بلا قسم في آخر الأرصدة', function () {
+    [$main] = tblTwoWarehouses();
+    WarehouseStock::create(['warehouse_id' => $main->id, 'item_id' => tblOrderedItem('ألف بلا قسم', null)->id, 'quantity' => 1]);
+    WarehouseStock::create(['warehouse_id' => $main->id, 'item_id' => tblOrderedItem('ياء بقسم', 'مخزن التصوير', 1)->id, 'quantity' => 2]);
+    $this->actingAs(tblUser());
+
+    expect(Livewire::test(Stock::class)->viewData('stocks')->pluck('item.name')->all())
+        ->toBe(['ياء بقسم', 'ألف بلا قسم']);
+});
+
+it('يرتّب منسدلة أصناف سجل الحركات بترتيب الدفتر', function () {
+    tblOrderedItem('ياء', 'مخزن التصوير', 1);
+    tblOrderedItem('ألف', 'مخزن المستديم', 2);
+    $this->actingAs(tblUser());
+
+    expect(Livewire::test(Movements::class)->viewData('items')->pluck('name')->all())
+        ->toBe(['ياء', 'ألف']);
+});
