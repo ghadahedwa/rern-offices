@@ -63,7 +63,10 @@
                     <tr class="hover:bg-zinc-50 dark:hover:bg-zinc-800 transition">
                         <td class="px-4 py-3 text-zinc-500">{{ $items->firstItem() + $loop->index }}</td>
                         <td class="px-4 py-3 font-medium text-zinc-800 dark:text-zinc-100">
-                            {{ $item->name }}
+                            {{-- الاسم رابطٌ يبدو رابطاً: التسطير المنقّط أهدأ من اللون
+                                 على ٣٧٧ صفاً، ويبقى ظاهراً بلا مرور الماوس --}}
+                            <a href="{{ route('warehouses.items.show', $item) }}" wire:navigate
+                               class="underline decoration-dotted decoration-zinc-300 dark:decoration-zinc-600 underline-offset-4 hover:text-[#c9a847] hover:decoration-[#c9a847] transition">{{ $item->name }}</a>
                             @if($item->code)
                                 <span class="mr-2 inline-flex items-center px-1.5 py-0.5 rounded text-[11px] font-normal text-zinc-500 bg-zinc-100 dark:text-zinc-400 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700">{{ $item->code }}</span>
                             @endif
@@ -87,6 +90,12 @@
                         @if($canManage)
                             <td class="px-4 py-3">
                                 <div class="flex items-center gap-2">
+                                    {{-- «عرض» أولاً كنمط جداول المشروع — الاسم رابطٌ كذلك،
+                                         والزرّ هو ما تقع عليه العين في عمود العمليات --}}
+                                    <a href="{{ route('warehouses.items.show', $item) }}" wire:navigate
+                                       class="inline-flex items-center text-xs px-3 py-1.5 rounded-md border border-[#c9a847] text-[#c9a847] hover:bg-[#c9a847]/10 transition">
+                                        {{ __('home.view') }}
+                                    </a>
                                     <a href="{{ route('items.edit', $item) }}" wire:navigate
                                        class="inline-flex items-center text-xs px-3 py-1.5 rounded-md border border-zinc-300 dark:border-zinc-600 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition">
                                         {{ __('home.edit') }}

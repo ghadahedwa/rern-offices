@@ -189,8 +189,15 @@
                     </flux:sidebar.item>
                     @endif
 
+                    {{-- بندان لمحورين لا لشاشتين متشابهتين: الأول صفٌّ لكل صنف
+                         («كم عندنا من هذا الصنف؟») والثاني صفٌّ لكل مخزن×صنف
+                         («ما في هذا المخزن؟»). والاسم يقول المحور في كليهما. --}}
+                    <flux:sidebar.item icon="cube" :href="route('warehouses.item-balances')" :current="request()->routeIs('warehouses.item-balances') || request()->routeIs('warehouses.items.show')" wire:navigate>
+                        {{ __('home.wh_item_balances_title') }}
+                    </flux:sidebar.item>
+
                     <flux:sidebar.item icon="scale" :href="route('warehouses.stock')" :current="request()->routeIs('warehouses.stock')" wire:navigate>
-                        {{ __('home.wh_stock') }}
+                        {{ __('home.wh_warehouse_balances_title') }}
                     </flux:sidebar.item>
 
                     <flux:sidebar.item icon="inbox-arrow-down" :href="route('warehouses.incoming.index')" :current="request()->routeIs('warehouses.incoming.*')" wire:navigate>

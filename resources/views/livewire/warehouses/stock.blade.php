@@ -2,7 +2,9 @@
 
     {{-- Header --}}
     <div class="flex items-center justify-between">
-        <h1 class="text-2xl font-semibold text-zinc-800 dark:text-zinc-100">{{ __('home.wh_stock') }}</h1>
+        {{-- «أرصدة المخازن» لا «الأرصدة»: صار في المنيو بندٌ آخر للرصيد
+             محورُه الصنف، فيلزم بيان محور كلٍّ منهما (وهو عنوان الشاشة أصلاً) --}}
+        <h1 class="text-2xl font-semibold text-zinc-800 dark:text-zinc-100">{{ __('home.wh_warehouse_balances_title') }}</h1>
     </div>
 
     {{-- Filters --}}
@@ -71,7 +73,9 @@
                             @endif
                         </td>
                         <td class="px-4 py-3 font-medium text-zinc-800 dark:text-zinc-100">
-                            {{ $stock->item->name }}
+                            {{-- الاسم رابطٌ يبدو رابطاً (نفس نمط شاشة الأصناف) --}}
+                            <a href="{{ route('warehouses.items.show', $stock->item) }}" wire:navigate
+                               class="underline decoration-dotted decoration-zinc-300 dark:decoration-zinc-600 underline-offset-4 hover:text-[#c9a847] hover:decoration-[#c9a847] transition">{{ $stock->item->name }}</a>
                             @if($stock->item->code)
                                 <span class="mr-2 inline-flex items-center px-1.5 py-0.5 rounded text-[11px] font-normal text-zinc-500 bg-zinc-100 dark:text-zinc-400 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700">{{ $stock->item->code }}</span>
                             @endif

@@ -58,6 +58,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->middleware('permission:warehouses.create')
         ->name('warehouses.opening-balances');
 
+    // شاشتا الرصيد ومحوراهما: صفٌّ لكل صنف · وصفٌّ لكل (مخزن × صنف)
+    Route::livewire('warehouses/item-balances', \App\Livewire\Warehouses\ItemBalances::class)
+        ->middleware('permission:warehouses.index')
+        ->name('warehouses.item-balances');
+
     Route::livewire('warehouses/stock', \App\Livewire\Warehouses\Stock::class)
         ->middleware('permission:warehouses.index')
         ->name('warehouses.stock');
@@ -81,6 +86,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::livewire('warehouses/movements', \App\Livewire\Warehouses\Movements::class)
         ->middleware('permission:warehouses.index')
         ->name('warehouses.movements');
+
+    // صفحة الصنف — «أين هذا الصنف؟»: رصيده في كل المخازن وسجل حركاته.
+    // ⚠️ اسمها `warehouses.items.show` لا `items.show`: النمط `items.*` يضع
+    //    الشاشة في فرع «إدارة النظام»، وهي شاشة قراءة تشغيلية مدخلها الأرصدة.
+    // ⚠️ ومصفاة الصلاحية خشنة هنا، والحارس الفعلي في mount() — الشاشة تُفتح
+    //    بأيٍّ من الصلاحيتين لأن لها مدخلين في فرعين.
+    Route::livewire('warehouses/items/{item}', \App\Livewire\Warehouses\Items\Show::class)
+        ->middleware('role_or_permission:super-admin|warehouses.index|warehouses.settings')
+        ->name('warehouses.items.show');
 
     // بيان بأرصدة القسم — شاشة معاينة وكنترولر طباعة، وفلتراهما في الرابط
     Route::livewire('warehouses/statement', \App\Livewire\Warehouses\Statement::class)
