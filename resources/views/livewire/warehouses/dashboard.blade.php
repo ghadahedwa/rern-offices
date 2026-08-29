@@ -3,20 +3,27 @@
     <div class="flex items-center justify-between gap-4">
         <h1 class="text-2xl font-semibold text-zinc-800 dark:text-zinc-100">{{ __('home.warehouses_dashboard') }}</h1>
 
-        @if($canCreate)
+        {{-- كل زرّ برايته: الأفعال الثلاثة صارت ثلاث صلاحيات، ولا يملكها شخص واحد --}}
+        @if($canIncoming || $canTransfer || $canOpening)
             <div class="flex items-center gap-2">
-                <a href="{{ route('warehouses.incoming.create') }}" wire:navigate
-                   class="inline-flex items-center gap-2 bg-[#c9a847] hover:bg-[#b8962e] text-white text-sm font-medium px-4 py-2 rounded-lg transition">
-                    {{ __('home.wh_incoming_add') }}
-                </a>
-                <a href="{{ route('warehouses.transfers.create') }}" wire:navigate
-                   class="inline-flex items-center gap-2 border border-[#c9a847] text-[#b8962e] hover:bg-[#c9a847]/10 text-sm font-medium px-4 py-2 rounded-lg transition">
-                    {{ __('home.wh_transfer_add') }}
-                </a>
-                <a href="{{ route('warehouses.opening-balances') }}" wire:navigate
-                   class="inline-flex items-center gap-2 border border-zinc-300 dark:border-zinc-600 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 text-sm font-medium px-4 py-2 rounded-lg transition">
-                    {{ __('home.wh_opening_balances') }}
-                </a>
+                @if($canIncoming)
+                    <a href="{{ route('warehouses.incoming.create') }}" wire:navigate
+                       class="inline-flex items-center gap-2 bg-[#c9a847] hover:bg-[#b8962e] text-white text-sm font-medium px-4 py-2 rounded-lg transition">
+                        {{ __('home.wh_incoming_add') }}
+                    </a>
+                @endif
+                @if($canTransfer)
+                    <a href="{{ route('warehouses.transfers.create') }}" wire:navigate
+                       class="inline-flex items-center gap-2 border border-[#c9a847] text-[#b8962e] hover:bg-[#c9a847]/10 text-sm font-medium px-4 py-2 rounded-lg transition">
+                        {{ __('home.wh_transfer_add') }}
+                    </a>
+                @endif
+                @if($canOpening)
+                    <a href="{{ route('warehouses.opening-balances') }}" wire:navigate
+                       class="inline-flex items-center gap-2 border border-zinc-300 dark:border-zinc-600 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 text-sm font-medium px-4 py-2 rounded-lg transition">
+                        {{ __('home.wh_opening_balances') }}
+                    </a>
+                @endif
             </div>
         @endif
     </div>

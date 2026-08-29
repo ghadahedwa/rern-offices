@@ -28,7 +28,10 @@ function ibUser(array $permissions = ['warehouses.index'], string $role = 'ib-vi
     $roleModel = Role::findOrCreate($role, 'web');
     $roleModel->syncPermissions($permissions);
 
-    return tap(User::factory()->create())->assignRole($roleModel);
+    // ⚠️ `all_warehouses` = **بلا حدّ**: هذه الاختبارات تفحص منطق الشاشة لا
+    //    النطاق، ومستخدمٌ بلا مخزن مرتبط يرى صفراً بحقّ (الفراغ = لا شيء).
+    //    اختبارات النطاق نفسها في WarehouseScopeTest.
+    return tap(User::factory()->create(['all_warehouses' => true]))->assignRole($roleModel);
 }
 
 function ibWarehouse(string $name, int $level = 1): Warehouse

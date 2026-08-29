@@ -11,6 +11,7 @@ use App\Models\Warehouse;
 use App\Models\WarehouseStock;
 use App\Support\ArabicDigits;
 use App\Support\ArabicText;
+use App\Support\WarehouseScope;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Layout;
@@ -137,6 +138,8 @@ class Stock extends Component
             ->leftJoin('warehouse_types', 'warehouses.warehouse_type_id', '=', 'warehouse_types.id')
             ->leftJoin('governorates', 'warehouses.governorate_id', '=', 'governorates.id')
             ->select('warehouse_stocks.*')
+            // ⚠️ النطاق أولاً وفي مكان واحد — يمرّ به الجدول والمنسدلة معاً
+            ->tap(fn ($q) => WarehouseScope::apply($q, 'warehouse_stocks.warehouse_id'))
             // قيمة غير رقمية تصل من الرابط تُهمَل — وإلا خرجت شاشة فارغة بلا سبب ظاهر
             ->when(ctype_digit($this->warehouseFilter), fn ($q) => $q->where('warehouse_stocks.warehouse_id', (int) $this->warehouseFilter))
             // قسم الصنف لا المخزن: القسم صفة على الصنف نفسه، فيصل عبر الـjoin القائم
@@ -171,7 +174,9 @@ class Stock extends Component
 
         return view('livewire.warehouses.stock', [
             'stocks'     => $stocks,
-            'warehouses' => Warehouse::ordered()->get(),
+            // ⚠️ المنسدلة مفلترة كالنتائج: خيارٌ خارج النطاق يسرّب اسم مخزن
+            //    محافظةٍ أخرى لمن يعدّل الرابط، وإن كانت أرقامه محجوبة
+            'warehouses' => WarehouseScope::warehouses(),
             'categories' => ItemCategory::orderBy('order')->orderBy('name')->get(),
             'units'      => ItemUnit::orderBy('name')->get(),
         ]);

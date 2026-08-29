@@ -6,6 +6,7 @@ use App\Models\Item;
 use App\Models\Warehouse;
 use App\Models\WarehouseMovement;
 use App\Models\WarehouseStock;
+use App\Support\WarehouseScope;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\Layout;
@@ -25,7 +26,11 @@ class Dashboard extends Component
     protected function lowStockItems()
     {
         // إجمالي رصيد كل صنف في المخازن الرئيسية (level = 1)
-        $mainWarehouseIds = Warehouse::whereHas('type', fn ($q) => $q->where('level', 1))->pluck('id');
+        // ⚠️ المخازن الرئيسية **داخل نطاق المستخدم**: مَن لا يملك الرئيسي لا
+        //    يعنيه تنبيه حدّه الأدنى، وعرضُه له يُنبّه على ما لا يملك تداركه.
+        $mainWarehouseIds = WarehouseScope::apply(
+            Warehouse::whereHas('type', fn ($q) => $q->where('level', 1))
+        )->pluck('warehouses.id');
 
         if ($mainWarehouseIds->isEmpty()) {
             return collect();
@@ -52,16 +57,26 @@ class Dashboard extends Component
     public function render()
     {
         return view('livewire.warehouses.dashboard', [
-            'warehousesCount'  => Warehouse::count(),
+            // كل أرقام اللوحة على نطاق قارئها — لوحةٌ تعرض ما لا يراه في
+            // شاشاته تُخرج رقمين مختلفين للشيء الواحد
+            'warehousesCount'  => WarehouseScope::apply(Warehouse::query())->count(),
             'itemsCount'       => Item::count(),
-            'movementsMonth'   => WarehouseMovement::whereMonth('created_at', now()->month)
-                                     ->whereYear('created_at', now()->year)->count(),
+            'movementsMonth'   => WarehouseScope::apply(
+                                        WarehouseMovement::whereMonth('created_at', now()->month)
+                                            ->whereYear('created_at', now()->year),
+                                        'warehouse_movements.warehouse_id'
+                                     )->count(),
             'lowStock'         => $this->lowStockItems(),
-            'recentMovements'  => WarehouseMovement::with(['warehouse', 'item', 'user'])
-                                     ->latest('created_at')
-                                     ->limit(8)
-                                     ->get(),
-            'canCreate'        => Auth::user()?->can('warehouses.create'),
+            'recentMovements'  => WarehouseScope::apply(
+                                        WarehouseMovement::with(['warehouse', 'item', 'user'])->latest('created_at'),
+                                        'warehouse_movements.warehouse_id'
+                                     )->limit(8)->get(),
+            // ⚠️ ثلاثة أزرار لثلاثة أفعال، فثلاث رايات لا واحدة: المفتش يملك
+            //    الافتتاحي وحده، وأمين المخزن الرئيسي يملك الوارد والنقل دونه.
+            //    والراية الواحدة كانت تُظهر الثلاثة لمن يملك واحداً فيقع على ٤٠٣.
+            'canIncoming'      => Auth::user()?->can('warehouses.incoming'),
+            'canTransfer'      => Auth::user()?->can('warehouses.transfer'),
+            'canOpening'       => Auth::user()?->can('warehouses.opening'),
         ]);
     }
 }

@@ -8,6 +8,7 @@ use App\Models\Warehouse;
 use App\Models\WarehouseStock;
 use App\Models\WarehouseTransfer;
 use App\Support\WarehouseLedger;
+use App\Support\WarehouseScope;
 use Flux\Flux;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -35,7 +36,7 @@ class Create extends Component
 
     public function mount(): void
     {
-        abort_unless(Auth::user()?->can('warehouses.create'), 403);
+        abort_unless(Auth::user()?->can('warehouses.transfer'), 403);
         // «اليوم» بالتوقيت المحلي — انظر التعليق في Incoming\Create
         $this->transferred_at = \App\Support\LocalTime::date(now());
         $this->lines = [['item_id' => null, 'quantity' => null]];
@@ -88,6 +89,11 @@ class Create extends Component
             return;
         }
 
+        // ⚠️ **المصدر وحده** يُحرَس بالنطاق لا الوجهة: أمين المخزن الرئيسي
+        //    ينقل إلى مخازن المحافظات كلها، وحصرُ الوجهة في نطاقه يمنعه من
+        //    عملِه نفسه. والخصم يقع على المصدر، فهو موضع الحراسة.
+        abort_unless(WarehouseScope::allows((int) $this->from_warehouse_id), 403);
+
         $path = $this->attachment->store('warehouses/transfers', 'public');
 
         try {
@@ -130,7 +136,11 @@ class Create extends Component
         }
 
         return view('livewire.warehouses.transfers.create', [
-            'warehouses' => Warehouse::where('warehouses.is_active', true)->ordered()->get(),
+            // الوجهة كل المخازن؛ والمصدر نطاقُ المستخدم ($sourceWarehouses في القالب)
+            'warehouses'       => Warehouse::where('warehouses.is_active', true)->ordered()->get(),
+            'sourceWarehouses' => WarehouseScope::apply(
+                Warehouse::where('warehouses.is_active', true)->ordered()
+            )->get(),
             'items'      => Item::where('items.is_active', true)->inStatementOrder()->get(),
             'stocks'     => $stocks,
         ]);

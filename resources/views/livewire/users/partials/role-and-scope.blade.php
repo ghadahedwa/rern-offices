@@ -17,7 +17,7 @@
         @endforeach
     </select>
     @error('role') <p class="text-red-500 text-xs">{{ $message }}</p> @enderror
-    @if($role && ! $needsGovernorates && ! $needsEntity)
+    @if($role && ! $needsGovernorates && ! $needsEntity && ! $needsWarehouses)
         <p class="text-xs text-zinc-500 dark:text-zinc-400">{{ __('home.user_scope_none_hint') }}</p>
     @endif
 </div>
@@ -43,6 +43,59 @@
                 @endforeach
             </div>
         @endif
+    </div>
+@endif
+
+{{-- نطاق المخازن: خانة «الكل» أو قائمة صريحة.
+     ⚠️ الخانة تعني «بلا حدّ»، والقائمة الفارغة تعني «لا يرى شيئاً» — ولذلك
+        يمنع التحقق الحفظَ على قائمة فارغة بلا الخانة. --}}
+@if($needsWarehouses)
+    <div class="flex flex-col gap-3 rounded-xl border border-[#c9a847]/40 bg-[#c9a847]/5 dark:bg-[#c9a847]/10 p-4">
+        <div>
+            <label class="text-sm font-medium text-zinc-700 dark:text-zinc-300">{{ __('home.user_warehouses') }}</label>
+            <p class="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">{{ __('home.user_warehouses_hint') }}</p>
+        </div>
+
+        <label class="flex items-start gap-3 p-3 rounded-lg border border-[#c9a847]/50 bg-white dark:bg-zinc-900 cursor-pointer transition">
+            <input type="checkbox" wire:model.live="allWarehouses" class="w-4 h-4 mt-0.5 rounded accent-[#c9a847]" />
+            <span>
+                <span class="text-sm font-medium text-zinc-800 dark:text-zinc-100">{{ __('home.user_warehouses_all') }}</span>
+                <span class="block text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">{{ __('home.user_warehouses_all_hint') }}</span>
+            </span>
+        </label>
+
+        @unless($allWarehouses)
+            <div class="flex items-center gap-2">
+                <span class="text-xs font-medium text-zinc-500 dark:text-zinc-400">{{ __('home.user_warehouses_or') }}</span>
+                <span class="flex-1 h-px bg-zinc-200 dark:bg-zinc-700"></span>
+            </div>
+
+            @if($warehouses->isEmpty())
+                <p class="text-xs text-zinc-400">{{ __('home.no_warehouses') }}</p>
+            @else
+                <p class="text-xs text-zinc-500 dark:text-zinc-400">{{ __('home.user_warehouses_autofill') }}</p>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-2 max-h-72 overflow-y-auto">
+                    @foreach($warehouses as $warehouse)
+                        <label class="flex items-center gap-3 p-3 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 hover:bg-zinc-50 dark:hover:bg-zinc-800 cursor-pointer transition">
+                            <input type="checkbox" wire:model="selectedWarehouses"
+                                   value="{{ $warehouse->id }}"
+                                   class="w-4 h-4 rounded accent-[#c9a847]" />
+                            <span class="text-sm text-zinc-700 dark:text-zinc-300">
+                                {{ $warehouse->name }}
+                                <span class="text-xs text-zinc-400">
+                                    ({{ $warehouse->type?->name ?? '—' }}@if($warehouse->governorate) — {{ $warehouse->governorate->name }}@endif)
+                                </span>
+                            </span>
+                        </label>
+                    @endforeach
+                </div>
+                @error('selectedWarehouses')
+                    <p class="text-red-500 text-xs">{{ $message }}</p>
+                @else
+                    <p class="text-xs text-zinc-400 dark:text-zinc-500">{{ __('home.user_warehouses_empty_hint') }}</p>
+                @enderror
+            @endif
+        @endunless
     </div>
 @endif
 

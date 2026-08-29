@@ -19,7 +19,10 @@ function ptUser(): User
     $role = Role::findOrCreate('pt-admin', 'web');
     $role->givePermissionTo('warehouses.settings');
 
-    return tap(User::factory()->create())->assignRole($role);
+    // ⚠️ `all_warehouses` = **بلا حدّ**: هذه الاختبارات تفحص منطق الشاشة لا
+    //    النطاق، ومستخدمٌ بلا مخزن مرتبط يرى صفراً بحقّ (الفراغ = لا شيء).
+    //    اختبارات النطاق نفسها في WarehouseScopeTest.
+    return tap(User::factory()->create(['all_warehouses' => true]))->assignRole($role);
 }
 
 function ptWarehouse(string $typeName = 'رئيسي', int $level = 1): Warehouse

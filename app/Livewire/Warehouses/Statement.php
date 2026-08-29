@@ -5,6 +5,7 @@ namespace App\Livewire\Warehouses;
 use App\Models\ItemCategory;
 use App\Models\Warehouse;
 use App\Reports\CategoryStatement;
+use App\Support\WarehouseScope;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
@@ -53,7 +54,9 @@ class Statement extends Component
             return null;
         }
 
-        $warehouse = Warehouse::find((int) $this->warehouseId);
+        // ⚠️ النطاق هنا لا في المنسدلة وحدها: المعرّف يصل من الرابط،
+        //    والبيان المطبوع يخرج من النظام موقَّعاً — فلا يُبنى لمخزنٍ خارجه
+        $warehouse = WarehouseScope::apply(Warehouse::query())->find((int) $this->warehouseId);
         $category  = ItemCategory::find((int) $this->categoryId);
 
         return $warehouse && $category ? [$warehouse, $category] : null;
@@ -67,7 +70,7 @@ class Statement extends Component
 
         return view('livewire.warehouses.statement', [
             'statement'  => $statement,
-            'warehouses' => Warehouse::ordered()->get(),
+            'warehouses' => WarehouseScope::warehouses(),
             'categories' => ItemCategory::orderBy('order')->orderBy('name')->get(),
         ]);
     }

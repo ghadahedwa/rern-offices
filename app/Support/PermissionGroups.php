@@ -69,6 +69,21 @@ class PermissionGroups
         'correspondence.delegate',
         'correspondence.delete',
         'correspondence.share',
+
+        // المخازن **مرتَّبة بالدور** كترتيب المراسلات أعلاه:
+        //   الأربع الأولى دور **المفتش** (وهو أكثر الأدوار حَمَلةً — ثلاثة عشر)،
+        //   ثم ما ينفرد به **أمين المخزن الرئيسي**، ثم الحذف.
+        // فمَن يُنشئ دور مفتشٍ يعلّم الأربع المتتالية في أعلى الجدول ولا يتخطّى.
+        //
+        // ⚠️ و`opening` ثانيةً وهي **الأخطر** (تكتب الرصيد كتابةً) — فلا يحرسها
+        //    موضعُها بل **نصّها**: «ضبط الرصيد الافتتاحي (يكتب الرصيد كتابةً)».
+        'warehouses.index',
+        'warehouses.opening',
+        'warehouses.export',
+        'warehouses.attachments',
+        'warehouses.incoming',
+        'warehouses.transfer',
+        'warehouses.delete',
     ];
 
     /**
@@ -85,6 +100,15 @@ class PermissionGroups
 
     /** العنوان الذي يستلزم اختيار طرف ومسمّى وظيفي (نطاقه جهة). */
     public const ENTITY_BRANCH = 'home.branch_correspondence';
+
+    /**
+     * العنوان الذي يستلزم اختيار مخازن (نطاقه مخزن).
+     *
+     * ⚠️ العنوان لا البادئة: `warehouses.settings` تبدأ بـ`warehouses.` وهي
+     *    تحت «إدارة النظام» — ومَن يدير قائمة الأصناف والوحدات لا يلزمه
+     *    نطاق مخزن، فلا يُطالَب باختيارٍ لا معنى له.
+     */
+    public const WAREHOUSE_BRANCH = 'home.branch_warehouses';
 
     /**
      * الصلاحيات المعطاة مجمَّعة كما تعرضها شبكة الأدوار.
@@ -148,6 +172,12 @@ class PermissionGroups
     public static function needsEntity(iterable $permissionNames): bool
     {
         return self::hasBranch($permissionNames, self::ENTITY_BRANCH);
+    }
+
+    /** هل يستلزم هذا الدور اختيار مخازن؟ */
+    public static function needsWarehouses(iterable $permissionNames): bool
+    {
+        return self::hasBranch($permissionNames, self::WAREHOUSE_BRANCH);
     }
 
     protected static function matches(string $permissionName, array $matcher): bool

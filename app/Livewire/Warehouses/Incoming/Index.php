@@ -8,6 +8,7 @@ use App\Livewire\Concerns\WithPerPage;
 use App\Livewire\Concerns\WithTableSorting;
 use App\Models\WarehouseIncoming;
 use App\Support\ArabicText;
+use App\Support\WarehouseScope;
 use App\Support\WarehouseLedger;
 use Flux\Flux;
 use Illuminate\Database\Eloquent\Builder;
@@ -79,6 +80,9 @@ class Index extends Component
     public function view(int $id): void
     {
         $this->viewing = WarehouseIncoming::with(['warehouse', 'creator', 'items.item.unit'])->findOrFail($id);
+
+        // ⚠️ المعرّف يصل من العميل في طلبٍ مستقل عن render — فلا تكفي فلترة القائمة
+        abort_unless(WarehouseScope::allows($this->viewing->warehouse_id), 403);
         $this->showView = true;
     }
 
@@ -86,6 +90,7 @@ class Index extends Component
     {
         abort_unless(Auth::user()?->can('warehouses.delete'), 403);
         $incoming = WarehouseIncoming::with('warehouse')->findOrFail($id);
+        abort_unless(WarehouseScope::allows($incoming->warehouse_id), 403);
         $this->deletingId    = $incoming->id;
         $this->deletingLabel = ($incoming->warehouse?->name ?? '—').' — '.$incoming->received_at->format('Y-m-d');
         $this->deletingWarning = '';
@@ -101,7 +106,10 @@ class Index extends Component
         }
 
         try {
-            WarehouseLedger::reverseIncoming(WarehouseIncoming::findOrFail($this->deletingId));
+            $incoming = WarehouseIncoming::findOrFail($this->deletingId);
+            // ⚠️ الحذف يُرجع الرصيد، فيُفحص النطاق هنا أيضاً لا في askDelete وحدها
+            abort_unless(WarehouseScope::allows($incoming->warehouse_id), 403);
+            WarehouseLedger::reverseIncoming($incoming);
             $this->reset('deletingId', 'deletingLabel', 'deletingWarning', 'showDelete');
             Flux::toast(variant: 'success', text: __('home.wh_incoming_deleted'));
         } catch (WarehouseException $e) {
@@ -115,6 +123,7 @@ class Index extends Component
         $incomings = WarehouseIncoming::query()
             ->join('warehouses', 'warehouse_incomings.warehouse_id', '=', 'warehouses.id')
             ->select('warehouse_incomings.*')
+            ->tap(fn ($q) => WarehouseScope::apply($q, 'warehouse_incomings.warehouse_id'))
             ->when($this->search, fn ($q) => $q->where(function ($q) {
                 $q->whereRaw(
                     ArabicText::sqlNormalize('warehouse_incomings.supplier_name').' LIKE ?',
@@ -133,7 +142,7 @@ class Index extends Component
 
         return view('livewire.warehouses.incoming.index', [
             'incomings'  => $incomings,
-            'canCreate'  => Auth::user()?->can('warehouses.create'),
+            'canCreate'  => Auth::user()?->can('warehouses.incoming'),
             'canDelete'  => Auth::user()?->can('warehouses.delete'),
             'canAttach'  => Auth::user()?->can('warehouses.attachments'),
         ]);

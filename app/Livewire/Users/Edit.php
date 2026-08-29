@@ -4,6 +4,7 @@ namespace App\Livewire\Users;
 
 use App\Models\CorrespondenceEntity;
 use App\Models\Governorate;
+use App\Models\Warehouse;
 use App\Models\User;
 use App\Support\PermissionGroups;
 use Flux\Flux;
@@ -30,6 +31,11 @@ class Edit extends Component
     /** نطاق المقرات */
     public array $selectedGovernorates = [];
 
+    /** نطاق المخازن — القائمة الفارغة تعني «لا يرى شيئاً»، و allWarehouses تعني «بلا حدّ» */
+    public array $selectedWarehouses = [];
+
+    public bool $allWarehouses = false;
+
     /** نطاق المراسلات */
     public string $correspondence_entity_id = '';
     public string $job_title = '';
@@ -52,6 +58,12 @@ class Edit extends Component
         $this->selectedGovernorates     = $user->governorates->pluck('id')->map(fn ($id) => (string) $id)->toArray();
         $this->correspondence_entity_id = (string) ($user->correspondence_entity_id ?? '');
         $this->job_title                = $user->job_title ?? '';
+        $this->selectedWarehouses       = $user->warehouses->pluck('id')->map(fn ($id) => (string) $id)->toArray();
+        $this->allWarehouses            = (bool) $user->all_warehouses;
+
+        // ⚠️ الظِلّ يُبدأ بالمحفوظ لا فارغاً: بدونه يُحسب كل محافظات المستخدم
+        //    «مضافةً» عند أول تعديل، فتُعاد إليه مخازنُ نزعها بيده من قبل.
+        $this->governoratesShadow = array_map('intval', $this->selectedGovernorates);
     }
 
     public function save(): void
@@ -79,6 +91,7 @@ class Edit extends Component
             'email'                    => $this->email ?: null,
             'correspondence_entity_id' => $scope['entity_id'],
             'job_title'                => $scope['job_title'],
+            'all_warehouses'           => $scope['all_warehouses'],
         ];
 
         if ($this->password) {
@@ -88,6 +101,7 @@ class Edit extends Component
         $this->user->update($data);
         $this->user->syncRoles([$this->role]);
         $this->user->governorates()->sync($scope['governorates']);
+        $this->user->warehouses()->sync($scope['warehouses']);
 
         Flux::toast(variant: 'success', text: __('home.user_updated'));
         $this->redirect(route('users.index'), navigate: true);
@@ -101,6 +115,8 @@ class Edit extends Component
             'entities'          => CorrespondenceEntity::where('is_active', true)->orderBy('order')->orderBy('id')->get(),
             'needsGovernorates' => PermissionGroups::needsGovernorates($this->rolePermissionNames()),
             'needsEntity'       => PermissionGroups::needsEntity($this->rolePermissionNames()),
+            'needsWarehouses'   => PermissionGroups::needsWarehouses($this->rolePermissionNames()),
+            'warehouses'        => Warehouse::ordered()->get(),
         ]);
     }
 }

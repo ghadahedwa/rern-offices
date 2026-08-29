@@ -4,6 +4,7 @@ namespace App\Livewire\Users;
 
 use App\Models\CorrespondenceEntity;
 use App\Models\Governorate;
+use App\Models\Warehouse;
 use App\Models\User;
 use App\Support\PermissionGroups;
 use Flux\Flux;
@@ -27,6 +28,11 @@ class Create extends Component
 
     /** نطاق المقرات */
     public array $selectedGovernorates = [];
+
+    /** نطاق المخازن — القائمة الفارغة تعني «لا يرى شيئاً»، و allWarehouses تعني «بلا حدّ» */
+    public array $selectedWarehouses = [];
+
+    public bool $allWarehouses = false;
 
     /** نطاق المراسلات */
     public string $correspondence_entity_id = '';
@@ -58,10 +64,12 @@ class Create extends Component
             'password'                  => $this->password,
             'correspondence_entity_id'  => $scope['entity_id'],
             'job_title'                 => $scope['job_title'],
+            'all_warehouses'            => $scope['all_warehouses'],
         ]);
 
         $user->assignRole($this->role);
         $user->governorates()->sync($scope['governorates']);
+        $user->warehouses()->sync($scope['warehouses']);
 
         Flux::toast(variant: 'success', text: __('home.user_created'));
         $this->redirect(route('users.index'), navigate: true);
@@ -75,6 +83,8 @@ class Create extends Component
             'entities'           => CorrespondenceEntity::where('is_active', true)->orderBy('order')->orderBy('id')->get(),
             'needsGovernorates'  => PermissionGroups::needsGovernorates($this->rolePermissionNames()),
             'needsEntity'        => PermissionGroups::needsEntity($this->rolePermissionNames()),
+            'needsWarehouses'    => PermissionGroups::needsWarehouses($this->rolePermissionNames()),
+            'warehouses'         => Warehouse::ordered()->get(),
         ]);
     }
 }

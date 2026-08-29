@@ -41,8 +41,9 @@
         </div>
     @endunless
 
-    {{-- بطاقات الرأس: محسوبة على كل المخازن لا على ما بقي بعد فلتر الجدول --}}
-    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+    {{-- بطاقات الرأس: محسوبة على كل مخازن نطاق القارئ لا على ما بقي بعد فلتر الجدول.
+         وبطاقة الرئيسي تُخفى لمن ليس الرئيسي في نطاقه — فتصير البطاقات اثنتين. --}}
+    <div class="grid grid-cols-1 {{ $summary['showMain'] ? 'sm:grid-cols-3' : 'sm:grid-cols-2' }} gap-4">
         <div class="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-sm p-5">
             <p class="text-xs text-zinc-400 dark:text-zinc-500">{{ __('home.wh_item_total_balance') }}</p>
             <p class="mt-1 text-2xl font-bold text-[#b8962e] tabular-nums">{{ number_format($summary['total']) }}</p>
@@ -55,6 +56,7 @@
             <p class="mt-1 text-xs text-zinc-400 dark:text-zinc-500">{{ __('home.wh_item_warehouses_of', ['count' => number_format($summary['warehousesAll'])]) }}</p>
         </div>
 
+        @if($summary['showMain'])
         <div class="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-sm p-5">
             <p class="text-xs text-zinc-400 dark:text-zinc-500">{{ __('home.wh_item_main_balance') }}</p>
             @if($summary['mainWarehouse'])
@@ -75,6 +77,7 @@
                 <p class="mt-1 text-sm text-zinc-400 dark:text-zinc-500">{{ __('home.wh_no_main_warehouse') }}</p>
             @endif
         </div>
+        @endif
     </div>
 
     {{-- Tabs --}}

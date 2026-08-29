@@ -163,6 +163,7 @@ return [
     ],
 
     'attributes' => [
+        'selectedWarehouses' => 'المخازن',
         // المراسلات — أطراف
         'code'                  => 'الرمز',
         'order'                 => 'الترتيب',

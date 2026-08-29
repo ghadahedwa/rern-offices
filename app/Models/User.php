@@ -17,7 +17,7 @@ use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
 use Spatie\Permission\Traits\HasRoles;
 
-#[Fillable(['name', 'username', 'email', 'password', 'correspondence_entity_id', 'job_title'])]
+#[Fillable(['name', 'username', 'email', 'password', 'correspondence_entity_id', 'job_title', 'all_warehouses'])]
 #[Hidden(['password', 'two_factor_secret', 'two_factor_recovery_codes', 'remember_token'])]
 class User extends Authenticatable
 {
@@ -48,6 +48,7 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'all_warehouses' => 'boolean',
         ];
     }
 
@@ -57,6 +58,18 @@ class User extends Authenticatable
     public function governorates(): BelongsToMany
     {
         return $this->belongsToMany(Governorate::class);
+    }
+
+    /**
+     * نطاق المخازن — نظير «المحافظات» للمقرات: نطاق على المستخدم لا على الدور.
+     *
+     * ⚠️ لا تقرأ هذه العلاقة مباشرةً في استعلامات الفرع، بل عبر
+     *    `App\Support\WarehouseScope`: القائمة الفارغة مع `all_warehouses = false`
+     *    تعني **«لا يرى شيئاً»** لا «يرى الكل»، والخلط بينهما يفتح المنظومة كلها.
+     */
+    public function warehouses(): BelongsToMany
+    {
+        return $this->belongsToMany(Warehouse::class);
     }
 
     /** الطرف الذي ينتمي إليه في المراسلات — نظير «المحافظات» للمقرات: نطاق على المستخدم لا على الدور. */

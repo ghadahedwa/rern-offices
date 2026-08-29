@@ -33,7 +33,10 @@ function stmtUser(array $abilities = ['warehouses.index', 'warehouses.export']):
     $role = Role::findOrCreate('stmt-'.md5(implode(',', $abilities)), 'web');
     $role->syncPermissions($abilities);
 
-    return tap(User::factory()->create())->assignRole($role);
+    // ⚠️ `all_warehouses` = **بلا حدّ**: هذه الاختبارات تفحص منطق الشاشة لا
+    //    النطاق، ومستخدمٌ بلا مخزن مرتبط يرى صفراً بحقّ (الفراغ = لا شيء).
+    //    اختبارات النطاق نفسها في WarehouseScopeTest.
+    return tap(User::factory()->create(['all_warehouses' => true]))->assignRole($role);
 }
 
 function stmtWarehouse(string $name = 'المخزن الرئيسي', ?string $letterhead = 'الادارة العامة للتعاقدات والمخازن'): Warehouse
@@ -214,7 +217,7 @@ it('يحفظ جهة الترويسة من فورم المخزن', function () {
     Permission::findOrCreate('warehouses.settings', 'web');
     $role = Role::findOrCreate('stmt-settings', 'web');
     $role->syncPermissions(['warehouses.settings']);
-    $this->actingAs(tap(User::factory()->create())->assignRole($role));
+    $this->actingAs(tap(User::factory()->create(['all_warehouses' => true]))->assignRole($role));
 
     Livewire::test(ManageCreate::class)
         ->set('name', 'مخزن سوهاج')

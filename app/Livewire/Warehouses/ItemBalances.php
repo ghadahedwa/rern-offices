@@ -10,6 +10,7 @@ use App\Models\ItemUnit;
 use App\Models\WarehouseStock;
 use App\Support\ArabicDigits;
 use App\Support\ArabicText;
+use App\Support\WarehouseScope;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Query\Builder as QueryBuilder;
 use Illuminate\Support\Facades\Auth;
@@ -139,10 +140,12 @@ class ItemBalances extends Component
      */
     protected function totalSub(): QueryBuilder
     {
-        return WarehouseStock::query()
-            ->selectRaw('COALESCE(SUM(warehouse_stocks.quantity), 0)')
-            ->whereColumn('warehouse_stocks.item_id', 'items.id')
-            ->toBase();
+        return WarehouseScope::apply(
+            WarehouseStock::query()
+                ->selectRaw('COALESCE(SUM(warehouse_stocks.quantity), 0)')
+                ->whereColumn('warehouse_stocks.item_id', 'items.id'),
+            'warehouse_stocks.warehouse_id'
+        )->toBase();
     }
 
     /**
@@ -161,6 +164,7 @@ class ItemBalances extends Component
             ->join('warehouse_types', 'warehouses.warehouse_type_id', '=', 'warehouse_types.id')
             ->whereColumn('warehouse_stocks.item_id', 'items.id')
             ->where('warehouse_types.level', 1)
+            ->tap(fn ($q) => WarehouseScope::apply($q, 'warehouse_stocks.warehouse_id'))
             ->toBase();
     }
 
@@ -177,11 +181,13 @@ class ItemBalances extends Component
             ->selectSub($this->mainSub(), 'main_quantity')
             // عدد المخازن التي للصنف فيها رصيد فعلي — لا التي له فيها صفٌّ بصفر
             ->selectSub(
-                WarehouseStock::query()
-                    ->selectRaw('COUNT(*)')
-                    ->whereColumn('warehouse_stocks.item_id', 'items.id')
-                    ->where('warehouse_stocks.quantity', '>', 0)
-                    ->toBase(),
+                WarehouseScope::apply(
+                    WarehouseStock::query()
+                        ->selectRaw('COUNT(*)')
+                        ->whereColumn('warehouse_stocks.item_id', 'items.id')
+                        ->where('warehouse_stocks.quantity', '>', 0),
+                    'warehouse_stocks.warehouse_id'
+                )->toBase(),
                 'warehouses_count'
             )
             ->with(['unit', 'category'])

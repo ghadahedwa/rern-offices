@@ -55,7 +55,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->name('warehouses.dashboard');
 
     Route::livewire('warehouses/opening-balances', \App\Livewire\Warehouses\OpeningBalances::class)
-        ->middleware('permission:warehouses.create')
+        ->middleware('permission:warehouses.opening')
         ->name('warehouses.opening-balances');
 
     // شاشتا الرصيد ومحوراهما: صفٌّ لكل صنف · وصفٌّ لكل (مخزن × صنف)
@@ -72,7 +72,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->name('warehouses.incoming.index');
 
     Route::livewire('warehouses/incoming/create', \App\Livewire\Warehouses\Incoming\Create::class)
-        ->middleware('permission:warehouses.create')
+        ->middleware('permission:warehouses.incoming')
         ->name('warehouses.incoming.create');
 
     Route::livewire('warehouses/transfers', \App\Livewire\Warehouses\Transfers\Index::class)
@@ -80,7 +80,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->name('warehouses.transfers.index');
 
     Route::livewire('warehouses/transfers/create', \App\Livewire\Warehouses\Transfers\Create::class)
-        ->middleware('permission:warehouses.create')
+        ->middleware('permission:warehouses.transfer')
         ->name('warehouses.transfers.create');
 
     Route::livewire('warehouses/movements', \App\Livewire\Warehouses\Movements::class)

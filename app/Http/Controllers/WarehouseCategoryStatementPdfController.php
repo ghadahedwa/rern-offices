@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\ItemCategory;
 use App\Models\Warehouse;
 use App\Reports\CategoryStatement;
+use App\Support\WarehouseScope;
 use App\Reports\StatementLayout;
 use Illuminate\Http\Request;
 use Mpdf\Config\ConfigVariables;
@@ -29,7 +30,10 @@ class WarehouseCategoryStatementPdfController extends Controller
         $categoryId  = (string) $request->query('category', '');
         abort_unless(ctype_digit($warehouseId) && ctype_digit($categoryId), 404);
 
-        $warehouse = Warehouse::findOrFail((int) $warehouseId);
+        // ⚠️ والنطاق في الكنترولر أيضاً: الرابط يُفتح منسوخاً في طلبٍ مستقل
+        //    عن الشاشة، والورقة تخرج من النظام موقَّعةً ومختومة
+        $warehouse = WarehouseScope::apply(Warehouse::query(), 'warehouses.id', $user)
+            ->findOrFail((int) $warehouseId);
         $category  = ItemCategory::findOrFail((int) $categoryId);
 
         $statement = CategoryStatement::build($warehouse, $category);

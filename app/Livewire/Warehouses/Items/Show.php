@@ -11,6 +11,7 @@ use App\Models\WarehouseMovement;
 use App\Models\WarehouseStock;
 use App\Models\WarehouseType;
 use App\Support\ArabicText;
+use App\Support\WarehouseScope;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Layout;
@@ -206,7 +207,7 @@ class Show extends Component
      */
     protected function balancesList()
     {
-        return Warehouse::query()
+        return WarehouseScope::apply(Warehouse::query())
             ->leftJoin('warehouse_stocks', function ($join) {
                 $join->on('warehouse_stocks.warehouse_id', '=', 'warehouses.id')
                     ->where('warehouse_stocks.item_id', '=', $this->item->id);
@@ -239,6 +240,7 @@ class Show extends Component
             ->where('warehouse_movements.item_id', $this->item->id)
             ->join('warehouses', 'warehouse_movements.warehouse_id', '=', 'warehouses.id')
             ->select('warehouse_movements.*')
+            ->tap(fn ($q) => WarehouseScope::apply($q, 'warehouse_movements.warehouse_id'))
             ->when($this->search, fn ($q) => $q->whereRaw(
                 ArabicText::sqlNormalize('warehouses.name').' LIKE ?',
                 ['%'.ArabicText::normalize($this->search).'%']
@@ -259,18 +261,19 @@ class Show extends Component
      */
     protected function summary(): array
     {
-        $stocks = WarehouseStock::query()
-            ->where('item_id', $this->item->id)
+        $stocks = WarehouseScope::apply(
+            WarehouseStock::query()->where('item_id', $this->item->id),
+            'warehouse_stocks.warehouse_id'
+        )
             ->selectRaw('COALESCE(SUM(quantity), 0) as total')
             ->selectRaw('SUM(CASE WHEN quantity > 0 THEN 1 ELSE 0 END) as with_stock')
             ->first();
 
         // ⚠️ رصيد الرئيسي يُقرأ من مخزنٍ رئيسي بعينه — والحدّ الأدنى يُقاس عليه
         //    وحده (نفس قاعدة الداشبورد والبروفايل وشاشة الأرصدة).
-        $main = Warehouse::query()
-            ->whereHas('type', fn ($q) => $q->where('level', 1))
-            ->ordered()
-            ->first();
+        $main = WarehouseScope::apply(
+            Warehouse::query()->whereHas('type', fn ($q) => $q->where('level', 1))->ordered()
+        )->first();
 
         $mainQuantity = $main
             ? (int) WarehouseStock::query()
@@ -282,9 +285,12 @@ class Show extends Component
         return [
             'total'          => (int) ($stocks->total ?? 0),
             'withStock'      => (int) ($stocks->with_stock ?? 0),
-            'warehousesAll'  => Warehouse::count(),
+            'warehousesAll'  => WarehouseScope::apply(Warehouse::query())->count(),
             'mainWarehouse'  => $main,
             'mainQuantity'   => $mainQuantity,
+            // ⚠️ فرقٌ بين «لا مخزن رئيسي في المنظومة» و«الرئيسي خارج نطاقي»:
+            //    الأولى تُبلَّغ، والثانية تُخفى — وإلا أخبرنا المفتش بغياب مخزنٍ قائم
+            'showMain'       => $main !== null || WarehouseScope::unlimited(),
             'mainBelowMin'   => $main !== null
                 && $this->item->min_stock !== null
                 && (int) $mainQuantity <= $this->item->min_stock,
@@ -301,7 +307,7 @@ class Show extends Component
             'warehouseTypes' => WarehouseType::orderBy('level')->orderBy('name')->get(),
             // منسدلة تاب الحركات: مخازن تحرّك فيها هذا الصنف فعلاً — خيارٌ بلا
             // صفوف خلفه يُوهم المستخدم أن الشاشة معطّلة لا أن الحركة غائبة
-            'movementWarehouses' => Warehouse::query()
+            'movementWarehouses' => WarehouseScope::apply(Warehouse::query())
                 ->whereIn('warehouses.id', WarehouseMovement::query()
                     ->where('item_id', $this->item->id)
                     ->select('warehouse_id'))

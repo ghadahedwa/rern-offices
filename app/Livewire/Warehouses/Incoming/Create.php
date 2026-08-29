@@ -6,6 +6,7 @@ use App\Models\Item;
 use App\Models\Warehouse;
 use App\Models\WarehouseIncoming;
 use App\Support\WarehouseLedger;
+use App\Support\WarehouseScope;
 use Flux\Flux;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Layout;
@@ -30,7 +31,7 @@ class Create extends Component
 
     public function mount(): void
     {
-        abort_unless(Auth::user()?->can('warehouses.create'), 403);
+        abort_unless(Auth::user()?->can('warehouses.incoming'), 403);
         // «اليوم» بالتوقيت المحلي — now() بـ UTC يعطي تاريخ الأمس بين ١٢ و٣ فجراً بتوقيت مصر
         $this->received_at = \App\Support\LocalTime::date(now());
         $this->lines = [['item_id' => null, 'quantity' => null]];
@@ -68,6 +69,10 @@ class Create extends Component
         $this->validate();
 
         $warehouse = Warehouse::with('type')->findOrFail($this->warehouse_id);
+
+        // ⚠️ المعرّف يصل من العميل — والمنسدلة المفلترة لا تحرس الطلب
+        abort_unless(WarehouseScope::allows($warehouse->id), 403);
+
         if (! $warehouse->isMain()) {
             $this->addError('warehouse_id', __('home.wh_main_warehouse_only'));
             return;
@@ -115,11 +120,12 @@ class Create extends Component
     public function render()
     {
         return view('livewire.warehouses.incoming.create', [
-            'warehouses' => Warehouse::with('type')
-                ->whereHas('type', fn ($q) => $q->where('level', 1))
-                ->where('warehouses.is_active', true)
-                ->ordered()
-                ->get(),
+            'warehouses' => WarehouseScope::apply(
+                Warehouse::with('type')
+                    ->whereHas('type', fn ($q) => $q->where('level', 1))
+                    ->where('warehouses.is_active', true)
+                    ->ordered()
+            )->get(),
             'items' => Item::where('items.is_active', true)->inStatementOrder()->get(),
         ]);
     }

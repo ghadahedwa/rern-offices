@@ -10,6 +10,7 @@ use App\Models\ItemCategory;
 use App\Models\Warehouse;
 use App\Models\WarehouseMovement;
 use App\Support\ArabicText;
+use App\Support\WarehouseScope;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Layout;
@@ -117,6 +118,7 @@ class Movements extends Component
             ->join('warehouses', 'warehouse_movements.warehouse_id', '=', 'warehouses.id')
             ->join('items', 'warehouse_movements.item_id', '=', 'items.id')
             ->select('warehouse_movements.*')
+            ->tap(fn ($q) => WarehouseScope::apply($q, 'warehouse_movements.warehouse_id'))
             ->when($this->search, fn ($q) => $q->where(function ($q) {
                 $q->whereRaw(
                     ArabicText::sqlNormalize('warehouses.name').' LIKE ?',
@@ -141,7 +143,7 @@ class Movements extends Component
 
         return view('livewire.warehouses.movements', [
             'movements'  => $movements,
-            'warehouses' => Warehouse::ordered()->get(),
+            'warehouses' => WarehouseScope::warehouses(),
             // منسدلة الأصناف تتبع القسم المختار — ٣٧٧ صنفاً في قائمة واحدة
             // مسطّحة لا تُتصفَّح، وحصرُها في القسم هو ما يجعل الفلتر صالحاً
             'items' => Item::query()

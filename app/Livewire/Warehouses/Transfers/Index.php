@@ -8,6 +8,7 @@ use App\Livewire\Concerns\WithPerPage;
 use App\Livewire\Concerns\WithTableSorting;
 use App\Models\WarehouseTransfer;
 use App\Support\ArabicText;
+use App\Support\WarehouseScope;
 use App\Support\WarehouseLedger;
 use Flux\Flux;
 use Illuminate\Database\Eloquent\Builder;
@@ -80,6 +81,12 @@ class Index extends Component
     public function view(int $id): void
     {
         $this->viewing = WarehouseTransfer::with(['fromWarehouse', 'toWarehouse', 'creator', 'items.item.unit'])->findOrFail($id);
+
+        abort_unless(
+            WarehouseScope::allows($this->viewing->from_warehouse_id)
+            || WarehouseScope::allows($this->viewing->to_warehouse_id),
+            403
+        );
         $this->showView = true;
     }
 
@@ -87,6 +94,9 @@ class Index extends Component
     {
         abort_unless(Auth::user()?->can('warehouses.delete'), 403);
         $transfer = WarehouseTransfer::with(['fromWarehouse', 'toWarehouse'])->findOrFail($id);
+        // ⚠️ الحذف يعكس الحركة على **الطرفين**، فيُشترط امتلاك المصدر لا أحدهما:
+        //    وإلا حذف مستلِمٌ نقلاً أرسله إليه المركز فنقص رصيدُه وزاد الرئيسي بلا علمه.
+        abort_unless(WarehouseScope::allows($transfer->from_warehouse_id), 403);
         $this->deletingId    = $transfer->id;
         $this->deletingLabel = ($transfer->fromWarehouse?->name ?? '—').' ← '.($transfer->toWarehouse?->name ?? '—')
             .' — '.$transfer->transferred_at->format('Y-m-d');
@@ -103,7 +113,9 @@ class Index extends Component
         }
 
         try {
-            WarehouseLedger::reverseTransfer(WarehouseTransfer::findOrFail($this->deletingId));
+            $transfer = WarehouseTransfer::findOrFail($this->deletingId);
+            abort_unless(WarehouseScope::allows($transfer->from_warehouse_id), 403);
+            WarehouseLedger::reverseTransfer($transfer);
             $this->reset('deletingId', 'deletingLabel', 'deletingWarning', 'showDelete');
             Flux::toast(variant: 'success', text: __('home.wh_transfer_deleted'));
         } catch (WarehouseException $e) {
@@ -118,6 +130,8 @@ class Index extends Component
             ->join('warehouses as w_from', 'warehouse_transfers.from_warehouse_id', '=', 'w_from.id')
             ->join('warehouses as w_to', 'warehouse_transfers.to_warehouse_id', '=', 'w_to.id')
             ->select('warehouse_transfers.*')
+            // ⚠️ طرفان لا طرف: نقلٌ من الرئيسي إلى مخزنه يخصّه وإن لم يملك الرئيسي
+            ->tap(fn ($q) => WarehouseScope::applyEither($q, 'warehouse_transfers.from_warehouse_id', 'warehouse_transfers.to_warehouse_id'))
             ->when($this->search, fn ($q) => $q->where(function ($q) {
                 $q->whereRaw(
                     ArabicText::sqlNormalize('w_from.name').' LIKE ?',
@@ -139,7 +153,7 @@ class Index extends Component
 
         return view('livewire.warehouses.transfers.index', [
             'transfers' => $transfers,
-            'canCreate' => Auth::user()?->can('warehouses.create'),
+            'canCreate' => Auth::user()?->can('warehouses.transfer'),
             'canDelete' => Auth::user()?->can('warehouses.delete'),
             'canAttach' => Auth::user()?->can('warehouses.attachments'),
         ]);

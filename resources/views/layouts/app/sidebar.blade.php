@@ -218,7 +218,7 @@
                     </flux:sidebar.item>
                     @endif
 
-                    @if(auth()->user()?->hasRole('super-admin') || auth()->user()?->can('warehouses.create'))
+                    @if(auth()->user()?->hasRole('super-admin') || auth()->user()?->can('warehouses.opening'))
                     <flux:sidebar.item icon="clipboard-document-list" :href="route('warehouses.opening-balances')" :current="request()->routeIs('warehouses.opening-balances')" wire:navigate>
                         {{ __('home.wh_opening_balances') }}
                     </flux:sidebar.item>
