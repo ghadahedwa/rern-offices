@@ -32,7 +32,7 @@
         @if($governorates->isEmpty())
             <p class="text-xs text-zinc-400">{{ __('home.no_governorates') }}</p>
         @else
-            <div class="grid grid-cols-2 gap-2">
+            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
                 @foreach($governorates as $governorate)
                     <label class="flex items-center gap-3 p-3 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 hover:bg-zinc-50 dark:hover:bg-zinc-800 cursor-pointer transition">
                         <input type="checkbox" wire:model="selectedGovernorates"
@@ -74,16 +74,17 @@
                 <p class="text-xs text-zinc-400">{{ __('home.no_warehouses') }}</p>
             @else
                 <p class="text-xs text-zinc-500 dark:text-zinc-400">{{ __('home.user_warehouses_autofill') }}</p>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-2 max-h-72 overflow-y-auto">
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 max-h-96 overflow-y-auto">
                     @foreach($warehouses as $warehouse)
                         <label class="flex items-center gap-3 p-3 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 hover:bg-zinc-50 dark:hover:bg-zinc-800 cursor-pointer transition">
                             <input type="checkbox" wire:model="selectedWarehouses"
                                    value="{{ $warehouse->id }}"
-                                   class="w-4 h-4 rounded accent-[#c9a847]" />
-                            <span class="text-sm text-zinc-700 dark:text-zinc-300">
-                                {{ $warehouse->name }}
-                                <span class="text-xs text-zinc-400">
-                                    ({{ $warehouse->type?->name ?? '—' }}@if($warehouse->governorate) — {{ $warehouse->governorate->name }}@endif)
+                                   class="w-4 h-4 shrink-0 rounded accent-[#c9a847]" />
+                            <span class="min-w-0 flex-1">
+                                <span class="block text-sm text-zinc-700 dark:text-zinc-300 truncate"
+                                      title="{{ $warehouse->name }}">{{ $warehouse->name }}</span>
+                                <span class="block text-xs text-zinc-400 truncate">
+                                    {{ $warehouse->type?->name ?? '—' }}@if($warehouse->governorate) — {{ $warehouse->governorate->name }}@endif
                                 </span>
                             </span>
                         </label>
