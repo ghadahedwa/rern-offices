@@ -141,11 +141,12 @@ it('يعرض الصلاحيات الثلاث في شبكة الأدوار مرت
         // والإعدادات مستثناة — عنوانها فرع النظام لا فرع المخازن
         ->and($names)->not->toContain('warehouses.settings');
 
-    // ⚠️ صلاحيات **المفتش الأربع متتالية في أعلى الجدول** — فمَن يُنشئ دوره
+    // ⚠️ صلاحيات **المفتش الخمس متتالية في أعلى الجدول** — فمَن يُنشئ دوره
     //    يعلّمها بلا تخطٍّ ولا بحثٍ في القائمة. وهو أكثر الأدوار حَمَلةً.
-    expect(array_slice($names, 0, 4))->toBe([
+    expect(array_slice($names, 0, 5))->toBe([
         'warehouses.index',
         'warehouses.opening',
+        'warehouses.issue',
         'warehouses.export',
         'warehouses.attachments',
     ]);

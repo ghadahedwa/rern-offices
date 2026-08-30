@@ -56,6 +56,7 @@
         'warehouses.opening'     => 'ضبط الرصيد الافتتاحي (يكتب الرصيد كتابةً)',
         'warehouses.incoming'    => 'تسجيل الوارد على المخزن الرئيسي',
         'warehouses.transfer'    => 'تسجيل النقل بين المخازن',
+        'warehouses.issue'       => 'تسجيل الصرف للمقرات (يُنقص المخزن)',
         'warehouses.delete'      => 'حذف (بإرجاع الرصيد)',
         'warehouses.export'      => 'تصدير تقارير المخازن',
         'warehouses.attachments' => 'عرض وتنزيل مرفقات المخازن',

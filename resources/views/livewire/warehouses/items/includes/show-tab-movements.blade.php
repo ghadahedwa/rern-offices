@@ -50,6 +50,7 @@
                                 'incoming'     => 'text-green-700 bg-green-100 dark:text-green-300 dark:bg-green-900/30',
                                 'transfer_in'  => 'text-blue-700 bg-blue-100 dark:text-blue-300 dark:bg-blue-900/30',
                                 'transfer_out' => 'text-amber-700 bg-amber-100 dark:text-amber-300 dark:bg-amber-900/30',
+                                    'issue'        => 'text-red-700 bg-red-100 dark:text-red-300 dark:bg-red-900/30',
                                 default        => 'text-zinc-600 bg-zinc-100',
                             };
                         @endphp

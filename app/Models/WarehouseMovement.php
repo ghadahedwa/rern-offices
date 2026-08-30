@@ -11,6 +11,16 @@ class WarehouseMovement extends Model
     // created_at فقط (لا يوجد updated_at في هذا الجدول)
     const UPDATED_AT = null;
 
+    /**
+     * أنواع الحركة المعروفة — **المصدر الواحد** (بيانات لا واجهة).
+     *
+     * ⚠️ كانت مكرَّرة في ثلاث شاشات، فإضافةُ نوعٍ خامس كانت ستُنسى في اثنتين
+     *    فيسقط من فلترها صامتاً. والقيمة تصل من الرابط فتُحصر فيها.
+     *
+     * ترتيبها ترتيب أثرها على الرصيد: ضبطٌ · زيادة · زيادة · نقص · نقص.
+     */
+    public const TYPES = ['opening', 'incoming', 'transfer_in', 'transfer_out', 'issue'];
+
     protected $fillable = [
         'warehouse_id',
         'item_id',

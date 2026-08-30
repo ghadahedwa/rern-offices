@@ -31,8 +31,8 @@ class Show extends Component
     use WithPerPage;
     use WithTableSorting;
 
-    /** أنواع الحركة المعروفة — القيمة تصل من الرابط فتُحصر فيها. */
-    public const MOVEMENT_TYPES = ['opening', 'incoming', 'transfer_out', 'transfer_in'];
+    /** أنواع الحركة — المصدر الواحد على الموديل (بيانات لا واجهة). */
+    public const MOVEMENT_TYPES = WarehouseMovement::TYPES;
 
     public Warehouse $warehouse;
     public bool $canEdit = false;

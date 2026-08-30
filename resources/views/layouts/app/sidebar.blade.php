@@ -208,7 +208,7 @@
                         {{ __('home.wh_transfers') }}
                     </flux:sidebar.item>
 
-                    {{-- الصرف إلى المقار: النوع الخامس، وبه ينقص مخزن المحافظة.
+                    {{-- الصرف للمقرات: النوع الخامس، وبه ينقص مخزن المحافظة.
                          وموضعه بعد النقل يتبع رحلة الصنف: وارد ← نقل ← صرف. --}}
                     <flux:sidebar.item icon="arrow-up-tray" :href="route('warehouses.issues.index')" :current="request()->routeIs('warehouses.issues.*')" wire:navigate>
                         {{ __('home.wh_issues') }}

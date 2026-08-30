@@ -83,6 +83,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->middleware('permission:warehouses.transfer')
         ->name('warehouses.transfers.create');
 
+    // الصرف إلى المقار — النوع الخامس من الحركة، وبه ينقص مخزن المحافظة
+    Route::livewire('warehouses/issues', \App\Livewire\Warehouses\Issues\Index::class)
+        ->middleware('permission:warehouses.index')
+        ->name('warehouses.issues.index');
+
+    Route::livewire('warehouses/issues/create', \App\Livewire\Warehouses\Issues\Create::class)
+        ->middleware('permission:warehouses.issue')
+        ->name('warehouses.issues.create');
+
     Route::livewire('warehouses/movements', \App\Livewire\Warehouses\Movements::class)
         ->middleware('permission:warehouses.index')
         ->name('warehouses.movements');

@@ -29,7 +29,8 @@ class Movements extends Component
     use WithTableSorting;
 
     /** أنواع الحركة المعروفة — القيمة تصل من الرابط فتُحصر فيها. */
-    public const TYPES = ['opening', 'incoming', 'transfer_out', 'transfer_in'];
+    /** أنواع الحركة — المصدر الواحد على الموديل (بيانات لا واجهة). */
+    public const TYPES = WarehouseMovement::TYPES;
 
     #[Url(as: 'q', except: '')]
     public string $search = '';

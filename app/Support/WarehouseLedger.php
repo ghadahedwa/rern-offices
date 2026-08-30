@@ -6,6 +6,7 @@ use App\Exceptions\WarehouseException;
 use App\Models\Item;
 use App\Models\Warehouse;
 use App\Models\WarehouseIncoming;
+use App\Models\WarehouseIssue;
 use App\Models\WarehouseMovement;
 use App\Models\WarehouseStock;
 use App\Models\WarehouseTransfer;
@@ -164,6 +165,68 @@ class WarehouseLedger
                 ->delete();
 
             $transfer->delete();
+        });
+    }
+
+    /**
+     * الصرف إلى مقر: خصمٌ من المخزن بلا مستلِمٍ مخزنيّ — إمّا كله أو لا شيء.
+     *
+     * ⚠️ وهو **النوع الوحيد الذي يُنقص مخزناً بلا أن يزيد آخر**. وبه ينقص
+     *    مخزن المحافظة، إذ لا ينقل هو لغيره — فرصيدُه قبل هذه الحركة كان
+     *    مجموع ما وصله منذ نشأته لا ما فيه.
+     *
+     * ⚠️ ولا قاعدة مستوى هنا (بخلاف النقل): المقر ليس مخزناً وليس له مستوى،
+     *    وأي مخزن يصرف إلى مقر — الرئيسي والإقليمي والفرعي سواء.
+     *
+     * @throws WarehouseException رصيد أحد الأصناف غير كافٍ.
+     */
+    public static function recordIssue(WarehouseIssue $issue): void
+    {
+        DB::transaction(function () use ($issue) {
+            foreach ($issue->items as $line) {
+                $stock = static::lockStock($issue->warehouse_id, $line->item_id);
+
+                if ($stock->quantity < $line->quantity) {
+                    $itemName = $line->item?->name ?? ('#'.$line->item_id);
+                    throw new WarehouseException(
+                        "الرصيد غير كافٍ للصنف «{$itemName}» في المخزن "
+                        ."(المتاح {$stock->quantity}، المطلوب {$line->quantity})."
+                    );
+                }
+
+                $before = $stock->quantity;
+                $after  = $before - $line->quantity;
+                $stock->update(['quantity' => $after]);
+
+                static::logMovement(
+                    $issue->warehouse_id, $line->item_id, 'issue',
+                    $line->quantity, $before, $after, $issue, $issue->created_by
+                );
+            }
+        });
+    }
+
+    /**
+     * حذف بإرجاع: يردّ المصروف إلى المخزن ثم يحذف المستند وحركاته.
+     * (لا تعديل بعد الحفظ — الحذف هو الطريقة الوحيدة للتراجع، كالوارد والنقل.)
+     *
+     * ⚠️ ولا يُفحص رصيدٌ هنا: الإرجاع **يزيد** المخزن، فلا يصطدم بنقص. وهذا
+     *    بخلاف حذف الوارد والنقل حيث الإرجاع يخصم من طرفٍ قد تكون حركاتٌ
+     *    لاحقة استهلكته.
+     */
+    public static function reverseIssue(WarehouseIssue $issue): void
+    {
+        DB::transaction(function () use ($issue) {
+            foreach ($issue->items as $line) {
+                $stock = static::lockStock($issue->warehouse_id, $line->item_id);
+                $stock->update(['quantity' => $stock->quantity + $line->quantity]);
+            }
+
+            WarehouseMovement::where('reference_type', $issue->getMorphClass())
+                ->where('reference_id', $issue->id)
+                ->delete();
+
+            $issue->delete();
         });
     }
 
