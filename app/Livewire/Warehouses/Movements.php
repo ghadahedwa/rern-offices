@@ -150,6 +150,7 @@ class Movements extends Component
             'items' => Item::query()
                 ->when($this->categoryFilter === 'none', fn ($q) => $q->whereNull('items.item_category_id'))
                 ->when(ctype_digit($this->categoryFilter), fn ($q) => $q->where('items.item_category_id', (int) $this->categoryFilter))
+                ->with('category')
                 ->inStatementOrder()
                 ->get(),
             'categories' => ItemCategory::orderBy('order')->orderBy('name')->get(),

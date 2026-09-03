@@ -4,9 +4,7 @@
     <x-filter-bar :active="$this->hasActiveFilters()" :per-page-options="$this->perPageOptions()">
         <x-filter-select :label="__('home.item')" wire:model.live="itemFilter">
             <option value="">—</option>
-            @foreach($movementItems as $movementItem)
-                <option value="{{ $movementItem->id }}">{{ $movementItem->name }}</option>
-            @endforeach
+            @include('livewire.warehouses.partials.item-options', ['items' => $movementItems])
         </x-filter-select>
 
         <x-filter-select :label="__('home.wh_movement_type')" wire:model.live="typeFilter">

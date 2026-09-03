@@ -95,7 +95,9 @@ class OpeningBalances extends Component
             'warehouses' => WarehouseScope::apply(
                 Warehouse::with('type')->where('warehouses.is_active', true)->ordered()
             )->get(),
-            'items'      => Item::where('items.is_active', true)->inStatementOrder()->get(),
+            // ⚠️ `with(category)` لأجل التجميع في المنتقي — بلا تحميلها
+            //    مسبقاً يقرأ القالب القسمَ لكل صنف على حدة (٣٧٧ استعلاماً)
+            'items'      => Item::where('items.is_active', true)->with('category')->inStatementOrder()->get(),
         ]);
     }
 }

@@ -24,9 +24,7 @@
 
         <x-filter-select :label="__('home.item')" wire:model.live="itemFilter">
             <option value="">—</option>
-            @foreach($items as $item)
-                <option value="{{ $item->id }}">{{ $item->name }}</option>
-            @endforeach
+            @include('livewire.warehouses.partials.item-options')
         </x-filter-select>
 
         <x-filter-select :label="__('home.wh_movement_type')" wire:model.live="typeFilter">

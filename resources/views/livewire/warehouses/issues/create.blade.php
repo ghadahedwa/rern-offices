@@ -92,11 +92,7 @@
                                 <select wire:model.live="lines.{{ $i }}.item_id"
                                         class="border border-zinc-300 dark:border-zinc-600 rounded-lg px-3 py-2 text-sm w-full bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-[#c9a847]">
                                     <option value="">— {{ __('home.item') }} —</option>
-                                    @foreach($items as $item)
-                                        @if(! in_array($item->id, $chosen, true) || (int) ($line['item_id'] ?? 0) === $item->id)
-                                            <option value="{{ $item->id }}">{{ $item->name }}</option>
-                                        @endif
-                                    @endforeach
+                                    @include('livewire.warehouses.partials.item-options')
                                 </select>
                                 {{-- المتاح بجوار الصنف — فلا يُصرف ما ليس في المخزن --}}
                                 @if(($line['item_id'] ?? '') !== '')

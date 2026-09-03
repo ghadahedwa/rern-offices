@@ -355,6 +355,7 @@ class Show extends Component
                 ->whereIn('items.id', WarehouseStock::query()
                     ->where('warehouse_id', $this->warehouse->id)
                     ->select('item_id'))
+                ->with('category')
                 ->inStatementOrder()
                 ->get(),
             // أقسام ووحدات أصناف هذا المخزن وحدها — قائمةٌ بخيارات لا صفوف خلفها
