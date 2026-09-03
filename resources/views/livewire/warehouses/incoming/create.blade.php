@@ -60,7 +60,9 @@
 
                     @error('lines') <p class="text-red-500 text-xs mb-3">{{ $message }}</p> @enderror
 
-                    @php $chosen = collect($lines)->pluck('item_id')->filter()->map(fn ($v) => (int) $v)->all(); @endphp
+                    @include('livewire.warehouses.partials.item-category-filter')
+
+                @php $chosen = collect($lines)->pluck('item_id')->filter()->map(fn ($v) => (int) $v)->all(); @endphp
                     <div class="space-y-3">
                         @foreach($lines as $i => $line)
                             <div class="flex items-start gap-3" wire:key="line-{{ $i }}">

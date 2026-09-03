@@ -18,6 +18,7 @@ use Livewire\WithFileUploads;
 #[Title('تسجيل وارد')]
 class Create extends Component
 {
+    use \App\Livewire\Warehouses\Concerns\FiltersItemsByCategory;
     use WithFileUploads;
 
     public ?int $warehouse_id = null;
@@ -126,9 +127,10 @@ class Create extends Component
                     ->where('warehouses.is_active', true)
                     ->ordered()
             )->get(),
-            // ⚠️ `with(category)` لأجل التجميع في المنتقي — بلا تحميلها
-            //    مسبقاً يقرأ القالب القسمَ لكل صنف على حدة (٣٧٧ استعلاماً)
-            'items' => Item::where('items.is_active', true)->with('category')->inStatementOrder()->get(),
+            // أصناف القسم المختار + ما اختاره المستخدم فعلاً (وإلا اختفى
+            // الصنف من صفّه حين يضيق الفلتر) — التفصيل في الـtrait
+            'items'      => $this->categoryFilteredItems(),
+            'categories' => \App\Models\ItemCategory::orderBy('order')->orderBy('name')->get(),
         ]);
     }
 }
