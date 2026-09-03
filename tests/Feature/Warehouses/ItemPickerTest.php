@@ -2,7 +2,6 @@
 
 use App\Livewire\Warehouses\Issues\Create as IssueCreate;
 use App\Livewire\Warehouses\Movements;
-use App\Livewire\Warehouses\OpeningBalances;
 use App\Models\Item;
 use App\Models\ItemCategory;
 use App\Models\ItemUnit;
@@ -67,7 +66,7 @@ it('يجمع الأصناف تحت أقسامها في منسدلة الإدخا
 
     $this->actingAs(ipUser());
 
-    $html = Livewire::test(OpeningBalances::class)->html();
+    $html = Livewire::test(IssueCreate::class)->html();
 
     expect($html)->toContain('<optgroup label="الكمبيوتر">')
         ->and($html)->toContain('<optgroup label="الورق والحافظات">')
@@ -83,7 +82,7 @@ it('يحافظ على ترتيب الدفتر بين الأقسام لا الت�
 
     $this->actingAs(ipUser());
 
-    $html = Livewire::test(OpeningBalances::class)->html();
+    $html = Livewire::test(IssueCreate::class)->html();
 
     expect(strpos($html, 'الورق والحافظات'))->toBeLessThan(strpos($html, 'الكمبيوتر'));
 });
@@ -95,7 +94,7 @@ it('يضع الأصناف بلا قسم في مجموعة أخيرة', function 
 
     $this->actingAs(ipUser());
 
-    $html = Livewire::test(OpeningBalances::class)->html();
+    $html = Livewire::test(IssueCreate::class)->html();
 
     expect($html)->toContain('<optgroup label="بلا قسم">')
         // ⚠️ آخراً كما في الدفتر — `statementOrder` يدفعها للنهاية
@@ -109,7 +108,7 @@ it('يُظهر رقم الصنف بجوار اسمه حيث له رقم', functi
 
     $this->actingAs(ipUser());
 
-    $html = Livewire::test(OpeningBalances::class)->html();
+    $html = Livewire::test(IssueCreate::class)->html();
 
     expect($html)->toContain('حركة التأشير الهامشى — ٥٤ ق')
         // والذي بلا رقم يبقى باسمه وحده بلا شرطة معلَّقة
@@ -125,7 +124,7 @@ it('يُخفي الصنف المختار في صفٍّ آخر ويُبقيه ف�
 
     $this->actingAs(ipUser());
 
-    $component = Livewire::test(OpeningBalances::class)
+    $component = Livewire::test(IssueCreate::class)
         ->call('addLine')
         ->set('lines.0.item_id', $first->id);
 
@@ -143,7 +142,7 @@ it('لا يعرض عنوان قسمٍ خلت أصنافه كلها', function ()
 
     $this->actingAs(ipUser());
 
-    $component = Livewire::test(OpeningBalances::class)
+    $component = Livewire::test(IssueCreate::class)
         ->call('addLine')
         ->set('lines.0.item_id', $only->id);
 
@@ -167,7 +166,7 @@ it('يعمل في منسدلة الفلترة التي لا تمرّر صفوف�
         ->and($html)->toContain('جهاز كمبيوتر — ٧ ك');
 });
 
-it('يجمع بالقسم في شاشات الإدخال الأربع', function () {
+it('يجمع بالقسم في شاشات الإدخال الثلاث', function () {
     $category = ipCategory('الكمبيوتر', 1);
     ipItem('جهاز كمبيوتر', $category);
     ipWarehouse();
@@ -177,8 +176,9 @@ it('يجمع بالقسم في شاشات الإدخال الأربع', function
         'warehouses.incoming', 'warehouses.transfer',
     ], 'ip-all'));
 
+    // ⚠️ ثلاثٌ لا أربع: «الأرصدة الافتتاحية» صارت جدولاً على صورة البيان
+    //    الورقي بلا منسدلة صنف — يحرسها OpeningBalancesTest.
     foreach ([
-        OpeningBalances::class,
         IssueCreate::class,
         \App\Livewire\Warehouses\Incoming\Create::class,
         \App\Livewire\Warehouses\Transfers\Create::class,

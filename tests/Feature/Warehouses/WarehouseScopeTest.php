@@ -244,9 +244,11 @@ it('يمنع ضبط رصيدٍ افتتاحي لمخزنٍ خارج النطاق
 
     $this->actingAs(wsUser(['warehouses.index', 'warehouses.opening'], 'ws-open', [$mine]));
 
+    // الشاشة صارت على صورة البيان: قسمٌ ثم كمياتٌ بمعرّفات الأصناف
     Livewire::test(OpeningBalances::class)
         ->set('warehouse_id', $theirs->id)
-        ->set('lines', [['item_id' => $item->id, 'quantity' => 5]])
+        ->set('category_id', (string) $item->item_category_id)
+        ->set('quantities.'.$item->id, 5)
         ->call('save')
         ->assertStatus(403);
 
