@@ -200,9 +200,13 @@
                         {{ __('home.wh_warehouse_balances_title') }}
                     </flux:sidebar.item>
 
+                    {{-- الوارد يُسجَّل على المخزن الرئيسي وحده، فبندُه على مَن لا رئيسيَّ
+                         في نطاقه **فارغ أبداً** لا فارغ اليوم. والمقياس النطاق لا الصلاحية. --}}
+                    @if(\App\Support\WarehouseScope::hasMainWarehouse())
                     <flux:sidebar.item icon="inbox-arrow-down" :href="route('warehouses.incoming.index')" :current="request()->routeIs('warehouses.incoming.*')" wire:navigate>
                         {{ __('home.wh_incoming') }}
                     </flux:sidebar.item>
+                    @endif
 
                     <flux:sidebar.item icon="arrows-right-left" :href="route('warehouses.transfers.index')" :current="request()->routeIs('warehouses.transfers.*')" wire:navigate>
                         {{ __('home.wh_transfers') }}

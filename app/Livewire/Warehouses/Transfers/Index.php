@@ -31,6 +31,15 @@ class Index extends Component
     #[Url(as: 'q', except: '')]
     public string $search = '';
 
+    /**
+     * اتجاه النقل بالنسبة لمخازن المستخدم: 'in' وارد إليها · 'out' صادر منها.
+     *
+     * ⚠️ لا معنى له لمن نطاقه بلا حدّ (لا "مخازني" عنده) — فيُخفى من الشاشة
+     *    وتُهمَل قيمته الآتية من الرابط. انظر activeDirection().
+     */
+    #[Url(as: 'direction', except: '')]
+    public string $directionFilter = '';
+
     public bool $showDelete = false;
     public ?int $deletingId = null;
     public string $deletingLabel = '';
@@ -49,15 +58,40 @@ class Index extends Component
         $this->resetPage();
     }
 
+    public function updatingDirectionFilter(): void
+    {
+        $this->resetPage();
+    }
+
+    /**
+     * الاتجاه المفعَّل فعلاً — '' إن كانت القيمة تالفة أو النطاق بلا حدّ.
+     *
+     * ⚠️ القيمة تصل من الرابط، فقائمة بيضاء لا فحص وجود.
+     */
+    public function activeDirection(): string
+    {
+        if (WarehouseScope::unlimited()) {
+            return '';
+        }
+
+        return in_array($this->directionFilter, ['in', 'out'], true) ? $this->directionFilter : '';
+    }
+
+    /** يُعرض المنتقي لمن له مخازن بعينها وحده. */
+    public function showDirection(): bool
+    {
+        return ! WarehouseScope::unlimited();
+    }
+
     public function resetFilters(): void
     {
-        $this->reset('search', 'dateFrom', 'dateTo');
+        $this->reset('search', 'directionFilter', 'dateFrom', 'dateTo');
         $this->resetPage();
     }
 
     public function hasActiveFilters(): bool
     {
-        return $this->search !== '' || $this->hasDateFilter();
+        return $this->search !== '' || $this->activeDirection() !== '' || $this->hasDateFilter();
     }
 
     protected function sortableColumns(): array
@@ -132,6 +166,9 @@ class Index extends Component
             ->select('warehouse_transfers.*')
             // ⚠️ طرفان لا طرف: نقلٌ من الرئيسي إلى مخزنه يخصّه وإن لم يملك الرئيسي
             ->tap(fn ($q) => WarehouseScope::applyEither($q, 'warehouse_transfers.from_warehouse_id', 'warehouse_transfers.to_warehouse_id'))
+            // الاتجاه يضيّق الطرفين إلى طرفٍ واحد — وهو نفسه نطاق المستخدم
+            ->when($this->activeDirection() === 'in', fn ($q) => WarehouseScope::apply($q, 'warehouse_transfers.to_warehouse_id'))
+            ->when($this->activeDirection() === 'out', fn ($q) => WarehouseScope::apply($q, 'warehouse_transfers.from_warehouse_id'))
             ->when($this->search, fn ($q) => $q->where(function ($q) {
                 $q->whereRaw(
                     ArabicText::sqlNormalize('w_from.name').' LIKE ?',
@@ -156,6 +193,7 @@ class Index extends Component
             'canCreate' => Auth::user()?->can('warehouses.transfer'),
             'canDelete' => Auth::user()?->can('warehouses.delete'),
             'canAttach' => Auth::user()?->can('warehouses.attachments'),
+            'showDirection' => $this->showDirection(),
         ]);
     }
 }

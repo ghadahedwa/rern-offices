@@ -118,6 +118,35 @@ class WarehouseScope
             ->all();
     }
 
+    /**
+     * هل في نطاق المستخدم مخزن رئيسي (level=1)؟
+     *
+     * الوارد توريدُ مورّدٍ من خارج المنظومة، ولا يُسجَّل إلا على الرئيسي
+     * (Incoming\Create يرفض غيره صراحةً). فمَن لا رئيسيَّ في نطاقه شاشةُ
+     * الوارد عليه **فارغة أبداً** لا فارغة اليوم — وبندٌ كهذا في المنيو
+     * يعلّم المستخدم أن المنظومة معطّلة، لا أن هذا ليس عمله.
+     *
+     * ⚠️ والمقياس **النطاق لا الصلاحية**: أمين المخزن الرئيسي يسجّل الوارد،
+     *    وقد يأتي دورٌ يطالعه ولا يسجّله — والقراءة حقُّ مَن في نطاقه.
+     * ⚠️ وبلا حدّ = نعم: الرئيسي داخلٌ فيه، ويدخله المخزن الجديد تلقائياً.
+     */
+    public static function hasMainWarehouse(?Authenticatable $user = null): bool
+    {
+        $ids = self::warehouseIds($user);
+
+        if ($ids === null) {
+            return true;
+        }
+
+        if ($ids === []) {
+            return false;
+        }
+
+        return Warehouse::whereIn('warehouses.id', $ids)
+            ->whereHas('type', fn ($q) => $q->where('level', 1))
+            ->exists();
+    }
+
     /** هل يملك المستخدم هذا المخزن في نطاقه؟ (لحارس فعلٍ على مخزن بعينه) */
     public static function allows(int $warehouseId, ?Authenticatable $user = null): bool
     {

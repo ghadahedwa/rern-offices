@@ -15,9 +15,18 @@
     </div>
 
     {{-- Filters --}}
-    <x-filter-bar :active="$this->hasActiveFilters()" :per-page-options="$this->perPageOptions()" :columns="3">
+    <x-filter-bar :active="$this->hasActiveFilters()" :per-page-options="$this->perPageOptions()" :columns="$showDirection ? 4 : 3">
         <x-filter-input :label="__('home.search')" wire:model.live.debounce.300ms="search"
                         placeholder="{{ __('home.wh_from_warehouse') }} / {{ __('home.wh_to_warehouse') }} / {{ __('home.wh_document_type') }}" />
+
+        {{-- الاتجاه: لمن له مخازن بعينها وحده — ولا معنى له لصاحب النطاق المفتوح --}}
+        @if($showDirection)
+        <x-filter-select :label="__('home.wh_transfer_direction')" wire:model.live="directionFilter">
+            <option value="">—</option>
+            <option value="in">{{ __('home.wh_transfer_direction_in') }}</option>
+            <option value="out">{{ __('home.wh_transfer_direction_out') }}</option>
+        </x-filter-select>
+        @endif
 
         <x-filter-input type="date" :label="__('home.wh_date_from')" wire:model.live="dateFrom" />
         <x-filter-input type="date" :label="__('home.wh_date_to')" wire:model.live="dateTo" />
