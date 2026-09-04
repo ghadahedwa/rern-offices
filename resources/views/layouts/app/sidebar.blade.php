@@ -179,59 +179,75 @@
                     @endif {{-- /branch: meetings --}}
 
                     @if($currentBranch === 'warehouses')
+                    @php
+                        // ثلاث مجموعات بإيقاع العمل: ما عندي ← ما تحرّك ← ما أُخرِجه وأضبطه.
+                        // ⚠️ عنوانٌ بلا بنود تحته أسوأ من قائمة مسطّحة — فمجموعة «مخرجات
+                        //    وضبط» كلها مشروطة بصلاحيتَي بنديها، تُحسبان مرة هنا.
+                        $whUser        = auth()->user();
+                        $whCanStatement = (bool) $whUser?->can('warehouses.export');
+                        $whCanOpening   = $whUser?->hasRole('super-admin') || $whUser?->can('warehouses.opening');
+                    @endphp
+
                     <flux:sidebar.item icon="squares-2x2" :href="route('warehouses.dashboard')" :current="request()->routeIs('warehouses.dashboard')" wire:navigate>
                         {{ __('home.warehouses_dashboard') }}
                     </flux:sidebar.item>
 
-                    @if(auth()->user()?->can('warehouses.settings'))
+                    @if($whUser?->can('warehouses.settings'))
                     <flux:sidebar.item icon="building-office-2" :href="route('warehouse-manage.index')" :current="request()->routeIs('warehouse-manage.*')" wire:navigate>
                         {{ __('home.warehouses_manage_title') }}
                     </flux:sidebar.item>
                     @endif
 
-                    {{-- بندان لمحورين لا لشاشتين متشابهتين: الأول صفٌّ لكل صنف
-                         («كم عندنا من هذا الصنف؟») والثاني صفٌّ لكل مخزن×صنف
-                         («ما في هذا المخزن؟»). والاسم يقول المحور في كليهما. --}}
-                    <flux:sidebar.item icon="cube" :href="route('warehouses.item-balances')" :current="request()->routeIs('warehouses.item-balances') || request()->routeIs('warehouses.items.show')" wire:navigate>
-                        {{ __('home.wh_item_balances_title') }}
-                    </flux:sidebar.item>
+                    {{-- بندان لمحورين لا لشاشتين متشابهتين: الأول صفٌّ لكل مخزن×صنف
+                         («ما في هذا المخزن؟») والثاني صفٌّ لكل صنف («كم عندنا منه؟»).
+                         ومحور المخزن أولاً لأن صاحب المخزن الواحد يبدأ منه. --}}
+                    <flux:sidebar.group :heading="__('home.wh_group_balances')">
+                        <flux:sidebar.item icon="scale" :href="route('warehouses.stock')" :current="request()->routeIs('warehouses.stock')" wire:navigate>
+                            {{ __('home.wh_warehouse_balances_title') }}
+                        </flux:sidebar.item>
 
-                    <flux:sidebar.item icon="scale" :href="route('warehouses.stock')" :current="request()->routeIs('warehouses.stock')" wire:navigate>
-                        {{ __('home.wh_warehouse_balances_title') }}
-                    </flux:sidebar.item>
+                        <flux:sidebar.item icon="cube" :href="route('warehouses.item-balances')" :current="request()->routeIs('warehouses.item-balances') || request()->routeIs('warehouses.items.show')" wire:navigate>
+                            {{ __('home.wh_item_balances_title') }}
+                        </flux:sidebar.item>
+                    </flux:sidebar.group>
 
-                    {{-- الوارد يُسجَّل على المخزن الرئيسي وحده، فبندُه على مَن لا رئيسيَّ
-                         في نطاقه **فارغ أبداً** لا فارغ اليوم. والمقياس النطاق لا الصلاحية. --}}
-                    @if(\App\Support\WarehouseScope::hasMainWarehouse())
-                    <flux:sidebar.item icon="inbox-arrow-down" :href="route('warehouses.incoming.index')" :current="request()->routeIs('warehouses.incoming.*')" wire:navigate>
-                        {{ __('home.wh_incoming') }}
-                    </flux:sidebar.item>
-                    @endif
+                    {{-- رحلة الصنف: وارد ← نقل ← صرف، ثم سجلّها كلها --}}
+                    <flux:sidebar.group :heading="__('home.wh_group_movements')">
+                        {{-- الوارد يُسجَّل على المخزن الرئيسي وحده، فبندُه على مَن لا رئيسيَّ
+                             في نطاقه **فارغ أبداً** لا فارغ اليوم. والمقياس النطاق لا الصلاحية. --}}
+                        @if(\App\Support\WarehouseScope::hasMainWarehouse())
+                        <flux:sidebar.item icon="inbox-arrow-down" :href="route('warehouses.incoming.index')" :current="request()->routeIs('warehouses.incoming.*')" wire:navigate>
+                            {{ __('home.wh_incoming') }}
+                        </flux:sidebar.item>
+                        @endif
 
-                    <flux:sidebar.item icon="arrows-right-left" :href="route('warehouses.transfers.index')" :current="request()->routeIs('warehouses.transfers.*')" wire:navigate>
-                        {{ __('home.wh_transfers') }}
-                    </flux:sidebar.item>
+                        <flux:sidebar.item icon="arrows-right-left" :href="route('warehouses.transfers.index')" :current="request()->routeIs('warehouses.transfers.*')" wire:navigate>
+                            {{ __('home.wh_transfers') }}
+                        </flux:sidebar.item>
 
-                    {{-- الصرف للمقرات: النوع الخامس، وبه ينقص مخزن المحافظة.
-                         وموضعه بعد النقل يتبع رحلة الصنف: وارد ← نقل ← صرف. --}}
-                    <flux:sidebar.item icon="arrow-up-tray" :href="route('warehouses.issues.index')" :current="request()->routeIs('warehouses.issues.*')" wire:navigate>
-                        {{ __('home.wh_issues') }}
-                    </flux:sidebar.item>
+                        <flux:sidebar.item icon="arrow-up-tray" :href="route('warehouses.issues.index')" :current="request()->routeIs('warehouses.issues.*')" wire:navigate>
+                            {{ __('home.wh_issues') }}
+                        </flux:sidebar.item>
 
-                    <flux:sidebar.item icon="queue-list" :href="route('warehouses.movements')" :current="request()->routeIs('warehouses.movements')" wire:navigate>
-                        {{ __('home.wh_movements') }}
-                    </flux:sidebar.item>
+                        <flux:sidebar.item icon="queue-list" :href="route('warehouses.movements')" :current="request()->routeIs('warehouses.movements')" wire:navigate>
+                            {{ __('home.wh_movements') }}
+                        </flux:sidebar.item>
+                    </flux:sidebar.group>
 
-                    @if(auth()->user()?->can('warehouses.export'))
-                    <flux:sidebar.item icon="document-text" :href="route('warehouses.statement')" :current="request()->routeIs('warehouses.statement')" wire:navigate>
-                        {{ __('home.wh_statement') }}
-                    </flux:sidebar.item>
-                    @endif
+                    @if($whCanStatement || $whCanOpening)
+                    <flux:sidebar.group :heading="__('home.wh_group_outputs')">
+                        @if($whCanStatement)
+                        <flux:sidebar.item icon="document-text" :href="route('warehouses.statement')" :current="request()->routeIs('warehouses.statement')" wire:navigate>
+                            {{ __('home.wh_statement') }}
+                        </flux:sidebar.item>
+                        @endif
 
-                    @if(auth()->user()?->hasRole('super-admin') || auth()->user()?->can('warehouses.opening'))
-                    <flux:sidebar.item icon="clipboard-document-list" :href="route('warehouses.opening-balances')" :current="request()->routeIs('warehouses.opening-balances')" wire:navigate>
-                        {{ __('home.wh_opening_balances') }}
-                    </flux:sidebar.item>
+                        @if($whCanOpening)
+                        <flux:sidebar.item icon="clipboard-document-list" :href="route('warehouses.opening-balances')" :current="request()->routeIs('warehouses.opening-balances')" wire:navigate>
+                            {{ __('home.wh_opening_balances') }}
+                        </flux:sidebar.item>
+                        @endif
+                    </flux:sidebar.group>
                     @endif
 
                     @endif {{-- /branch: warehouses --}}

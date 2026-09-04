@@ -22,7 +22,8 @@
         {{-- الاتجاه: لمن له مخازن بعينها وحده — ولا معنى له لصاحب النطاق المفتوح --}}
         @if($showDirection)
         <x-filter-select :label="__('home.wh_transfer_direction')" wire:model.live="directionFilter">
-            <option value="">—</option>
+            {{-- الخيار الافتراضي يقول معنى المنسدلة وهي مقفولة: «—» وحدها لا تُنبئ بشيء فتعدّي عليها العين --}}
+            <option value="">{{ __('home.wh_transfer_direction_all') }}</option>
             <option value="in">{{ __('home.wh_transfer_direction_in') }}</option>
             <option value="out">{{ __('home.wh_transfer_direction_out') }}</option>
         </x-filter-select>

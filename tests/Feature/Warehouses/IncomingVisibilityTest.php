@@ -20,12 +20,18 @@ use Spatie\Permission\Models\Role;
  *
  * ⚠️ والمقياس **النطاق لا الصلاحية**: قد يأتي دورٌ يطالع الوارد ولا يسجّله.
  */
-function ivUser(array $warehouses, bool $all = false): User
+function ivUser(array $warehouses, bool $all = false, array $extra = []): User
 {
-    Permission::findOrCreate('warehouses.index', 'web');
-    Role::findOrCreate('iv-role', 'web')->syncPermissions(['warehouses.index']);
+    $abilities = array_merge(['warehouses.index'], $extra);
 
-    $user = tap(User::factory()->create(['all_warehouses' => $all]))->assignRole('iv-role');
+    foreach ($abilities as $ability) {
+        Permission::findOrCreate($ability, 'web');
+    }
+
+    $role = Role::findOrCreate('iv-role-'.md5(implode(',', $abilities)), 'web');
+    $role->syncPermissions($abilities);
+
+    $user = tap(User::factory()->create(['all_warehouses' => $all]))->assignRole($role);
     $user->warehouses()->sync(collect($warehouses)->pluck('id')->all());
 
     return $user->fresh();
@@ -105,4 +111,31 @@ it('يُبقي شاشة الوارد مفتوحةً لمن أُخفي عنه ا�
     // البند يُخفى ولا يُغلق الرابط: رابطٌ محفوظ يُخرج شاشةً فارغة لا ٤٠٣،
     // والنطاق هو الذي يحجب الصفوف كما يحجبها في كل شاشة أخرى
     expect(Livewire::test(IncomingIndex::class)->viewData('incomings')->count())->toBe(0);
+});
+
+// ── ترتيب القائمة ومجموعاتها ─────────────────────────────
+
+it('يعرض عناوين مجموعات القائمة بترتيب إيقاع العمل', function () {
+    $this->actingAs(ivUser([ivWarehouse('المخزن الرئيسي', 1)], all: true, extra: ['warehouses.export', 'warehouses.opening']));
+
+    $html = $this->get(route('warehouses.stock'))->assertOk()->getContent();
+
+    // ⚠️ الترتيب نفسه هو المطلوب لا مجرّد الوجود: ما عندي ← ما تحرّك ← ما أُخرِجه
+    $positions = collect(['الأرصدة', 'الحركات', 'مخرجات وضبط'])
+        ->map(fn ($heading) => mb_strpos($html, '>'.$heading.'<'));
+
+    expect($positions->every(fn ($p) => $p !== false))->toBeTrue()
+        ->and($positions->all())->toBe($positions->sort()->values()->all());
+});
+
+it('لا يعرض عنوان «مخرجات وضبط» لمن لا بند له تحته', function () {
+    // ⚠️ عنوانٌ بلا بنود أسوأ من قائمة مسطّحة — والمفتش بلا export ولا opening
+    //    في هذا الاختبار، فالمجموعة كلها تسقط لا عنوانها وحده
+    ivWarehouse('المخزن الرئيسي', 1);
+    $this->actingAs(ivUser([ivWarehouse('بنها', 3)]));
+
+    $this->get(route('warehouses.stock'))
+        ->assertOk()
+        ->assertSee('>الأرصدة<', false)
+        ->assertDontSee('>مخرجات وضبط<', false);
 });

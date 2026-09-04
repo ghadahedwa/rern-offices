@@ -970,6 +970,10 @@ return [
     'wh_all_types'                => '— كل الأنواع —',
     'wh_quantity'                 => 'الكمية',
     'wh_current_balance'          => 'الرصيد الحالي',
+    // عناوين مجموعات قائمة الفرع — بإيقاع العمل: ما عندي ← ما تحرّك ← ما أُخرِجه
+    'wh_group_balances'           => 'الأرصدة',
+    'wh_group_movements'          => 'الحركات',
+    'wh_group_outputs'            => 'مخرجات وضبط',
     'wh_incoming'                 => 'الوارد',
     'wh_incoming_add'             => 'تسجيل وارد',
     'wh_incoming_saved'           => 'تم تسجيل الوارد',
@@ -984,6 +988,7 @@ return [
     'wh_to_warehouse'             => 'المخزن المستلم',
     'wh_transferred_at'           => 'تاريخ الصرف',
     'wh_transfer_direction'      => 'الاتجاه',
+    'wh_transfer_direction_all'  => '— وارد وصادر —',
     'wh_transfer_direction_in'   => 'وارد إلى مخازني',
     'wh_transfer_direction_out'  => 'صادر من مخازني',
     'wh_document_type'            => 'نوع المستند',
