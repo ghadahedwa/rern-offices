@@ -12,6 +12,7 @@ use App\Models\WarehouseMovement;
 use App\Models\WarehouseStock;
 use App\Models\WarehouseTransfer;
 use App\Support\ArabicText;
+use App\Support\WarehouseScope;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Layout;
@@ -79,17 +80,39 @@ class Show extends Component
     public bool $showViewTransfer = false;
     public ?WarehouseTransfer $viewingTransfer = null;
 
+    /**
+     * مدخلان في فرعين: مدير الإعدادات من «إدارة المخازن»، وصاحب المخزن من
+     * شاشة الأرصدة — وهي أقرب شاشة إلى «مخزني» (أرصدته وحركاته ونقله معاً).
+     *
+     * ⚠️ وحارسان لا واحد: الصلاحية تقول «له أن يطالع بروفايل مخزنٍ ما»،
+     *    والنطاق يقول **أيّ** مخزن — والمعرّف يصل من الرابط لا من قائمة.
+     */
     public function mount(Warehouse $warehouse): void
     {
-        abort_unless(Auth::user()?->can('warehouses.settings'), 403);
+        $user = Auth::user();
+
+        abort_unless($user?->can('warehouses.index') || $user?->can('warehouses.settings'), 403);
+        abort_unless(WarehouseScope::allows($warehouse->id, $user), 403);
 
         $this->warehouse = $warehouse->load('type', 'governorate', 'stocks.item');
-        $this->canEdit   = (bool) Auth::user()?->can('warehouses.settings');
+        // التعديل فعلُ إعداداتٍ لا فعلُ تشغيل — فصاحب المخزن يطالع ولا يعدّل
+        $this->canEdit   = (bool) $user?->can('warehouses.settings');
 
         // التاب يصل من الرابط أيضاً — يُفحص هنا لا في setTab وحدها
         if (! in_array($this->tab, $this->validTabs(), true)) {
             $this->tab = 'stock';
         }
+    }
+
+    /**
+     * زرّ الرجوع يتبع مدخل المستخدم — إرجاعُ الجميع إلى «إدارة المخازن»
+     * يهبط بصاحب المخزن على ٤٠٣ في شاشةٍ ليست له.
+     */
+    public function backRoute(): string
+    {
+        return Auth::user()?->can('warehouses.settings')
+            ? route('warehouse-manage.index')
+            : route('warehouses.stock');
     }
 
     /** @return array<int, string> */

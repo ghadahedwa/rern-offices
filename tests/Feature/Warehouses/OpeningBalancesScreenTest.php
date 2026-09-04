@@ -277,11 +277,26 @@ it('يمنع الحفظ على مخزنٍ خارج نطاق المستخدم', f
     expect(WarehouseStock::count())->toBe(0);
 });
 
-it('يمسح المُدخَل عند تبديل القسم أو المخزن', function () {
+it('يبدّل بلا سؤال ما لم يكن ثمّ ما يُفقد', function () {
     $one       = obCategory('المستديم', 1);
     $two       = obCategory('الورق', 2);
     $warehouse = obWarehouse();
-    $other     = obWarehouse('مخزن آخر');
+    obItem('كمبيوتر', $one);
+
+    $this->actingAs(obUser());
+
+    Livewire::test(OpeningBalances::class)
+        ->set('warehouse_id', $warehouse->id)
+        ->set('category_id', (string) $one->id)
+        ->set('category_id', (string) $two->id)
+        ->assertSet('showSwitchWarning', false)
+        ->assertSet('category_id', (string) $two->id);
+});
+
+it('يسأل قبل أن يمسح، ويُبقي المُدخَل والقسم ريثما يُجاب', function () {
+    $one       = obCategory('المستديم', 1);
+    $two       = obCategory('الورق', 2);
+    $warehouse = obWarehouse();
     $item      = obItem('كمبيوتر', $one);
 
     $this->actingAs(obUser());
@@ -289,14 +304,124 @@ it('يمسح المُدخَل عند تبديل القسم أو المخزن', f
     $component = Livewire::test(OpeningBalances::class)
         ->set('warehouse_id', $warehouse->id)
         ->set('category_id', (string) $one->id)
-        ->set('quantities.'.$item->id, 40);
+        ->set('quantities.'.$item->id, 40)
+        ->set('category_id', (string) $two->id);
 
-    // ⚠️ وإلا حُملت أرقام قسمٍ إلى قسمٍ آخر بمعرّفات أصناف لا تُعرض
-    $component->set('category_id', (string) $two->id)->assertSet('quantities', []);
+    // ⚠️ المسح صحيح وصمتُه غلط: عشرون خانة تضيع بضغطة سهو على شاشةٍ إدخالها طويل
+    $component->assertSet('showSwitchWarning', true)
+        ->assertSet('quantities.'.$item->id, 40)
+        // ويعود القسم إلى سابقه: أرقامٌ مملوءة تحت عناوين أصناف قسمٍ آخر عرضٌ كاذب
+        ->assertSet('category_id', (string) $one->id);
 
-    $component->set('category_id', (string) $one->id)
+    $component->call('cancelSwitch')
+        ->assertSet('showSwitchWarning', false)
+        ->assertSet('category_id', (string) $one->id)
+        ->assertSet('quantities.'.$item->id, 40);
+});
+
+it('ينتقل بلا حفظ إن اختار صاحبه ذلك', function () {
+    $one       = obCategory('المستديم', 1);
+    $two       = obCategory('الورق', 2);
+    $warehouse = obWarehouse();
+    $item      = obItem('كمبيوتر', $one);
+
+    $this->actingAs(obUser());
+
+    Livewire::test(OpeningBalances::class)
+        ->set('warehouse_id', $warehouse->id)
+        ->set('category_id', (string) $one->id)
+        ->set('quantities.'.$item->id, 40)
+        ->set('category_id', (string) $two->id)
+        ->call('discardThenSwitch')
+        ->assertSet('category_id', (string) $two->id)
+        ->assertSet('quantities', [])
+        ->assertSet('showSwitchWarning', false);
+
+    // ⚠️ ولم يُسجَّل شيء: الفقد كان باختياره
+    expect(WarehouseStock::where('item_id', $item->id)->count())->toBe(0);
+});
+
+it('يحفظ ثم ينتقل', function () {
+    $one       = obCategory('المستديم', 1);
+    $two       = obCategory('الورق', 2);
+    $warehouse = obWarehouse();
+    $item      = obItem('كمبيوتر', $one);
+
+    $this->actingAs(obUser());
+
+    Livewire::test(OpeningBalances::class)
+        ->set('warehouse_id', $warehouse->id)
+        ->set('category_id', (string) $one->id)
+        ->set('quantities.'.$item->id, 40)
+        ->set('category_id', (string) $two->id)
+        ->call('saveThenSwitch')
+        ->assertSet('category_id', (string) $two->id)
+        ->assertSet('quantities', []);
+
+    expect(WarehouseStock::where('warehouse_id', $warehouse->id)->where('item_id', $item->id)->value('quantity'))->toBe(40);
+});
+
+it('يحذّر ولو وصلت الكمية والقسم في طلبٍ واحد', function () {
+    $one       = obCategory('المستديم', 1);
+    $two       = obCategory('الورق', 2);
+    $warehouse = obWarehouse();
+    $item      = obItem('كمبيوتر', $one);
+
+    $this->actingAs(obUser());
+
+    $component = Livewire::test(OpeningBalances::class)
+        ->set('warehouse_id', $warehouse->id)
+        ->set('category_id', (string) $one->id);
+
+    // ⚠️ هذا ما يقع في المتصفح لا في اختبارٍ يرسل كل تغيير وحده: خانةُ العدد
+    //    تُرسَل مع تغيير القسم في الطلب نفسه. ولولا أن Livewire يطبّق التحديثات
+    //    كلها قبل استدعاء خطّافات `updated` لَرأى الخطّافُ خاناتٍ فارغة فمسح صامتاً.
+    $component->set([
+        'quantities.'.$item->id => 40,
+        'category_id'           => (string) $two->id,
+    ]);
+
+    $component->assertSet('showSwitchWarning', true)
+        ->assertSet('category_id', (string) $one->id)
+        ->assertSet('quantities.'.$item->id, 40);
+});
+it('لا ينتقل إن سقط الحفظ — ولا يفقد ما كُتب', function () {
+    $one       = obCategory('المستديم', 1);
+    $two       = obCategory('الورق', 2);
+    $warehouse = obWarehouse();
+    $item      = obItem('كمبيوتر', $one);
+
+    $this->actingAs(obUser());
+
+    // ⚠️ «احفظ ثم انتقل» على رقمٍ مرفوض: الانتقال بعده يمسح ما لم يُحفظ
+    Livewire::test(OpeningBalances::class)
+        ->set('warehouse_id', $warehouse->id)
+        ->set('category_id', (string) $one->id)
+        ->set('quantities.'.$item->id, -5)
+        ->set('category_id', (string) $two->id)
+        ->call('saveThenSwitch')
+        ->assertHasErrors()
+        ->assertSet('category_id', (string) $one->id)
+        ->assertSet('quantities.'.$item->id, -5)
+        ->assertSet('showSwitchWarning', true);
+});
+it('يسأل عند تبديل المخزن أيضاً', function () {
+    $one       = obCategory('المستديم', 1);
+    $warehouse = obWarehouse();
+    $other     = obWarehouse('مخزن آخر');
+    $item      = obItem('كمبيوتر', $one);
+
+    $this->actingAs(obUser());
+
+    Livewire::test(OpeningBalances::class)
+        ->set('warehouse_id', $warehouse->id)
+        ->set('category_id', (string) $one->id)
         ->set('quantities.'.$item->id, 40)
         ->set('warehouse_id', $other->id)
+        ->assertSet('showSwitchWarning', true)
+        ->assertSet('warehouse_id', $warehouse->id)
+        ->call('discardThenSwitch')
+        ->assertSet('warehouse_id', $other->id)
         ->assertSet('quantities', []);
 });
 

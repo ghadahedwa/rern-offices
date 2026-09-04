@@ -192,9 +192,12 @@
                         {{ __('home.warehouses_dashboard') }}
                     </flux:sidebar.item>
 
-                    @if($whUser?->can('warehouses.settings'))
+                    {{-- بندٌ واحد بمسمّيين: مدير الإعدادات **يدير** المخازن، وصاحب المخزن
+                         **يطالع** مخازنه ليبلغ بروفايل أحدها — وهو مدخله الوحيد إليه،
+                         إذ المخزن الفارغ بلا صفٍّ في جدول الأرصدة يُنقر اسمُه. --}}
+                    @if($whUser?->can('warehouses.settings') || $whUser?->can('warehouses.index'))
                     <flux:sidebar.item icon="building-office-2" :href="route('warehouse-manage.index')" :current="request()->routeIs('warehouse-manage.*')" wire:navigate>
-                        {{ __('home.warehouses_manage_title') }}
+                        {{ $whUser?->can('warehouses.settings') ? __('home.warehouses_manage_title') : __('home.wh_my_warehouses') }}
                     </flux:sidebar.item>
                     @endif
 

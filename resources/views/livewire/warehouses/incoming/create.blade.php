@@ -60,17 +60,28 @@
 
                     @error('lines') <p class="text-red-500 text-xs mb-3">{{ $message }}</p> @enderror
 
-                    @include('livewire.warehouses.partials.item-category-filter')
 
                 @php $chosen = collect($lines)->pluck('item_id')->filter()->map(fn ($v) => (int) $v)->all(); @endphp
                     <div class="space-y-3">
                         @foreach($lines as $i => $line)
-                            <div class="flex items-start gap-3" wire:key="line-{{ $i }}">
+                            <div class="flex flex-wrap items-start gap-3" wire:key="line-{{ $i }}">
+                                {{-- القسم داخل الصفّ لا فوقه: صفٌّ مستقلٌّ بذاته، فلا حالةَ مشتركة
+                                     تتبدّل تحت صفٍّ ممتلئ فتُفقده قيمته المعروضة --}}
+                                <div class="w-44 flex flex-col gap-1">
+                                    <select wire:model.live="lines.{{ $i }}.category_id"
+                                            class="border border-zinc-300 dark:border-zinc-600 rounded-lg px-3 py-2 text-sm w-full bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-[#c9a847]">
+                                        <option value="">{{ __('home.item_category_all') }}</option>
+                                        @foreach($categories as $category)
+                                            <option value="{{ $category->id }}" @selected((string) ($line['category_id'] ?? '') === (string) $category->id)>{{ $category->name }}</option>
+                                        @endforeach
+                                        <option value="none" @selected(($line['category_id'] ?? '') === 'none')>{{ __('home.item_category_none') }}</option>
+                                    </select>
+                                </div>
                                 <div class="flex-1 flex flex-col gap-1">
                                     <select wire:model.live="lines.{{ $i }}.item_id"
                                             class="border border-zinc-300 dark:border-zinc-600 rounded-lg px-3 py-2 text-sm w-full bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-[#c9a847]">
                                         <option value="">— {{ __('home.item') }} —</option>
-                                        @include('livewire.warehouses.partials.item-options')
+                                        @include('livewire.warehouses.partials.item-options', ['items' => $lineItems[$i]])
                                     </select>
                                     @error("lines.$i.item_id") <p class="text-red-500 text-xs">{{ $message }}</p> @enderror
                                 </div>

@@ -958,6 +958,10 @@ return [
     'wh_opening_pick_category'    => 'اختر المخزن والقسم لتظهر الأصناف',
     'wh_opening_category_empty'   => 'لا توجد أصناف نشطة في هذا القسم',
     'wh_opening_nothing_entered'  => 'لم تُدخل رصيداً لأي صنف',
+    'wh_opening_unsaved_title'    => 'خانات مكتوبة لم تُحفظ',
+    'wh_opening_unsaved_body'     => 'عندك :count خانة مكتوبة ولم تُحفظ، والانتقال يمسحها.',
+    'wh_opening_save_and_switch'  => 'احفظ ثم انتقل',
+    'wh_opening_discard_switch'   => 'انتقل بلا حفظ',
     'wh_opening_saved_count'      => 'تم حفظ رصيد :count صنف',
     'wh_opening_blank_note'       => 'الخانة الفارغة تُترك ولا يُسجَّل لها رصيد. والصفر المكتوب يُسجَّل إقراراً بالعدّ.',
     'wh_opening_recorded'         => 'المسجَّل الآن',
@@ -971,6 +975,7 @@ return [
     'wh_quantity'                 => 'الكمية',
     'wh_current_balance'          => 'الرصيد الحالي',
     // عناوين مجموعات قائمة الفرع — بإيقاع العمل: ما عندي ← ما تحرّك ← ما أُخرِجه
+    'wh_my_warehouses'            => 'مخازني',
     'wh_group_balances'           => 'الأرصدة',
     'wh_group_movements'          => 'الحركات',
     'wh_group_outputs'            => 'مخرجات وضبط',
@@ -995,9 +1000,6 @@ return [
     'wh_attachment'               => 'المرفق (صورة أو PDF)',
     'wh_attachment_required'      => 'المرفق إجباري (إذن صرف / محضر استلام / استمارة نقل عهدة)',
     'wh_add_line'                 => 'إضافة صنف',
-    'wh_items_category_filter'    => 'حصر الأصناف بقسم',
-    'wh_items_category_all'       => '— كل الأقسام —',
-    'wh_items_category_hint'      => 'يضيّق منسدلات الصنف. والصنف المختار في صفٍّ يبقى ظاهراً فيه مهما ضاق الحصر.',
     'wh_remove_line'              => 'حذف',
     // الصرف للمقرات — النوع الخامس من الحركة
     'wh_issues'                   => 'الصرف للمقرات',

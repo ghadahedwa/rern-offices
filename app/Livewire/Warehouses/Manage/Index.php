@@ -9,6 +9,7 @@ use App\Models\WarehouseIncoming;
 use App\Models\WarehouseTransfer;
 use App\Models\WarehouseType;
 use App\Support\ArabicText;
+use App\Support\WarehouseScope;
 use Flux\Flux;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
@@ -38,9 +39,23 @@ class Index extends Component
     public string $deletingLabel = '';
     public string $deletingWarning = '';
 
+    /**
+     * مدخلان: مدير الإعدادات يدير المخازن، وصاحب المخزن يطالع قائمة مخازنه
+     * ليبلغ بروفايل أحدها — وهو مدخله الوحيد إليه.
+     *
+     * ⚠️ رابطٌ على صفٍّ في جدول أرصدة لا يكفي مدخلاً: المخزن الفارغ بلا صفوف،
+     *    و٢٩ مخزناً فارغة تنتظر أرصدتها الافتتاحية — أي أن المدخل يغيب عمّن
+     *    يحتاجه اليوم بالضبط.
+     */
     public function mount(): void
     {
-        abort_unless(Auth::user()?->can('warehouses.settings'), 403);
+        abort_unless(Auth::user()?->can('warehouses.index') || Auth::user()?->can('warehouses.settings'), 403);
+    }
+
+    /** هل يدير المستخدم المخازن (إنشاءً وتعديلاً وحذفاً)؟ */
+    public function canManage(): bool
+    {
+        return (bool) Auth::user()?->can('warehouses.settings');
     }
 
     public function updatingSearch(): void
@@ -118,6 +133,9 @@ class Index extends Component
     {
         $warehouses = Warehouse::query()
             ->withOrderingJoins()
+            // ⚠️ شاشة إعدادات بلا نطاق لمديرها (يدير المخازن كلها ولو لم يُربط بواحد)،
+            //    ومَن دخلها بصلاحية التشغيل وحدها يراها بنطاقه — قائمةُ مخازنه هو
+            ->unless($this->canManage(), fn ($q) => WarehouseScope::apply($q))
             ->with(['type', 'governorate'])
             ->when($this->search, fn ($q) => $q->whereRaw(
                 ArabicText::sqlNormalize('warehouses.name').' LIKE ?',
@@ -132,7 +150,7 @@ class Index extends Component
             'warehouses' => $warehouses,
             // بترتيب المستوى نفسه المعتمد في عرض المخازن — لا أبجدياً
             'types'      => WarehouseType::orderBy('level')->orderBy('order')->get(),
-            'canManage'  => Auth::user()?->can('warehouses.settings'),
+            'canManage'  => $this->canManage(),
         ]);
     }
 }

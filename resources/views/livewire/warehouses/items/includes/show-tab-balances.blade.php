@@ -35,14 +35,10 @@
                 <tr class="hover:bg-zinc-50 dark:hover:bg-zinc-800 transition">
                     <td class="px-4 py-3 text-zinc-500">{{ $balances->firstItem() + $loop->index }}</td>
                     <td class="px-4 py-3 font-medium text-zinc-800 dark:text-zinc-100">
-                        {{-- ⚠️ بروفايل المخزن خلف `warehouses.settings` — فلا يُعرض رابطاً
-                             لمن يملك `warehouses.index` وحده، وإلا قاده الرابط إلى ٤٠٣ --}}
-                        @if($canManage)
-                            <a href="{{ route('warehouse-manage.show', $warehouse) }}" wire:navigate
-                               class="hover:text-[#c9a847] transition">{{ $warehouse->name }}</a>
-                        @else
-                            {{ $warehouse->name }}
-                        @endif
+                        {{-- صار البروفايل يُفتح بـ`warehouses.index` أيضاً، وصفوف هذا
+                             التاب كلها داخل نطاق المستخدم — فالرابط للجميع، ويبدو رابطاً --}}
+                        <a href="{{ route('warehouse-manage.show', $warehouse) }}" wire:navigate
+                           class="underline decoration-dotted decoration-zinc-300 dark:decoration-zinc-600 underline-offset-4 hover:text-[#c9a847] hover:decoration-[#c9a847] transition">{{ $warehouse->name }}</a>
                         @unless($warehouse->is_active)
                             <span class="mr-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium text-zinc-500 bg-zinc-100 dark:text-zinc-400 dark:bg-zinc-700/40">{{ __('home.warehouse_inactive') }}</span>
                         @endunless

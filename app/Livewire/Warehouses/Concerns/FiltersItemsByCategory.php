@@ -3,25 +3,50 @@
 namespace App\Livewire\Warehouses\Concerns;
 
 use App\Models\Item;
+use Illuminate\Support\Collection;
 
 /**
- * حصر منسدلات الصنف بقسمٍ واحد في فورمات المستندات (وارد · نقل · صرف).
+ * القسم **داخل صفّ المستند** لا فوق الصفوف (وارد · نقل · صرف).
  *
- * المستند هنا صغير — صنفٌ أو ثلاثة — فالمنسدلة صحيحة، لكن ٣٧٧ صنفاً فيها
- * كثير. والتجميع بالقسم (`partials/item-options`) رأسٌ للقائمة، وهذا الفلتر
- * يقصرها على قسمٍ واحد فيصير الاختيار من عشرين لا من ثلاثمائة.
+ * كان حصراً واحداً فوق الجدول يضيّق منسدلات الصفوف كلها. وكان له عيبان
+ * كشفتهما المستخدمة على الشاشة:
  *
- * ⚠️ **والصنف المختار في صفٍّ يبقى معروضاً مهما ضاق الفلتر.** المنتقي يُبقي
- *    الصنف في صفّه هو، لكنه لا يستطيع ذلك إن أُخرج من القائمة أصلاً — فيختفي
- *    من منسدلته ويبدو الصف فارغاً وقد كان ممتلئاً. ولذلك يُضمّ المختارون إلى
- *    نتيجة الفلتر دائماً.
+ *  ١) **حالةٌ مشتركة تتغيّر تحت صفوفٍ ممتلئة.** مَن ملأ صفاً من قسم ثم بدّل
+ *     الحصر ليأتي بصنفٍ من قسمٍ آخر، تتبدّل خيارات منسدلات الصفوف كلها —
+ *     فيفقد `<select>` قيمته المعروضة ويبدو الصفّ فارغاً وهو ممتلئ. والأخطر
+ *     أنّ الحفظ يمضي بالصنف الذي لا يراه صاحبه.
+ *  ٢) وحتى مع بقاء المختار في القائمة، بقاؤه **استثناءٌ يشرح نفسه بصعوبة**:
+ *     قسمٌ معروض ومعه صنفٌ من غيره.
  *
- * ⚠️ ويشترط في المكوّن المستعمِل خاصيةُ `$lines` (صفوف المستند).
+ * فصار لكل صفٍّ قسمُه: **قسم ← صنف ← عدد**، مستقلاً بذاته. ولا حالة مشتركة
+ * أصلاً، فلا شيء يتغيّر تحت صفٍّ ممتلئ.
+ *
+ * ⚠️ ويشترط في المكوّن المستعمِل خاصيةُ `$lines`، وأن يكون في كل صفٍّ مفتاح
+ *    `category_id` (فارغٌ = كل الأقسام).
  */
 trait FiltersItemsByCategory
 {
-    /** معرّف قسم، أو 'none' لأصناف بلا قسم، أو '' للكل. */
-    public string $itemCategoryId = '';
+    /** أصناف كل قسمٍ داخل الطلب الواحد — الصفوف تتشارك الأقسام كثيراً. */
+    protected array $itemsByCategory = [];
+
+    /** صفٌّ جديد فارغ — المصدر الواحد لبنية الصفّ. */
+    protected function emptyLine(): array
+    {
+        return ['category_id' => '', 'item_id' => null, 'quantity' => null];
+    }
+
+    /**
+     * تغيّر قسمُ صفٍّ ⇐ يُفرَّغ صنفُه.
+     *
+     * ⚠️ الصنف لا ينتمي لقسمين، فإبقاؤه يُخرج صفاً صنفُه خارج قسمه المعروض.
+     *    والإفراغ **محصور في صفّه** — لا يمسّ صفاً آخر (وهي علّة التصميم السابق).
+     */
+    public function updatedLines($value, $key): void
+    {
+        if (preg_match('/^(\d+)\.category_id$/', (string) $key, $matches)) {
+            $this->lines[(int) $matches[1]]['item_id'] = null;
+        }
+    }
 
     /** معرّفات الأصناف المختارة في الصفوف. */
     protected function chosenItemIds(): array
@@ -33,32 +58,34 @@ trait FiltersItemsByCategory
             ->all();
     }
 
-    /** أصناف المنسدلة: قسمُ الفلتر + ما اختاره المستخدم فعلاً. */
-    protected function categoryFilteredItems()
+    /** أصناف قسمٍ بعينه — أو كلها إن لم يُختر قسم. */
+    protected function itemsForCategory(string $categoryId): Collection
     {
-        $filter = $this->itemCategoryId;
-        $chosen = $this->chosenItemIds();
+        if (array_key_exists($categoryId, $this->itemsByCategory)) {
+            return $this->itemsByCategory[$categoryId];
+        }
 
-        return Item::query()
+        return $this->itemsByCategory[$categoryId] = Item::query()
             ->where('items.is_active', true)
-            ->when($filter !== '', fn ($q) => $q->where(function ($group) use ($filter, $chosen) {
-                if ($filter === 'none') {
-                    $group->whereNull('items.item_category_id');
-                } elseif (ctype_digit($filter)) {
-                    $group->where('items.item_category_id', (int) $filter);
-                } else {
-                    // ⚠️ قيمة تالفة تصل من العميل: تُهمَل ولا تُفرّغ المنسدلة
-                    $group->whereRaw('1 = 1');
-                }
-
-                if ($chosen !== []) {
-                    $group->orWhereIn('items.id', $chosen);
-                }
-            }))
+            ->when($categoryId === 'none', fn ($q) => $q->whereNull('items.item_category_id'))
+            // ⚠️ قيمة تالفة تصل من العميل: تُهمَل ولا تُفرّغ المنسدلة
+            ->when(ctype_digit($categoryId), fn ($q) => $q->where('items.item_category_id', (int) $categoryId))
             // ⚠️ `with(category)` لأجل التجميع في المنتقي — بلا تحميلها
             //    مسبقاً يقرأ القالب القسمَ لكل صنف على حدة
             ->with('category')
             ->inStatementOrder()
             ->get();
+    }
+
+    /**
+     * أصناف كل صفٍّ بترتيب الصفوف — يقرأها القالب.
+     *
+     * @return array<int, Collection>
+     */
+    protected function lineItems(): array
+    {
+        return collect($this->lines)
+            ->map(fn ($line) => $this->itemsForCategory((string) ($line['category_id'] ?? '')))
+            ->all();
     }
 }

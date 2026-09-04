@@ -39,7 +39,10 @@
                      تعليقات `<!--[if BLOCK]-->` حول كل شرط، فتقع **داخل نصّ
                      الخيار** فتقطّعه — «الاسم<!--…--> — الرقم<!--…-->». --}}
                 @php $itemLabel = $item->code ? $item->name.' — '.$item->code : $item->name; @endphp
-                <option value="{{ $item->id }}">{{ $itemLabel }}</option>
+                {{-- ⚠️ `selected` صريحة: خيارات المنسدلة تُبدَّل كلها حين يتغيّر قسمُ
+                     الصفّ، والمتصفح لا يعرف المختار إلا من الوسم نفسه — فبلا هذا
+                     تبدو المنسدلة فارغة والقيمة محفوظة، فيمضي الحفظ بصنفٍ لا يُرى. --}}
+                <option value="{{ $item->id }}" @selected((int) ($currentLine['item_id'] ?? 0) === $item->id)>{{ $itemLabel }}</option>
             @endforeach
         </optgroup>
     @endif

@@ -52,19 +52,124 @@ class OpeningBalances extends Component
     }
 
     /**
-     * تبديل المخزن أو القسم يمسح المُدخَل.
+     * تبديلٌ معلَّق بانتظار جواب المستخدم — 'warehouse' أو 'category'.
      *
-     * ⚠️ وإلا حُملت أرقامُ قسمٍ إلى قسمٍ آخر بمعرّفات أصنافٍ لم تعد معروضة،
-     *    فتُسجَّل أرصدة لأصناف لا يراها المُدخِل أمامه.
+     * ⚠️ تبديل المخزن أو القسم **يمسح المُدخَل** (وإلا حُملت أرقامُ قسمٍ إلى
+     *    قسمٍ آخر بمعرّفات أصنافٍ لم تعد معروضة، فتُسجَّل أرصدةٌ لأصنافٍ لا
+     *    يراها المُدخِل). والمسح صحيح — لكن **صمتَه غلط**: مَن ملأ عشرين خانة
+     *    ثم بدّل القسم سهواً يفقدها ولا يعلم إلا حين يعود يفتش عنها. وهي شاشةٌ
+     *    الإدخال فيها طويل بطبعه: ٣٧٧ صنفاً على أقسامها.
      */
-    public function updatedWarehouseId(): void
+    public string $pendingSwitch = '';
+
+    /** القيمة المطلوب الانتقال إليها. */
+    public string $pendingValue = '';
+
+    /**
+     * ما نعود إليه إن ألغى — **قيمتان لا قيمة واحدة**.
+     *
+     * ⚠️ المخزن والقسم حقلان، وظِلٌّ واحد لهما يُعيد إلى المخزن قيمةَ القسم
+     *    (كشفه اختبار تبديل المخزن، لا قراءة الكود).
+     */
+    public string $previousWarehouse = '';
+    public string $previousCategory = '';
+
+    public bool $showSwitchWarning = false;
+
+    /** هل في الخانات ما كُتب ولم يُحفظ؟ (الصفر المكتوب مُدخَل، والفراغ ليس مُدخَلاً) */
+    public function hasUnsavedEntries(): bool
     {
-        $this->quantities = [];
+        return collect($this->quantities)
+            ->filter(fn ($value) => $value !== null && $value !== '')
+            ->isNotEmpty();
     }
 
-    public function updatedCategoryId(): void
+    public function updatedWarehouseId($value): void
+    {
+        $this->guardSwitch('warehouse', (string) $value);
+    }
+
+    public function updatedCategoryId($value): void
+    {
+        $this->guardSwitch('category', (string) $value);
+    }
+
+    /**
+     * يسأل قبل أن يمسح — ويمسح بلا سؤال إن لم يكن ثمّ ما يُفقد.
+     *
+     * ⚠️ ويُعيد المنسدلة إلى قيمتها السابقة ريثما يُجيب: الشاشة تعرض أصناف
+     *    القسم المعروضة أرقامُها، فبقاءُ القسم الجديد فوق أرقام القديم يعرض
+     *    خانات مملوءة تحت عناوين أصنافٍ ليست لها.
+     */
+    protected function guardSwitch(string $what, string $value): void
+    {
+        if (! $this->hasUnsavedEntries()) {
+            $this->rememberCurrent($what);
+
+            return;
+        }
+
+        $this->pendingSwitch     = $what;
+        $this->pendingValue      = $value;
+        $this->showSwitchWarning = true;
+
+        // العودة إلى السابق ريثما يُجيب — والقيمة المطلوبة محفوظة في pendingValue
+        $this->restorePrevious($what);
+    }
+
+    protected function rememberCurrent(string $what): void
+    {
+        if ($what === 'warehouse') {
+            $this->previousWarehouse = (string) $this->warehouse_id;
+        } else {
+            $this->previousCategory = $this->category_id;
+        }
+    }
+
+    protected function restorePrevious(string $what): void
+    {
+        if ($what === 'warehouse') {
+            $this->warehouse_id = $this->previousWarehouse === '' ? null : (int) $this->previousWarehouse;
+        } else {
+            $this->category_id = $this->previousCategory;
+        }
+    }
+
+    /** «احفظ ثم انتقل» — ولا ينتقل إن سقط الحفظ. */
+    public function saveThenSwitch(): void
+    {
+        $this->save();
+
+        if ($this->getErrorBag()->isNotEmpty()) {
+            return;
+        }
+
+        $this->applyPendingSwitch();
+    }
+
+    /** «انتقل بلا حفظ» — الفقد هنا باختيار صاحبه. */
+    public function discardThenSwitch(): void
     {
         $this->quantities = [];
+        $this->applyPendingSwitch();
+    }
+
+    public function cancelSwitch(): void
+    {
+        $this->reset('pendingSwitch', 'pendingValue', 'showSwitchWarning');
+    }
+
+    protected function applyPendingSwitch(): void
+    {
+        if ($this->pendingSwitch === 'warehouse') {
+            $this->warehouse_id = $this->pendingValue === '' ? null : (int) $this->pendingValue;
+        } elseif ($this->pendingSwitch === 'category') {
+            $this->category_id = $this->pendingValue;
+        }
+
+        $this->quantities = [];
+        $this->rememberCurrent($this->pendingSwitch);
+        $this->reset('pendingSwitch', 'pendingValue', 'showSwitchWarning');
     }
 
     /** أصناف القسم المختار بترتيب الدفتر — أو لا شيء قبل اكتمال الاختيار. */
@@ -128,6 +233,7 @@ class OpeningBalances extends Component
         // ⚠️ يبقى على الشاشة ولا يُعاد توجيهه: الإدخال قسمٌ بعد قسم، فإخراجُه
         //    إلى اللوحة بعد كل قسم يُطيل عملاً هو أصلاً طويل.
         $this->quantities = [];
+        $this->rememberCurrent('category');
     }
 
     public function render()

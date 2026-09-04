@@ -183,10 +183,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // إعدادات المخازن (المخازن + الأصناف + الأنواع + الوحدات) — فرع النظام، صلاحية warehouses.settings
     Route::middleware('permission:warehouses.settings')->group(function () {
-        Route::livewire('warehouse-manage', \App\Livewire\Warehouses\Manage\Index::class)->name('warehouse-manage.index');
         Route::livewire('warehouse-manage/create', \App\Livewire\Warehouses\Manage\Create::class)->name('warehouse-manage.create');
         Route::livewire('warehouse-manage/{warehouse}/edit', \App\Livewire\Warehouses\Manage\Create::class)->name('warehouse-manage.edit');
-        Route::livewire('warehouse-manage/{warehouse}', \App\Livewire\Warehouses\Manage\Show::class)->name('warehouse-manage.show');
 
         Route::livewire('items', \App\Livewire\Warehouses\Items\Index::class)->name('items.index');
         Route::livewire('items/create', \App\Livewire\Warehouses\Items\Create::class)->name('items.create');
@@ -203,6 +201,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::livewire('item-units', \App\Livewire\Warehouses\Units\Index::class)->name('item-units.index');
         Route::livewire('item-units/create', \App\Livewire\Warehouses\Units\Create::class)->name('item-units.create');
         Route::livewire('item-units/{itemUnit}/edit', \App\Livewire\Warehouses\Units\Create::class)->name('item-units.edit');
+    });
+
+    // قائمة المخازن وبروفايلها: مدخلان لكلٍّ منهما — مدير الإعدادات يدير، وصاحب
+    // المخزن يطالع قائمة مخازنه ليبلغ بروفايل أحدها. والنطاق يُفحص في المكوّن لا هنا.
+    // ⚠️ وموضعه **بعد** مجموعة الإعدادات مقصود: مسارُه حرفٌ بدل، ولو سبق
+    //    `warehouse-manage/create` لالتقطه فصار إنشاء المخزن بحثاً عن مخزنٍ اسمه create.
+    Route::middleware('permission:warehouses.index|warehouses.settings')->group(function () {
+        Route::livewire('warehouse-manage', \App\Livewire\Warehouses\Manage\Index::class)->name('warehouse-manage.index');
+        Route::livewire('warehouse-manage/{warehouse}', \App\Livewire\Warehouses\Manage\Show::class)->name('warehouse-manage.show');
     });
 
     // فرع المراسلات — الشاشات سقالة حتى تُنشأ جداول المكاتبات (س٦).

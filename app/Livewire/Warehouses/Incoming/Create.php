@@ -35,12 +35,12 @@ class Create extends Component
         abort_unless(Auth::user()?->can('warehouses.incoming'), 403);
         // «اليوم» بالتوقيت المحلي — now() بـ UTC يعطي تاريخ الأمس بين ١٢ و٣ فجراً بتوقيت مصر
         $this->received_at = \App\Support\LocalTime::date(now());
-        $this->lines = [['item_id' => null, 'quantity' => null]];
+        $this->lines = [$this->emptyLine()];
     }
 
     public function addLine(): void
     {
-        $this->lines[] = ['item_id' => null, 'quantity' => null];
+        $this->lines[] = $this->emptyLine();
     }
 
     public function removeLine(int $index): void
@@ -48,7 +48,7 @@ class Create extends Component
         unset($this->lines[$index]);
         $this->lines = array_values($this->lines);
         if (empty($this->lines)) {
-            $this->lines = [['item_id' => null, 'quantity' => null]];
+            $this->lines = [$this->emptyLine()];
         }
     }
 
@@ -129,7 +129,7 @@ class Create extends Component
             )->get(),
             // أصناف القسم المختار + ما اختاره المستخدم فعلاً (وإلا اختفى
             // الصنف من صفّه حين يضيق الفلتر) — التفصيل في الـtrait
-            'items'      => $this->categoryFilteredItems(),
+            'lineItems'  => $this->lineItems(),
             'categories' => \App\Models\ItemCategory::orderBy('order')->orderBy('name')->get(),
         ]);
     }

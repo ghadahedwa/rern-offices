@@ -37,9 +37,7 @@
                     @include('livewire.partials.sortable-th', ['column' => 'type',        'label' => __('home.warehouse_type')])
                     @include('livewire.partials.sortable-th', ['column' => 'governorate', 'label' => __('home.warehouse_governorate')])
                     @include('livewire.partials.sortable-th', ['column' => 'status',      'label' => __('home.warehouse_status')])
-                    @if($canManage)
-                        <th class="px-4 py-3 font-medium">{{ __('home.actions') }}</th>
-                    @endif
+                    <th class="px-4 py-3 font-medium">{{ __('home.actions') }}</th>
                 </tr>
             </thead>
             <tbody class="divide-y divide-zinc-100 dark:divide-zinc-700">
@@ -56,13 +54,15 @@
                                 <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium text-zinc-500 bg-zinc-100 dark:text-zinc-400 dark:bg-zinc-700/40">{{ __('home.warehouse_inactive') }}</span>
                             @endif
                         </td>
-                        @if($canManage)
-                            <td class="px-4 py-3">
-                                <div class="flex items-center gap-2">
+                        {{-- «عرض» مدخل صاحب المخزن إلى بروفايله، فيظهر للجميع؛
+                             والتعديل والحذف فعلا إعدادات --}}
+                        <td class="px-4 py-3">
+                            <div class="flex items-center gap-2">
                                     <a href="{{ route('warehouse-manage.show', $warehouse) }}" wire:navigate
                                        class="inline-flex items-center text-xs px-3 py-1.5 rounded-md border border-zinc-300 dark:border-zinc-600 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition">
                                         {{ __('home.view') }}
                                     </a>
+                                    @if($canManage)
                                     <a href="{{ route('warehouse-manage.edit', $warehouse) }}" wire:navigate
                                        class="inline-flex items-center text-xs px-3 py-1.5 rounded-md border border-zinc-300 dark:border-zinc-600 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition">
                                         {{ __('home.edit') }}
@@ -72,13 +72,13 @@
                                         class="inline-flex items-center text-xs px-3 py-1.5 rounded-md border border-red-200 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition">
                                         {{ __('home.delete') }}
                                     </button>
+                                    @endif
                                 </div>
                             </td>
-                        @endif
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="{{ $canManage ? 6 : 5 }}" class="px-4 py-10 text-center text-zinc-400">
+                        <td colspan="6" class="px-4 py-10 text-center text-zinc-400">
                             {{ __('home.no_data') }}
                         </td>
                     </tr>

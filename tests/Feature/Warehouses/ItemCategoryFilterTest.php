@@ -12,11 +12,13 @@ use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 
 /**
- * حصر منسدلات الصنف بقسم في فورمات المستندات (وارد · نقل · صرف).
+ * القسم **داخل صفّ المستند** (وارد · نقل · صرف).
  *
- * ⚠️ الحارس الأهم: **الصنف المختار في صفٍّ يبقى معروضاً مهما ضاق الحصر**.
- *    المنتقي يُبقيه في صفّه، لكنه لا يستطيع ذلك إن أُخرج من القائمة أصلاً —
- *    فيختفي من منسدلته ويبدو الصف فارغاً وقد كان ممتلئاً.
+ * كان حصراً واحداً فوق الصفوف كلها، فكانت حالةٌ مشتركة تتبدّل تحت صفوفٍ
+ * ممتلئة: تُبدَّل خيارات كل منسدلة، فيفقد الـ«select» قيمته المعروضة ويبدو
+ * الصفّ فارغاً وهو ممتلئ — **ويمضي الحفظ بصنفٍ لا يراه صاحبه**.
+ *
+ * فصار لكل صفٍّ قسمُه: قسم ← صنف ← عدد. ولا شيء يتغيّر تحت صفٍّ آخر.
  */
 function icfUser(): User
 {
@@ -56,29 +58,33 @@ function icfItem(string $name, ?ItemCategory $category = null, int $order = 1): 
     ]);
 }
 
-// ── الحصر ────────────────────────────────────────────────
+/** أسماء أصناف الصفّ رقم $i. */
+function icfLineItems($component, int $i = 0): array
+{
+    return $component->viewData('lineItems')[$i]->pluck('name')->all();
+}
 
-it('يعرض الأصناف كلها بلا حصر', function () {
+// ── الحصر داخل الصفّ ─────────────────────────────────────
+
+it('يعرض أصناف الصفّ كلها ما لم يُختر له قسم', function () {
     icfItem('كمبيوتر', icfCategory('الكمبيوتر', 1));
     icfItem('ورق', icfCategory('الورق', 2));
 
     $this->actingAs(icfUser());
 
-    expect(Livewire::test(IssueCreate::class)->viewData('items')->count())->toBe(2);
+    expect(icfLineItems(Livewire::test(IssueCreate::class)))->toHaveCount(2);
 });
 
-it('يحصر المنسدلة بالقسم المختار', function () {
+it('يحصر منسدلة الصفّ بقسمه المختار', function () {
     $computers = icfCategory('الكمبيوتر', 1);
     icfItem('كمبيوتر', $computers);
     icfItem('ورق', icfCategory('الورق', 2));
 
     $this->actingAs(icfUser());
 
-    $items = Livewire::test(IssueCreate::class)
-        ->set('itemCategoryId', (string) $computers->id)
-        ->viewData('items');
+    $component = Livewire::test(IssueCreate::class)->set('lines.0.category_id', (string) $computers->id);
 
-    expect($items->pluck('name')->all())->toBe(['كمبيوتر']);
+    expect(icfLineItems($component))->toBe(['كمبيوتر']);
 });
 
 it('يحصر بـ«بلا قسم» على الأصناف التي لا قسم لها', function () {
@@ -87,11 +93,9 @@ it('يحصر بـ«بلا قسم» على الأصناف التي لا قسم ل
 
     $this->actingAs(icfUser());
 
-    $items = Livewire::test(IssueCreate::class)
-        ->set('itemCategoryId', 'none')
-        ->viewData('items');
+    $component = Livewire::test(IssueCreate::class)->set('lines.0.category_id', 'none');
 
-    expect($items->pluck('name')->all())->toBe(['صنف يتيم']);
+    expect(icfLineItems($component))->toBe(['صنف يتيم']);
 });
 
 it('يهمل معرّف قسمٍ تالفاً يصل من العميل ولا يُفرّغ المنسدلة', function () {
@@ -100,85 +104,9 @@ it('يهمل معرّف قسمٍ تالفاً يصل من العميل ولا ي
 
     $this->actingAs(icfUser());
 
-    $items = Livewire::test(IssueCreate::class)
-        ->set('itemCategoryId', 'abc')
-        ->viewData('items');
+    $component = Livewire::test(IssueCreate::class)->set('lines.0.category_id', 'abc');
 
-    expect($items->count())->toBe(2);
-});
-
-// ── الصنف المختار يبقى ───────────────────────────────────
-
-it('يُبقي الصنف المختار في صفّه ولو كان خارج القسم المحصور', function () {
-    $computers = icfCategory('الكمبيوتر', 1);
-    $paper     = icfCategory('الورق', 2);
-    $chosen    = icfItem('ورق A4', $paper);
-    icfItem('كمبيوتر', $computers);
-
-    $this->actingAs(icfUser());
-
-    $component = Livewire::test(IssueCreate::class)
-        ->set('lines.0.item_id', $chosen->id)
-        ->set('itemCategoryId', (string) $computers->id);
-
-    // ⚠️ وإلا اختفى من منسدلته فبدا الصف فارغاً وقد كان ممتلئاً
-    expect($component->viewData('items')->pluck('name')->all())
-        ->toContain('ورق A4')
-        ->toContain('كمبيوتر');
-
-    expect($component->html())->toContain('value="'.$chosen->id.'"');
-});
-
-it('لا يُبقي إلا المختار فعلاً من خارج القسم', function () {
-    $computers = icfCategory('الكمبيوتر', 1);
-    $paper     = icfCategory('الورق', 2);
-    $chosen    = icfItem('ورق A4', $paper, 1);
-    icfItem('ورق مقوّى', $paper, 2);
-    icfItem('كمبيوتر', $computers);
-
-    $this->actingAs(icfUser());
-
-    $items = Livewire::test(IssueCreate::class)
-        ->set('lines.0.item_id', $chosen->id)
-        ->set('itemCategoryId', (string) $computers->id)
-        ->viewData('items');
-
-    // «ورق مقوّى» من قسمٍ محصورٍ عنه ولم يُختر — فلا يُضمّ
-    expect($items->pluck('name')->all())->not->toContain('ورق مقوّى');
-});
-
-it('لا يمسّ الحصرُ ما أُدخل في الصفوف', function () {
-    $computers = icfCategory('الكمبيوتر', 1);
-    $chosen    = icfItem('ورق A4', icfCategory('الورق', 2));
-
-    $this->actingAs(icfUser());
-
-    Livewire::test(IssueCreate::class)
-        ->set('lines.0.item_id', $chosen->id)
-        ->set('lines.0.quantity', 7)
-        ->set('itemCategoryId', (string) $computers->id)
-        ->assertSet('lines.0.item_id', $chosen->id)
-        ->assertSet('lines.0.quantity', 7);
-});
-
-// ── الشاشات الثلاث ───────────────────────────────────────
-
-it('يظهر الحصر في الشاشات الثلاث ويعمل فيها', function () {
-    icfMainWarehouse();
-    $computers = icfCategory('الكمبيوتر', 1);
-    icfItem('كمبيوتر', $computers);
-    icfItem('ورق', icfCategory('الورق', 2));
-
-    $this->actingAs(icfUser());
-
-    foreach ([IssueCreate::class, IncomingCreate::class, TransferCreate::class] as $screen) {
-        $component = Livewire::test($screen);
-
-        expect($component->html())->toContain(__('home.wh_items_category_filter'));
-
-        expect($component->set('itemCategoryId', (string) $computers->id)->viewData('items')->pluck('name')->all())
-            ->toBe(['كمبيوتر']);
-    }
+    expect(icfLineItems($component))->toHaveCount(2);
 });
 
 it('يستبعد الصنف الموقوف من المنسدلة ولو حُصر قسمه', function () {
@@ -188,9 +116,118 @@ it('يستبعد الصنف الموقوف من المنسدلة ولو حُصر
 
     $this->actingAs(icfUser());
 
-    $items = Livewire::test(IssueCreate::class)
-        ->set('itemCategoryId', (string) $computers->id)
-        ->viewData('items');
+    $component = Livewire::test(IssueCreate::class)->set('lines.0.category_id', (string) $computers->id);
 
-    expect($items->pluck('name')->all())->toBe(['نشط']);
+    expect(icfLineItems($component))->toBe(['نشط']);
+});
+
+// ── استقلال الصفوف: العلّة التي أنشأت التصميم ────────────
+
+it('لا يمسّ قسمُ صفٍّ منسدلةَ صفٍّ آخر ولا ما أُدخل فيه', function () {
+    $computers = icfCategory('الكمبيوتر', 1);
+    $paper     = icfCategory('الورق', 2);
+    $chosen    = icfItem('ورق A4', $paper);
+    icfItem('كمبيوتر', $computers);
+
+    $this->actingAs(icfUser());
+
+    $component = Livewire::test(IssueCreate::class)
+        ->set('lines.0.category_id', (string) $paper->id)
+        ->set('lines.0.item_id', $chosen->id)
+        ->set('lines.0.quantity', 7)
+        ->call('addLine')
+        ->set('lines.1.category_id', (string) $computers->id);
+
+    // ⚠️ هذه هي العلّة بعينها: الصفّ الأول يبقى ممتلئاً وقائمتُه قائمة
+    $component->assertSet('lines.0.item_id', $chosen->id)
+        ->assertSet('lines.0.quantity', 7);
+
+    expect(icfLineItems($component, 0))->toBe(['ورق A4'])
+        ->and(icfLineItems($component, 1))->toBe(['كمبيوتر']);
+});
+
+it('يُعلّم الصنف المختار بـselected في الوسم نفسه', function () {
+    $paper  = icfCategory('الورق', 2);
+    $chosen = icfItem('ورق A4', $paper);
+
+    $this->actingAs(icfUser());
+
+    $html = Livewire::test(IssueCreate::class)
+        ->set('lines.0.category_id', (string) $paper->id)
+        ->set('lines.0.item_id', $chosen->id)
+        ->html();
+
+    // ⚠️ بلا هذا لا يعرف المتصفح المختارَ حين تُبدَّل الخيارات، فتبدو المنسدلة
+    //    فارغة والقيمة محفوظة — فيمضي الحفظ بصنفٍ لا يُرى
+    expect($html)->toContain('value="'.$chosen->id.'" selected');
+});
+
+it('يُفرّغ صنفَ الصفّ حين يتغيّر قسمُه — ولا يمسّ صفاً آخر', function () {
+    $paper     = icfCategory('الورق', 2);
+    $computers = icfCategory('الكمبيوتر', 1);
+    $kept      = icfItem('ورق A4', $paper);
+    $dropped   = icfItem('ورق مقوّى', $paper, 2);
+
+    $this->actingAs(icfUser());
+
+    Livewire::test(IssueCreate::class)
+        ->set('lines.0.category_id', (string) $paper->id)
+        ->set('lines.0.item_id', $kept->id)
+        ->call('addLine')
+        ->set('lines.1.category_id', (string) $paper->id)
+        ->set('lines.1.item_id', $dropped->id)
+        // الصنف لا ينتمي لقسمين، فتغيير القسم يُفرّغ صنف صفّه هو وحده
+        ->set('lines.1.category_id', (string) $computers->id)
+        ->assertSet('lines.1.item_id', null)
+        ->assertSet('lines.0.item_id', $kept->id);
+});
+
+it('يُخفي الصنف المختار في صفٍّ عن منسدلة صفٍّ آخر ويُبقيه في صفّه', function () {
+    $paper  = icfCategory('الورق', 2);
+    $chosen = icfItem('ورق A4', $paper, 1);
+    icfItem('ورق مقوّى', $paper, 2);
+
+    $this->actingAs(icfUser());
+
+    $component = Livewire::test(IssueCreate::class)
+        ->set('lines.0.category_id', (string) $paper->id)
+        ->set('lines.0.item_id', $chosen->id)
+        ->call('addLine')
+        ->set('lines.1.category_id', (string) $paper->id);
+
+    $html = $component->html();
+
+    // 📌 العدّ بنصّ العنصر لا بمعرّفه: منسدلة الأقسام تحمل معرّفات قد تساوي معرّفات الأصناف
+    expect(substr_count($html, '>ورق A4<'))->toBe(1)
+        ->and(substr_count($html, '>ورق مقوّى<'))->toBe(2);
+});
+
+// ── الشاشات الثلاث ───────────────────────────────────────
+
+it('يعمل القسم داخل الصفّ في الشاشات الثلاث', function () {
+    icfMainWarehouse();
+    $computers = icfCategory('الكمبيوتر', 1);
+    icfItem('كمبيوتر', $computers);
+    icfItem('ورق', icfCategory('الورق', 2));
+
+    $this->actingAs(icfUser());
+
+    foreach ([IssueCreate::class, IncomingCreate::class, TransferCreate::class] as $screen) {
+        $component = Livewire::test($screen)->set('lines.0.category_id', (string) $computers->id);
+
+        expect(icfLineItems($component))->toBe(['كمبيوتر']);
+    }
+});
+
+it('يبدأ كل صفٍّ جديد بلا قسم ولا صنف', function () {
+    icfItem('كمبيوتر', icfCategory('الكمبيوتر', 1));
+
+    $this->actingAs(icfUser());
+
+    Livewire::test(IssueCreate::class)
+        ->set('lines.0.category_id', (string) ItemCategory::first()->id)
+        ->call('addLine')
+        ->assertSet('lines.1.category_id', '')
+        ->assertSet('lines.1.item_id', null)
+        ->assertSet('lines.1.quantity', null);
 });

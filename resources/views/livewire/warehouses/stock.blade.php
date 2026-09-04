@@ -67,7 +67,9 @@
                     <tr class="hover:bg-zinc-50 dark:hover:bg-zinc-800 transition">
                         <td class="px-4 py-3 text-zinc-500">{{ $stocks->firstItem() + $loop->index }}</td>
                         <td class="px-4 py-3 text-zinc-700 dark:text-zinc-200">
-                            {{ $stock->warehouse->name }}
+                            {{-- الاسم رابطٌ يبدو رابطاً: بروفايل المخزن أقرب شاشة إلى «مخزني» --}}
+                            <a href="{{ route('warehouse-manage.show', $stock->warehouse) }}" wire:navigate
+                               class="underline decoration-dotted decoration-zinc-300 dark:decoration-zinc-600 underline-offset-4 hover:text-[#c9a847] hover:decoration-[#c9a847] transition">{{ $stock->warehouse->name }}</a>
                             @if($stock->warehouse->type)
                                 <span class="text-xs text-zinc-400">({{ $stock->warehouse->type->name }})</span>
                             @endif

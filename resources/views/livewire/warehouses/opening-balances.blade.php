@@ -100,7 +100,10 @@
                                         </td>
                                         <td class="px-3 py-2">
                                             <input type="number" min="0" inputmode="numeric"
-                                                   wire:model="quantities.{{ $item->id }}"
+                                                   {{-- ⚠️ `.blur` لا `wire:model` مجرَّداً: القيمة المؤجَّلة قد لا تبلغ الخادم
+                                                        قبل تبديل القسم، فيرى الخادمُ خاناتٍ فارغة ويمسح بلا تحذير.
+                                                        والخروج من الخانة يسبق الضغط على المنسدلة دائماً. --}}
+                                                   wire:model.blur="quantities.{{ $item->id }}"
                                                    class="w-full border border-zinc-300 dark:border-zinc-600 rounded-lg px-2 py-1.5 text-sm tabular-nums bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-[#c9a847]" />
                                             @error("quantities.{$item->id}") <p class="text-red-500 text-xs mt-0.5">{{ $message }}</p> @enderror
                                         </td>
@@ -128,6 +131,44 @@
         </form>
     </div>
 
+    {{-- تحذير التبديل: المسح صحيح، وصمتُه هو الخطأ --}}
+    <div x-show="$wire.showSwitchWarning"
+         x-transition.opacity
+         @click.self="$wire.cancelSwitch()"
+         class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
+         style="display:none">
+        <div class="w-full max-w-md rounded-2xl shadow-2xl overflow-hidden border-2 border-[#c9a847] bg-white dark:bg-zinc-900">
+            <div class="flex items-center gap-2.5 px-5 py-3.5 bg-[#c9a847]">
+                <div class="w-7 h-7 rounded-lg bg-white/20 flex items-center justify-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z"/>
+                    </svg>
+                </div>
+                <h3 class="text-sm font-semibold text-white">{{ __('home.wh_opening_unsaved_title') }}</h3>
+            </div>
+
+            <div class="px-5 py-4">
+                <p class="text-sm text-zinc-700 dark:text-zinc-200">
+                    {{ __('home.wh_opening_unsaved_body', ['count' => collect($quantities)->filter(fn ($v) => $v !== null && $v !== '')->count()]) }}
+                </p>
+            </div>
+
+            <div class="flex items-center justify-end gap-2 px-5 py-3 bg-zinc-50 dark:bg-zinc-800/50">
+                <button type="button" wire:click="cancelSwitch"
+                        class="text-sm px-4 py-2 rounded-lg border border-zinc-300 dark:border-zinc-600 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition">
+                    {{ __('home.cancel') }}
+                </button>
+                <button type="button" wire:click="discardThenSwitch"
+                        class="text-sm px-4 py-2 rounded-lg border border-red-200 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition">
+                    {{ __('home.wh_opening_discard_switch') }}
+                </button>
+                <button type="button" wire:click="saveThenSwitch"
+                        class="text-sm px-4 py-2 rounded-lg bg-[#c9a847] hover:bg-[#b8962e] text-white font-medium transition">
+                    {{ __('home.wh_opening_save_and_switch') }}
+                </button>
+            </div>
+        </div>
+    </div>
     {{-- keepalive: يجدد الـ snapshot والـ CSRF كل 10 دقائق --}}
     <div x-data x-init="setInterval(() => $wire.$refresh(), 600000)" class="hidden"></div>
 
