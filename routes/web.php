@@ -220,6 +220,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::livewire('correspondence/assignments', \App\Livewire\Correspondence\Assignments::class)->name('correspondence.assignments');
     Route::livewire('correspondence/delegations', \App\Livewire\Correspondence\Delegations::class)->name('correspondence.delegations');
 
+    // فرع مدخلي البيانات — الشاشات سقالة حتى يُنشأ جدولا المدخلين والحضور.
+    // الحراسة حقيقية من الآن: كل شاشة بصلاحيتها لا بصلاحية الفرع كله — التسجيل
+    // اليومي (`attendance`) قد يُسنَد لمن لا يملك تعديل بيانات المدخلين.
+    // ⚠️ والنطاق (محافظات المفتش) يُفحص في المكوّن لا هنا، كنمط المخازن.
+    Route::livewire('data-entry/operators', \App\Livewire\DataEntry\Operators::class)->name('data-entry.index');
+    Route::livewire('data-entry/attendance', \App\Livewire\DataEntry\Attendance::class)->name('data-entry.attendance');
+    Route::livewire('data-entry/reports', \App\Livewire\DataEntry\Reports::class)->name('data-entry.reports');
+
     // إعدادات المراسلات (أطراف المراسلات) — صلاحية correspondence.settings
     // تسكن فرع «إدارة النظام» كباقي القوائم المرجعية، لا فرعاً خاصاً — فرع المراسلات
     // يُنشأ مع شاشات الوارد والصادر لا قبلها.
@@ -227,6 +235,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::livewire('correspondence-entities', \App\Livewire\Correspondence\Entities\Index::class)->name('correspondence-entities.index');
         Route::livewire('correspondence-entities/create', \App\Livewire\Correspondence\Entities\Create::class)->name('correspondence-entities.create');
         Route::livewire('correspondence-entities/{entity}/edit', \App\Livewire\Correspondence\Entities\Create::class)->name('correspondence-entities.edit');
+    });
+
+    // إعدادات مدخلي البيانات (حالات الحضور — قائمة مرجعية) — صلاحية data-entry.settings
+    // ⚠️ تسكن «إدارة النظام» لا فرع مدخلي البيانات: مدير القوائم المرجعية بلا نطاق محافظات.
+    Route::middleware('permission:data-entry.settings')->group(function () {
+        Route::livewire('attendance-statuses', \App\Livewire\DataEntry\Statuses\Index::class)->name('attendance-statuses.index');
+        Route::livewire('attendance-statuses/create', \App\Livewire\DataEntry\Statuses\Create::class)->name('attendance-statuses.create');
+        Route::livewire('attendance-statuses/{attendanceStatus}/edit', \App\Livewire\DataEntry\Statuses\Create::class)->name('attendance-statuses.edit');
     });
 
     // إعدادات المقرات (القوائم المرجعية للمقرات والسيارات) — صلاحية offices.settings

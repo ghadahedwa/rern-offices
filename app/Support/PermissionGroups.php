@@ -32,6 +32,11 @@ class PermissionGroups
         'home.branch_feedback' => [
             'رأي المواطن'       => ['prefix' => 'feedback.'],
         ],
+        'home.branch_data_entry' => [
+            // ⚠️ `data-entry.settings` مستثناة: تحت «إدارة النظام» بلا نطاق محافظات،
+            //    ولولا الاستثناء لطالبت البادئةُ مديرَ القوائم المرجعية بمحافظاتٍ لا معنى لها
+            'مدخلو البيانات'    => ['prefix' => 'data-entry.', 'except' => ['data-entry.settings']],
+        ],
         'home.branch_meetings' => [
             'الاجتماعات'        => ['prefix' => 'meetings.'],
         ],
@@ -46,6 +51,7 @@ class PermissionGroups
             'إعدادات المخازن'   => ['names' => ['warehouses.settings']],
             // مدير النظام يدير قائمة الأطراف بلا أن ينتمي لطرف — فهذه لا تُظهر حقل الطرف
             'إعدادات المراسلات' => ['names' => ['correspondence.settings']],
+            'إعدادات مدخلي البيانات' => ['names' => ['data-entry.settings']],
         ],
     ];
 
@@ -85,6 +91,15 @@ class PermissionGroups
         'warehouses.incoming',
         'warehouses.transfer',
         'warehouses.delete',
+
+        // مدخلو البيانات **بالدور** كسابقتيها: الاثنتان الأوليان دور المفتش اليومي
+        // (يطالع القائمة ويسجّل الحضور)، ثم إدارة البيانات، ثم الحذف.
+        'data-entry.index',
+        'data-entry.attendance',
+        'data-entry.create',
+        'data-entry.edit',
+        'data-entry.export',
+        'data-entry.delete',
     ];
 
     /**
@@ -97,6 +112,8 @@ class PermissionGroups
     public const GOVERNORATE_BRANCHES = [
         'home.branch_offices',
         'home.branch_feedback',
+        // المفتش يسجّل حضور مدخلي مقرات محافظاته — بلا محافظةٍ لا يرى مقرّاً يسجّل عليه
+        'home.branch_data_entry',
     ];
 
     /** العنوان الذي يستلزم اختيار طرف ومسمّى وظيفي (نطاقه جهة). */

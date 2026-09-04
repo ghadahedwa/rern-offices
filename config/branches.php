@@ -68,6 +68,30 @@ return [
         ],
     ],
 
+    // مدخلو البيانات — نطاقه المحافظة كالمقرات ورأي المواطن (نفس pivot governorate_user)،
+    // وقارئه هو المفتش نفسه، فموضعه بجوارهما لا في آخر القائمة.
+    // ⚠️ مَن له التسجيل وحده (data-entry.attendance) يهبط على شاشة الحضور مباشرة —
+    //    رابطٌ يؤدي إلى ٤٠٣ أسوأ من غيابه.
+    'data-entry' => [
+        'label'         => 'home.branch_data_entry',
+        'icon'          => 'user-group',
+        'default_route' => 'data-entry.index',
+        'entries' => [
+            'data-entry.index'      => 'data-entry.index',
+            'data-entry.attendance' => 'data-entry.attendance',
+        ],
+        'route_patterns' => [
+            'data-entry.*',
+        ],
+        'super_admin_only' => false,
+        // الإضافة والتعديل والحذف والتصدير لا معنى لها بلا عرضٍ أو تسجيل،
+        // فلا تفتح الفرع وحدها — وإلا دخل صاحبها فرعاً بلا صفحة دخول.
+        'permissions' => [
+            'data-entry.index',
+            'data-entry.attendance',
+        ],
+    ],
+
     'meetings' => [
         'label'         => 'home.branch_meetings',
         'icon'          => 'calendar-days',
@@ -170,6 +194,9 @@ return [
             // إعدادات المراسلات (أطراف المراسلات — قائمة مرجعية).
             // فرع المراسلات المستقل يُنشأ مع شاشات الوارد والصادر لا قبلها.
             'correspondence-entities.*',
+            // إعدادات مدخلي البيانات (حالات الحضور — قائمة مرجعية).
+            // ⚠️ النمط `attendance-statuses.*` لا `data-entry.*` — الأخير فرع مستقل بنطاق محافظة
+            'attendance-statuses.*',
         ],
         'super_admin_only' => false,
         'permissions' => [
@@ -177,6 +204,7 @@ return [
             'offices.settings',
             'warehouses.settings',
             'correspondence.settings',
+            'data-entry.settings',
         ],
     ],
 

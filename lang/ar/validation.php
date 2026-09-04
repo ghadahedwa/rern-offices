@@ -168,6 +168,7 @@ return [
         'code'                  => 'الرمز',
         'order'                 => 'الترتيب',
         'is_active'             => 'الحالة',
+        'color'                 => 'اللون',
         'correspondence_entity_id' => 'الطرف',
         'job_title'             => 'المسمّى الوظيفي',
 

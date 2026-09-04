@@ -274,6 +274,28 @@
                     @livewire('correspondence.menu-counters')
                     @endif {{-- /branch: correspondence --}}
 
+                    @if($currentBranch === 'data-entry')
+                    {{-- كل بند بصلاحيته: مَن له التسجيل وحده لا يرى القائمة والتقارير،
+                         ومَن له العرض وحده لا يرى شاشة التسجيل — رابطٌ يؤدي إلى ٤٠٣ أسوأ من غيابه --}}
+                    @can('data-entry.index')
+                    <flux:sidebar.item icon="user-group" :href="route('data-entry.index')" :current="request()->routeIs('data-entry.index')" wire:navigate>
+                        {{ __('home.de_operators') }}
+                    </flux:sidebar.item>
+                    @endcan
+
+                    @can('data-entry.attendance')
+                    <flux:sidebar.item icon="calendar-days" :href="route('data-entry.attendance')" :current="request()->routeIs('data-entry.attendance')" wire:navigate>
+                        {{ __('home.de_attendance') }}
+                    </flux:sidebar.item>
+                    @endcan
+
+                    @can('data-entry.index')
+                    <flux:sidebar.item icon="chart-bar" :href="route('data-entry.reports')" :current="request()->routeIs('data-entry.reports')" wire:navigate>
+                        {{ __('home.de_reports') }}
+                    </flux:sidebar.item>
+                    @endcan
+                    @endif {{-- /branch: data-entry --}}
+
                     @if($currentBranch === 'feedback')
                     {{-- الشاشات الثلاث بـfeedback.view، والمرفوضات بصلاحيتها المستقلة —
                          رابط يؤدي إلى ٤٠٣ أسوأ من غيابه --}}
@@ -353,6 +375,27 @@
                             </flux:sidebar.item>
                             <flux:sidebar.item icon="scale" :href="route('item-units.index')" :current="request()->routeIs('item-units.*')" wire:navigate>
                                 {{ __('home.item_units_title') }}
+                            </flux:sidebar.item>
+                        </div>
+                    </div>
+                    @endif
+
+                    {{-- إعدادات مدخلي البيانات (حالات الحضور) — صلاحية data-entry.settings --}}
+                    @if(auth()->user()?->can('data-entry.settings'))
+                    <div x-data="{ open: {{ request()->routeIs('attendance-statuses.*') ? 'true' : 'false' }} }">
+                        <button @click="open = !open"
+                            class="nested-menu-btn flex items-center w-full px-3 py-2 font-medium rounded text-zinc-600 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-zinc-900 dark:hover:text-white transition-colors">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-gray-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" />
+                            </svg>
+                            <span class="ml-2">{{ __('home.de_settings') }}</span>
+                            <svg class="ml-auto w-4 h-4 transition-transform" :class="{ 'rotate-180': open }" viewBox="0 0 20 20">
+                                <path d="M5 8l5 5 5-5" fill="none" stroke="currentColor"/>
+                            </svg>
+                        </button>
+                        <div x-show="open" x-transition class="ml-6 mt-1 space-y-1 overflow-hidden [&_[data-content]]:text-xs! [&_[data-content]]:min-w-0">
+                            <flux:sidebar.item icon="calendar-days" :href="route('attendance-statuses.index')" :current="request()->routeIs('attendance-statuses.*')" wire:navigate>
+                                {{ __('home.de_statuses') }}
                             </flux:sidebar.item>
                         </div>
                     </div>
