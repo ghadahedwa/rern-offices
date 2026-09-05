@@ -245,6 +245,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::livewire('attendance-statuses/{attendanceStatus}/edit', \App\Livewire\DataEntry\Statuses\Create::class)->name('attendance-statuses.edit');
     });
 
+    // العطلات الرسمية — **سوبر أدمن وحده** (قرار العميل)، أضيق من data-entry.settings:
+    // ⚠️ القائمة قومية لا محلية، وعطلةٌ بتاريخ خاطئ تغيّر أيام العمل في تقارير المحافظات جميعاً.
+    Route::middleware('role:super-admin')->group(function () {
+        Route::livewire('official-holidays', \App\Livewire\OfficialHolidays\Index::class)->name('official-holidays.index');
+        Route::livewire('official-holidays/create', \App\Livewire\OfficialHolidays\Create::class)->name('official-holidays.create');
+        Route::livewire('official-holidays/{officialHoliday}/edit', \App\Livewire\OfficialHolidays\Create::class)->name('official-holidays.edit');
+    });
+
     // إعدادات المقرات (القوائم المرجعية للمقرات والسيارات) — صلاحية offices.settings
     Route::middleware('permission:offices.settings')->group(function () {
         Route::livewire('office-types', \App\Livewire\OfficeTypes\Index::class)->name('office-types.index');

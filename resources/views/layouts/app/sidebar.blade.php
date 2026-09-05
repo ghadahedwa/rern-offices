@@ -382,7 +382,7 @@
 
                     {{-- إعدادات مدخلي البيانات (حالات الحضور) — صلاحية data-entry.settings --}}
                     @if(auth()->user()?->can('data-entry.settings'))
-                    <div x-data="{ open: {{ request()->routeIs('attendance-statuses.*') ? 'true' : 'false' }} }">
+                    <div x-data="{ open: {{ request()->routeIs('attendance-statuses.*', 'official-holidays.*') ? 'true' : 'false' }} }">
                         <button @click="open = !open"
                             class="nested-menu-btn flex items-center w-full px-3 py-2 font-medium rounded text-zinc-600 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-zinc-900 dark:hover:text-white transition-colors">
                             <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-gray-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
@@ -397,6 +397,13 @@
                             <flux:sidebar.item icon="calendar-days" :href="route('attendance-statuses.index')" :current="request()->routeIs('attendance-statuses.*')" wire:navigate>
                                 {{ __('home.de_statuses') }}
                             </flux:sidebar.item>
+                            {{-- العطلات الرسمية: سوبر أدمن وحده — و⚠️ Route::has لأن الرابط في الـlayout
+                                 يُطلب من كل صفحة، فcache راوتات قديم يوقع النظام كله بـ500 --}}
+                            @if(auth()->user()?->hasRole('super-admin') && Route::has('official-holidays.index'))
+                            <flux:sidebar.item icon="calendar" :href="route('official-holidays.index')" :current="request()->routeIs('official-holidays.*')" wire:navigate>
+                                {{ __('home.de_holidays') }}
+                            </flux:sidebar.item>
+                            @endif
                         </div>
                     </div>
                     @endif
