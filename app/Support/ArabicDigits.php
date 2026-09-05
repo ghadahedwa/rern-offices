@@ -24,4 +24,15 @@ class ArabicDigits
     {
         return str_replace(self::LATIN, self::ARABIC, (string) $text);
     }
+
+    /**
+     * الاتجاه المعاكس — أرقام لاتينية.
+     *
+     * ⚠️ لأرقام الهواتف لا لأرقام الأصناف: الهاتف يُكتب في فورم الإدخال لاتينياً،
+     *    فملفٌ مستورَد كُتب فيه «٠١٠١٢٣٤٥٦٧٨» يصير رقماً ثانياً للشخص نفسه.
+     */
+    public static function toLatin(?string $text): string
+    {
+        return str_replace(self::ARABIC, self::LATIN, (string) $text);
+    }
 }

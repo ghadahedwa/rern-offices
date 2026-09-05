@@ -3,7 +3,15 @@
     {{-- Header --}}
     <div class="flex items-center justify-between gap-4">
         <h1 class="text-2xl font-semibold text-zinc-800 dark:text-zinc-100">{{ __('home.de_operators') }}</h1>
+        <div class="flex flex-wrap items-center gap-2">
         @can('data-entry.create')
+            <a href="{{ route('data-entry.operators.import') }}" wire:navigate
+               class="inline-flex items-center gap-2 border border-[#c9a847] text-[#c9a847] hover:bg-[#c9a847]/10 text-sm font-medium px-4 py-2 rounded-lg transition">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 16V4m0 0L8 8m4-4l4 4M4 20h16"/>
+                </svg>
+                {{ __('home.de_import_button') }}
+            </a>
             <a href="{{ route('data-entry.operators.create') }}" wire:navigate
                class="inline-flex items-center gap-2 bg-[#c9a847] hover:bg-[#b8962e] text-white text-sm font-medium px-4 py-2 rounded-lg transition">
                 <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -12,6 +20,7 @@
                 {{ __('home.de_operator_add') }}
             </a>
         @endcan
+        </div>
     </div>
 
     {{-- شريط الفلاتر الموحّد: الأربعة في صفٍّ واحد على الشاشة العريضة --}}

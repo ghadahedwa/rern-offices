@@ -18,6 +18,10 @@
         </include>
     </source>
     <php>
+        <!-- ⚠️ توليد ملفات xlsx (تصدير رأي المواطن · قوالب مدخلي البيانات) يبني
+             المصنّف كاملاً في الذاكرة، والحزمة كلها تجري في عملية واحدة فتتراكم.
+             ١٢٨م الافتراضية تنفد عند تشغيل الحزمة كاملةً وإن مرّ كل ملف وحده. -->
+        <ini name="memory_limit" value="512M"/>
         <env name="APP_ENV" value="testing"/>
         <env name="APP_MAINTENANCE_DRIVER" value="file"/>
         <env name="BCRYPT_ROUNDS" value="4"/>
