@@ -43,4 +43,27 @@ class ArabicText
         // إزالة المسافات
         return "REPLACE({$expr}, ' ', '')";
     }
+
+    /**
+     * تقصير نصّ للعرض في منسدلة أو خلية ضيّقة — **القصّ عند حدّ كلمة**.
+     *
+     * ⚠️ أسماء المقرات تبلغ ١٣٦ حرفاً («حفظ مستغل ( الدفترخانة ومخازن … ) مكتب طنطا
+     *    محافظة الغربية»)، والمنسدلة تتّسع لأطول خيار فيها فيخرج جزؤها عن الشاشة.
+     * ⚠️ ولا يُقصّ بـ`mb_substr` وحدها: القصّ يقع وسط الكلمة بلا علامة قطع
+     *    («توثيق كفر الدوار النموذ»)، فيُرجَع إلى آخر مسافة قبل الحدّ.
+     *    والنص الكامل يبقى في `title` — التقصير للعرض لا للبيانات.
+     */
+    public static function shorten(?string $text, int $max = 45): string
+    {
+        $text = trim((string) $text);
+
+        if ($text === '' || mb_strlen($text) <= $max) {
+            return $text;
+        }
+
+        $cut       = mb_substr($text, 0, $max);
+        $lastSpace = mb_strrpos($cut, ' ');
+
+        return rtrim($lastSpace ? mb_substr($cut, 0, $lastSpace) : $cut).' …';
+    }
 }

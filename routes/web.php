@@ -224,7 +224,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // الحراسة حقيقية من الآن: كل شاشة بصلاحيتها لا بصلاحية الفرع كله — التسجيل
     // اليومي (`attendance`) قد يُسنَد لمن لا يملك تعديل بيانات المدخلين.
     // ⚠️ والنطاق (محافظات المفتش) يُفحص في المكوّن لا هنا، كنمط المخازن.
-    Route::livewire('data-entry/operators', \App\Livewire\DataEntry\Operators::class)->name('data-entry.index');
+    Route::livewire('data-entry/operators', \App\Livewire\DataEntry\Operators\Index::class)->name('data-entry.index');
+    // ⚠️ الإضافة والتعديل بصلاحيتيهما في المكوّن لا في الراوت — الأولى create والثانية edit،
+    //    ولا تفتحان الفرع وحدهما فيبقى دخوله من data-entry.index.
+    Route::livewire('data-entry/operators/create', \App\Livewire\DataEntry\Operators\Create::class)->name('data-entry.operators.create');
+    Route::livewire('data-entry/operators/{operator}/edit', \App\Livewire\DataEntry\Operators\Create::class)->name('data-entry.operators.edit');
     Route::livewire('data-entry/attendance', \App\Livewire\DataEntry\Attendance::class)->name('data-entry.attendance');
     Route::livewire('data-entry/reports', \App\Livewire\DataEntry\Reports::class)->name('data-entry.reports');
 
