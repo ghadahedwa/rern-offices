@@ -23,8 +23,11 @@
         </div>
     </div>
 
-    {{-- شريط الفلاتر الموحّد: الخمسة في صفٍّ واحد على الشاشة العريضة --}}
-    <x-filter-bar :active="$this->hasActiveFilters()" :per-page-options="$this->perPageOptions()" :columns="5">
+    {{--
+        شبكة من ثلاثة أعمدة: البحث والمحافظة والمقر في صفٍّ (الثلاثة تحدّد «مَن أين؟»)،
+        ورأس العمل ونوع المقر في الصفّ الذي يليه.
+    --}}
+    <x-filter-bar :active="$this->hasActiveFilters()" :per-page-options="$this->perPageOptions()" :columns="3">
         <x-filter-input :label="__('home.search')" wire:model.live.debounce.300ms="search"
                         placeholder="{{ __('home.de_operator_search_placeholder') }}" />
 
@@ -32,13 +35,6 @@
             <option value="">{{ __('home.de_operator_all_governorates') }}</option>
             @foreach($governorates as $gov)
                 <option value="{{ $gov->id }}">{{ $gov->name }}</option>
-            @endforeach
-        </x-filter-select>
-
-        <x-filter-select :label="__('home.de_operator_office_type')" wire:model.live="officeType">
-            <option value="">{{ __('home.de_operator_all_office_types') }}</option>
-            @foreach($officeTypes as $type)
-                <option value="{{ $type->id }}">{{ $type->name }}</option>
             @endforeach
         </x-filter-select>
 
@@ -53,6 +49,13 @@
             <option value="in_service">{{ __('home.de_operator_status_active') }}</option>
             <option value="ended">{{ __('home.de_operator_status_ended') }}</option>
             <option value="all">{{ __('home.de_operator_status_all') }}</option>
+        </x-filter-select>
+
+        <x-filter-select :label="__('home.de_operator_office_type')" wire:model.live="officeType">
+            <option value="">{{ __('home.de_operator_all_office_types') }}</option>
+            @foreach($officeTypes as $type)
+                <option value="{{ $type->id }}">{{ $type->name }}</option>
+            @endforeach
         </x-filter-select>
     </x-filter-bar>
 
