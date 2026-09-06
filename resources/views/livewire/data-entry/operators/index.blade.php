@@ -62,61 +62,77 @@
             <thead class="bg-zinc-50 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 text-xs uppercase">
                 <tr>
                     <th class="px-4 py-3 font-medium w-[4%] hidden 2xl:table-cell">#</th>
-                    @include('livewire.partials.sortable-th', ['column' => 'name', 'label' => __('home.de_operator_name'), 'thClass' => 'w-[22%]'])
-                    @include('livewire.partials.sortable-th', ['column' => 'phone', 'label' => __('home.de_operator_phone'), 'thClass' => 'w-[14%]'])
-                    <th class="px-4 py-3 font-medium w-[20%]">{{ __('home.de_operator_current_office') }}</th>
+                    @include('livewire.partials.sortable-th', ['column' => 'name', 'label' => __('home.de_operator_name'), 'thClass' => 'w-[30%]'])
+                    <th class="px-4 py-3 font-medium w-[32%]">{{ __('home.de_operator_current_office') }}</th>
                     <th class="px-4 py-3 font-medium w-[12%] hidden xl:table-cell">{{ __('home.de_operator_governorate') }}</th>
-                    @include('livewire.partials.sortable-th', ['column' => 'started_on', 'label' => __('home.de_operator_started_on'), 'thClass' => 'w-[12%] hidden xl:table-cell'])
-                    <th class="px-4 py-3 font-medium w-[16%]">{{ __('home.actions') }}</th>
+                    <th class="px-4 py-3 font-medium w-[22%]">{{ __('home.actions') }}</th>
                 </tr>
             </thead>
             <tbody class="divide-y divide-zinc-100 dark:divide-zinc-700">
+                @php
+                    // حبّات ناعمة بلا حدود: أربعة إطارات في خليةٍ واحدة تصنع ضجيجاً بصرياً،
+                    // والخلفية الملوّنة تكفي لتمييز الفعل مع بقاء النصّ مقروءاً.
+                    // ⚠️ الحبّة الرمادية درجتان أغمق من خلفية الصفّ (البيضاء والمؤرشَفة معاً)
+                    //    — بدرجةٍ واحدة كانت تذوب في الخلفية فلا تبدو زرّاً.
+                    $pillBase    = 'inline-flex items-center text-xs font-medium px-3 py-1.5 rounded-full transition';
+                    $pillNeutral = $pillBase.' bg-zinc-200 text-zinc-800 hover:bg-zinc-300 dark:bg-zinc-700 dark:text-zinc-100 dark:hover:bg-zinc-600';
+                    // ⚠️ الأزرق بوزن الرمادي (100 لا 50): حبّةٌ أفتح بجواره تبدو معطَّلة لا مختلفة
+                    $pillBlue    = $pillBase.' bg-blue-100 text-blue-700 hover:bg-blue-200 dark:bg-blue-900/40 dark:text-blue-300 dark:hover:bg-blue-900/60';
+                    $pillGold    = $pillBase.' bg-[#c9a847]/15 text-[#b8962e] hover:bg-[#c9a847]/25 dark:text-[#d4b65e]';
+                    $pillDanger  = $pillBase.' bg-red-50 text-red-600 hover:bg-red-100 dark:bg-red-900/20 dark:text-red-400 dark:hover:bg-red-900/30';
+                @endphp
                 @forelse($operators as $operator)
                     @php($assignment = $operator->currentAssignment)
-                    <tr class="hover:bg-zinc-50 dark:hover:bg-zinc-800 transition">
+                    {{-- الصفّ المؤرشَف بخلفيةٍ باهتة: في فلتر «الكل» يختلط المنتهية خدمته بالعامل --}}
+                    <tr class="transition {{ $assignment ? 'hover:bg-zinc-50 dark:hover:bg-zinc-800' : 'bg-zinc-50 hover:bg-zinc-100 dark:bg-zinc-800/40 dark:hover:bg-zinc-800' }}">
                         <td class="px-4 py-3 text-zinc-500 hidden 2xl:table-cell">{{ $operators->firstItem() + $loop->index }}</td>
-                        <td class="px-4 py-3 font-medium text-zinc-800 dark:text-zinc-100 truncate" title="{{ $operator->name }}">
-                            {{ $operator->name }}
-                            @unless($assignment)
-                                <span class="inline-flex items-center ms-2 text-[11px] font-medium px-2 py-0.5 rounded-full bg-zinc-200 dark:bg-zinc-700 text-zinc-600 dark:text-zinc-300">
-                                    {{ __('home.de_operator_status_ended') }}
-                                </span>
-                            @endunless
+                        <td class="px-4 py-3">
+                            <div class="font-medium text-zinc-800 dark:text-zinc-100 truncate" title="{{ $operator->name }}">
+                                {{ $operator->name }}
+                                @unless($assignment)
+                                    <span class="inline-flex items-center ms-2 text-[11px] font-medium px-2 py-0.5 rounded-full bg-zinc-200 dark:bg-zinc-700 text-zinc-600 dark:text-zinc-300">
+                                        {{ __('home.de_operator_status_ended') }}
+                                    </span>
+                                @endunless
+                            </div>
+                            {{-- الهاتف سطرٌ ثانٍ تحت الاسم: بيانا تعريفٍ لشخصٍ واحد، وعمودٌ مستقل كان يضيّق ما بعده --}}
+                            <div class="text-xs text-zinc-500 dark:text-zinc-400 truncate">{{ $operator->phone ?: '—' }}</div>
                         </td>
-                        <td class="px-4 py-3 text-zinc-600 dark:text-zinc-300 truncate">{{ $operator->phone ?: '—' }}</td>
-                        <td class="px-4 py-3 text-zinc-600 dark:text-zinc-300 truncate"
-                            title="{{ $assignment?->office?->name ?? __('home.de_operator_no_office') }}">
-                            {{ $assignment?->office?->name ?? __('home.de_operator_no_office') }}
+                        <td class="px-4 py-3">
+                            <div class="text-zinc-600 dark:text-zinc-300 truncate"
+                                 title="{{ $assignment?->office?->name ?? __('home.de_operator_no_office') }}">
+                                {{ $assignment?->office?->name ?? __('home.de_operator_no_office') }}
+                            </div>
+                            {{-- تاريخ الالتحاق تحت المقر: هو تاريخ بدء التسكين فيه، لا بيانَ تعريفٍ بالشخص --}}
+                            @if($assignment)
+                                <div class="text-xs text-zinc-500 dark:text-zinc-400 truncate">
+                                    {{ __('home.de_operator_started_on') }}: {{ $assignment->started_on?->toDateString() ?? '—' }}
+                                </div>
+                            @endif
                         </td>
                         <td class="px-4 py-3 text-zinc-500 truncate hidden xl:table-cell">{{ $assignment?->office?->governorate?->name ?? '—' }}</td>
-                        <td class="px-4 py-3 text-zinc-500 hidden xl:table-cell">{{ $assignment?->started_on?->toDateString() ?? '—' }}</td>
                         <td class="px-4 py-3">
                             <div class="flex flex-wrap items-center gap-2">
                                 @can('data-entry.edit')
-                                    <a href="{{ route('data-entry.operators.edit', $operator) }}" wire:navigate
-                                       class="inline-flex items-center text-xs px-3 py-1.5 rounded-md border border-zinc-300 dark:border-zinc-600 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition">
+                                    <a href="{{ route('data-entry.operators.edit', $operator) }}" wire:navigate class="{{ $pillBlue }}">
                                         {{ __('home.edit') }}
                                     </a>
                                     @if($assignment)
-                                        <button wire:click="askTransfer({{ $operator->id }})"
-                                                class="inline-flex items-center text-xs px-3 py-1.5 rounded-md border border-[#c9a847] text-[#b8962e] hover:bg-[#c9a847]/10 transition">
+                                        <button wire:click="askTransfer({{ $operator->id }})" class="{{ $pillGold }}">
                                             {{ __('home.de_operator_transfer') }}
                                         </button>
-                                        <button wire:click="askEnd({{ $operator->id }})"
-                                                class="inline-flex items-center text-xs px-3 py-1.5 rounded-md border border-zinc-300 dark:border-zinc-600 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition">
+                                        <button wire:click="askEnd({{ $operator->id }})" class="{{ $pillNeutral }}">
                                             {{ __('home.de_operator_end') }}
                                         </button>
                                     @else
                                         {{-- الصفّ المؤرشَف: طريقه الوحيد للعودة (وتصحيح إنهاءٍ بالخطأ) --}}
-                                        <button wire:click="askReassign({{ $operator->id }})"
-                                                class="inline-flex items-center text-xs px-3 py-1.5 rounded-md border border-[#c9a847] text-[#b8962e] hover:bg-[#c9a847]/10 transition">
+                                        <button wire:click="askReassign({{ $operator->id }})" class="{{ $pillGold }}">
                                             {{ __('home.de_operator_reassign') }}
                                         </button>
                                     @endif
                                 @endcan
                                 @can('data-entry.delete')
-                                    <button wire:click="askDelete({{ $operator->id }})"
-                                            class="inline-flex items-center text-xs px-3 py-1.5 rounded-md border border-red-200 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition">
+                                    <button wire:click="askDelete({{ $operator->id }})" class="{{ $pillDanger }}">
                                         {{ __('home.delete') }}
                                     </button>
                                 @endcan
@@ -125,7 +141,30 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="7" class="px-4 py-10 text-center text-zinc-400">{{ __('home.no_data') }}</td>
+                        {{-- «لا مدخلين بعد» غير «الفلتر لم يطابق»: لكلٍّ نصُّه وزرُّه، والشرطة وحدها لا تقول أيّهما --}}
+                        <td colspan="5" class="px-4 py-12 text-center">
+                            <p class="text-sm text-zinc-500 dark:text-zinc-400">
+                                {{ $hasAnyOperator ? __('home.de_operators_no_match') : __('home.de_operators_empty') }}
+                            </p>
+                            <p class="text-xs text-zinc-400 dark:text-zinc-500 mt-1">
+                                {{ $hasAnyOperator ? __('home.de_operators_no_match_hint') : __('home.de_operators_empty_hint') }}
+                            </p>
+                            <div class="mt-4">
+                                @if($hasAnyOperator)
+                                    <button type="button" wire:click="resetFilters"
+                                            class="inline-flex items-center text-xs px-3 py-1.5 rounded-md border border-zinc-300 dark:border-zinc-600 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition">
+                                        {{ __('home.reset_filters') }}
+                                    </button>
+                                @else
+                                    @can('data-entry.create')
+                                        <a href="{{ route('data-entry.operators.create') }}" wire:navigate
+                                           class="inline-flex items-center text-xs px-3 py-1.5 rounded-md border border-[#c9a847] text-[#b8962e] hover:bg-[#c9a847]/10 transition">
+                                            {{ __('home.de_operator_add') }}
+                                        </a>
+                                    @endcan
+                                @endif
+                            </div>
+                        </td>
                     </tr>
                 @endforelse
             </tbody>

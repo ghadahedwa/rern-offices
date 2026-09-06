@@ -472,6 +472,45 @@ it('يضيّق النوعُ منسدلةَ المقرات ويُصفّر الم�
 
     expect($component->viewData('offices')->pluck('id')->all())->toBe([$shahrOffice->id]);
 });
+
+// ── العرض ────────────────────────────────────────────────
+
+it('يفرّق الجدولُ الفارغ بين «لا مدخلين بعد» و«الفلتر لم يطابق»', function () {
+    // ⚠️ الفرق يُقرأ من النطاق لا من الفلاتر: فلتر الحالة الافتراضي يُخفي المؤرشَفين
+    //    وهو ليس فلتراً مفعّلاً، فشاشةٌ فيها مؤرشَفون وحدهم ليست شاشةً بلا مدخلين.
+    $gov = Governorate::factory()->create();
+
+    $this->actingAs(opUser(['data-entry.index'], [$gov]));
+
+    $empty = Livewire::test(Index::class);
+    expect($empty->viewData('hasAnyOperator'))->toBeFalse();
+    $empty->assertSee(__('home.de_operators_empty'))
+        ->assertDontSee(__('home.de_operators_no_match'));
+
+    $left = makeOperator(opOffice($gov), name: 'كامل المغادر');
+    $left->assignments()->first()->update(['ended_on' => '2026-09-10', 'end_reason' => 'left']);
+
+    // على رأس العمل (الافتراضي) لا يُظهر أحداً، لكن في النطاق مدخلاً — فهي نتيجةُ فلترٍ لا شاشةٌ فارغة
+    $filtered = Livewire::test(Index::class);
+    expect($filtered->viewData('hasAnyOperator'))->toBeTrue();
+    $filtered->assertSee(__('home.de_operators_no_match'))
+        ->assertDontSee(__('home.de_operators_empty'));
+});
+
+it('يُظهر أزرارَ الإجراءات لصاحب الصلاحية وحده', function () {
+    // ⚠️ نصوص الأزرار («نقل» · «حذف») موجودة في المودالات على كل حال، فالفحص
+    //    على رابط التعديل: لا يظهر إلا داخل @can في الصفّ.
+    $gov      = Governorate::factory()->create();
+    $operator = makeOperator(opOffice($gov), name: 'سعيد العامل');
+    $editUrl  = route('data-entry.operators.edit', $operator);
+
+    $this->actingAs(opUser(['data-entry.index'], [$gov]));
+    Livewire::test(Index::class)->assertDontSee($editUrl, escape: false);
+
+    $this->actingAs(opUser(['data-entry.index', 'data-entry.edit'], [$gov]));
+    Livewire::test(Index::class)->assertSee($editUrl, escape: false);
+});
+
 // ── الترتيب وعدد الصفوف ──────────────────────────────────
 
 it('يرتّب بالاسم ويعكسه ثم يعود للافتراضي', function () {

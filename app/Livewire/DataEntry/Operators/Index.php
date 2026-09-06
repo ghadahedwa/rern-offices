@@ -455,6 +455,11 @@ class Index extends Component
 
         return view('livewire.data-entry.operators.index', [
             'operators'    => $operators,
+            // ⚠️ الفرق بين «لا مدخلين بعد» و«الفلتر لم يطابق» يُقرأ من النطاق لا من الفلاتر:
+            //    فلتر الحالة الافتراضي (على رأس العمل) يُخفي المؤرشَفين وهو ليس فلتراً مفعّلاً.
+            //    والاستعلام الإضافي لا يقع إلا على صفحة فارغة.
+            'hasAnyOperator' => $operators->total() > 0
+                || DataEntryScope::applyToOperators(DataEntryOperator::query())->exists(),
             'governorates' => DataEntryScope::governorateOptions(),
             'offices'      => DataEntryScope::officeOptions($governorateId, $typeId),
             'officeTypes'  => OfficeType::orderBy('name')->get(['id', 'name']),
