@@ -220,18 +220,26 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::livewire('correspondence/assignments', \App\Livewire\Correspondence\Assignments::class)->name('correspondence.assignments');
     Route::livewire('correspondence/delegations', \App\Livewire\Correspondence\Delegations::class)->name('correspondence.delegations');
 
-    // فرع مدخلي البيانات — الشاشات سقالة حتى يُنشأ جدولا المدخلين والحضور.
+    // فرع العاملين بالتعاقد — الشاشات سقالة حتى يُنشأ جدولا العاملين والحضور.
     // الحراسة حقيقية من الآن: كل شاشة بصلاحيتها لا بصلاحية الفرع كله — التسجيل
-    // اليومي (`attendance`) قد يُسنَد لمن لا يملك تعديل بيانات المدخلين.
+    // اليومي (`attendance`) قد يُسنَد لمن لا يملك تعديل بيانات العاملين.
     // ⚠️ والنطاق (محافظات المفتش) يُفحص في المكوّن لا هنا، كنمط المخازن.
-    Route::livewire('data-entry/operators', \App\Livewire\DataEntry\Operators\Index::class)->name('data-entry.index');
+    // ⚠️ الروابط المحفوظة عند المستخدمين من قبل إعادة التسمية (2026-09-06):
+    //    /data-entry كان مدخل الفرع، وبلا هذه التحويلات يجد صاحبه ٤٠٤ بلا تفسير.
+    Route::permanentRedirect('data-entry', 'contractors');
+    Route::permanentRedirect('data-entry/operators/create', 'contractors/create');
+    Route::permanentRedirect('data-entry/operators/import', 'contractors/import');
+    Route::permanentRedirect('data-entry/attendance', 'contractors/attendance');
+    Route::permanentRedirect('data-entry/reports', 'contractors/reports');
+
+    Route::livewire('contractors', \App\Livewire\Contractors\Index::class)->name('contractors.index');
     // ⚠️ الإضافة والتعديل بصلاحيتيهما في المكوّن لا في الراوت — الأولى create والثانية edit،
-    //    ولا تفتحان الفرع وحدهما فيبقى دخوله من data-entry.index.
-    Route::livewire('data-entry/operators/create', \App\Livewire\DataEntry\Operators\Create::class)->name('data-entry.operators.create');
-    Route::livewire('data-entry/operators/import', \App\Livewire\DataEntry\Operators\Import::class)->name('data-entry.operators.import');
-    Route::livewire('data-entry/operators/{operator}/edit', \App\Livewire\DataEntry\Operators\Create::class)->name('data-entry.operators.edit');
-    Route::livewire('data-entry/attendance', \App\Livewire\DataEntry\Attendance::class)->name('data-entry.attendance');
-    Route::livewire('data-entry/reports', \App\Livewire\DataEntry\Reports::class)->name('data-entry.reports');
+    //    ولا تفتحان الفرع وحدهما فيبقى دخوله من contractors.index.
+    Route::livewire('contractors/create', \App\Livewire\Contractors\Create::class)->name('contractors.create');
+    Route::livewire('contractors/import', \App\Livewire\Contractors\Import::class)->name('contractors.import');
+    Route::livewire('contractors/{contractor}/edit', \App\Livewire\Contractors\Create::class)->name('contractors.edit');
+    Route::livewire('contractors/attendance', \App\Livewire\Contractors\Attendance::class)->name('contractors.attendance');
+    Route::livewire('contractors/reports', \App\Livewire\Contractors\Reports::class)->name('contractors.reports');
 
     // إعدادات المراسلات (أطراف المراسلات) — صلاحية correspondence.settings
     // تسكن فرع «إدارة النظام» كباقي القوائم المرجعية، لا فرعاً خاصاً — فرع المراسلات
@@ -242,15 +250,20 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::livewire('correspondence-entities/{entity}/edit', \App\Livewire\Correspondence\Entities\Create::class)->name('correspondence-entities.edit');
     });
 
-    // إعدادات مدخلي البيانات (حالات الحضور — قائمة مرجعية) — صلاحية data-entry.settings
-    // ⚠️ تسكن «إدارة النظام» لا فرع مدخلي البيانات: مدير القوائم المرجعية بلا نطاق محافظات.
-    Route::middleware('permission:data-entry.settings')->group(function () {
-        Route::livewire('attendance-statuses', \App\Livewire\DataEntry\Statuses\Index::class)->name('attendance-statuses.index');
-        Route::livewire('attendance-statuses/create', \App\Livewire\DataEntry\Statuses\Create::class)->name('attendance-statuses.create');
-        Route::livewire('attendance-statuses/{attendanceStatus}/edit', \App\Livewire\DataEntry\Statuses\Create::class)->name('attendance-statuses.edit');
+    // إعدادات العاملين بالتعاقد (حالات الحضور — قائمة مرجعية) — صلاحية contractors.settings
+    // ⚠️ تسكن «إدارة النظام» لا فرع العاملين بالتعاقد: مدير القوائم المرجعية بلا نطاق محافظات.
+    Route::middleware('permission:contractors.settings')->group(function () {
+        Route::livewire('attendance-statuses', \App\Livewire\Contractors\Statuses\Index::class)->name('attendance-statuses.index');
+        Route::livewire('attendance-statuses/create', \App\Livewire\Contractors\Statuses\Create::class)->name('attendance-statuses.create');
+        Route::livewire('attendance-statuses/{attendanceStatus}/edit', \App\Livewire\Contractors\Statuses\Create::class)->name('attendance-statuses.edit');
+
+        // صفات العاملين (مدخل بيانات · مترجم · عامل · سائق · مساحي) — قائمة مرجعية كحالات الحضور
+        Route::livewire('professions', \App\Livewire\Contractors\Professions\Index::class)->name('professions.index');
+        Route::livewire('professions/create', \App\Livewire\Contractors\Professions\Create::class)->name('professions.create');
+        Route::livewire('professions/{profession}/edit', \App\Livewire\Contractors\Professions\Create::class)->name('professions.edit');
     });
 
-    // العطلات الرسمية — **سوبر أدمن وحده** (قرار العميل)، أضيق من data-entry.settings:
+    // العطلات الرسمية — **سوبر أدمن وحده** (قرار العميل)، أضيق من contractors.settings:
     // ⚠️ القائمة قومية لا محلية، وعطلةٌ بتاريخ خاطئ تغيّر أيام العمل في تقارير المحافظات جميعاً.
     Route::middleware('role:super-admin')->group(function () {
         Route::livewire('official-holidays', \App\Livewire\OfficialHolidays\Index::class)->name('official-holidays.index');

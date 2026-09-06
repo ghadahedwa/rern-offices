@@ -16,7 +16,7 @@ use Livewire\WithPagination;
 /**
  * العطلات الرسمية — قائمة قومية واحدة، **للسوبر أدمن وحده** (قرار العميل).
  *
- * ⚠️ أضيق من `data-entry.settings` عمداً: عطلةٌ بتاريخ خاطئ تغيّر أيام العمل في
+ * ⚠️ أضيق من `contractors.settings` عمداً: عطلةٌ بتاريخ خاطئ تغيّر أيام العمل في
  *    تقارير الجمهورية كلها لا في محافظةٍ واحدة.
  */
 #[Layout('layouts.app')]
@@ -129,8 +129,8 @@ class Index extends Component
         Flux::toast(
             variant: $added > 0 ? 'success' : 'warning',
             text: $added > 0
-                ? __('home.de_holiday_seed_done', ['count' => $added])
-                : __('home.de_holiday_seed_none')
+                ? __('home.ct_holiday_seed_done', ['count' => $added])
+                : __('home.ct_holiday_seed_none')
         );
     }
 
@@ -142,7 +142,7 @@ class Index extends Component
 
         $this->deletingId      = $holiday->id;
         $this->deletingLabel   = $holiday->name;
-        $this->deletingWarning = __('home.de_holiday_delete_warning');
+        $this->deletingWarning = __('home.ct_holiday_delete_warning');
         $this->showDelete      = true;
     }
 
@@ -158,7 +158,7 @@ class Index extends Component
         OfficialHoliday::findOrFail($this->deletingId)->delete();
 
         $this->reset('deletingId', 'deletingLabel', 'deletingWarning', 'showDelete');
-        Flux::toast(variant: 'success', text: __('home.de_holiday_deleted'));
+        Flux::toast(variant: 'success', text: __('home.ct_holiday_deleted'));
     }
 
     public function render()

@@ -274,27 +274,27 @@
                     @livewire('correspondence.menu-counters')
                     @endif {{-- /branch: correspondence --}}
 
-                    @if($currentBranch === 'data-entry')
+                    @if($currentBranch === 'contractors')
                     {{-- كل بند بصلاحيته: مَن له التسجيل وحده لا يرى القائمة والتقارير،
                          ومَن له العرض وحده لا يرى شاشة التسجيل — رابطٌ يؤدي إلى ٤٠٣ أسوأ من غيابه --}}
-                    @can('data-entry.index')
-                    <flux:sidebar.item icon="user-group" :href="route('data-entry.index')" :current="request()->routeIs('data-entry.index')" wire:navigate>
-                        {{ __('home.de_operators') }}
+                    @can('contractors.index')
+                    <flux:sidebar.item icon="user-group" :href="route('contractors.index')" :current="request()->routeIs('contractors.index')" wire:navigate>
+                        {{ __('home.ct_workers') }}
                     </flux:sidebar.item>
                     @endcan
 
-                    @can('data-entry.attendance')
-                    <flux:sidebar.item icon="calendar-days" :href="route('data-entry.attendance')" :current="request()->routeIs('data-entry.attendance')" wire:navigate>
-                        {{ __('home.de_attendance') }}
+                    @can('contractors.attendance')
+                    <flux:sidebar.item icon="calendar-days" :href="route('contractors.attendance')" :current="request()->routeIs('contractors.attendance')" wire:navigate>
+                        {{ __('home.ct_attendance') }}
                     </flux:sidebar.item>
                     @endcan
 
-                    @can('data-entry.index')
-                    <flux:sidebar.item icon="chart-bar" :href="route('data-entry.reports')" :current="request()->routeIs('data-entry.reports')" wire:navigate>
-                        {{ __('home.de_reports') }}
+                    @can('contractors.index')
+                    <flux:sidebar.item icon="chart-bar" :href="route('contractors.reports')" :current="request()->routeIs('contractors.reports')" wire:navigate>
+                        {{ __('home.ct_reports') }}
                     </flux:sidebar.item>
                     @endcan
-                    @endif {{-- /branch: data-entry --}}
+                    @endif {{-- /branch: contractors --}}
 
                     @if($currentBranch === 'feedback')
                     {{-- الشاشات الثلاث بـfeedback.view، والمرفوضات بصلاحيتها المستقلة —
@@ -380,28 +380,34 @@
                     </div>
                     @endif
 
-                    {{-- إعدادات مدخلي البيانات (حالات الحضور) — صلاحية data-entry.settings --}}
-                    @if(auth()->user()?->can('data-entry.settings'))
-                    <div x-data="{ open: {{ request()->routeIs('attendance-statuses.*', 'official-holidays.*') ? 'true' : 'false' }} }">
+                    {{-- إعدادات العاملين بالتعاقد (حالات الحضور) — صلاحية contractors.settings --}}
+                    @if(auth()->user()?->can('contractors.settings'))
+                    <div x-data="{ open: {{ request()->routeIs('attendance-statuses.*', 'professions.*', 'official-holidays.*') ? 'true' : 'false' }} }">
                         <button @click="open = !open"
                             class="nested-menu-btn flex items-center w-full px-3 py-2 font-medium rounded text-zinc-600 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-zinc-900 dark:hover:text-white transition-colors">
                             <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-gray-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" />
                             </svg>
-                            <span class="ml-2">{{ __('home.de_settings') }}</span>
+                            <span class="ml-2">{{ __('home.ct_settings') }}</span>
                             <svg class="ml-auto w-4 h-4 transition-transform" :class="{ 'rotate-180': open }" viewBox="0 0 20 20">
                                 <path d="M5 8l5 5 5-5" fill="none" stroke="currentColor"/>
                             </svg>
                         </button>
                         <div x-show="open" x-transition class="ml-6 mt-1 space-y-1 overflow-hidden [&_[data-content]]:text-xs! [&_[data-content]]:min-w-0">
                             <flux:sidebar.item icon="calendar-days" :href="route('attendance-statuses.index')" :current="request()->routeIs('attendance-statuses.*')" wire:navigate>
-                                {{ __('home.de_statuses') }}
+                                {{ __('home.ct_statuses') }}
                             </flux:sidebar.item>
+                            {{-- ⚠️ Route::has: الرابط في الـlayout، وcache راوتات قديم يوقع كل الصفحات بـ500 --}}
+                            @if(Route::has('professions.index'))
+                            <flux:sidebar.item icon="identification" :href="route('professions.index')" :current="request()->routeIs('professions.*')" wire:navigate>
+                                {{ __('home.ct_professions') }}
+                            </flux:sidebar.item>
+                            @endif
                             {{-- العطلات الرسمية: سوبر أدمن وحده — و⚠️ Route::has لأن الرابط في الـlayout
                                  يُطلب من كل صفحة، فcache راوتات قديم يوقع النظام كله بـ500 --}}
                             @if(auth()->user()?->hasRole('super-admin') && Route::has('official-holidays.index'))
                             <flux:sidebar.item icon="calendar" :href="route('official-holidays.index')" :current="request()->routeIs('official-holidays.*')" wire:navigate>
-                                {{ __('home.de_holidays') }}
+                                {{ __('home.ct_holidays') }}
                             </flux:sidebar.item>
                             @endif
                         </div>

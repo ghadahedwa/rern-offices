@@ -135,8 +135,8 @@ class Create extends Component
         Flux::toast(
             variant: 'success',
             text: $this->officialHoliday?->exists
-                ? __('home.de_holiday_updated')
-                : __('home.de_holiday_created')
+                ? __('home.ct_holiday_updated')
+                : __('home.ct_holiday_created')
         );
 
         $this->redirect(route('official-holidays.index'), navigate: true);

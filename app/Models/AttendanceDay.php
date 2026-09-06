@@ -49,9 +49,9 @@ class AttendanceDay extends Model
             ->whereDate('date', '<=', $to->toDateString());
     }
 
-    public function scopeForOperator(Builder $query, DataEntryOperator|int $operator): Builder
+    public function scopeForContractor(Builder $query, Contractor|int $contractor): Builder
     {
-        return $query->where('attendable_type', DataEntryOperator::class)
-            ->where('attendable_id', $operator instanceof DataEntryOperator ? $operator->getKey() : $operator);
+        return $query->where('attendable_type', Contractor::class)
+            ->where('attendable_id', $contractor instanceof Contractor ? $contractor->getKey() : $contractor);
     }
 }

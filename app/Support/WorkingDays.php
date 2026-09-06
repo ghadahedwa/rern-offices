@@ -3,7 +3,7 @@
 namespace App\Support;
 
 use App\Models\AttendanceDay;
-use App\Models\DataEntryOperator;
+use App\Models\Contractor;
 use App\Models\OfficialHoliday;
 use Carbon\CarbonImmutable;
 use Carbon\CarbonInterface;
@@ -146,11 +146,11 @@ final class WorkingDays
     }
 
     /** مدد خدمة المدخل: [['from' => 'Y-m-d', 'to' => 'Y-m-d'|null], …] */
-    public static function serviceIntervals(DataEntryOperator $operator): array
+    public static function serviceIntervals(Contractor $contractor): array
     {
-        $assignments = $operator->relationLoaded('assignments')
-            ? $operator->assignments
-            : $operator->assignments()->orderBy('started_on')->get();
+        $assignments = $contractor->relationLoaded('assignments')
+            ? $contractor->assignments
+            : $contractor->assignments()->orderBy('started_on')->get();
 
         return $assignments
             ->map(fn ($assignment) => [
@@ -163,14 +163,14 @@ final class WorkingDays
     }
 
     /** أيام عمل المدخل داخل المدى — أيام العمل ∩ مدد تسكينه. */
-    public static function operatorCalendar(
-        DataEntryOperator $operator,
+    public static function contractorCalendar(
+        Contractor $contractor,
         DateTimeInterface|string $from,
         DateTimeInterface|string $to,
         ?array $calendar = null
     ): array {
         $calendar  = $calendar ?? self::calendar($from, $to);
-        $intervals = self::serviceIntervals($operator);
+        $intervals = self::serviceIntervals($contractor);
 
         if ($intervals === []) {
             return [];
@@ -192,20 +192,20 @@ final class WorkingDays
      * @return array{working:int, present:int, exceptions:array<int,int>, dates:array<string,int>}
      */
     public static function summaryFor(
-        DataEntryOperator $operator,
+        Contractor $contractor,
         DateTimeInterface|string $from,
         DateTimeInterface|string $to,
         ?array $calendar = null
     ): array {
         [$start, $end] = self::range($from, $to);
 
-        $days    = self::operatorCalendar($operator, $start, $end, $calendar);
+        $days    = self::contractorCalendar($contractor, $start, $end, $calendar);
         $working = count($days);
         $lookup  = array_flip($days);
 
-        $rows = $operator->relationLoaded('attendanceDays')
-            ? $operator->attendanceDays
-            : AttendanceDay::query()->forOperator($operator)->between($start, $end)->get();
+        $rows = $contractor->relationLoaded('attendanceDays')
+            ? $contractor->attendanceDays
+            : AttendanceDay::query()->forContractor($contractor)->between($start, $end)->get();
 
         $exceptions = [];
         $dates      = [];

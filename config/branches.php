@@ -68,27 +68,27 @@ return [
         ],
     ],
 
-    // مدخلو البيانات — نطاقه المحافظة كالمقرات ورأي المواطن (نفس pivot governorate_user)،
+    // العاملون بالتعاقد — نطاقه المحافظة كالمقرات ورأي المواطن (نفس pivot governorate_user)،
     // وقارئه هو المفتش نفسه، فموضعه بجوارهما لا في آخر القائمة.
-    // ⚠️ مَن له التسجيل وحده (data-entry.attendance) يهبط على شاشة الحضور مباشرة —
+    // ⚠️ مَن له التسجيل وحده (contractors.attendance) يهبط على شاشة الحضور مباشرة —
     //    رابطٌ يؤدي إلى ٤٠٣ أسوأ من غيابه.
-    'data-entry' => [
-        'label'         => 'home.branch_data_entry',
+    'contractors' => [
+        'label'         => 'home.branch_contractors',
         'icon'          => 'user-group',
-        'default_route' => 'data-entry.index',
+        'default_route' => 'contractors.index',
         'entries' => [
-            'data-entry.index'      => 'data-entry.index',
-            'data-entry.attendance' => 'data-entry.attendance',
+            'contractors.index'      => 'contractors.index',
+            'contractors.attendance' => 'contractors.attendance',
         ],
         'route_patterns' => [
-            'data-entry.*',
+            'contractors.*',
         ],
         'super_admin_only' => false,
         // الإضافة والتعديل والحذف والتصدير لا معنى لها بلا عرضٍ أو تسجيل،
         // فلا تفتح الفرع وحدها — وإلا دخل صاحبها فرعاً بلا صفحة دخول.
         'permissions' => [
-            'data-entry.index',
-            'data-entry.attendance',
+            'contractors.index',
+            'contractors.attendance',
         ],
     ],
 
@@ -194,8 +194,8 @@ return [
             // إعدادات المراسلات (أطراف المراسلات — قائمة مرجعية).
             // فرع المراسلات المستقل يُنشأ مع شاشات الوارد والصادر لا قبلها.
             'correspondence-entities.*',
-            // إعدادات مدخلي البيانات (حالات الحضور — قائمة مرجعية).
-            // ⚠️ النمط `attendance-statuses.*` لا `data-entry.*` — الأخير فرع مستقل بنطاق محافظة
+            // إعدادات العاملين بالتعاقد (حالات الحضور — قائمة مرجعية).
+            // ⚠️ النمط `attendance-statuses.*` لا `contractors.*` — الأخير فرع مستقل بنطاق محافظة
             'attendance-statuses.*',
         ],
         'super_admin_only' => false,
@@ -204,7 +204,7 @@ return [
             'offices.settings',
             'warehouses.settings',
             'correspondence.settings',
-            'data-entry.settings',
+            'contractors.settings',
         ],
     ],
 
