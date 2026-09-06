@@ -1282,6 +1282,8 @@ return [
     'de_operator_governorate'     => 'المحافظة',
     'de_operator_all_governorates' => 'كل المحافظات',
     'de_operator_all_offices'   => 'كل المقرات',
+    'de_operator_office_type'     => 'نوع المقر',
+    'de_operator_all_office_types' => 'كل الأنواع',
     'de_operator_search_placeholder' => 'اسم المدخل أو رقم هاتفه',
     'de_operator_office'          => 'المقر',
     'de_operator_started_on'      => 'تاريخ الالتحاق',

@@ -8,6 +8,7 @@ use App\Models\DataEntryAssignment;
 use App\Models\DataEntryOperator;
 use App\Models\Governorate;
 use App\Models\Office;
+use App\Models\OfficeType;
 use App\Models\User;
 use App\Support\WorkingDays;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -430,6 +431,47 @@ it('يفصل فلترُ الحالة المؤرشَف عمّن على رأس ا�
         ->assertSee($left->name)->assertDontSee($working->name);
 });
 
+it('يقصر فلترُ النوع الصفوفَ على مقرات نوعه', function () {
+    $gov      = Governorate::factory()->create();
+    $shahr    = OfficeType::factory()->create(['name' => 'مكتب شهر عقاري']);
+    $tawtheeq = OfficeType::factory()->create(['name' => 'مكتب توثيق']);
+
+    $inShahr = makeOperator(
+        Office::factory()->create(['governorate_id' => $gov->id, 'type_id' => $shahr->id]),
+        name: 'سعيد الشاهر'
+    );
+    $inTawtheeq = makeOperator(
+        Office::factory()->create(['governorate_id' => $gov->id, 'type_id' => $tawtheeq->id]),
+        name: 'كامل الموثّق'
+    );
+
+    $this->actingAs(opUser(['data-entry.index'], [$gov]));
+
+    Livewire::test(Index::class)->set('officeType', (string) $shahr->id)
+        ->assertSee($inShahr->name)->assertDontSee($inTawtheeq->name);
+
+    // ⚠️ قيمة نوع تالفة تصل من الرابط: تُهمَل ولا تُخرج شاشة فارغة
+    Livewire::test(Index::class)->set('officeType', 'أي كلام')
+        ->assertSee($inShahr->name)->assertSee($inTawtheeq->name);
+});
+
+it('يضيّق النوعُ منسدلةَ المقرات ويُصفّر المقر المختار', function () {
+    // ⚠️ خيارٌ بلا صفوف خلفه يُوهم المستخدم أن الشاشة معطّلة لا أن مقراتها من نوعٍ آخر
+    $gov      = Governorate::factory()->create();
+    $shahr    = OfficeType::factory()->create();
+    $tawtheeq = OfficeType::factory()->create();
+
+    $shahrOffice    = Office::factory()->create(['governorate_id' => $gov->id, 'type_id' => $shahr->id]);
+    $tawtheeqOffice = Office::factory()->create(['governorate_id' => $gov->id, 'type_id' => $tawtheeq->id]);
+
+    $this->actingAs(opUser(['data-entry.index'], [$gov]));
+
+    $component = Livewire::test(Index::class)->set('office', (string) $tawtheeqOffice->id);
+
+    $component->set('officeType', (string) $shahr->id)->assertSet('office', '');
+
+    expect($component->viewData('offices')->pluck('id')->all())->toBe([$shahrOffice->id]);
+});
 // ── الترتيب وعدد الصفوف ──────────────────────────────────
 
 it('يرتّب بالاسم ويعكسه ثم يعود للافتراضي', function () {
@@ -477,6 +519,7 @@ it('يمسح زرُّ المسح الفلاتر والترتيب معاً', func
 
     Livewire::test(Index::class)
         ->set('search', 'أحمد')
+        ->set('officeType', '7')
         ->set('status', 'all')
         ->call('sort', 'name')
         ->assertSet('sortBy', 'name')
@@ -484,6 +527,7 @@ it('يمسح زرُّ المسح الفلاتر والترتيب معاً', func
         ->assertSet('search', '')
         ->assertSet('governorate', '')
         ->assertSet('office', '')
+        ->assertSet('officeType', '')
         ->assertSet('status', 'in_service')
         ->assertSet('sortBy', '');
 });

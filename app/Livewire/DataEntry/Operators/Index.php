@@ -7,6 +7,7 @@ use App\Livewire\Concerns\WithTableSorting;
 use App\Models\AttendanceDay;
 use App\Models\DataEntryAssignment;
 use App\Models\DataEntryOperator;
+use App\Models\OfficeType;
 use App\Support\ArabicText;
 use App\Support\DataEntryScope;
 use App\Support\WorkingDays;
@@ -45,6 +46,9 @@ class Index extends Component
 
     #[Url(as: 'office', except: '')]
     public string $office = '';
+
+    #[Url(as: 'type', except: '')]
+    public string $officeType = '';
 
     /** in_service | ended | all */
     #[Url(as: 'status', except: 'in_service')]
@@ -105,6 +109,13 @@ class Index extends Component
         $this->resetPage();
     }
 
+    public function updatedOfficeType(): void
+    {
+        // المقر المختار قد لا يكون من النوع الجديد — فيُصفَّر بدل أن يُخرج شاشة فارغة
+        $this->office = '';
+        $this->resetPage();
+    }
+
     public function updatedStatus(): void
     {
         $this->resetPage();
@@ -145,13 +156,14 @@ class Index extends Component
         return $this->search !== ''
             || $this->governorate !== ''
             || $this->office !== ''
+            || $this->officeType !== ''
             || $this->status !== 'in_service'
             || $this->isCustomSorted();
     }
 
     public function resetFilters(): void
     {
-        $this->reset('search', 'governorate', 'office');
+        $this->reset('search', 'governorate', 'office', 'officeType');
         $this->status = 'in_service';
         $this->resetSort();
         $this->resetPage();
@@ -403,6 +415,7 @@ class Index extends Component
     {
         $governorateId = ctype_digit($this->governorate) ? (int) $this->governorate : null;
         $officeId      = ctype_digit($this->office) ? (int) $this->office : null;
+        $typeId        = ctype_digit($this->officeType) ? (int) $this->officeType : null;
 
         // تاريخ بدء التسكين المفتوح كعمود محسوب — ليُرتَّب به بلا تحميل العلاقات كلها
         $currentStart = DataEntryAssignment::query()
@@ -428,6 +441,11 @@ class Index extends Component
                 $governorateId && ! $officeId,
                 fn ($q) => $q->whereHas('currentAssignment.office', fn ($o) => $o->where('governorate_id', $governorateId))
             )
+            // النوع كالمحافظة: المقر أخصّ منهما، فإن اختير أغنى عنهما
+            ->when(
+                $typeId && ! $officeId,
+                fn ($q) => $q->whereHas('currentAssignment.office', fn ($o) => $o->where('type_id', $typeId))
+            )
             ->when($this->status === 'in_service', fn ($q) => $q->inService())
             ->when($this->status === 'ended', fn ($q) => $q->whereDoesntHave('assignments', fn ($a) => $a->whereNull('ended_on')));
 
@@ -438,7 +456,8 @@ class Index extends Component
         return view('livewire.data-entry.operators.index', [
             'operators'    => $operators,
             'governorates' => DataEntryScope::governorateOptions(),
-            'offices'      => DataEntryScope::officeOptions($governorateId),
+            'offices'      => DataEntryScope::officeOptions($governorateId, $typeId),
+            'officeTypes'  => OfficeType::orderBy('name')->get(['id', 'name']),
             // ⚠️ قوائم المودالين مستقلة عن فلتر الشاشة: النقل قد يكون إلى محافظة
             //    أخرى داخل النطاق، وفلترُ الشاشة سؤالٌ آخر (مَن أعرض الآن؟).
             'transferOffices' => DataEntryScope::officeOptions(

@@ -113,14 +113,20 @@ class DataEntryScope
             ->get(['id', 'name']);
     }
 
-    /** مقرات المنسدلة — مقصورة على النطاق، وعلى محافظةٍ بعينها إن طُلبت. */
-    public static function officeOptions(?int $governorateId = null, ?Authenticatable $user = null)
+    /**
+     * مقرات المنسدلة — مقصورة على النطاق، وعلى محافظةٍ ونوعٍ بعينهما إن طُلبا.
+     *
+     * ⚠️ فلتر النوع يضيّق المنسدلة كما يضيّق الصفوف: خيارٌ بلا صفوف خلفه يُوهم
+     *    المستخدم أن الشاشة معطّلة لا أن مقراتها من نوعٍ آخر.
+     */
+    public static function officeOptions(?int $governorateId = null, ?int $typeId = null, ?Authenticatable $user = null)
     {
         $ids = self::governorateIds($user);
 
         return Office::query()
             ->when($ids !== null, fn ($q) => $q->whereIn('governorate_id', $ids ?: [0]))
             ->when($governorateId, fn ($q) => $q->where('governorate_id', $governorateId))
+            ->when($typeId, fn ($q) => $q->where('type_id', $typeId))
             ->orderBy('name')
             ->get(['id', 'name', 'governorate_id'])
             // ⚠️ اسم المقر يبلغ ١٣٦ حرفاً، والمنسدلة تتّسع لأطول خيار فيخرج جزؤها عن الشاشة.
