@@ -97,14 +97,17 @@ it('يرى السوبر أدمن مدخلي الجمهورية كلها', functi
         ->assertSee('مدخل الثانية');
 });
 
-it('لا تسرّب منسدلة المقرات مقرات خارج النطاق', function () {
+it('لا تسرّب منسدلة فلتر المقرات مقرات خارج النطاق', function () {
+    // ⚠️ الفحص على بيانات العرض لا على الصفحة كلها: مودالا النقل وإعادة التسكين
+    //    يعرضان محافظات أخرى بحقٍّ منذ 2026-09-07، فـassertDontSee صار يخلط بينهما.
     $mine = Governorate::factory()->create();
     opOffice($mine);
     $outside = Office::factory()->create(['name' => 'مقر خارج النطاق']);
 
     $this->actingAs(opUser(['contractors.index'], [$mine]));
 
-    Livewire::test(Index::class)->assertDontSee($outside->name);
+    expect(Livewire::test(Index::class)->viewData('offices')->pluck('name')->all())
+        ->not->toContain($outside->name);
 });
 
 it('لا يُخرج فلتر محافظةٍ ليست للمستخدم شيئاً', function () {
@@ -296,20 +299,38 @@ it('يرفض تاريخ نقلٍ لا يتجاوز بداية التسكين ا�
     expect($contractor->assignments()->count())->toBe(1);
 });
 
-it('يرفض النقل إلى مقر خارج النطاق', function () {
-    $gov      = Governorate::factory()->create();
+it('يقبل النقل إلى محافظة أخرى ويرفض نوعاً بلا عمالة متعاقدة', function () {
+    // قرار العميلة 2026-09-07: النقل غير مقيَّد بمحافظات المستخدم، والحدّ صار
+    // **نوع المقر**: الاستراحة وتحت الإنشاء والمعلَّق ليست مقارَّ عمل.
+    $gov        = Governorate::factory()->create();
     $contractor = makeContractor(opOffice($gov), '2026-09-01');
+    $elsewhere  = opOffice();   // محافظة أخرى تماماً
 
     $this->actingAs(opUser(['contractors.index', 'contractors.edit'], [$gov]));
 
     Livewire::test(Index::class)
         ->call('askTransfer', $contractor->id)
-        ->set('transferOffice', (string) opOffice()->id)
+        ->set('transferOffice', (string) $elsewhere->id)
         ->set('transferDate', '2026-09-16')
+        ->call('transfer')
+        ->assertHasNoErrors();
+
+    expect($contractor->fresh()->currentAssignment->office_id)->toBe($elsewhere->id);
+
+    // ومقرٌّ من نوعٍ ليس به عمالة متعاقدة يُرفض ولو كان في محافظة المستخدم
+    $closed = Office::factory()->create([
+        'governorate_id' => $gov->id,
+        'type_id'        => App\Models\OfficeType::factory()->create(['has_contract_workers' => false])->id,
+    ]);
+
+    Livewire::test(Index::class)
+        ->call('askTransfer', $contractor->id)
+        ->set('transferOffice', (string) $closed->id)
+        ->set('transferDate', '2026-09-20')
         ->call('transfer')
         ->assertHasErrors('transferOffice');
 
-    expect($contractor->assignments()->count())->toBe(1);
+    expect($contractor->fresh()->currentAssignment->office_id)->toBe($elsewhere->id);
 });
 
 it('يتجاهل النقل إن لم يُفتح المودال', function () {
@@ -656,17 +677,22 @@ it('يرفض تاريخ عودةٍ لا يتجاوز نهاية آخر تسكي�
     expect($contractor->assignments()->count())->toBe(1);
 });
 
-it('يرفض إعادة تسكين مقرٍّ خارج النطاق، ومَن هو على رأس العمل', function () {
+it('يرفض إعادة تسكين مقرٍّ ليس به عمالة متعاقدة، ومَن هو على رأس العمل', function () {
     $gov      = Governorate::factory()->create();
     $archived = makeContractor(opOffice($gov), '2026-09-01', name: 'مؤرشف');
     $archived->assignments()->first()->update(['ended_on' => '2026-09-10', 'end_reason' => 'left']);
     $working  = makeContractor(opOffice($gov), '2026-09-01', name: 'قائم');
 
+    $closed = Office::factory()->create([
+        'governorate_id' => $gov->id,
+        'type_id'        => App\Models\OfficeType::factory()->create(['has_contract_workers' => false])->id,
+    ]);
+
     $this->actingAs(opUser(['contractors.index', 'contractors.edit'], [$gov]));
 
     Livewire::test(Index::class)
         ->call('askReassign', $archived->id)
-        ->set('reassignOffice', (string) opOffice()->id)   // محافظة أخرى
+        ->set('reassignOffice', (string) $closed->id)
         ->set('reassignDate', '2026-09-21')
         ->call('reassign')
         ->assertHasErrors('reassignOffice');
@@ -768,16 +794,74 @@ it('يفتح مودالُ إعادة التسكين على محافظة آخر �
         ->assertSet('reassignOffice', '');
 });
 
-it('لا تسرّب قائمةُ مقرات المودال ما هو خارج النطاق', function () {
-    $mine    = Governorate::factory()->create();
+it('تفتح قائمةُ مقرات المودال على المحافظات كلها وتُخفي ما بلا عمالة متعاقدة', function () {
+    $mine       = Governorate::factory()->create();
+    $others     = Governorate::factory()->create();
     $contractor = makeContractor(opOffice($mine), '2026-09-01');
-    Office::factory()->create(['name' => 'مقر خارج النطاق']);
+
+    $outside = Office::factory()->create(['governorate_id' => $others->id, 'name' => 'مقر محافظة أخرى']);
+    $closed  = Office::factory()->create([
+        'governorate_id' => $others->id,
+        'name'           => 'استراحة مغلقة',
+        'type_id'        => App\Models\OfficeType::factory()->create(['has_contract_workers' => false])->id,
+    ]);
 
     $this->actingAs(opUser(['contractors.index', 'contractors.edit'], [$mine]));
 
-    $component = Livewire::test(Index::class)->call('askTransfer', $contractor->id)
+    $component = Livewire::test(Index::class)
+        ->call('askTransfer', $contractor->id)
+        ->set('transferGovernorate', (string) $others->id);
+
+    $names = $component->viewData('transferOffices')->pluck('name')->all();
+
+    expect($names)->toContain($outside->name)
+        ->and($names)->not->toContain($closed->name)
+        // ومحافظات المودال كلها لا محافظات المستخدم
+        ->and($component->viewData('modalGovernorates')->pluck('id')->all())
+        ->toContain($others->id);
+});
+
+it('لا تُحمَّل مقرات المودال قبل اختيار محافظة', function () {
+    // ⚠️ القائمة مفتوحة على الجمهورية (أكثر من ألف مقر)، وتحميلها في كل عرضٍ
+    //    للشاشة تكلفةٌ بلا فائدة — ومنسدلةٌ بألف خيار لا تُستعمل أصلاً.
+    $mine       = Governorate::factory()->create();
+    $contractor = makeContractor(opOffice($mine), '2026-09-01');
+
+    $this->actingAs(opUser(['contractors.index', 'contractors.edit'], [$mine]));
+
+    $component = Livewire::test(Index::class)
+        ->call('askTransfer', $contractor->id)
         ->set('transferGovernorate', '');
 
-    expect($component->viewData('transferOffices')->pluck('name')->all())
-        ->not->toContain('مقر خارج النطاق');
+    expect($component->viewData('transferOffices'))->toBeEmpty();
+});
+
+it('ترفض الإضافةُ مقراً ليس به عمالة متعاقدة ولا تعرضه في منسدلتها', function () {
+    // ⚠️ الحارس في الإجراء لا في المنسدلة وحدها: المعرّف يصل من العميل بلا منسدلة.
+    $gov    = Governorate::factory()->create();
+    $closed = Office::factory()->create([
+        'governorate_id' => $gov->id,
+        'name'           => 'استراحة مغلقة',
+        'type_id'        => App\Models\OfficeType::factory()->create(['has_contract_workers' => false])->id,
+    ]);
+    $open = opOffice($gov);
+
+    $this->actingAs(opUser(['contractors.index', 'contractors.create'], [$gov]));
+
+    $component = Livewire::test(Create::class)->set('governorate', (string) $gov->id);
+
+    // المنسدلة تعرض ما تُسكَّن به عمالة وحده
+    expect($component->viewData('offices')->pluck('name')->all())
+        ->toContain($open->name)
+        ->not->toContain($closed->name);
+
+    // والحفظ يرفض المعرّف المدسوس
+    $component
+        ->set('name', 'محاولة على مقر مغلق')
+        ->set('office', (string) $closed->id)
+        ->set('started_on', '2026-09-01')
+        ->call('save')
+        ->assertHasErrors('office');
+
+    expect(Contractor::where('name', 'محاولة على مقر مغلق')->exists())->toBeFalse();
 });

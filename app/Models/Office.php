@@ -101,6 +101,23 @@ class Office extends Model
         return $query->whereHas('officeType', fn ($q) => $q->where('is_public', true));
     }
 
+    /**
+     * المقارّ التي بها عمالة متعاقدة — نوعها يقبل تسكين العاملين.
+     *
+     * تُستبعد بها أنواعٌ ليست مقارَّ عمل (استراحة · تحت الإنشاء · معلَّق بقرار ·
+     * منتهي العمل به · غير مستغل · أراضٍ) حين يُسأل المستخدم «أين يعمل هذا الشخص؟».
+     *
+     * ⚠️ **للاختيار لا للعرض**: المقر الذي لا عمالة متعاقدة به يبقى في شاشة المقرات وتقاريره
+     *    وإحصائياته كما هو، ويبقى ظاهراً على مَن سبق تسكينه فيه — إخفاؤه من
+     *    السجلّ يُخفي تاريخاً صحيحاً.
+     * ⚠️ ونوعٌ بلا صفٍّ في `office_types` (`type_id` فارغ) لا يمرّ — النوع
+     *    مجهول، والمجهول لا تُفترض فيه عمالة.
+     */
+    public function scopeWithContractWorkers($query)
+    {
+        return $query->whereHas('officeType', fn ($q) => $q->where('has_contract_workers', true));
+    }
+
     public function locationDescription(): BelongsTo
     {
         return $this->belongsTo(LocationDescription::class, 'location_description_id');

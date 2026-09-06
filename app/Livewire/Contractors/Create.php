@@ -102,7 +102,7 @@ class Create extends Component
         }
 
         // ⚠️ المقر يصل من العميل — يُفحص على النطاق، وإلا سُكِّن مدخلٌ في محافظةٍ ليست له
-        if (! ContractorScope::allowsOffice((int) $this->office)) {
+        if (! ContractorScope::allowsAssignment((int) $this->office)) {
             $this->addError('office', __('home.ct_worker_office_out_of_scope'));
 
             return;
@@ -127,7 +127,8 @@ class Create extends Component
 
         return view('livewire.contractors.create', [
             'governorates' => ContractorScope::governorateOptions(),
-            'offices'      => ContractorScope::officeOptions($governorateId),
+            // الشغّالة وحدها: الاستراحة وتحت الإنشاء والمعلَّق ليست مقارَّ عمل
+            'offices'      => ContractorScope::assignableOffices($governorateId),
             // المعطَّلة تختفي من الإضافة وتبقى على أصحابها — ومع صفة المعروض لئلا تختفي عند التعديل
             'professions'  => Profession::query()
                 ->where(fn ($q) => $q->where('is_active', true)->orWhere('id', $this->contractor?->profession_id))

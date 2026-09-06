@@ -11,7 +11,11 @@ class OfficeType extends Model
 
     protected $table = 'office_types';
 
-    protected $fillable = ['name', 'is_public'];
+    protected $fillable = ['name', 'is_public', 'has_contract_workers'];
 
-    protected $casts = ['is_public' => 'boolean'];
+    protected $casts = [
+        'is_public'      => 'boolean',
+        // هل هذا النوع مقرُّ عملٍ أصلاً؟ (استراحة · تحت الإنشاء · معلَّق · منتهٍ · أراضٍ = لا)
+        'has_contract_workers' => 'boolean',
+    ];
 }

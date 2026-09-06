@@ -21,6 +21,9 @@ class Index extends Component
     /** فلتر الظهور للمواطن: '' الكل | 'yes' ظاهر | 'no' غير ظاهر */
     public string $publicFilter = '';
 
+    /** فلتر العمالة المتعاقدة: '' الكل | 'yes' به عمالة | 'no' بلا عمالة */
+    public string $workersFilter = '';
+
     public bool $showDelete = false;
     public ?int $deletingId = null;
     public string $deletingLabel = '';
@@ -31,6 +34,11 @@ class Index extends Component
     }
 
     public function updatingPublicFilter(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatingWorkersFilter(): void
     {
         $this->resetPage();
     }
@@ -60,6 +68,7 @@ class Index extends Component
             'officeTypes'  => OfficeType::query()
                 ->when($this->search, fn($q) => $q->where('name', 'like', "%{$this->search}%"))
                 ->when($this->publicFilter !== '', fn($q) => $q->where('is_public', $this->publicFilter === 'yes'))
+                ->when($this->workersFilter !== '', fn($q) => $q->where('has_contract_workers', $this->workersFilter === 'yes'))
                 ->orderBy('name')
                 ->paginate(15),
             'isSuperAdmin' => Auth::user()?->can('offices.settings'),

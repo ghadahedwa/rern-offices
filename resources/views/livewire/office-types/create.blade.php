@@ -23,6 +23,15 @@
             </div>
 
             <label class="flex items-start gap-3 cursor-pointer">
+                <input type="checkbox" wire:model="has_contract_workers"
+                       class="mt-0.5 w-4 h-4 rounded border-zinc-300 dark:border-zinc-600 text-[#c9a847] focus:ring-[#c9a847]" />
+                <span>
+                    <span class="block text-sm font-medium text-zinc-700 dark:text-zinc-300">{{ __('home.office_type_has_workers') }}</span>
+                    <span class="block text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">{{ __('home.office_type_has_workers_hint') }}</span>
+                </span>
+            </label>
+
+            <label class="flex items-start gap-3 cursor-pointer">
                 <input type="checkbox" wire:model="is_public"
                        class="mt-0.5 w-4 h-4 rounded border-zinc-300 dark:border-zinc-600 text-[#c9a847] focus:ring-[#c9a847]" />
                 <span>

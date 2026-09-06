@@ -101,6 +101,58 @@ class ContractorScope
         return self::applyToContractors(Contractor::whereKey($id), $user)->exists();
     }
 
+    /**
+     * هل يصلح هذا المقر لتسكين عامل؟ — الحارس الفعلي قبل كل حفظ.
+     *
+     * ⚠️ شرطان لا شرط: **النوع تُسكَّن به عمالة متعاقدة** دائماً، **والنطاق** حين يكون الفعل مقيَّداً
+     *    به (الإضافة). والنقل وإعادة التسكين مفتوحان على الجمهورية بقرار العميلة
+     *    (2026-09-07): العامل يُنقل خارج محافظات المستخدم، ويبقى مرئياً له لأن
+     *    له تسكيناً سابقاً في نطاقه.
+     */
+    public static function allowsAssignment(?int $officeId, bool $withinScope = true, ?Authenticatable $user = null): bool
+    {
+        if ($officeId === null) {
+            return false;
+        }
+
+        $operational = Office::whereKey($officeId)->withContractWorkers()->exists();
+
+        if (! $operational) {
+            return false;
+        }
+
+        return $withinScope ? self::allowsOffice($officeId, $user) : true;
+    }
+
+    /**
+     * مقرات منسدلات التسكين — **ما تُسكَّن به عمالة متعاقدة وحده**.
+     *
+     * ⚠️ منفصلة عن `officeOptions()` عمداً: تلك تخدم **فلتر الشاشة وقالب
+     *    الاستيراد**، وهما يعرضان ما هو مسجَّل فعلاً لا ما يصلح للتسكين. وتضييق
+     *    قالب الاستيراد كان يجعل مقراً مكتوباً في ملفٍ موزَّع سلفاً «غير معروف».
+     */
+    public static function assignableOffices(?int $governorateId = null, bool $withinScope = true, ?Authenticatable $user = null)
+    {
+        $ids = self::governorateIds($user);
+
+        return Office::query()
+            ->withContractWorkers()
+            ->when($withinScope && $ids !== null, fn ($q) => $q->whereIn('governorate_id', $ids ?: [0]))
+            ->when($governorateId, fn ($q) => $q->where('governorate_id', $governorateId))
+            ->orderBy('name')
+            ->get(['id', 'name', 'governorate_id'])
+            ->each(fn (Office $office) => $office->setAttribute('short_name', ArabicText::shorten($office->name)));
+    }
+
+    /** محافظات منسدلات التسكين — كلها حين يكون الفعل غير مقيَّد بالنطاق. */
+    public static function assignableGovernorates(bool $withinScope = true, ?Authenticatable $user = null)
+    {
+        if ($withinScope) {
+            return self::governorateOptions($user);
+        }
+
+        return Governorate::query()->orderBy('order')->orderBy('name')->get(['id', 'name']);
+    }
     /** محافظات المنسدلة — مقصورة على النطاق. */
     public static function governorateOptions(?Authenticatable $user = null)
     {

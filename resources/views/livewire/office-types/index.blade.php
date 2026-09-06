@@ -25,6 +25,12 @@
             <option value="yes">{{ __('home.public_visible') }}</option>
             <option value="no">{{ __('home.public_hidden') }}</option>
         </select>
+        <select wire:model.live="workersFilter"
+                class="border border-zinc-300 dark:border-zinc-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-[#c9a847]">
+            <option value="">— {{ __('home.office_type_workers_filter') }} —</option>
+            <option value="yes">{{ __('home.office_type_workers_yes') }}</option>
+            <option value="no">{{ __('home.office_type_workers_no') }}</option>
+        </select>
     </div>
 
     {{-- Table --}}
@@ -45,6 +51,11 @@
                         <td class="px-4 py-3 text-zinc-500">{{ $officeTypes->firstItem() + $loop->index }}</td>
                         <td class="px-4 py-3 font-medium text-zinc-800 dark:text-zinc-100">
                             {{ $type->name }}
+                            @unless($type->has_contract_workers)
+                                <span class="inline-flex items-center ms-2 text-[11px] font-medium px-2 py-0.5 rounded-full bg-zinc-200 dark:bg-zinc-700 text-zinc-600 dark:text-zinc-300">
+                                    {{ __('home.office_type_no_workers_badge') }}
+                                </span>
+                            @endunless
                             @if($type->is_public)
                                 <span class="inline-flex items-center ms-2 text-[11px] font-medium px-2 py-0.5 rounded-full bg-[#c9a847]/15 text-[#b8962e] dark:text-[#d8b856]">
                                     {{ __('home.office_type_public_badge') }}

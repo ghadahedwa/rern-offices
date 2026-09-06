@@ -221,8 +221,9 @@ class Index extends Component
             'transferDate'   => ['required', 'date'],
         ]);
 
-        // ⚠️ المقر يصل من العميل — فيُفحص على النطاق لا على وجوده فقط
-        if (! ContractorScope::allowsOffice((int) $this->transferOffice)) {
+        // ⚠️ المقر يصل من العميل — فيُفحص أنه مقرٌّ شغّال. والنقل غير مقيَّد
+        //    بمحافظات المستخدم (قرار العميلة): العامل يُنقل إلى أي محافظة.
+        if (! ContractorScope::allowsAssignment((int) $this->transferOffice, withinScope: false)) {
             $this->addError('transferOffice', __('home.ct_worker_office_out_of_scope'));
 
             return;
@@ -343,7 +344,7 @@ class Index extends Component
             'reassignDate'   => ['required', 'date'],
         ]);
 
-        if (! ContractorScope::allowsOffice((int) $this->reassignOffice)) {
+        if (! ContractorScope::allowsAssignment((int) $this->reassignOffice, withinScope: false)) {
             $this->addError('reassignOffice', __('home.ct_worker_office_out_of_scope'));
 
             return;
@@ -421,6 +422,16 @@ class Index extends Component
         return ContractorScope::applyToContractors(Contractor::whereKey($id))->firstOrFail();
     }
 
+    /** مقرات مودالي النقل وإعادة التسكين — فارغة حتى تُختار محافظة. */
+    private function modalOffices(string $governorate)
+    {
+        if (! ctype_digit($governorate)) {
+            return collect();
+        }
+
+        return ContractorScope::assignableOffices((int) $governorate, withinScope: false);
+    }
+
     public function render()
     {
         $governorateId = ctype_digit($this->governorate) ? (int) $this->governorate : null;
@@ -478,12 +489,15 @@ class Index extends Component
             'professions'  => Profession::ordered()->get(['id', 'name']),
             // ⚠️ قوائم المودالين مستقلة عن فلتر الشاشة: النقل قد يكون إلى محافظة
             //    أخرى داخل النطاق، وفلترُ الشاشة سؤالٌ آخر (مَن أعرض الآن؟).
-            'transferOffices' => ContractorScope::officeOptions(
-                ctype_digit($this->transferGovernorate) ? (int) $this->transferGovernorate : null
-            ),
-            'reassignOffices' => ContractorScope::officeOptions(
-                ctype_digit($this->reassignGovernorate) ? (int) $this->reassignGovernorate : null
-            ),
+            // ⚠️ المقرات لا تُحمَّل قبل اختيار المحافظة: القائمة مفتوحة على الجمهورية
+            //    (أكثر من ألف مقر)، وتحميلها في كل عرضٍ للشاشة تكلفةٌ بلا فائدة —
+            //    ومنسدلةٌ بألف خيار لا تُستعمل أصلاً. والمودال يُفتح على محافظة
+            //    المقر الحالي فتكون القائمة جاهزة عند فتحه.
+            'transferOffices' => $this->modalOffices($this->transferGovernorate),
+            'reassignOffices' => $this->modalOffices($this->reassignGovernorate),
+            // ⚠️ محافظات المودالين كلها لا محافظات المستخدم — والنقل خارج نطاقه
+            //    مقصود، ويبقى العامل مرئياً له لأن له تسكيناً سابقاً في نطاقه.
+            'modalGovernorates' => ContractorScope::assignableGovernorates(withinScope: false),
         ]);
     }
 }

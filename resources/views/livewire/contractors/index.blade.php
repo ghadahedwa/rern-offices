@@ -208,7 +208,7 @@
                     <select wire:model.live="transferGovernorate"
                             class="border border-zinc-300 dark:border-zinc-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-[#c9a847]">
                         <option value="">{{ __('home.ct_worker_all_governorates') }}</option>
-                        @foreach($governorates as $gov)
+                        @foreach($modalGovernorates as $gov)
                             <option value="{{ $gov->id }}">{{ $gov->name }}</option>
                         @endforeach
                     </select>
@@ -302,7 +302,7 @@
                     <select wire:model.live="reassignGovernorate"
                             class="border border-zinc-300 dark:border-zinc-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-[#c9a847]">
                         <option value="">{{ __('home.ct_worker_all_governorates') }}</option>
-                        @foreach($governorates as $gov)
+                        @foreach($modalGovernorates as $gov)
                             <option value="{{ $gov->id }}">{{ $gov->name }}</option>
                         @endforeach
                     </select>
