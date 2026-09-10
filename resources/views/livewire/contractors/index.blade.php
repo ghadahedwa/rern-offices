@@ -74,7 +74,7 @@
                     <th class="px-4 py-3 font-medium w-[4%] hidden 2xl:table-cell">#</th>
                     @include('livewire.partials.sortable-th', ['column' => 'name', 'label' => __('home.ct_worker_name'), 'thClass' => 'w-[30%]'])
                     <th class="px-4 py-3 font-medium w-[32%]">{{ __('home.ct_worker_current_office') }}</th>
-                    <th class="px-4 py-3 font-medium w-[12%] hidden xl:table-cell">{{ __('home.ct_worker_governorate') }}</th>
+                    @include('livewire.partials.sortable-th', ['column' => 'governorate', 'label' => __('home.ct_worker_governorate'), 'thClass' => 'w-[12%] hidden xl:table-cell'])
                     <th class="px-4 py-3 font-medium w-[22%]">{{ __('home.actions') }}</th>
                 </tr>
             </thead>

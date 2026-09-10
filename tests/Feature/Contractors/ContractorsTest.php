@@ -571,6 +571,79 @@ it('يسقط عمود ترتيبٍ خارج القائمة البيضاء إلى
     expect($component->viewData('contractors')->pluck('name')->all())->toBe(['أحمد', 'ياسر']);
 });
 
+it('يرتّب افتراضياً بالمحافظة ثم الاسم', function () {
+    // ⚠️ الأبجدي وحده يبعثر عاملي المحافظة الواحدة — والترتيب هنا ترتيب المصلحة
+    //    (`governorates.order`) لا أبجديّ أسماء المحافظات.
+    $second = Governorate::factory()->create(['order' => 2]);
+    $first  = Governorate::factory()->create(['order' => 1]);
+
+    makeContractor(opOffice($second), name: 'أحمد');   // الأول أبجدياً، والثاني محافظةً
+    makeContractor(opOffice($first), name: 'ياسر');
+
+    $this->actingAs(opUser(['contractors.index'], [$first, $second]));
+
+    expect(Livewire::test(Index::class)->viewData('contractors')->pluck('name')->all())
+        ->toBe(['ياسر', 'أحمد']);
+});
+
+it('يضع المؤرشَف في آخر الترتيب الافتراضي لا أوّله', function () {
+    // ⚠️ عمود المحافظة المحسوب `NULL` لمن لا تسكين مفتوح له، وترتيبه الطبيعي
+    //    يقدّمه — فيتصدّر فلترَ «الكل» مَن لا محافظة له.
+    $gov    = Governorate::factory()->create(['order' => 1]);
+    $office = opOffice($gov);
+
+    makeContractor($office, name: 'ياسر');
+    $archived = makeContractor($office, name: 'أحمد');
+    $archived->assignments()->update(['ended_on' => '2026-09-05']);
+
+    $this->actingAs(opUser(['contractors.index'], [$gov]));
+
+    expect(Livewire::test(Index::class)->set('status', 'all')
+        ->viewData('contractors')->pluck('name')->all())
+        ->toBe(['ياسر', 'أحمد']);
+});
+
+it('يرتّب بعمود المحافظة ويعكسه', function () {
+    $second = Governorate::factory()->create(['order' => 2]);
+    $first  = Governorate::factory()->create(['order' => 1]);
+
+    makeContractor(opOffice($second), name: 'أحمد');
+    makeContractor(opOffice($first), name: 'ياسر');
+
+    $this->actingAs(opUser(['contractors.index'], [$first, $second]));
+
+    $component = Livewire::test(Index::class);
+    $names     = fn () => $component->viewData('contractors')->pluck('name')->all();
+
+    $component->call('sort', 'governorate');
+    expect($names())->toBe(['ياسر', 'أحمد']);
+
+    $component->call('sort', 'governorate');           // تنازلي
+    expect($names())->toBe(['أحمد', 'ياسر']);
+});
+
+it('يبقي الأسماء أبجدية داخل القيمة المتكرّرة عند الترتيب بالمحافظة أو بتاريخ الالتحاق', function () {
+    // ⚠️ المحافظة تتكرّر على مئات الصفوف، وتاريخ الالتحاق يتكرّر على دفعة استيرادٍ
+    //    كاملة — فبلا الاسم عموداً ثانياً تُعرض كلها بترتيب الإدخال (المعرّف)
+    //    فتبدو للمستخدم بلا ترتيب. (بلّغت المستخدمة بالعطل من الشاشة نفسها.)
+    $gov    = Governorate::factory()->create(['order' => 1]);
+    $office = opOffice($gov);
+
+    makeContractor($office, name: 'ياسر');   // أُدخل أولاً فمعرّفه أصغر
+    makeContractor($office, name: 'أحمد');
+
+    $this->actingAs(opUser(['contractors.index'], [$gov]));
+
+    $component = Livewire::test(Index::class);
+    $names     = fn () => $component->viewData('contractors')->pluck('name')->all();
+
+    $component->call('sort', 'governorate');
+    expect($names())->toBe(['أحمد', 'ياسر']);
+
+    $component->call('sort', 'started_on');
+    expect($names())->toBe(['أحمد', 'ياسر']);
+});
+
 it('يمسح زرُّ المسح الفلاتر والترتيب معاً', function () {
     $gov = Governorate::factory()->create();
     makeContractor(opOffice($gov), name: 'أحمد');

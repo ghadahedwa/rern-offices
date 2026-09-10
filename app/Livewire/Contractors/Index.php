@@ -141,22 +141,36 @@ class Index extends Component
         $this->reassignOffice = '';
     }
 
-    /** الترتيب الافتراضي: أبجدي بالاسم — القائمة تُقرأ بحثاً عن شخص. */
+    /**
+     * الترتيب الافتراضي: المحافظة ثم الاسم — القائمة تُقرأ بمنطق التوزيع الإداري
+     * (مَن عندي في كل محافظة)، والأبجديّ وحده يبعثر عاملي المحافظة الواحدة على
+     * صفحاتٍ متباعدة. ومَن أراد الأبجدي المطلق يضغط رأس عمود «اسم العامل».
+     *
+     * ⚠️ والمؤرشَفون (بلا تسكين مفتوح) في الآخر لا في الأول: عمودهم المحسوب
+     *    `NULL` وترتيبه الطبيعي يقدّمه، فيتصدّر فلترَ «الكل» مَن لا محافظة له.
+     */
     protected function defaultOrder(Builder $query): Builder
     {
-        return $query->orderBy('contractors.name');
+        return $query->orderByRaw('current_governorate IS NULL')
+            ->orderBy('current_governorate')
+            ->orderBy('contractors.name');
     }
 
     /**
      * ⚠️ قائمة بيضاء: اسم العمود يأتي من الرابط ولا يُمرَّر لـorderBy قبل المرور بها.
-     *    و`current_started_on` عمودٌ محسوب في render (تاريخ بدء التسكين المفتوح).
+     *    و`current_started_on`/`current_governorate` عمودان محسوبان في render
+     *    (من التسكين المفتوح وحده — كما يعرض الجدول تماماً).
      */
     protected function sortableColumns(): array
     {
         return [
-            'name'       => 'contractors.name',
-            'phone'      => 'contractors.phone',
-            'started_on' => 'current_started_on',
+            'name'        => 'contractors.name',
+            'phone'       => 'contractors.phone',
+            // ⚠️ الاسم عمودٌ ثانٍ في كليهما لا مُرجِّحاً بالمعرّف: المحافظة تتكرّر
+            //    على مئة صفّ وتاريخ الالتحاق يتكرّر على دفعة استيرادٍ كاملة، فبلا
+            //    الاسم تُعرض المئة بترتيب الإدخال — تبدو للمستخدم بلا ترتيب أصلاً.
+            'started_on'  => ['current_started_on', 'contractors.name'],
+            'governorate' => ['current_governorate', 'contractors.name'],
         ];
     }
 
@@ -447,9 +461,22 @@ class Index extends Component
             ->orderByDesc('started_on')
             ->limit(1);
 
+        // المحافظة كعمودٍ محسوب كذلك — الترتيب الافتراضي عليها.
+        // ⚠️ ترتيبها بعمود `governorates.order` لا بالاسم: هو ترتيب المصلحة نفسها
+        //    (وبه تُبنى كل منسدلات المحافظات)، والأبجدي يخالفه.
+        $currentGovernorate = ContractorAssignment::query()
+            ->select('governorates.order')
+            ->join('offices', 'offices.id', '=', 'contractor_assignments.office_id')
+            ->join('governorates', 'governorates.id', '=', 'offices.governorate_id')
+            ->whereColumn('contractor_assignments.contractor_id', 'contractors.id')
+            ->whereNull('contractor_assignments.ended_on')
+            ->orderByDesc('contractor_assignments.started_on')
+            ->limit(1);
+
         $contractors = ContractorScope::applyToContractors(Contractor::query())
             ->select('contractors.*')
             ->selectSub($currentStart, 'current_started_on')
+            ->selectSub($currentGovernorate, 'current_governorate')
             ->with(['profession', 'currentAssignment.office.governorate'])
             ->when($this->search, fn ($q) => $q->where(function ($inner) {
                 $inner->whereRaw(
