@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\HasFeedbackIdentity;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -9,7 +10,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class FeedbackRating extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory, HasFeedbackIdentity, SoftDeletes;
 
     /**
      * خيارات مدة الانتظار ومحاور التقييم — مصدر الحقيقة هنا (بيانات، لا واجهة)،
@@ -63,7 +64,7 @@ class FeedbackRating extends Model
 
     protected $fillable = [
         'governorate_id', 'office_id',
-        'name', 'national_id', 'phone',
+        'name', 'national_id', 'phone', 'device_token',
         'wait_time',
         'rating_speed', 'rating_staff', 'rating_queue',
         'rating_cleanliness', 'rating_clarity', 'rating_accessibility',

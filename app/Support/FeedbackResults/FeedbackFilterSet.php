@@ -2,6 +2,7 @@
 
 namespace App\Support\FeedbackResults;
 
+use App\Models\Concerns\HasFeedbackIdentity;
 use App\Models\Governorate;
 use App\Models\Office;
 use Carbon\CarbonImmutable;
@@ -10,7 +11,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 
 /**
- * فلاتر شاشات نتائج رأي المواطن (محافظة / مقر / فترة) ككائن مستقل.
+ * فلاتر شاشات نتائج رأي المواطن (محافظة / مقر / فترة / الهوية) ككائن مستقل.
  *
  * سبب وجوده: الشاشة مكوّن Livewire والتصدير كنترولر خارجه، ولو بنى كلٌّ منهما
  * الفلترة بنفسه لخرج الملف بأرقام غير التي على الشاشة. الكائن ده هو التطبيق
@@ -18,12 +19,21 @@ use Illuminate\Http\Request;
  */
 final class FeedbackFilterSet
 {
+    /** قيم فلتر الهوية — قائمة بيضاء: القيمة تصل من الرابط. */
+    public const IDENTITIES = ['identified', 'anonymous'];
+
+    public readonly string $identity;
+
     public function __construct(
         public readonly string $governorateId = '',
         public readonly string $officeId = '',
         public readonly string $from = '',
         public readonly string $to = '',
-    ) {}
+        string $identity = '',
+    ) {
+        // قيمة مجهولة تُهمَل ولا تُمرَّر — تمريرها كان يُخرج شاشة فارغة بلا سبب ظاهر
+        $this->identity = in_array($identity, self::IDENTITIES, true) ? $identity : '';
+    }
 
     /**
      * أسماء الـ query string هي نفسها أسماء الـ #[Url] في WithFeedbackFilters،
@@ -36,6 +46,7 @@ final class FeedbackFilterSet
             self::param($request, 'office'),
             self::param($request, 'from'),
             self::param($request, 'to'),
+            self::param($request, 'identity'),
         );
     }
 
@@ -58,7 +69,19 @@ final class FeedbackFilterSet
             ->when($this->governorateId !== '', fn ($q) => $governorateFilter
                 ? $governorateFilter($q)
                 : $q->where('governorate_id', $this->governorateId))
-            ->when($this->officeId !== '', fn ($q) => $q->where('office_id', $this->officeId));
+            ->when($this->officeId !== '', fn ($q) => $q->where('office_id', $this->officeId))
+            ->when($this->identity !== '' && $this->supportsIdentity($query), fn ($q) => $this->identity === 'anonymous'
+                ? $q->anonymous()
+                : $q->identified());
+    }
+
+    /**
+     * فلتر الهوية للتقييمات والمقترحات وحدهما (تعريف «مجهول» على الموديل في
+     * HasFeedbackIdentity). المحاولات المرفوضة خارجه: الرفض لا يحمل رأياً يُصنَّف.
+     */
+    private function supportsIdentity(Builder $query): bool
+    {
+        return in_array(HasFeedbackIdentity::class, class_uses_recursive($query->getModel()), true);
     }
 
     /**
@@ -104,7 +127,7 @@ final class FeedbackFilterSet
     public function isActive(): bool
     {
         return $this->governorateId !== '' || $this->officeId !== ''
-            || $this->from !== '' || $this->to !== '';
+            || $this->from !== '' || $this->to !== '' || $this->identity !== '';
     }
 
     /** الفلاتر كـ query string لبناء رابط التصدير. */
@@ -114,7 +137,8 @@ final class FeedbackFilterSet
             'gov'    => $this->governorateId,
             'office' => $this->officeId,
             'from'   => $this->from,
-            'to'     => $this->to,
+            'to'       => $this->to,
+            'identity' => $this->identity,
         ], fn ($v) => $v !== '');
     }
 
@@ -134,6 +158,10 @@ final class FeedbackFilterSet
 
         if ($this->officeId !== '') {
             $parts[] = [__('home.fr_office'), Office::find($this->officeId)?->name ?? __('home.fr_deleted_office')];
+        }
+
+        if ($this->identity !== '') {
+            $parts[] = [__('home.fr_identity'), __('home.fr_identity_'.$this->identity)];
         }
 
         $parts[] = [__('home.fr_export_period'), $this->describePeriod()];

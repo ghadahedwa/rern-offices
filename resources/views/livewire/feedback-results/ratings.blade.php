@@ -70,10 +70,7 @@
                             <span class="block text-xs text-zinc-400 truncate">{{ $rating->governorate?->name ?? '—' }}</span>
                         </td>
                         <td class="px-3 py-3">
-                            <span class="block font-medium text-zinc-800 dark:text-zinc-100 truncate"
-                                  title="{{ $rating->name }}">{{ $rating->name }}</span>
-                            <span class="block text-xs text-zinc-400">{{ $rating->national_id }}</span>
-                            <span class="block text-xs text-zinc-400">{{ $rating->phone }}</span>
+                            @include('livewire.feedback-results.includes.citizen-cell', ['row' => $rating])
                         </td>
                         <td class="px-3 py-3 text-zinc-600 dark:text-zinc-300 truncate hidden xl:table-cell"
                             title="{{ $waitTimes[$rating->wait_time] ?? $rating->wait_time }}">

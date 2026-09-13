@@ -435,17 +435,30 @@ resources/views/livewire/offices/
 `feedback_ratings` · `feedback_suggestions` · `suggestion_domains` · `suggestion_topics` · `feedback_suggestion_topic` (pivot) · `feedback_rejected_attempts`. FK للمقر/المحافظة `nullOnDelete` (حفظ التاريخ). `SuggestionCatalogSeeder` يزرع 5 مجالات/20 عنوان من `Suggestion::DOMAINS` (idempotent، في DatabaseSeeder).
 
 ### بوابة الحماية (Anti-abuse)
-- `config/feedback.php`: `window_days=7` · `ip_max_per_minute=10` · `rejected_retention_days=30`.
-- `App\Services\FeedbackGate`: `duplicateRetryDate` (يفحص **الرقم القومي أو الهاتف** + المقر خلال المدة — الهاتف معرّف شخصي، لكل نوع منفصل) · `ipThrottled`/`hitIp` (RateLimiter نافذة 60ث، صمّام ضد البوت فقط) · `logRejection`.
-- Trait `App\Livewire\Feedback\Concerns\InteractsWithFeedbackGate`: honeypot (حقل `website` مخفي visually-hidden) · `evaluateGate()` فحص تفاعلي (يحجب قبل البنود؛ **يسجّل duplicate_window مرة واحدة عند دخول الحجب فقط** لا مع كل re-check) · `submit()` (honeypot→validate→IP→تكرار→حفظ في transaction) · `formatArabicDate` · الانتقال بين الفورمين (تحت).
+- `config/feedback.php`: `window_days=7` · `ip_max_per_minute=10` · **`ip_max_per_day_per_office=30`** · **`ip_cluster_alert=10`** · `rejected_retention_days=30`.
+- `App\Services\FeedbackGate`: `duplicateRetryDate` (يفحص **الرقم القومي أو الهاتف أو بصمة الجهاز** + المقر خلال المدة — لكل نوع منفصل) · `ipThrottled`/`hitIp` (RateLimiter نافذة 60ث، صمّام ضد البوت فقط) · **`officeIpCapExceeded`/`hitOfficeIpCap`** (نافذة يوم لكل IP+مقر) · `logRejection`.
+- Trait `App\Livewire\Feedback\Concerns\InteractsWithFeedbackGate`: honeypot (حقل `website` مخفي visually-hidden) · `evaluateGate()` فحص تفاعلي (يحجب قبل البنود؛ **يسجّل duplicate_window مرة واحدة عند دخول الحجب فقط** لا مع كل re-check) · `submit()` (honeypot→validate→IP دقيقة→**سقف IP اليومي للمقر**→تكرار→حفظ في transaction) · `identityAttributes()` (أعمدة الهوية + البصمة، مشتركة بين الفورمين) · `formatArabicDate` · الانتقال بين الفورمين (تحت).
 - المكوّن يوفّر `feedbackType()`/`persist()`؛ Suggestion يربط العناوين بـ `topics()->sync`. `showRating`/`showTopics` = `office_id && !gateBlocked`.
 - ⚠️ المشروع يستخدم **CarbonImmutable** — أي دالة ترجع تاريخ استخدم `CarbonInterface`.
+
+### الهوية الاختيارية وبصمة الجهاز ✅ (2026-09-14)
+**الاسم والرقم القومي والهاتف اختيارية** (قرار المستخدمة: مواطنون يريدون إخفاء هويتهم). ومنع التكرار انتقل من «مَن أنت» إلى «أي جهاز هذا»، والاستخدام **من هاتف المواطن الشخصي** لا جهاز مشترك:
+- **بصمة الجهاز** `App\Support\FeedbackDevice`: رمز عشوائي (32 hex) في كوكي `feedback_device` **مشفَّر** بمفتاح التطبيق، عمره سنة، ويُحفظ في عمود `device_token`. الحجب نفسه **٧ أيام لكل مقر ولكل نوع** — عمر الكوكي ليس مدة الحجب.
+- ⚠️ **البصمة تُقرأ من الطلب في كل مرة ولا تُحفظ في خاصية عامة** — خصائص Livewire تمرّ بالمتصفح فتُزوَّر.
+- ⚠️ **البصمة تُكتب على كل صف، المُعرَّف والمجهول معاً** — وإلا صار مَن أرسل باسمه اليوم يعيد الإرسال مجهولاً غداً من الهاتف نفسه.
+- ⚠️ **`duplicateRetryDate` بلا أي مفتاح ترجع null فوراً** — مجموعة `where` فارغة تطابق **كل** الصفوف، فيصير أول تقييم للمقر حاجزاً للجميع.
+- **السقف اليومي للـIP لكل مقر** (٣٠): السور حين تُمسح الكوكيز أو يُفتح متصفح آخر. حدّ خشن لا قفل — شركات المحمول تجمع آلاف المشتركين على IP واحد (CGNAT)، ولذلك الرقم مرتفع. ⚠️ **يسري على المُعرَّف أيضاً**: الهاتف غير موثَّق، واستثناء المُعرَّف كان يفتح الباب لمن يكتب هاتفاً مختلَقاً في كل مرة. يُحتسب الإرسال **الناجح** وحده، وتجاوزه سبب رفض `ip_daily_cap`.
+- **الحدود بصراحة:** متصفح آخر أو مسح الكوكيز أو التصفّح المتخفّي = بصمة جديدة. القفل يمنع **التكرار العادي** لا **التلاعب المصمَّم** (والقفل القديم بالرقم القومي كان يُتخطّى بتغيير خانة — الرقم غير موثَّق). التحقق الحقيقي الوحيد **OTP بالـSMS** مع تخزين بصمة HMAC للهاتف لا الرقم نفسه — **مؤجَّل** حتى تظهر حالة تلاعب فعلية (تكلفة رسائل + عزوف).
+- ⚠️ **لو صارت البوابة على جهاز مشترك** (تابلت على الشباك) فقفل البصمة **يحجب المواطن التالي** — يلزم حينها إعادة التفكير (نافذة بالساعات أو تعطيل البصمة لذلك الجهاز).
+- **«مجهول» = بلا رقم قومي وبلا هاتف** — الاسم وحده لا يُعرّف. التعريف الواحد في `App\Models\Concerns\HasFeedbackIdentity` (`scopeAnonymous`/`scopeIdentified`/`isAnonymous()`)، ويقرؤه الفلتر ومؤشر اللوحة وشارة الصف معاً.
+- هجرة `2026_09_14_000001`: الأعمدة الثلاثة `nullable` + `device_token` وفهرس `['device_token','office_id']` على الجدولين + `device_token` على المرفوضات. جُرِّبت ذهاباً وإياباً على sqlite (الـ`down` يملأ NULL بفراغ قبل إرجاع NOT NULL).
 
 ### سلامة المدخلات (لا تُضعِفها)
 الفورمان **عامان بلا auth**، فأي قيمة جاية من العميل غير موثوقة حتى لو الواجهة مابتسمحش بيها:
 - `office_id` يُتحقق منه بـ **`App\Rules\PublicFeedbackOffice`** (وليس `exists:offices,id`) — يمنع تعليق رأي مواطن على مقر من نوع غير عام عبر طلب متلاعَب فيه. `scopePublicFeedback` وحده يخصّ **العرض** فقط.
 - `governorate_id` **يُشتق من المقر** عبر `officeGovernorateId()` في الـ trait — لا يُحفظ كما أرسله العميل (وإلا فسد تجميع النتائج حسب المحافظة لاحقاً). **المقر هو مصدر الحقيقة.**
-- فهرس `['phone','office_id']` على جدولي التقييم/المقترحات: `duplicateRetryDate` يبحث `national_id OR phone` والاستعلام يتنفّذ أثناء الكتابة (`wire:model.live`).
+- فهارس `['national_id','office_id']` · `['phone','office_id']` · `['device_token','office_id']` على جدولي التقييم/المقترحات: `duplicateRetryDate` يبحث بالمفاتيح الموجودة `OR` والاستعلام يتنفّذ أثناء الكتابة (`wire:model.live`) ومع اختيار المقر.
+- الرقم القومي والهاتف يدخلان مفاتيح الفحص التفاعلي **مكتملين فقط** (`completeNationalId`/`completePhone`) — نصف رقم يطابق بالمصادفة رقماً آخر.
 
 ### الإظهار حسب النوع
 فلاج **`is_public` على `office_types`** (مش على المقر) — قابل للتعديل من شاشة إدارة الأنواع (checkbox + شارة "عام" + فلتر). الفورمان يعرضان مقرات الأنواع العامة فقط عبر `Office::scopePublicFeedback` (whereHas officeType is_public)، والمحافظات بلا مقرات عامة تُخفى. فلتر "الظهور للمواطن": toggle في شاشة المقرات (`public_only`)، select في شاشة الأنواع.
@@ -463,6 +476,7 @@ resources/views/livewire/offices/
 `php artisan test` — **١٠٩ اختبار، كلها ناجحة**. تشغيل اختبارات البوابة وحدها: `php artisan test tests/Feature/Feedback`.
 - `tests/Feature/Feedback/FeedbackGateTest.php` — منع التكرار (بالرقم القومي/الهاتف، انتهاء المدة، لكل مقر ولكل نوع)، تسجيل الرفض مرة واحدة، honeypot، حد الـ IP، `is_public`، نقل الهوية بـ `resume=1`.
 - `tests/Feature/Feedback/FeedbackValidationTest.php` — الرقم القومي بحالات رفضه الستة، صيغة الهاتف، سلامة المقر/المحافظة، أمر التنظيف.
+- `tests/Feature/Feedback/AnonymousFeedbackTest.php` (١٧) — الإرسال بلا هوية · **صفحتا الفورم تُصدران كوكي البصمة مع التحميل** (الباقي يحقن الكوكي فلا يكشف غيابه) · قفل البصمة (نفس الجهاز/جهاز آخر/انتهاء المدة/**مُعرَّف ثم مجهول**) · **حارس المفاتيح الفارغة** · الكوكي التالف · السقف اليومي (ولكل مقر، **وعلى المُعرَّف بهاتف مختلَق**) · فلتر الهوية وقائمته البيضاء · المجهول داخل المتوسطات ونسبته · مؤشرات التدقيق وحارسها. 📌 كُسِرت حراساته التسعة عمداً وتأكّد سقوطها.
 - factories في `database/factories/` لـ Governorate / OfficeType / Office / FeedbackRating / FeedbackSuggestion (state `->public()` لنوع ظاهر للمواطن). الموديلات المستخدَمة في الاختبارات تحتاج `HasFactory`.
 - **الاختبارات تعمل على sqlite في الذاكرة** (`phpunit.xml`) — لا تلمس قاعدة البيانات الحقيقية أبداً. لا تشغّلها على السيرفر.
 - ⚠️ **عند تعديل منطق البوابة شغّل الاختبارات قبل الـ push** — هي الحارس الوحيد لمنطق منع التكرار.
@@ -536,6 +550,13 @@ feedback-results.rejected      → /feedback-results/rejected     (RejectedAttem
 
 ### البحث
 البحث في التقييمات يشمل الاسم و**نص الملاحظة**، وفي المقترحات الاسم و**الاقتراح الحر وعناوين الكتالوج** — كلها عبر `ArabicText` (تطبيع الألف/الياء/التاء المربوطة). الرقم القومي والهاتف بحث نصي مباشر.
+
+### الهوية الاختيارية في النتائج (2026-09-14)
+- **الآراء المجهولة داخلة في كل المتوسطات والترتيب** (قرار المستخدمة) **مع تمييزها**: شارة «مجهول» في الصف (`includes/citizen-cell`) · فلتر «الهوية» (الكل/معرَّف/مجهول) في الفلاتر المشتركة · عمود «الهوية» في Excel دائماً (ليس بيانات شخصية) · «مجهول» مكان سطر الرقم والهاتف في الـPDF **بلا عمود جديد** (عرض جدول التقييمات مقيس).
+- فلتر الهوية جزء من **`FeedbackFilterSet`** (`?identity=`، قائمة بيضاء `IDENTITIES`) فيصل للشاشة والتصدير والـPDF واللوحة معاً. **يُطبَّق على الموديلين ذوي `HasFeedbackIdentity` وحدهما** — شاشة المرفوضات تخفيه (`showsIdentityFilter() = false`).
+- ⚠️ **مفتاح اللوحة `identityShare` لا `identity`** — المكوّن فيه خاصية عامة `$identity` (الفلتر)، وLivewire يمرّر الخصائص العامة للقالب فتطغى على مفتاح بنفس الاسم (٥٠٠ على اللوحة).
+- **اللوحة**: بطاقة «الآراء المجهولة» (النسبة مع عدّها) · و**«مؤشرات التدقيق»** (`DashboardReport::ipClusters`): خطوط IP جاء منها لمقر واحد `ip_cluster_alert` رأياً فأكثر، مع **عدد الأجهزة المختلفة** وأول/آخر إرسال. أجهزة ≈ عدد الآراء بأوقات متقاربة = مسح كوكيز متكرر. التلاعب لا يُمنع — **ينكشف**.
+- ⚠️ **مؤشرات التدقيق خلف `feedback.rejected`** (الـIP بيانات أمنية) **والحارس في `DashboardReport` لا في القالب** — نفس نمط ملخص المرفوضات، لأن اللوحة تُصدَّر من الدالة نفسها.
 
 ### قواعد حسابية لا تُكسر
 - **المحور السادس (ذوو الإعاقة) `nullable`** — المتوسط يُحسب على المجيبين فقط. في SQL نعتمد أن `AVG`/`COUNT` يتجاهلان NULL؛ وعلى مستوى الصف `FeedbackRating::criteriaAverage()`. احتسابه صفراً يبوّظ الرقم.

@@ -25,7 +25,13 @@ class RejectedAttempts extends Component
     use WithBulkDelete, WithFeedbackExport, WithFeedbackFilters, WithPagination;
 
     /** أسباب الرفض كما يسجّلها FeedbackGate/الـ trait */
-    public const REASONS = ['duplicate_window', 'rate_limit', 'honeypot'];
+    public const REASONS = ['duplicate_window', 'ip_daily_cap', 'rate_limit', 'honeypot'];
+
+    /** المحاولة المرفوضة لا تحمل رأياً يُصنَّف معرَّفاً أو مجهولاً. */
+    public function showsIdentityFilter(): bool
+    {
+        return false;
+    }
 
     #[Url(as: 'q', except: '')]
     public string $search = '';

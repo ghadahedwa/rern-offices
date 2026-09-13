@@ -38,7 +38,8 @@ class FeedbackSuggestionsSheet implements FromQuery, ShouldAutoSize, WithEvents,
     public function headings(): array
     {
         return array_merge(
-            [__('home.fr_date'), __('home.fr_governorate'), __('home.fr_office')],
+            // عمود الهوية ليس بيانات شخصية (معرَّف/مجهول فقط) فيخرج دائماً
+            [__('home.fr_date'), __('home.fr_governorate'), __('home.fr_office'), __('home.fr_identity')],
             $this->includePersonal
                 ? [__('home.fr_name'), __('home.fr_national_id'), __('home.fr_phone')]
                 : [],
@@ -54,6 +55,7 @@ class FeedbackSuggestionsSheet implements FromQuery, ShouldAutoSize, WithEvents,
                 LocalTime::date($suggestion->created_at),
                 $suggestion->governorate?->name ?? '—',
                 $suggestion->office?->name ?? __('home.fr_deleted_office'),
+                __('home.fr_identity_'.($suggestion->isAnonymous() ? 'anonymous' : 'identified')),
             ],
             $this->includePersonal
                 ? [$suggestion->name, $suggestion->national_id, $suggestion->phone]

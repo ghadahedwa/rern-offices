@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\HasFeedbackIdentity;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -10,11 +11,11 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class FeedbackSuggestion extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory, HasFeedbackIdentity, SoftDeletes;
 
     protected $fillable = [
         'governorate_id', 'office_id',
-        'name', 'national_id', 'phone',
+        'name', 'national_id', 'phone', 'device_token',
         'other_suggestion',
         'ip_address', 'user_agent',
     ];

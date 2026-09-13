@@ -1,11 +1,13 @@
-{{-- فلاتر مشتركة لشاشات نتائج رأي المواطن: محافظة / مقر / فترة --}}
+{{-- فلاتر مشتركة لشاشات نتائج رأي المواطن: محافظة / مقر / فترة / الهوية --}}
 @php
     $inp = 'w-full border border-zinc-300 dark:border-zinc-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-[#c9a847]';
     $lbl = 'block text-xs font-medium text-zinc-500 dark:text-zinc-400 mb-1';
+    $withIdentity = $this->showsIdentityFilter();
 @endphp
 
 <div class="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-sm p-5">
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+    {{-- ⚠️ الفئتان صريحتان لا مركّبتان بالنص — البناء لا يرى lg:grid-cols-{{ $n }} --}}
+    <div class="grid grid-cols-1 md:grid-cols-2 {{ $withIdentity ? 'lg:grid-cols-5' : 'lg:grid-cols-4' }} gap-4">
         <div>
             <label class="{{ $lbl }}">{{ __('home.fr_governorate') }}</label>
             <select wire:model.live="governorate_id" class="{{ $inp }}">
@@ -35,6 +37,18 @@
             <label class="{{ $lbl }}">{{ __('home.fr_date_to') }}</label>
             <input type="date" wire:model.live="to" class="{{ $inp }}">
         </div>
+
+        @if($withIdentity)
+            <div>
+                <label class="{{ $lbl }}">{{ __('home.fr_identity') }}</label>
+                <select wire:model.live="identity" class="{{ $inp }}">
+                    <option value="">{{ __('home.fr_identity_all') }}</option>
+                    @foreach(\App\Support\FeedbackResults\FeedbackFilterSet::IDENTITIES as $key)
+                        <option value="{{ $key }}">{{ __('home.fr_identity_'.$key) }}</option>
+                    @endforeach
+                </select>
+            </div>
+        @endif
     </div>
 
     {{-- اختصارات فترة جاهزة — تغني عن اختيار تاريخين يدوياً في الحالات الشائعة --}}

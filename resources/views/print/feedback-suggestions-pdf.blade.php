@@ -38,8 +38,9 @@
                 <td class="rt-start">{{ $suggestion->office?->name ?? __('home.fr_deleted_office') }}</td>
                 @if($personal)
                     <td class="rt-start">
+                        {{-- الهوية اختيارية: «مجهول» مكان سطر الرقم والهاتف — بلا عمود جديد (عرض الجدول مقيس) --}}
                         {{ $suggestion->name }}
-                        <div class="muted" style="font-size:7.5pt">{{ $suggestion->national_id }} · {{ $suggestion->phone }}</div>
+                        <div class="muted" style="font-size:7.5pt">{{ $suggestion->isAnonymous() ? __('home.fr_anonymous') : implode(' · ', array_filter([$suggestion->national_id, $suggestion->phone])) }}</div>
                     </td>
                 @endif
                 <td class="rt-start" style="font-size:8pt">

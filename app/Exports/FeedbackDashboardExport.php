@@ -90,13 +90,36 @@ class FeedbackDashboardExport implements WithMultipleSheets
                     ->map(fn ($count, $reason) => [__('home.fr_reason_'.$reason), $count])
                     ->values()->all(),
             ),
+
+            // فارغة لمن لا يملك feedback.rejected — الحارس في DashboardReport::ipClusters
+            new FeedbackDashboardSheet(
+                __('home.fr_export_sheet_clusters'),
+                [
+                    __('home.fr_type'), __('home.fr_office'), __('home.fr_ip'),
+                    __('home.fr_export_opinions_count'), __('home.fr_devices'),
+                    __('home.fr_export_first_at'), __('home.fr_export_last_at'),
+                ],
+                $this->report->ipClusters()->map(fn ($c) => [
+                    __('home.fr_type_'.$c['type']), $c['office'], $c['ip'], $c['total'], $c['devices'],
+                    \App\Support\LocalTime::stamp($c['first_at']), \App\Support\LocalTime::stamp($c['last_at']),
+                ])->all(),
+            ),
         ];
+    }
+
+    /** «35% (7 من 20)» — النسبة مع عدّها، فالنسبة وحدها تُخفي صِغر العينة. */
+    private function shareText(array $share): string
+    {
+        return $share['percent'] === null
+            ? '—'
+            : $share['percent'].'% ('.__('home.fr_anonymous_of_total', ['anonymous' => $share['anonymous'], 'total' => $share['total']]).')';
     }
 
     /** ورقة الملخص: الفلتر المطبَّق أولاً — رقم بلا سياق فلتره بلا معنى. */
     private function summaryRows(): array
     {
-        $kpis = $this->report->kpis();
+        $kpis     = $this->report->kpis();
+        $identity = $this->report->identityShare();
 
         return array_merge(
             $this->report->filters()->describe(),
@@ -106,6 +129,8 @@ class FeedbackDashboardExport implements WithMultipleSheets
                 [__('home.fr_total_suggestions'), $kpis['suggestions']],
                 [__('home.fr_avg_overall'), $kpis['avg_overall'] ?? '—'],
                 [__('home.fr_rated_offices'), $kpis['rated_offices']],
+                [__('home.fr_export_anonymous_ratings'), $this->shareText($identity['ratings'])],
+                [__('home.fr_export_anonymous_suggestions'), $this->shareText($identity['suggestions'])],
                 [__('home.fr_export_sample'), __('home.fr_export_sample_note', ['min' => $this->report->minSample()])],
             ],
         );

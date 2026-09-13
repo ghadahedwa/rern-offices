@@ -46,8 +46,9 @@
                 <td class="rt-start">{{ $rating->office?->name ?? __('home.fr_deleted_office') }}</td>
                 @if($personal)
                     <td class="rt-start">
+                        {{-- الهوية اختيارية: «مجهول» مكان سطر الرقم والهاتف — بلا عمود جديد (عرض الجدول مقيس) --}}
                         {{ $rating->name }}
-                        <div class="muted" style="font-size:7.5pt">{{ $rating->national_id }} · {{ $rating->phone }}</div>
+                        <div class="muted" style="font-size:7.5pt">{{ $rating->isAnonymous() ? __('home.fr_anonymous') : implode(' · ', array_filter([$rating->national_id, $rating->phone])) }}</div>
                     </td>
                 @endif
                 <td>{{ $waitTimes[$rating->wait_time] ?? $rating->wait_time }}</td>

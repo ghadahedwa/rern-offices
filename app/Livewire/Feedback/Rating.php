@@ -78,7 +78,7 @@ class Rating extends Component
         $this->evaluateGate();
     }
 
-    /** إعادة فحص التكرار عند تغيير الهاتف (لأنه أحد مفتاحي القفل) */
+    /** إعادة فحص التكرار عند تغيير الهاتف (لأنه أحد مفاتيح القفل) */
     public function updatedPhone(): void
     {
         $this->evaluateGate();
@@ -116,9 +116,7 @@ class Rating extends Component
         FeedbackRating::create([
             'governorate_id'       => $this->officeGovernorateId(),
             'office_id'            => $this->office_id,
-            'name'                 => $this->name,
-            'national_id'          => $this->national_id,
-            'phone'                => $this->phone,
+            ...$this->identityAttributes(),
             'wait_time'            => $this->wait_time,
             'rating_speed'         => $this->rating_speed,
             'rating_staff'         => $this->rating_staff,
@@ -136,9 +134,10 @@ class Rating extends Component
     protected function rules(): array
     {
         return [
-            'name'                 => ['required', 'string', 'max:100'],
-            'national_id'          => ['required', new EgyptianNationalId],
-            'phone'                => ['required', 'regex:/^01[0125]\d{8}$/'],
+            // الهوية اختيارية — لمن يريد إخفاء هويته. والمكتوب منها يُفحص بصيغته كاملة.
+            'name'                 => ['nullable', 'string', 'max:100'],
+            'national_id'          => ['nullable', new EgyptianNationalId],
+            'phone'                => ['nullable', 'regex:/^01[0125]\d{8}$/'],
             'governorate_id'       => ['required', 'exists:governorates,id'],
             'office_id'            => ['required', new PublicFeedbackOffice],
             'wait_time'            => ['required', 'in:'.implode(',', array_keys(self::WAIT_TIMES))],

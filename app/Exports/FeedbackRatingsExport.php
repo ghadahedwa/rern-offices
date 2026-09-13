@@ -50,7 +50,8 @@ class FeedbackRatingsExport implements FromQuery, ShouldAutoSize, WithEvents, Wi
     public function headings(): array
     {
         return array_merge(
-            [__('home.fr_date'), __('home.fr_governorate'), __('home.fr_office')],
+            // عمود الهوية ليس بيانات شخصية (معرَّف/مجهول فقط) فيخرج دائماً
+            [__('home.fr_date'), __('home.fr_governorate'), __('home.fr_office'), __('home.fr_identity')],
             $this->includePersonal
                 ? [__('home.fr_name'), __('home.fr_national_id'), __('home.fr_phone')]
                 : [],
@@ -74,6 +75,7 @@ class FeedbackRatingsExport implements FromQuery, ShouldAutoSize, WithEvents, Wi
                 LocalTime::date($rating->created_at),
                 $rating->governorate?->name ?? '—',
                 $rating->office?->name ?? __('home.fr_deleted_office'),
+                __('home.fr_identity_'.($rating->isAnonymous() ? 'anonymous' : 'identified')),
             ],
             $this->includePersonal ? [$rating->name, $rating->national_id, $rating->phone] : [],
             [FeedbackRating::WAIT_TIMES[$rating->wait_time] ?? $rating->wait_time],

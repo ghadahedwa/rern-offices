@@ -43,6 +43,31 @@
         </div>
     </div>
 
+    {{-- الآراء المجهولة — داخلة في كل المتوسطات، والنسبة تُعلِم القارئ كم منها غير قابل للتدقيق --}}
+    <div class="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-sm p-5">
+        <div class="flex items-center gap-3 mb-2">
+            <div class="w-1 h-5 bg-[#c9a847] rounded-full"></div>
+            <h3 class="text-sm font-semibold text-zinc-600 dark:text-zinc-400 uppercase tracking-wide">{{ __('home.fr_identity_share') }}</h3>
+        </div>
+        <p class="text-xs text-zinc-400 mb-5">{{ __('home.fr_identity_share_hint') }}</p>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            @foreach(['ratings' => 'fr_total_ratings', 'suggestions' => 'fr_total_suggestions'] as $key => $labelKey)
+                <div class="rounded-lg border border-zinc-100 dark:border-zinc-800 p-4">
+                    <p class="text-xs text-zinc-400 dark:text-zinc-500 mb-1">{{ __('home.'.$labelKey) }}</p>
+                    @if($identityShare[$key]['percent'] === null)
+                        <p class="text-xl font-semibold text-zinc-300 dark:text-zinc-600">—</p>
+                    @else
+                        <div class="flex items-baseline gap-2">
+                            <p class="text-xl font-semibold text-zinc-800 dark:text-zinc-100">{{ $identityShare[$key]['percent'] }}%</p>
+                            <span class="text-xs text-zinc-400">{{ __('home.fr_anonymous_of_total', ['anonymous' => $identityShare[$key]['anonymous'], 'total' => $identityShare[$key]['total']]) }}</span>
+                        </div>
+                    @endif
+                </div>
+            @endforeach
+        </div>
+    </div>
+
     {{-- الاتجاه الشهري — يجيب على «بيتحسن ولا بيسوء؟» بعكس لقطة الفترة الواحدة --}}
     <div class="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-sm p-5">
         <div class="flex items-center justify-between gap-3 mb-2">
@@ -338,7 +363,7 @@
             <a href="{{ route('feedback-results.rejected') }}" wire:navigate class="text-xs text-[#c9a847] hover:underline">{{ __('home.fr_view_all') }}</a>
         </div>
 
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             @foreach(\App\Livewire\FeedbackResults\RejectedAttempts::REASONS as $reasonKey)
                 <div class="rounded-lg border border-zinc-100 dark:border-zinc-800 p-4">
                     <p class="text-xs text-zinc-400 dark:text-zinc-500 mb-1">{{ __('home.fr_reason_'.$reasonKey) }}</p>
@@ -346,6 +371,52 @@
                 </div>
             @endforeach
         </div>
+    </div>
+    @endcan
+
+    {{-- مؤشرات التدقيق — خلف feedback.rejected (الـIP بيانات أمنية)، والحارس الفعلي في
+         DashboardReport::ipClusters فلا تخرج في الملف المصدَّر لمن لا يملكها --}}
+    @can('feedback.rejected')
+    <div class="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-sm p-5">
+        <div class="flex items-center gap-3 mb-2">
+            <div class="w-1 h-5 bg-[#c9a847] rounded-full"></div>
+            <h3 class="text-sm font-semibold text-zinc-600 dark:text-zinc-400 uppercase tracking-wide">{{ __('home.fr_ip_clusters') }}</h3>
+        </div>
+        <p class="text-xs text-zinc-400 mb-5">{{ __('home.fr_ip_clusters_hint', ['min' => $clusterMin]) }}</p>
+
+        @if($clusters->isEmpty())
+            <p class="text-sm text-zinc-400 py-4 text-center">{{ __('home.fr_no_clusters') }}</p>
+        @else
+            <div class="overflow-x-auto">
+                <table class="w-full min-w-140 table-fixed text-sm">
+                    <thead>
+                        <tr class="text-xs text-zinc-500 dark:text-zinc-400 border-b border-zinc-200 dark:border-zinc-700">
+                            <th class="px-3 py-2 font-medium text-start w-[12%]">{{ __('home.fr_type') }}</th>
+                            <th class="px-3 py-2 font-medium text-start w-[34%]">{{ __('home.fr_office') }}</th>
+                            <th class="px-3 py-2 font-medium text-start w-[18%]">{{ __('home.fr_ip') }}</th>
+                            <th class="px-3 py-2 font-medium text-start w-[10%]">{{ __('home.fr_export_opinions_count') }}</th>
+                            <th class="px-3 py-2 font-medium text-start w-[10%]">{{ __('home.fr_devices') }}</th>
+                            <th class="px-3 py-2 font-medium text-start w-[16%]">{{ __('home.fr_first_last') }}</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-zinc-100 dark:divide-zinc-800">
+                        @foreach($clusters as $row)
+                            <tr>
+                                <td class="px-3 py-2 text-zinc-600 dark:text-zinc-300">{{ __('home.fr_type_'.$row['type']) }}</td>
+                                <td class="px-3 py-2 text-zinc-800 dark:text-zinc-100 truncate" title="{{ $row['office'] }}">{{ $row['office'] }}</td>
+                                <td class="px-3 py-2 text-zinc-600 dark:text-zinc-300 font-mono text-xs truncate" title="{{ $row['ip'] }}" dir="ltr">{{ $row['ip'] }}</td>
+                                <td class="px-3 py-2 font-semibold text-zinc-800 dark:text-zinc-100">{{ $row['total'] }}</td>
+                                <td class="px-3 py-2 text-zinc-600 dark:text-zinc-300">{{ $row['devices'] }}</td>
+                                <td class="px-3 py-2 text-xs text-zinc-500">
+                                    <span class="block">{{ \App\Support\LocalTime::stamp($row['first_at']) }}</span>
+                                    <span class="block">{{ \App\Support\LocalTime::stamp($row['last_at']) }}</span>
+                                </td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+        @endif
     </div>
     @endcan
 

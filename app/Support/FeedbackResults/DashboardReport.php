@@ -8,6 +8,7 @@ use App\Models\Office;
 use App\Models\SuggestionTopic;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -62,6 +63,9 @@ final class DashboardReport
             'priority'   => $this->topicsPriority(),
             'freeTexts'  => $this->freeTexts(),
             'rejected'   => $this->rejectedSummary(),
+            'identityShare' => $this->identityShare(),
+            'clusters'   => $this->ipClusters(),
+            'clusterMin' => $this->clusterThreshold(),
             'minSample'  => $this->minSample(),
         ];
     }
@@ -297,6 +301,86 @@ final class DashboardReport
      * ⚠️ الحارس هنا لا في القالب: اللوحة تُطبع وتُصدَّر من نفس الدالة،
      *    فإخفاء البطاقة من الشاشة وحدها كان يُخرج الأرقام في الملف.
      */
+    /**
+     * نسبة الآراء المجهولة — الهوية اختيارية، والآراء المجهولة داخلة في كل
+     * المتوسطات (قرار المستخدمة 2026-09-14). النسبة تُعلِم قارئ الرقم كم منه
+     * غير قابل للتدقيق.
+     *
+     * ⚠️ «مجهول» يُقرأ من scope الموديل وحده (HasFeedbackIdentity) — تعريف ثانٍ هنا
+     * يُخرج نسبة تخالف عدد صفوف فلتر «مجهول».
+     */
+    public function identityShare(): array
+    {
+        return [
+            'ratings'     => $this->shareOf($this->ratingsQuery()),
+            'suggestions' => $this->shareOf($this->suggestionsQuery()),
+        ];
+    }
+
+    private function shareOf(Builder $query): array
+    {
+        $total     = (clone $query)->count();
+        $anonymous = (clone $query)->anonymous()->count();
+
+        return [
+            'total'     => $total,
+            'anonymous' => $anonymous,
+            'percent'   => $total > 0 ? round($anonymous * 100 / $total, 1) : null,
+        ];
+    }
+
+    public function clusterThreshold(): int
+    {
+        return max(2, (int) config('feedback.ip_cluster_alert', 10));
+    }
+
+    /**
+     * مؤشر تدقيق: خطوط إنترنت (IP) جاء منها لمقر واحد عددٌ من الآراء يبلغ حدّ التنبيه.
+     *
+     * التلاعب المصمَّم لا يوقفه قفل (الهوية غير موثَّقة، والكوكي يُمسح) — لكنه
+     * **ينكشف** هنا. وعمود «أجهزة مختلفة» هو الدليل: عشرون رأياً من خط واحد
+     * بعشرين بصمة جهاز = مسحٌ متكرر للكوكيز، لا عشرون مواطناً على شبكة محمول
+     * (هؤلاء يتوزّعون على أيام وأوقات، ويُقرأ ذلك من أول/آخر إرسال).
+     *
+     * ⚠️ خلف feedback.rejected كملخص المرفوضات: الـIP بيانات أمنية لا تقريرية،
+     * والحارس هنا لا في القالب — اللوحة تُصدَّر من نفس الدالة.
+     */
+    public function ipClusters(int $limit = 20): Collection
+    {
+        if (! FeedbackAccess::canViewRejected($this->user)) {
+            return collect();
+        }
+
+        $threshold = $this->clusterThreshold();
+
+        $rows = collect([
+            'rating'     => $this->ratingsQuery(),
+            'suggestion' => $this->suggestionsQuery(),
+        ])->flatMap(fn (Builder $query, string $type) => $query->toBase()
+            ->whereNotNull('ip_address')
+            ->whereNotNull('office_id')
+            ->selectRaw('ip_address, office_id, COUNT(*) as total, COUNT(DISTINCT device_token) as devices, MIN(created_at) as first_at, MAX(created_at) as last_at')
+            ->groupBy('ip_address', 'office_id')
+            ->havingRaw('COUNT(*) >= ?', [$threshold])
+            ->get()
+            ->map(fn ($row) => (array) $row + ['type' => $type]))
+            ->sortByDesc('total')
+            ->take($limit)
+            ->values();
+
+        $offices = Office::whereIn('id', $rows->pluck('office_id')->unique())->pluck('name', 'id');
+
+        return $rows->map(fn (array $row) => [
+            'type'     => $row['type'],
+            'ip'       => $row['ip_address'],
+            'office'   => $offices[$row['office_id']] ?? __('home.fr_deleted_office'),
+            'total'    => (int) $row['total'],
+            'devices'  => (int) $row['devices'],
+            'first_at' => \Carbon\CarbonImmutable::parse($row['first_at']),
+            'last_at'  => \Carbon\CarbonImmutable::parse($row['last_at']),
+        ]);
+    }
+
     public function rejectedSummary()
     {
         if (! FeedbackAccess::canViewRejected($this->user)) {

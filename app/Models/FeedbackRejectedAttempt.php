@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class FeedbackRejectedAttempt extends Model
 {
     protected $fillable = [
-        'type', 'national_id', 'phone', 'office_id',
+        'type', 'national_id', 'phone', 'device_token', 'office_id',
         'reason', 'ip_address', 'user_agent',
     ];
 

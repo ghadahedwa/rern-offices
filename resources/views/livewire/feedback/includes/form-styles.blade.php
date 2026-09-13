@@ -40,6 +40,9 @@
 .field:last-child{margin-bottom:0}
 .field label{display:block;font-size:12.5px;font-weight:600;color:var(--ink);margin-bottom:6px}
 .field label .req{color:var(--danger);margin-inline-start:2px}
+.field label .opt{font-weight:400;color:var(--ink-soft);font-size:11.5px;margin-inline-start:2px}
+.sec .hint{font-size:12.5px;color:var(--ink-soft);line-height:1.7;margin:-6px 0 14px}
+.sec .hint strong{color:var(--ink);font-weight:600}
 /* 16px إلزامي على الموبايل لمنع الـ zoom التلقائي في iOS عند التركيز على الحقل */
 .field .inp{width:100%;font-family:inherit;font-size:16px;color:var(--ink);background:var(--paper);
   border:1px solid var(--line);border-radius:12px;padding:11px 13px;transition:.18s;outline:none}

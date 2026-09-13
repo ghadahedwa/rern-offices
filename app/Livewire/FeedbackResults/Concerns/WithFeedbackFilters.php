@@ -39,6 +39,10 @@ trait WithFeedbackFilters
     #[Url(as: 'to', except: '')]
     public string $to = '';
 
+    /** معرَّف / مجهول — يُفحص بالقائمة البيضاء داخل FeedbackFilterSet. */
+    #[Url(as: 'identity', except: '')]
+    public string $identity = '';
+
     public function updatedGovernorateId(): void
     {
         $this->office_id = '';
@@ -58,6 +62,17 @@ trait WithFeedbackFilters
     public function updatedTo(): void
     {
         $this->afterFilterChange();
+    }
+
+    public function updatedIdentity(): void
+    {
+        $this->afterFilterChange();
+    }
+
+    /** فلتر الهوية يظهر في الشاشات ذات الآراء — شاشة المرفوضات تُعيد تعريفها false. */
+    public function showsIdentityFilter(): bool
+    {
+        return true;
     }
 
     /** اختصارات الفترة الجاهزة. */
@@ -117,7 +132,7 @@ trait WithFeedbackFilters
 
     public function resetFilters(): void
     {
-        $this->reset('governorate_id', 'office_id', 'from', 'to');
+        $this->reset('governorate_id', 'office_id', 'from', 'to', 'identity');
         $this->afterFilterChange();
     }
 
@@ -125,7 +140,8 @@ trait WithFeedbackFilters
     public function hasActiveFilters(): bool
     {
         return $this->governorate_id !== '' || $this->office_id !== ''
-            || $this->from !== '' || $this->to !== '';
+            || $this->from !== '' || $this->to !== ''
+            || ($this->showsIdentityFilter() && $this->filterSet()->identity !== '');
     }
 
     /** الصفحات ذات الـ pagination ترجع للصفحة الأولى عند تغيّر الفلتر. */
@@ -144,6 +160,7 @@ trait WithFeedbackFilters
             $this->office_id,
             $this->from,
             $this->to,
+            $this->showsIdentityFilter() ? $this->identity : '',
         );
     }
 

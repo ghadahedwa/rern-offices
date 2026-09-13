@@ -31,6 +31,32 @@
     </tr>
 </table>
 
+{{-- الآراء المجهولة — داخلة في كل المتوسطات --}}
+<div class="sec">
+    <div class="sec-title">{{ __('home.fr_identity_share') }}</div>
+    <table class="rt">
+        <thead>
+            <tr>
+                <th style="width:34%">{{ __('home.fr_export_item') }}</th>
+                <th style="width:22%">{{ __('home.fr_export_opinions_count') }}</th>
+                <th style="width:22%">{{ __('home.fr_identity_anonymous') }}</th>
+                <th style="width:22%">{{ __('home.fr_export_percent') }}</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach(['ratings' => 'fr_total_ratings', 'suggestions' => 'fr_total_suggestions'] as $key => $labelKey)
+                <tr>
+                    <td class="rt-start">{{ __('home.'.$labelKey) }}</td>
+                    <td>{{ $identityShare[$key]['total'] }}</td>
+                    <td>{{ $identityShare[$key]['anonymous'] }}</td>
+                    <td class="strong">{{ $identityShare[$key]['percent'] !== null ? $identityShare[$key]['percent'].'%' : '—' }}</td>
+                </tr>
+            @endforeach
+        </tbody>
+    </table>
+    <p class="muted" style="font-size:7.5pt">{{ __('home.fr_identity_share_hint') }}</p>
+</div>
+
 {{-- متوسط المحاور — عدد المجيبين عمود مستقل لأن المحور السادس اختياري --}}
 <div class="sec">
     <div class="sec-title">{{ __('home.fr_criteria_averages') }}</div>
@@ -264,6 +290,38 @@
                     <tr>
                         <td class="rt-start">{{ __('home.fr_reason_'.$reason) }}</td>
                         <td class="strong">{{ $count }}</td>
+                    </tr>
+                @endforeach
+            </tbody>
+        </table>
+    </div>
+@endif
+
+{{-- مؤشرات التدقيق — فارغة لمن لا يملك feedback.rejected (الحارس في DashboardReport) --}}
+@if($clusters->isNotEmpty())
+    <div class="sec">
+        <div class="sec-title">{{ __('home.fr_ip_clusters') }}</div>
+        <p class="muted" style="font-size:7.5pt">{{ __('home.fr_ip_clusters_hint', ['min' => $clusterMin]) }}</p>
+        <table class="rt">
+            <thead>
+                <tr>
+                    <th style="width:10%">{{ __('home.fr_type') }}</th>
+                    <th style="width:34%">{{ __('home.fr_office') }}</th>
+                    <th style="width:18%">{{ __('home.fr_ip') }}</th>
+                    <th style="width:10%">{{ __('home.fr_export_opinions_count') }}</th>
+                    <th style="width:10%">{{ __('home.fr_devices') }}</th>
+                    <th style="width:18%">{{ __('home.fr_first_last') }}</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach($clusters as $row)
+                    <tr>
+                        <td>{{ __('home.fr_type_'.$row['type']) }}</td>
+                        <td class="rt-start">{{ $row['office'] }}</td>
+                        <td>{{ $row['ip'] }}</td>
+                        <td class="strong">{{ $row['total'] }}</td>
+                        <td>{{ $row['devices'] }}</td>
+                        <td style="font-size:7.5pt">{{ \App\Support\LocalTime::stamp($row['first_at']) }}<br>{{ \App\Support\LocalTime::stamp($row['last_at']) }}</td>
                     </tr>
                 @endforeach
             </tbody>

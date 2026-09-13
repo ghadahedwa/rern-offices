@@ -7,7 +7,7 @@
     </div>
 
     {{-- ملخص الأسباب --}}
-    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         @foreach(\App\Livewire\FeedbackResults\RejectedAttempts::REASONS as $reasonKey)
             <button type="button" wire:click="$set('reason', '{{ $reason === $reasonKey ? '' : $reasonKey }}')"
                     class="text-right rounded-xl border bg-white dark:bg-zinc-900 shadow-sm p-5 transition

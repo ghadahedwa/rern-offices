@@ -165,14 +165,14 @@ it('حذف تقييم لا يفتح نافذة منع التكرار لصاحب�
     ]);
 
     $gate = app(FeedbackGate::class);
-    expect($gate->duplicateRetryDate('rating', '29001011234567', '01012345678', $office->id))->not->toBeNull();
+    expect($gate->duplicateRetryDate('rating', '29001011234567', '01012345678', null, $office->id))->not->toBeNull();
 
     Livewire::actingAs(bulkAdmin())->test(Ratings::class)
         ->set('selected', [(string) $rating->id])
         ->call('deleteSelected');
 
     // الصف المحذوف يظل حارساً للنافذة — وإلا صار الحذف الإداري إذناً بإعادة الإرسال
-    expect($gate->duplicateRetryDate('rating', '29001011234567', '01012345678', $office->id))->not->toBeNull();
+    expect($gate->duplicateRetryDate('rating', '29001011234567', '01012345678', null, $office->id))->not->toBeNull();
 });
 
 it('لا يحتسب الصفوف المحذوفة في متوسطات الداشبورد', function () {

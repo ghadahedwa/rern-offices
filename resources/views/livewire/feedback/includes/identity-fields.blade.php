@@ -10,21 +10,24 @@
 <div class="sec">
   <div class="sec-head"><span class="bar"></span><h2>بياناتك وتحديد المقر</h2></div>
 
+  {{-- الهوية اختيارية (2026-09-14) — منع التكرار ببصمة الجهاز لا بالهوية. انظر FeedbackDevice --}}
+  <p class="hint">الاسم والرقم القومي ورقم الهاتف <strong>اختيارية</strong> — يمكنك تركها فارغة وإرسال رأيك دون ذكر هويتك.</p>
+
   <div class="field">
-    <label>الاسم <span class="req">*</span></label>
+    <label>الاسم <span class="opt">(اختياري)</span></label>
     <input type="text" class="inp" wire:model="name" placeholder="الاسم بالكامل" />
     @error('name')<p class="err">{{ $message }}</p>@enderror
   </div>
 
   <div class="grid2">
     <div class="field">
-      <label>الرقم القومي <span class="req">*</span></label>
+      <label>الرقم القومي <span class="opt">(اختياري)</span></label>
       <input type="text" inputmode="numeric" maxlength="14" class="inp" wire:model.live.debounce.600ms="national_id"
              oninput="this.value = digitsOnly(this.value)" placeholder="١٤ رقماً" />
       @error('national_id')<p class="err">{{ $message }}</p>@enderror
     </div>
     <div class="field">
-      <label>رقم الهاتف المحمول <span class="req">*</span></label>
+      <label>رقم الهاتف المحمول <span class="opt">(اختياري)</span></label>
       <input type="tel" inputmode="numeric" maxlength="11" class="inp" wire:model.live.debounce.600ms="phone"
              oninput="this.value = digitsOnly(this.value)" placeholder="01XXXXXXXXX" />
       @error('phone')<p class="err">{{ $message }}</p>@enderror

@@ -69,10 +69,7 @@
                             <span class="block text-xs text-zinc-400 truncate">{{ $suggestion->governorate?->name ?? '—' }}</span>
                         </td>
                         <td class="px-3 py-3">
-                            <span class="block font-medium text-zinc-800 dark:text-zinc-100 truncate"
-                                  title="{{ $suggestion->name }}">{{ $suggestion->name }}</span>
-                            <span class="block text-xs text-zinc-400">{{ $suggestion->national_id }}</span>
-                            <span class="block text-xs text-zinc-400">{{ $suggestion->phone }}</span>
+                            @include('livewire.feedback-results.includes.citizen-cell', ['row' => $suggestion])
                         </td>
                         <td class="px-3 py-3">
                             <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold
