@@ -9,6 +9,7 @@ Route::redirect('/', '/feedback')->name('home');
 Route::view('feedback', 'feedback.landing')->name('feedback');
 Route::livewire('feedback/rating', \App\Livewire\Feedback\Rating::class)->name('feedback.rating');
 Route::livewire('feedback/suggestion', \App\Livewire\Feedback\Suggestion::class)->name('feedback.suggestion');
+Route::livewire('feedback/digital', \App\Livewire\Feedback\DigitalPlatforms::class)->name('feedback.digital');
 
 Route::middleware(['auth', 'verified'])->group(function () {
     //Route::view('dashboard', 'dashboard')->name('dashboard');

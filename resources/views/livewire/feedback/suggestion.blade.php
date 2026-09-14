@@ -15,18 +15,6 @@
 .dtitle{font-size:13.5px;font-weight:600;color:var(--ink);margin-bottom:11px;display:flex;align-items:center;gap:9px}
 .dtitle .num{width:22px;height:22px;border-radius:7px;background:var(--accent-tint);color:var(--accent-strong);
   display:grid;place-items:center;font-size:11px;font-weight:700;flex:none}
-.chips{display:flex;flex-wrap:wrap;gap:9px}
-.chip{position:relative;display:inline-flex;align-items:center;gap:8px;font-size:12.5px;font-weight:500;
-  color:var(--ink);background:var(--paper);border:1px solid var(--line);border-radius:999px;
-  padding:9px 14px;cursor:pointer;transition:.16s;-webkit-tap-highlight-color:transparent}
-.chip:hover{border-color:color-mix(in srgb,var(--accent) 50%,var(--line))}
-.chip input{position:absolute;opacity:0;pointer-events:none}
-.chip .box{width:16px;height:16px;border-radius:5px;border:2px solid var(--line);flex:none;
-  display:grid;place-items:center;transition:.16s}
-.chip .box svg{width:11px;height:11px;color:#fff;opacity:0;transform:scale(.5);transition:.16s}
-.chip.sel{border-color:var(--accent);background:var(--accent-tint)}
-.chip.sel .box{background:var(--accent);border-color:var(--accent)}
-.chip.sel .box svg{opacity:1;transform:none}
 </style>
 @endverbatim
 @endpush
@@ -43,10 +31,12 @@
     <h2>شكراً لمقترحك</h2>
     <p>وصلنا اقتراحك بنجاح، وسيُؤخذ في الاعتبار ضمن خطط تطوير الخدمة. نقدّر حرصك ومشاركتك.</p>
     <div class="actions">
-      <a href="{{ $this->otherFormUrl() }}" wire:navigate class="also">
-        {{ $this->otherFormLabel() }}
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
-      </a>
+      @foreach($this->otherForms() as $form)
+        <a href="{{ $form['url'] }}" wire:navigate class="also">
+          {{ $form['also'] }}
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+        </a>
+      @endforeach
       <a href="{{ route('feedback') }}" wire:navigate class="back">العودة للرئيسية</a>
     </div>
   </div>
@@ -123,10 +113,7 @@
           لا يتيح النظام تقديم أكثر من مقترح لهذا المقر كل أسبوع.<br>
           يمكنك المحاولة اعتباراً من <span class="date">{{ $gateRetryDate }}</span>.
         </p>
-        <a href="{{ $this->otherFormUrl() }}" wire:navigate class="alt">
-          هل ترغب بتقييم الخدمة؟
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
-        </a>
+        @include('livewire.feedback.includes.other-forms-alt')
       </div>
     @else
       <div class="gate-hint">

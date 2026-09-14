@@ -16,8 +16,8 @@ h1 .accent{color:var(--gold-dark)}
   color:var(--ink-soft)}
 
 /* ============ Cards ============ */
-.cards{margin-top:clamp(18px,3vh,34px);width:100%;max-width:700px;
-  display:grid;grid-template-columns:repeat(2,1fr);gap:20px}
+.cards{margin-top:clamp(18px,3vh,34px);width:100%;max-width:1000px;
+  display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
 .card{--c:var(--gold);--tint:var(--rating-tint);
   position:relative;background:var(--paper-2);border:1px solid var(--line);border-radius:20px;
   padding:28px 24px 24px;text-align:center;cursor:pointer;text-decoration:none;color:inherit;
@@ -42,6 +42,10 @@ h1 .accent{color:var(--gold-dark)}
 .card .stars{display:flex;gap:3px;margin-top:2px}
 .card .stars svg{width:15px;height:15px;fill:var(--rating);stroke:none}
 
+@media (max-width:980px) and (min-width:821px){
+  .card{padding:24px 16px 20px}
+  .card h3{font-size:18px}
+}
 @media (max-width:820px){
   .cards{grid-template-columns:1fr;max-width:420px;gap:16px}
   .card{flex-direction:row;text-align:start;padding:20px;align-items:center;gap:18px}
@@ -53,7 +57,7 @@ h1 .accent{color:var(--gold-dark)}
 }
 
 /* ============ شريط إرشادي — الشكاوى الرسمية ============ */
-.official-note{margin-top:clamp(16px,2.4vh,26px);width:100%;max-width:700px;
+.official-note{margin-top:clamp(16px,2.4vh,26px);width:100%;max-width:1000px;
   display:flex;align-items:flex-start;gap:14px;text-align:start;
   background:var(--paper-2);border:1px solid var(--line);border-inline-start:3px solid var(--danger);
   border-radius:14px;padding:14px 18px;box-shadow:var(--shadow)}
@@ -118,6 +122,22 @@ h1 .accent{color:var(--gold-dark)}
           <svg viewBox="0 0 24 24"><path d="M12 3l2.6 5.3 5.9.9-4.3 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8L4.5 9.2l5.9-.9Z"/></svg>
           <svg viewBox="0 0 24 24"><path d="M12 3l2.6 5.3 5.9.9-4.3 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8L4.5 9.2l5.9-.9Z"/></svg>
         </div>
+      </div>
+    </a>
+
+    {{-- تقييم المنصات الرقمية --}}
+    <a href="{{ route('feedback.digital') }}" wire:navigate class="card" style="--c:var(--digital);--tint:var(--digital-tint)">
+      <div class="ic">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="6" y="2.5" width="12" height="19" rx="2.5"/><path d="M11 18.5h2"/><path d="M9 7.5h6M9 10.5h6M9 13.5h3.5"/>
+        </svg>
+      </div>
+      <div class="body">
+        <h3>تقييم المنصات الرقمية</h3>
+        <p>حجزت إلكترونياً أو سمعت عن منصات الحجز؟ شاركنا تجربتك.</p>
+        <span class="go">ابدأ الآن
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+        </span>
       </div>
     </a>
 

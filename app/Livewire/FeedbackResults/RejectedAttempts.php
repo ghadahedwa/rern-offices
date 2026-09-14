@@ -132,7 +132,7 @@ class RejectedAttempts extends Component
             'attempts'       => $this->bulkQuery()->with('office:id,name,governorate_id')->latest('created_at')->paginate(15),
             'reasonCounts'   => $this->bulkQuery()->selectRaw('reason, COUNT(*) as total')->groupBy('reason')->pluck('total', 'reason'),
             'retentionDays'  => (int) config('feedback.rejected_retention_days', 30),
-            'types'          => [FeedbackGate::TYPE_RATING, FeedbackGate::TYPE_SUGGESTION],
+            'types'          => FeedbackGate::TYPES,
         ]);
     }
 }

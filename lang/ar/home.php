@@ -1135,6 +1135,7 @@ return [
     'fr_type'                     => 'النوع',
     'fr_type_rating'              => 'تقييم',
     'fr_type_suggestion'          => 'اقتراح',
+    'fr_type_digital'             => 'تقييم المنصات',
     'fr_ip'                       => 'عنوان الجهاز',
     'fr_user_agent'               => 'المتصفح',
     'fr_no_rejected'              => 'لا توجد محاولات مرفوضة',

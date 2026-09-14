@@ -8,21 +8,6 @@
 /* لون شاشة التقييم: ذهبي */
 .fb-main{--accent:var(--rating);--accent-strong:var(--gold-dark);--accent-tint:var(--rating-tint)}
 
-/* wait-time pills */
-.pills{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.pill{display:flex;align-items:center;gap:9px;font-size:13px;font-weight:500;color:var(--ink);
-  background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:11px 13px;cursor:pointer;
-  transition:.18s}
-.pill:hover{border-color:color-mix(in srgb,var(--accent) 50%,var(--line))}
-.pill input{position:absolute;opacity:0;pointer-events:none}
-.pill .tick{width:18px;height:18px;border-radius:50%;border:2px solid var(--line);flex:none;
-  display:grid;place-items:center;transition:.18s}
-.pill .tick::after{content:"";width:8px;height:8px;border-radius:50%;background:var(--accent);
-  transform:scale(0);transition:.18s}
-.pill.sel{border-color:var(--accent);background:var(--accent-tint)}
-.pill.sel .tick{border-color:var(--accent)}
-.pill.sel .tick::after{transform:scale(1)}
-
 /* criteria stars */
 .crit{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:12px 0;
   border-bottom:1px solid var(--line)}
@@ -44,7 +29,6 @@
 .overall .stars-input .star svg{width:38px;height:38px}
 
 @media (max-width:520px){
-  .pills{grid-template-columns:1fr}
   .crit{flex-direction:column;align-items:flex-start;gap:6px}
   .stars-input .star svg{width:30px;height:30px}
 }
@@ -64,10 +48,12 @@
     <h2>شكراً لتقييمك</h2>
     <p>وصلنا رأيك بنجاح، ونعمل على تحسين الخدمة باستمرار. نقدّر وقتك ومشاركتك.</p>
     <div class="actions">
-      <a href="{{ $this->otherFormUrl() }}" wire:navigate class="also">
-        {{ $this->otherFormLabel() }}
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
-      </a>
+      @foreach($this->otherForms() as $form)
+        <a href="{{ $form['url'] }}" wire:navigate class="also">
+          {{ $form['also'] }}
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+        </a>
+      @endforeach
       <a href="{{ route('feedback') }}" wire:navigate class="back">العودة للرئيسية</a>
     </div>
   </div>
@@ -158,10 +144,7 @@
           لا يتيح النظام تقييم هذا المقر أكثر من مرة كل أسبوع.<br>
           يمكنك المحاولة اعتباراً من <span class="date">{{ $gateRetryDate }}</span>.
         </p>
-        <a href="{{ $this->otherFormUrl() }}" wire:navigate class="alt">
-          لديك ملاحظة أخرى؟ قدّم اقتراح
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
-        </a>
+        @include('livewire.feedback.includes.other-forms-alt')
       </div>
     @else
       <div class="gate-hint">

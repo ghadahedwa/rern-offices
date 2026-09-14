@@ -106,7 +106,7 @@ it('تُصدر صفحتا الفورم كوكي بصمة الجهاز مع ال�
     $this->get(route($route))
         ->assertOk()
         ->assertCookie(FeedbackDevice::COOKIE);
-})->with(['feedback.rating', 'feedback.suggestion']);
+})->with(['feedback.rating', 'feedback.suggestion', 'feedback.digital']);
 
 /* ===================== قفل بصمة الجهاز ===================== */
 

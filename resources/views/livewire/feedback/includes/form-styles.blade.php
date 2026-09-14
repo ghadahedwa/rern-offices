@@ -84,6 +84,37 @@
   border-radius:12px;padding:9px 18px;transition:.2s}
 .blocked .alt:hover{background:var(--accent-tint)}
 .blocked .alt svg{width:15px;height:15px}
+.blocked .alts{margin-top:16px;display:flex;flex-wrap:wrap;justify-content:center;gap:10px}
+.blocked .alts .alt{margin-top:0}
+
+/* اختيار واحد (radio) — pills: مدة الانتظار وأسئلة المنصات الرقمية */
+.pills{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.pill{display:flex;align-items:center;gap:9px;font-size:13px;font-weight:500;color:var(--ink);
+  background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:11px 13px;cursor:pointer;
+  transition:.18s}
+.pill:hover{border-color:color-mix(in srgb,var(--accent) 50%,var(--line))}
+.pill input{position:absolute;opacity:0;pointer-events:none}
+.pill .tick{width:18px;height:18px;border-radius:50%;border:2px solid var(--line);flex:none;
+  display:grid;place-items:center;transition:.18s}
+.pill .tick::after{content:"";width:8px;height:8px;border-radius:50%;background:var(--accent);
+  transform:scale(0);transition:.18s}
+.pill.sel{border-color:var(--accent);background:var(--accent-tint)}
+.pill.sel .tick{border-color:var(--accent)}
+.pill.sel .tick::after{transform:scale(1)}
+
+/* اختيار متعدد (checkbox) — chips: عناوين المقترحات وأسئلة المنصات الرقمية */
+.chips{display:flex;flex-wrap:wrap;gap:9px}
+.chip{position:relative;display:inline-flex;align-items:center;gap:8px;font-size:12.5px;font-weight:500;
+  color:var(--ink);background:var(--paper);border:1px solid var(--line);border-radius:999px;
+  padding:9px 14px;cursor:pointer;transition:.16s;-webkit-tap-highlight-color:transparent}
+.chip:hover{border-color:color-mix(in srgb,var(--accent) 50%,var(--line))}
+.chip input{position:absolute;opacity:0;pointer-events:none}
+.chip .box{width:16px;height:16px;border-radius:5px;border:2px solid var(--line);flex:none;
+  display:grid;place-items:center;transition:.16s}
+.chip .box svg{width:11px;height:11px;color:#fff;opacity:0;transform:scale(.5);transition:.16s}
+.chip.sel{border-color:var(--accent);background:var(--accent-tint)}
+.chip.sel .box{background:var(--accent);border-color:var(--accent)}
+.chip.sel .box svg{opacity:1;transform:none}
 
 /* خطأ حد الجهاز */
 .gate-error{margin-top:16px;font-size:13px;color:var(--danger);background:var(--danger-tint);
@@ -109,6 +140,7 @@
 
 @media (max-width:520px){
   .grid2{grid-template-columns:1fr}
+  .pills{grid-template-columns:1fr}
 }
 </style>
 @endverbatim

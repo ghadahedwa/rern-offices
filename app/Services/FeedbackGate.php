@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\FeedbackDigitalRating;
 use App\Models\FeedbackRating;
 use App\Models\FeedbackRejectedAttempt;
 use App\Models\FeedbackSuggestion;
@@ -10,7 +11,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
 
 /**
- * بوابة حماية بوابة رأي المواطن — مشتركة بين التقييم والمقترحات.
+ * بوابة حماية بوابة رأي المواطن — مشتركة بين الفورمات الثلاثة (التقييم · المقترحات · المنصات الرقمية).
  * تفحص: التكرار (هوية أو بصمة جهاز خلال المدة) + سقف الـIP اليومي لكل مقر
  * + صمّام البوتات (IP في الدقيقة)، وتسجّل المرفوض.
  * الـ honeypot يُفحص داخل المكوّن (حقل مخفي). الحفظ يتم في المكوّن.
@@ -19,6 +20,27 @@ class FeedbackGate
 {
     public const TYPE_RATING = 'rating';
     public const TYPE_SUGGESTION = 'suggestion';
+    public const TYPE_DIGITAL = 'digital';
+
+    /** كل الأنواع — تقرؤها شاشة المحاولات المرفوضة في فلترها. */
+    public const TYPES = [self::TYPE_RATING, self::TYPE_SUGGESTION, self::TYPE_DIGITAL];
+
+    /**
+     * جدول كل نوع. ⚠️ **النوع المجهول استثناء لا سقوط إلى التقييمات** — كان الكود
+     * `suggestion ? … : Rating` فصار الفورم الثالث يُفحص تكراره على جدول التقييمات
+     * صامتاً: يُحجب مَن قيّم الخدمة، ولا يُحجب مَن كرّر تقييم المنصات.
+     *
+     * @return class-string<\Illuminate\Database\Eloquent\Model>
+     */
+    public function modelFor(string $type): string
+    {
+        return match ($type) {
+            self::TYPE_RATING     => FeedbackRating::class,
+            self::TYPE_SUGGESTION => FeedbackSuggestion::class,
+            self::TYPE_DIGITAL    => FeedbackDigitalRating::class,
+            default               => throw new \InvalidArgumentException("نوع رأي غير معروف: {$type}"),
+        };
+    }
 
     /**
      * لو وُجد إرسال سابق بنفس (الرقم القومي أو الهاتف أو بصمة الجهاز) + المقر
@@ -45,7 +67,7 @@ class FeedbackGate
         }
 
         $windowDays = (int) config('feedback.window_days', 7);
-        $model = $type === self::TYPE_SUGGESTION ? FeedbackSuggestion::class : FeedbackRating::class;
+        $model = $this->modelFor($type);
 
         // withTrashed: الصف المحذوف إدارياً (سلة المحذوفات) يظل حارساً للنافذة.
         // بدونها يصير حذف رأي عبثي من شاشة النتائج إذناً لصاحبه بإعادة إرساله فوراً.

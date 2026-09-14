@@ -216,20 +216,27 @@ trait InteractsWithFeedbackGate
         $this->evaluateGate();   // يكشف البنود مباشرة أو يظهر الحجب
     }
 
-    /** رابط الفورم الآخر مع إشارة الاستئناف. */
-    public function otherFormUrl(): string
+    /**
+     * الفورمات الأخرى (اثنان من ثلاثة) مع إشارة الاستئناف — لشاشتي الشكر والحجب.
+     *
+     * @return array<int, array{url: string, also: string, alt: string}>
+     *   also = نص زر شاشة الشكر · alt = نص رابط شاشة الحجب
+     */
+    public function otherForms(): array
     {
-        return $this->feedbackType() === FeedbackGate::TYPE_RATING
-            ? route('feedback.suggestion', ['resume' => 1])
-            : route('feedback.rating', ['resume' => 1]);
-    }
+        $forms = [
+            FeedbackGate::TYPE_RATING     => ['feedback.rating', 'قيّم الخدمة أيضاً', 'هل ترغب بتقييم الخدمة؟'],
+            FeedbackGate::TYPE_SUGGESTION => ['feedback.suggestion', 'قدّم اقتراحاً أيضاً', 'لديك ملاحظة أخرى؟ قدّم اقتراح'],
+            FeedbackGate::TYPE_DIGITAL    => ['feedback.digital', 'قيّم المنصات الرقمية أيضاً', 'قيّم المنصات الرقمية'],
+        ];
 
-    /** نص زر الانتقال للفورم الآخر. */
-    public function otherFormLabel(): string
-    {
-        return $this->feedbackType() === FeedbackGate::TYPE_RATING
-            ? 'قدّم اقتراحاً أيضاً'
-            : 'قيّم الخدمة أيضاً';
+        unset($forms[$this->feedbackType()]);
+
+        return array_values(array_map(fn ($f) => [
+            'url'  => route($f[0], ['resume' => 1]),
+            'also' => $f[1],
+            'alt'  => $f[2],
+        ], $forms));
     }
 
     /** "٦ أغسطس ٢٠٢٦" — أسماء عربية وأرقام عربية. */
