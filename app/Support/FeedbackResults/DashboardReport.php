@@ -65,6 +65,8 @@ final class DashboardReport
             'rejected'   => $this->rejectedSummary(),
             'identityShare' => $this->identityShare(),
             'clusters'   => $this->ipClusters(),
+            // كرت المنصات الرقمية — الأرقام من DigitalReport نفسه الذي يحسب صفحة الملخص
+            'digital'    => $this->digitalHeadline(),
             'clusterMin' => $this->clusterThreshold(),
             'minSample'  => $this->minSample(),
         ];
@@ -226,7 +228,7 @@ final class DashboardReport
             $query->where('created_at', '>=', now()->subMonths(11)->startOfMonth());
         }
 
-        $rows = $query->selectRaw($this->monthExpression().' as ym, COUNT(*) as total, AVG(overall_rating) as avg_overall')
+        $rows = $query->selectRaw(self::monthExpression().' as ym, COUNT(*) as total, AVG(overall_rating) as avg_overall')
             ->groupBy('ym')->orderBy('ym')->get();
 
         return $rows->map(fn ($r) => [
@@ -236,8 +238,8 @@ final class DashboardReport
         ])->all();
     }
 
-    /** تجميع الشهر يختلف بين MySQL (الإنتاج) وsqlite (الاختبارات). */
-    private function monthExpression(): string
+    /** تجميع الشهر يختلف بين MySQL (الإنتاج) وsqlite (الاختبارات) — يقرؤه DigitalReport أيضاً. */
+    public static function monthExpression(): string
     {
         return DB::connection()->getDriverName() === 'sqlite'
             ? "strftime('%Y-%m', created_at)"
@@ -314,6 +316,7 @@ final class DashboardReport
         return [
             'ratings'     => $this->shareOf($this->ratingsQuery()),
             'suggestions' => $this->shareOf($this->suggestionsQuery()),
+            'digital'     => $this->shareOf(DigitalRatingsQuery::build($this->filters, $this->user)),
         ];
     }
 
@@ -327,6 +330,12 @@ final class DashboardReport
             'anonymous' => $anonymous,
             'percent'   => $total > 0 ? round($anonymous * 100 / $total, 1) : null,
         ];
+    }
+
+    /** كرت المنصات الرقمية — من DigitalReport نفسه الذي يحسب صفحة الملخص. */
+    public function digitalHeadline(): array
+    {
+        return (new DigitalReport($this->filters, $this->user))->headline();
     }
 
     public function clusterThreshold(): int
@@ -356,6 +365,7 @@ final class DashboardReport
         $rows = collect([
             'rating'     => $this->ratingsQuery(),
             'suggestion' => $this->suggestionsQuery(),
+            'digital'    => DigitalRatingsQuery::build($this->filters, $this->user),
         ])->flatMap(fn (Builder $query, string $type) => $query->toBase()
             ->whereNotNull('ip_address')
             ->whereNotNull('office_id')

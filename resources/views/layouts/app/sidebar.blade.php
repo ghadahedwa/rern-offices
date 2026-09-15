@@ -311,6 +311,14 @@
                     <flux:sidebar.item icon="light-bulb" :href="route('feedback-results.suggestions')" :current="request()->routeIs('feedback-results.suggestions')" wire:navigate>
                         {{ __('home.fr_suggestions') }}
                     </flux:sidebar.item>
+
+                    <flux:sidebar.item icon="device-phone-mobile" :href="route('feedback-results.digital')" :current="request()->routeIs('feedback-results.digital')" wire:navigate>
+                        {{ __('home.fr_digital') }}
+                    </flux:sidebar.item>
+
+                    <flux:sidebar.item icon="chart-bar" :href="route('feedback-results.digital-summary')" :current="request()->routeIs('feedback-results.digital-summary')" wire:navigate>
+                        {{ __('home.fr_dg_summary') }}
+                    </flux:sidebar.item>
                     @endcan
 
                     @can('feedback.rejected')

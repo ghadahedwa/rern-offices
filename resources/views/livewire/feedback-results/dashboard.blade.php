@@ -43,6 +43,37 @@
         </div>
     </div>
 
+    {{-- المنصات الرقمية — كرت مختصر، والتفاصيل في صفحة «ملخص المنصات» المستقلة --}}
+    <a href="{{ route('feedback-results.digital-summary', $this->filterSet()->toQuery()) }}" wire:navigate
+       class="block rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-sm p-5 hover:border-[#c9a847] transition">
+        <div class="flex items-center justify-between gap-3 mb-4">
+            <div>
+                <div class="flex items-center gap-3">
+                    <div class="w-1 h-5 bg-[#c9a847] rounded-full"></div>
+                    <h3 class="text-sm font-semibold text-zinc-600 dark:text-zinc-400 uppercase tracking-wide">{{ __('home.fr_digital') }}</h3>
+                </div>
+                <p class="text-xs text-zinc-400 mt-1 ms-4">{{ __('home.fr_dg_card_hint') }}</p>
+            </div>
+            <span class="text-xs text-[#c9a847] whitespace-nowrap">{{ __('home.fr_dg_open_summary') }}</span>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div>
+                <p class="text-xs text-zinc-400 dark:text-zinc-500 mb-1">{{ __('home.fr_dg_kpi_total') }}</p>
+                <p class="text-xl font-semibold text-zinc-800 dark:text-zinc-100">{{ $digital['total'] }}</p>
+            </div>
+            <div>
+                <p class="text-xs text-zinc-400 dark:text-zinc-500 mb-1">{{ __('home.fr_dg_kpi_booked') }}</p>
+                <p class="text-xl font-semibold text-zinc-800 dark:text-zinc-100">{{ $digital['booked_percent'] !== null ? $digital['booked_percent'].'%' : '—' }}</p>
+                <p class="text-xs text-zinc-400">{{ __('home.fr_dg_count_of_base', ['count' => $digital['booked'], 'base' => $digital['total']]) }}</p>
+            </div>
+            <div>
+                <p class="text-xs text-zinc-400 dark:text-zinc-500 mb-1">{{ __('home.fr_dg_kpi_score') }}</p>
+                <p class="text-xl font-semibold text-zinc-800 dark:text-zinc-100">{{ $digital['score_avg'] ?? '—' }} <span class="text-xs font-normal text-zinc-400">{{ __('home.fr_dg_of_ten') }}</span></p>
+                <p class="text-xs text-zinc-400">{{ __('home.fr_dg_base', ['base' => $digital['score_base']]) }}</p>
+            </div>
+        </div>
+    </a>
+
     {{-- الآراء المجهولة — داخلة في كل المتوسطات، والنسبة تُعلِم القارئ كم منها غير قابل للتدقيق --}}
     <div class="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-sm p-5">
         <div class="flex items-center gap-3 mb-2">
@@ -51,8 +82,8 @@
         </div>
         <p class="text-xs text-zinc-400 mb-5">{{ __('home.fr_identity_share_hint') }}</p>
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            @foreach(['ratings' => 'fr_total_ratings', 'suggestions' => 'fr_total_suggestions'] as $key => $labelKey)
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            @foreach(['ratings' => 'fr_total_ratings', 'suggestions' => 'fr_total_suggestions', 'digital' => 'fr_digital'] as $key => $labelKey)
                 <div class="rounded-lg border border-zinc-100 dark:border-zinc-800 p-4">
                     <p class="text-xs text-zinc-400 dark:text-zinc-500 mb-1">{{ __('home.'.$labelKey) }}</p>
                     @if($identityShare[$key]['percent'] === null)
@@ -393,7 +424,7 @@
                         <tr class="text-xs text-zinc-500 dark:text-zinc-400 border-b border-zinc-200 dark:border-zinc-700">
                             <th class="px-3 py-2 font-medium text-start w-[12%]">{{ __('home.fr_type') }}</th>
                             <th class="px-3 py-2 font-medium text-start w-[34%]">{{ __('home.fr_office') }}</th>
-                            <th class="px-3 py-2 font-medium text-start w-[18%]">{{ __('home.fr_ip') }}</th>
+                            <th class="px-3 py-2 font-medium text-start w-[18%]">{{ __('home.fr_ip_line') }}</th>
                             <th class="px-3 py-2 font-medium text-start w-[10%]">{{ __('home.fr_export_opinions_count') }}</th>
                             <th class="px-3 py-2 font-medium text-start w-[10%]">{{ __('home.fr_devices') }}</th>
                             <th class="px-3 py-2 font-medium text-start w-[16%]">{{ __('home.fr_first_last') }}</th>

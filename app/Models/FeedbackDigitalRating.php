@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Models\Concerns\HasFeedbackIdentity;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -130,6 +131,27 @@ class FeedbackDigitalRating extends Model
         return $visible;
     }
 
+    /**
+     * مَن سُئل هذا السؤال — مقام أي نسبة عليه. **مشتقّ من SHOWN_WHEN لا مكتوب يدوياً**:
+     * q204 = حجز · قابلته مشاكل. والشرط يُطبَّق بسلسلته كاملة (شرط السؤال ثم شرط ما يعتمد عليه).
+     *
+     * ⚠️ نسبة سؤالٍ مقامها كل الآراء تُخرج رقماً أصغر من الحقيقة ومضلِّلاً:
+     * «٥٪ قابلتهم مشاكل» من ألف رأي، وهي «٢٥٪» من مئتي حاجز.
+     *
+     * 📌 تتبّع السلسلة **لا يغيّر نتيجة الأسئلة الحالية** — كل شرط في SHOWN_WHEN يذكر
+     * سلسلته صراحةً (q207 يشترط الحجز بنفسه)، ولذلك لا يسقط اختبارٌ بحذفه. هو لأسئلة
+     * القسم الثالث حين يشترط سؤالٌ سؤالاً مشروطاً دون تكرار شروطه.
+     */
+    public function scopeAsked(Builder $query, string $key): Builder
+    {
+        foreach (self::SHOWN_WHEN[$key] ?? [] as $dependsOn => $expected) {
+            $query->whereIn($query->qualifyColumn($dependsOn), (array) $expected);
+            $this->scopeAsked($query, $dependsOn);
+        }
+
+        return $query;
+    }
+
     /** @return array<int, string> أسئلة نوع بعينه */
     public static function questionsOfType(string $type): array
     {
@@ -149,6 +171,48 @@ class FeedbackDigitalRating extends Model
     public function choices(): HasMany
     {
         return $this->hasMany(FeedbackDigitalChoice::class);
+    }
+
+    /**
+     * إجابات الصف كما خُزِّنت — الاختيار المتعدد من علاقة choices (حمّلها مسبقاً في القوائم).
+     *
+     * @return array<string, mixed>
+     */
+    public function answers(): array
+    {
+        $out = [];
+        foreach (self::QUESTIONS as $key => [$type]) {
+            $out[$key] = $type === 'checkbox' ? $this->choicesFor($key) : $this->{$key};
+        }
+
+        return $out;
+    }
+
+    /**
+     * نص الإجابة للعرض، أو null لسؤال ظهر ولم يُجَب (النص الحر الاختياري).
+     * الاختيار بمسمّاه لا بمفتاحه، والمتعدد مجمَّعاً، والدرجة «٧ / ١٠».
+     */
+    public function answerLabel(string $key): ?string
+    {
+        [$type, , $options] = self::QUESTIONS[$key];
+        $value = $type === 'checkbox' ? $this->choicesFor($key) : $this->{$key};
+
+        return match ($type) {
+            'radio'    => $value !== null ? ($options[$value] ?? $value) : null,
+            'checkbox' => $value !== [] ? implode('، ', array_map(fn ($v) => $options[$v] ?? $v, $value)) : null,
+            'scale'    => $value !== null ? $value.' / '.$options[1] : null,
+            'text'     => $value !== null && $value !== '' ? $value : null,
+        };
+    }
+
+    /**
+     * أسئلة هذا الصف التي سُئلها صاحبه — من إجاباته المخزَّنة. المخفي عنه خانته NULL أصلاً.
+     *
+     * @return array<int, string>
+     */
+    public function askedQuestions(): array
+    {
+        return self::visibleQuestions($this->answers());
     }
 
     /** @return array<int, string> مفاتيح الاختيارات المحفوظة لسؤال متعدد */

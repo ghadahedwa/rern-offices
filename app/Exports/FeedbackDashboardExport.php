@@ -95,7 +95,7 @@ class FeedbackDashboardExport implements WithMultipleSheets
             new FeedbackDashboardSheet(
                 __('home.fr_export_sheet_clusters'),
                 [
-                    __('home.fr_type'), __('home.fr_office'), __('home.fr_ip'),
+                    __('home.fr_type'), __('home.fr_office'), __('home.fr_ip_line'),
                     __('home.fr_export_opinions_count'), __('home.fr_devices'),
                     __('home.fr_export_first_at'), __('home.fr_export_last_at'),
                 ],
@@ -120,6 +120,7 @@ class FeedbackDashboardExport implements WithMultipleSheets
     {
         $kpis     = $this->report->kpis();
         $identity = $this->report->identityShare();
+        $digital  = $this->report->digitalHeadline();
 
         return array_merge(
             $this->report->filters()->describe(),
@@ -131,6 +132,10 @@ class FeedbackDashboardExport implements WithMultipleSheets
                 [__('home.fr_rated_offices'), $kpis['rated_offices']],
                 [__('home.fr_export_anonymous_ratings'), $this->shareText($identity['ratings'])],
                 [__('home.fr_export_anonymous_suggestions'), $this->shareText($identity['suggestions'])],
+                [__('home.fr_export_anonymous_digital'), $this->shareText($identity['digital'])],
+                [__('home.fr_digital').' — '.__('home.fr_dg_kpi_total'), $digital['total']],
+                [__('home.fr_digital').' — '.__('home.fr_dg_kpi_booked'), $digital['booked_percent'] !== null ? $digital['booked_percent'].'% ('.__('home.fr_dg_count_of_base', ['count' => $digital['booked'], 'base' => $digital['total']]).')' : '—'],
+                [__('home.fr_digital').' — '.__('home.fr_dg_kpi_score'), ($digital['score_avg'] ?? '—').' — '.__('home.fr_dg_base', ['base' => $digital['score_base']])],
                 [__('home.fr_export_sample'), __('home.fr_export_sample_note', ['min' => $this->report->minSample()])],
             ],
         );

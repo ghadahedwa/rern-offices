@@ -31,6 +31,27 @@
     </tr>
 </table>
 
+{{-- المنصات الرقمية — مختصر، والتفصيل في تقرير «ملخص المنصات» --}}
+<div class="sec">
+    <div class="sec-title">{{ __('home.fr_digital') }}</div>
+    <table class="rt">
+        <thead>
+            <tr>
+                <th style="width:34%">{{ __('home.fr_dg_kpi_total') }}</th>
+                <th style="width:33%">{{ __('home.fr_dg_kpi_booked') }}</th>
+                <th style="width:33%">{{ __('home.fr_dg_kpi_score') }}</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td class="strong">{{ $digital['total'] }}</td>
+                <td>{{ $digital['booked_percent'] !== null ? $digital['booked_percent'].'%' : '—' }} ({{ __('home.fr_dg_count_of_base', ['count' => $digital['booked'], 'base' => $digital['total']]) }})</td>
+                <td>{{ $digital['score_avg'] ?? '—' }} {{ __('home.fr_dg_of_ten') }} ({{ __('home.fr_dg_base', ['base' => $digital['score_base']]) }})</td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
 {{-- الآراء المجهولة — داخلة في كل المتوسطات --}}
 <div class="sec">
     <div class="sec-title">{{ __('home.fr_identity_share') }}</div>
@@ -44,7 +65,7 @@
             </tr>
         </thead>
         <tbody>
-            @foreach(['ratings' => 'fr_total_ratings', 'suggestions' => 'fr_total_suggestions'] as $key => $labelKey)
+            @foreach(['ratings' => 'fr_total_ratings', 'suggestions' => 'fr_total_suggestions', 'digital' => 'fr_digital'] as $key => $labelKey)
                 <tr>
                     <td class="rt-start">{{ __('home.'.$labelKey) }}</td>
                     <td>{{ $identityShare[$key]['total'] }}</td>
@@ -307,7 +328,7 @@
                 <tr>
                     <th style="width:10%">{{ __('home.fr_type') }}</th>
                     <th style="width:34%">{{ __('home.fr_office') }}</th>
-                    <th style="width:18%">{{ __('home.fr_ip') }}</th>
+                    <th style="width:18%">{{ __('home.fr_ip_line') }}</th>
                     <th style="width:10%">{{ __('home.fr_export_opinions_count') }}</th>
                     <th style="width:10%">{{ __('home.fr_devices') }}</th>
                     <th style="width:18%">{{ __('home.fr_first_last') }}</th>
