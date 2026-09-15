@@ -35,13 +35,13 @@ class FeedbackRejectedExport implements FromQuery, ShouldAutoSize, WithEvents, W
     /** الترتيب يأتي مطبَّقاً من المكوّن — راجع التعليق في FeedbackRatingsExport. */
     public function query()
     {
-        return $this->query->with('office:id,name,governorate_id');
+        return $this->query->with('office:id,name,governorate_id', 'office.governorate:id,name');
     }
 
     public function headings(): array
     {
         return array_merge(
-            [__('home.fr_date'), __('home.fr_type'), __('home.fr_reason'), __('home.fr_office')],
+            [__('home.fr_date'), __('home.fr_type'), __('home.fr_reason'), __('home.fr_match_column'), __('home.fr_governorate'), __('home.fr_office')],
             $this->includePersonal ? [__('home.fr_national_id'), __('home.fr_phone')] : [],
             [__('home.fr_ip')],
         );
@@ -55,6 +55,9 @@ class FeedbackRejectedExport implements FromQuery, ShouldAutoSize, WithEvents, W
                 LocalTime::date($attempt->created_at),
                 __('home.fr_type_'.$attempt->type),
                 __('home.fr_reason_'.$attempt->reason),
+                collect($attempt->matchedKeys())->map(fn ($key) => __('home.fr_match_'.$key))->join(' · ')
+                    .($attempt->matched_at ? ' — '.LocalTime::stamp($attempt->matched_at) : ''),
+                $attempt->office?->governorate?->name,
                 $attempt->office?->name ?? __('home.fr_deleted_office'),
             ],
             $this->includePersonal ? [$attempt->national_id, $attempt->phone] : [],

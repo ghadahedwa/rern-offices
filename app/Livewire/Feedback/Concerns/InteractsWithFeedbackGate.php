@@ -80,8 +80,14 @@ trait InteractsWithFeedbackGate
         return app(FeedbackDevice::class)->token();
     }
 
-    /** فحص تفاعلي: يُستدعى عند تغيّر المقر/الرقم القومي قبل عرض البنود. */
-    protected function evaluateGate(): void
+    /**
+     * فحص تفاعلي: يُستدعى عند تغيّر المقر/الرقم القومي قبل عرض البنود.
+     *
+     * @param  bool  $logRejection  false عند الوصول بزرّ الانتقال بين الفورمات (resume):
+     *   المواطن ضغط رابطاً بعد إرساله أو حجبه، لم يحاول إرسالاً جديداً — وكان كل ضغطة
+     *   تُسجَّل «محاولة مرفوضة» فتملأ الشاشة بما ليس محاولة.
+     */
+    protected function evaluateGate(bool $logRejection = true): void
     {
         $wasBlocked = $this->gateBlocked;
         $this->gateBlocked = false;
@@ -93,21 +99,22 @@ trait InteractsWithFeedbackGate
             return;
         }
 
-        $retry = app(FeedbackGate::class)->duplicateRetryDate(
+        $duplicate = app(FeedbackGate::class)->duplicateMatch(
             $this->feedbackType(), $this->completeNationalId(), $this->completePhone(),
             $this->deviceToken(), (int) $this->office_id,
         );
 
-        if ($retry) {
+        if ($duplicate) {
             $this->gateBlocked = true;
-            $this->gateRetryDate = $this->formatArabicDate($retry);
+            $this->gateRetryDate = $this->formatArabicDate($duplicate['retry']);
             $this->stashIdentity();
 
             // نسجّل الرفض مرة واحدة فقط عند الدخول في الحجب — لا مع كل إعادة فحص (live)
-            if (! $wasBlocked) {
+            if (! $wasBlocked && $logRejection) {
                 app(FeedbackGate::class)->logRejection(
                     $this->feedbackType(), 'duplicate_window',
                     $this->national_id, $this->phone, (int) $this->office_id, request(), $this->deviceToken(),
+                    $duplicate['match'],
                 );
             }
         }
@@ -150,13 +157,13 @@ trait InteractsWithFeedbackGate
         }
 
         // 4) قاعدة الأسبوع (رقم قومي / هاتف / بصمة جهاز)
-        $retry = $gate->duplicateRetryDate(
+        $duplicate = $gate->duplicateMatch(
             $this->feedbackType(), $this->national_id, $this->phone, $this->deviceToken(), (int) $this->office_id,
         );
-        if ($retry) {
-            $gate->logRejection($this->feedbackType(), 'duplicate_window', $this->national_id, $this->phone, $this->office_id, request(), $this->deviceToken());
+        if ($duplicate) {
+            $gate->logRejection($this->feedbackType(), 'duplicate_window', $this->national_id, $this->phone, $this->office_id, request(), $this->deviceToken(), $duplicate['match']);
             $this->gateBlocked = true;
-            $this->gateRetryDate = $this->formatArabicDate($retry);
+            $this->gateRetryDate = $this->formatArabicDate($duplicate['retry']);
             $this->stashIdentity();
 
             return;
@@ -213,7 +220,7 @@ trait InteractsWithFeedbackGate
         $this->governorate_id = $carry['governorate_id'] ?? null;
         $this->office_id      = $carry['office_id'] ?? null;
 
-        $this->evaluateGate();   // يكشف البنود مباشرة أو يظهر الحجب
+        $this->evaluateGate(logRejection: false);   // يكشف البنود مباشرة أو يظهر الحجب — بلا تسجيل رفض (تنقّل لا محاولة)
     }
 
     /**

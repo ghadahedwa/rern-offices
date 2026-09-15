@@ -52,9 +52,9 @@
                     <th class="px-3 py-3 font-medium w-[4%] hidden 2xl:table-cell">#</th>
                     <th class="px-3 py-3 font-medium w-[11%]">{{ __('home.fr_date') }}</th>
                     <th class="px-3 py-3 font-medium w-[9%]">{{ __('home.fr_type') }}</th>
-                    <th class="px-3 py-3 font-medium w-[16%]">{{ __('home.fr_reason') }}</th>
+                    <th class="px-3 py-3 font-medium w-[20%]">{{ __('home.fr_reason') }}</th>
                     <th class="px-3 py-3 font-medium w-[24%]">{{ __('home.fr_office') }}</th>
-                    <th class="px-3 py-3 font-medium w-[18%]">{{ __('home.fr_citizen') }}</th>
+                    <th class="px-3 py-3 font-medium w-[14%]">{{ __('home.fr_citizen') }}</th>
                     <th class="px-3 py-3 font-medium w-[14%] hidden xl:table-cell">{{ __('home.fr_ip') }}</th>
                 </tr>
             </thead>
@@ -72,11 +72,41 @@
                             <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-red-50 text-red-600 dark:bg-red-900/20 dark:text-red-400">
                                 {{ __('home.fr_reason_'.$attempt->reason) }}
                             </span>
+                            {{-- سبب المطابقة: الهوية المعروضة هي المكتوبة في المحاولة، وقد يكون الحجب بمفتاح آخر (البصمة) --}}
+                            @if($attempt->matchedKeys())
+                                <span class="block mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+                                    {{ __('home.fr_match_by') }}
+                                    {{ collect($attempt->matchedKeys())->map(fn ($key) => __('home.fr_match_'.$key))->join(' · ') }}
+                                </span>
+                                @if($attempt->matched_at)
+                                    @php
+                                        $matchLabel = __('home.fr_match_with', [
+                                            'type' => __('home.fr_type_'.$attempt->type),
+                                            'at'   => \App\Support\LocalTime::stamp($attempt->matched_at),
+                                        ]);
+                                        $matchRoute = ['rating' => 'feedback-results.ratings', 'suggestion' => 'feedback-results.suggestions', 'digital' => 'feedback-results.digital'][$attempt->type] ?? null;
+                                    @endphp
+                                    @if($matchRoute && $attempt->office)
+                                        <a href="{{ route($matchRoute, ['gov' => $attempt->office->governorate_id, 'office' => $attempt->office_id]) }}" wire:navigate
+                                           class="block text-xs text-[#c9a847] hover:underline">{{ $matchLabel }}</a>
+                                    @else
+                                        <span class="block text-xs text-zinc-400">{{ $matchLabel }}</span>
+                                    @endif
+                                @endif
+                            @endif
                         </td>
                         <td class="px-3 py-3 text-zinc-800 dark:text-zinc-100">
-                            <span class="block truncate" title="{{ $attempt->office?->name }}">
-                                {{ $attempt->office?->name ?? __('home.fr_deleted_office') }}
-                            </span>
+                            @if($attempt->office)
+                                {{-- المحافظة بجانب المقر في العمود نفسه — لا تُقصّ مع اسم المقر الطويل --}}
+                                <span class="flex items-center gap-1.5 min-w-0" title="{{ $attempt->office->name }} — {{ $attempt->office->governorate?->name }}">
+                                    <span class="truncate">{{ $attempt->office->name }}</span>
+                                    @if($attempt->office->governorate)
+                                        <span class="shrink-0 text-xs text-zinc-400">· {{ $attempt->office->governorate->name }}</span>
+                                    @endif
+                                </span>
+                            @else
+                                <span class="block truncate">{{ __('home.fr_deleted_office') }}</span>
+                            @endif
                         </td>
                         <td class="px-3 py-3 text-zinc-600 dark:text-zinc-300 text-xs">
                             <span class="block">{{ $attempt->national_id ?? '—' }}</span>

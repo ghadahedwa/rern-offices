@@ -1136,6 +1136,12 @@ return [
     'fr_type_rating'              => 'تقييم',
     'fr_type_suggestion'          => 'اقتراح',
     'fr_type_digital'             => 'تقييم المنصات',
+    'fr_match_by'                 => 'طابق بـ:',
+    'fr_match_national_id'        => 'الرقم القومي',
+    'fr_match_phone'              => 'الهاتف',
+    'fr_match_device_token'       => 'بصمة الجهاز',
+    'fr_match_with'               => 'مع :type أُرسل :at',
+    'fr_match_column'             => 'المطابقة',
 
     // تقييم المنصات الرقمية — الشاشة والملخص والتصدير
     'fr_digital'                  => 'تقييم المنصات الرقمية',

@@ -56,6 +56,19 @@ class FeedbackGate
      */
     public function duplicateRetryDate(string $type, ?string $nationalId, ?string $phone, ?string $deviceToken, int $officeId): ?CarbonInterface
     {
+        return $this->duplicateMatch($type, $nationalId, $phone, $deviceToken, $officeId)['retry'] ?? null;
+    }
+
+    /**
+     * مثل duplicateRetryDate ومعه **سبب المطابقة** لسجل الرفض: بأي مفتاح طابق ومع أي رأي.
+     *
+     * ⚠️ الرفض يسجّل الهوية المكتوبة في المحاولة، وقد لا تكون هي هوية الرأي السابق
+     * (المطابقة بالبصمة وحدها). بلا هذا السبب يبحث المدير بالرقم فلا يجد رأياً فيظنّ خللاً.
+     *
+     * @return array{retry: CarbonInterface, match: array{matched_by: string, matched_id: int, matched_at: CarbonInterface}}|null
+     */
+    public function duplicateMatch(string $type, ?string $nationalId, ?string $phone, ?string $deviceToken, int $officeId): ?array
+    {
         $keys = array_filter([
             'national_id'  => (string) $nationalId,
             'phone'        => (string) $phone,
@@ -83,7 +96,20 @@ class FeedbackGate
             ->latest('created_at')
             ->first();
 
-        return $last ? $last->created_at->copy()->addDays($windowDays) : null;
+        if (! $last) {
+            return null;
+        }
+
+        $matchedBy = array_keys(array_filter($keys, fn ($value, $column) => (string) $last->{$column} === $value, ARRAY_FILTER_USE_BOTH));
+
+        return [
+            'retry' => $last->created_at->copy()->addDays($windowDays),
+            'match' => [
+                'matched_by' => implode(',', $matchedBy),
+                'matched_id' => $last->getKey(),
+                'matched_at' => $last->created_at,
+            ],
+        ];
     }
 
     /** هل تجاوز هذا الـ IP الحد المسموح في الدقيقة؟ (صمّام بوتات) */
@@ -127,8 +153,12 @@ class FeedbackGate
         RateLimiter::hit($this->officeIpKey($ip, $officeId), 86400);
     }
 
-    /** يسجّل محاولة مرفوضة دون احتسابها في النتائج. */
-    public function logRejection(string $type, string $reason, ?string $nationalId, ?string $phone, ?int $officeId, Request $request, ?string $deviceToken = null): void
+    /**
+     * يسجّل محاولة مرفوضة دون احتسابها في النتائج.
+     *
+     * @param  array{matched_by?: string, matched_id?: int, matched_at?: CarbonInterface}  $match  لرفض التكرار (من duplicateMatch)
+     */
+    public function logRejection(string $type, string $reason, ?string $nationalId, ?string $phone, ?int $officeId, Request $request, ?string $deviceToken = null, array $match = []): void
     {
         FeedbackRejectedAttempt::create([
             'type'         => $type,
@@ -137,6 +167,9 @@ class FeedbackGate
             'device_token' => $deviceToken ?: null,
             'office_id'    => $officeId,
             'reason'       => $reason,
+            'matched_by'   => ($match['matched_by'] ?? '') ?: null,
+            'matched_id'   => $match['matched_id'] ?? null,
+            'matched_at'   => $match['matched_at'] ?? null,
             'ip_address'   => $request->ip(),
             'user_agent'   => $request->userAgent(),
         ]);
