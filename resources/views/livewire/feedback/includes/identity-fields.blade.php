@@ -11,7 +11,7 @@
   <div class="sec-head"><span class="bar"></span><h2>بياناتك وتحديد المقر</h2></div>
 
   {{-- الهوية اختيارية (2026-09-14) — منع التكرار ببصمة الجهاز لا بالهوية. انظر FeedbackDevice --}}
-  <p class="hint">الاسم والرقم القومي ورقم الهاتف <strong>اختيارية</strong> — يمكنك تركها فارغة وإرسال رأيك دون ذكر هويتك.</p>
+  <p class="hint">البيانات الشخصية إدخالها <strong>اختياري</strong> — ويُفضَّل إدخالها للتواصل.</p>
 
   <div class="field">
     <label>الاسم <span class="opt">(اختياري)</span></label>
