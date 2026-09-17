@@ -287,6 +287,12 @@
                     <flux:sidebar.item icon="calendar-days" :href="route('contractors.attendance')" :current="request()->routeIs('contractors.attendance')" wire:navigate>
                         {{ __('home.ct_attendance') }}
                     </flux:sidebar.item>
+                    {{-- ⚠️ حارس Route::has: route() في الـlayout مع cache راوتات قديم يُسقط كل الصفحات بـ500 --}}
+                    @if(Route::has('contractors.attendance-file'))
+                    <flux:sidebar.item icon="table-cells" :href="route('contractors.attendance-file')" :current="request()->routeIs('contractors.attendance-file')" wire:navigate>
+                        {{ __('home.ct_att_file_title') }}
+                    </flux:sidebar.item>
+                    @endif
                     @endcan
 
                     @can('contractors.index')

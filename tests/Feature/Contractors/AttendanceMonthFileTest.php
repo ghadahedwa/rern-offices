@@ -1,6 +1,6 @@
 <?php
 
-use App\Livewire\Contractors\Attendance;
+use App\Livewire\Contractors\AttendanceFile;
 use App\Models\AttendanceDay;
 use App\Models\AttendanceReview;
 use App\Models\AttendanceStatus;
@@ -88,8 +88,30 @@ function mfFilled(Governorate $gov, array $edits, string $month = '2026-09'): Up
 
 function mfScreen(Governorate $gov, string $month = '2026-09')
 {
-    return Livewire::withQueryParams(['gov' => $gov->id, 'month' => $month])->test(Attendance::class);
+    return Livewire::withQueryParams(['gov' => $gov->id, 'month' => $month])->test(AttendanceFile::class);
 }
+
+// ── الصفحة ───────────────────────────────────────────────
+
+it('يفتح صفحة كشف الإكسيل المستقلة لصاحب التسجيل ويمنع غيره', function () {
+    $gov = Governorate::factory()->create();
+
+    $this->actingAs(mfUser([$gov]));
+    $this->get(route('contractors.attendance-file'))->assertOk()->assertSee(__('home.ct_att_file_pick_governorate'));
+
+    $this->actingAs(mfUser([$gov], ['contractors.index']));
+    $this->get(route('contractors.attendance-file'))->assertForbidden();
+});
+
+it('يربط شاشة الشبكة بصفحة الإكسيل على المحافظة والشهر المعروضين وقد خرج منها قسم الملف', function () {
+    $gov = Governorate::factory()->create();
+    $this->actingAs(mfUser([$gov]));
+
+    $html = $this->get(route('contractors.attendance', ['gov' => $gov->id, 'month' => '2026-09']))->assertOk()->getContent();
+
+    expect($html)->toContain(e(route('contractors.attendance-file', ['gov' => $gov->id, 'month' => '2026-09'])))
+        ->not->toContain('wire:model="monthFile"');
+});
 
 // ── القالب ───────────────────────────────────────────────
 

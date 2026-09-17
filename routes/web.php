@@ -243,6 +243,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::livewire('contractors/import', \App\Livewire\Contractors\Import::class)->name('contractors.import');
     Route::livewire('contractors/{contractor}/edit', \App\Livewire\Contractors\Create::class)->name('contractors.edit');
     Route::livewire('contractors/attendance', \App\Livewire\Contractors\Attendance::class)->name('contractors.attendance');
+    // كشف الشهر بالإكسيل — صفحةٌ مستقلة عن الشبكة (طلب العميلة 2026-09-17)، بصلاحية التسجيل نفسها في المكوّن
+    Route::livewire('contractors/attendance/file', \App\Livewire\Contractors\AttendanceFile::class)->name('contractors.attendance-file');
     Route::livewire('contractors/reports', \App\Livewire\Contractors\Reports::class)->name('contractors.reports');
 
     // إعدادات المراسلات (أطراف المراسلات) — صلاحية correspondence.settings
