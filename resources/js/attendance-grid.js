@@ -4,7 +4,12 @@
  * ⚠️ لماذا في المتصفح لا في خصائص Livewire: طلبٌ لكل نقرة = مئات الطلبات للشهر الواحد،
  *    وانقطاعٌ في المنتصف يترك نصفه محفوظاً ونصفه لا.
  * ⚠️ لماذا ملفٌ في الحزمة لا `<script>` في القالب: التنقّل بـwire:navigate لا يضمن تشغيل
- *    السكربت قبل تهيئة Alpine للعنصر — والتسجيل عند `alpine:init` مضمون مرة واحدة.
+ *    السكربت قبل تهيئة Alpine للعنصر.
+ * ⚠️ **والتسجيل لا يعتمد على `alpine:init` وحده** (بلاغ السيرفر ٢٠٢٦-٠٩-١٧): تبويبٌ مفتوح قبل
+ *    النشر ينتقل بـwire:navigate، وLivewire لا يُعيد تحميل الصفحة إلا إن تغيّر **query string**
+ *    الأصل لا اسمه — وVite يغيّر الاسم (الهاش). فيحقن الملف الجديد في صفحةٍ بدأ فيها Alpine
+ *    فعلاً، و`alpine:init` مضى: «attendanceGrid is not defined»، خلايا بيضاء لا تُعلَّم.
+ *    فإن وُجد Alpine يُسجَّل فوراً، وإلا انتظر `alpine:init`.
  *
  * data-config: { rows: [{id, open: ['Y-m-d'], marks: {'Y-m-d': statusId}, reviewed}],
  *                fingerprint, brush, statuses: {id: {name, color}} }
@@ -13,7 +18,7 @@
  *    العامل يُعيدان عرض القالب، وتغيّر قيمة `x-data` نفسها قد يُعيد تهيئة المكوّن فتضيع
  *    تغييرات لم تُحفظ. والبصمة المحفوظة هنا هي بصمة لحظة الفتح — وهو المطلوب للمقارنة.
  */
-document.addEventListener('alpine:init', () => {
+function registerAttendanceGrid() {
     window.Alpine.data('attendanceGrid', () => ({
         config: null,
         marks: {},
@@ -184,4 +189,10 @@ document.addEventListener('alpine:init', () => {
             }
         },
     }));
-});
+}
+
+if (window.Alpine) {
+    registerAttendanceGrid();
+} else {
+    document.addEventListener('alpine:init', registerAttendanceGrid);
+}
