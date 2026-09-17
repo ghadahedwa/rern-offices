@@ -370,7 +370,7 @@ final class AttendanceMonthFile
             ->setErrorTitle('حرف غير معروف')
             ->setError('اختر من القائمة: '.$codes->implode(' · ').' — أو امسح الخانة للحاضر.')
             ->setShowInputMessage(false)
-            ->setFormula1('"'.($codes->isEmpty() ? '-' : $codes->implode(',')).'"');
+            ->setFormula1('"'.($codes->isEmpty() ? '-' : $this->typeableCodes($codes->all())->implode(',')).'"');
 
         $locked = new DataValidation();
         $locked->setType(DataValidation::TYPE_LIST)
@@ -410,6 +410,34 @@ final class AttendanceMonthFile
             }
         }
     }
+    /** صور الألف التي يكتبها المفتش بالكيبورد — تُقرأ كلها ألفاً (`ArabicText`). */
+    private const ALEF_FORMS = ['ا', 'أ', 'إ', 'آ'];
+
+    /**
+     * حروف القائمة: الرموز أولاً (ما يظهر أعلى القائمة المنسدلة)، ثم **صور الألف الأخرى** لرمزٍ يبدأ بألف.
+     *
+     * ⚠️ طلب العميلة (٢٠٢٦-٠٩-١٧): مَن يكتب بالكيبورد يكتب «ا» لا «إ»، وتحقق القائمة في Excel مطابقةٌ
+     *    حرفية فكان يرفضها — بينما القارئ يقبلها أصلاً. فالقائمة تقبل ما يقبله القارئ.
+     *
+     * @param  array<int,string>  $codes
+     */
+    private function typeableCodes(array $codes): \Illuminate\Support\Collection
+    {
+        $list = collect($codes);
+
+        foreach ($codes as $code) {
+            $first = mb_substr($code, 0, 1);
+
+            if (in_array($first, self::ALEF_FORMS, true)) {
+                foreach (self::ALEF_FORMS as $form) {
+                    $list->push($form.mb_substr($code, 1));
+                }
+            }
+        }
+
+        return $list->unique()->values();
+    }
+
     private function styleBody(Worksheet $sheet, string $lastL, int $lastRow): void
     {
         $days = Coordinate::stringFromColumnIndex(self::COL_FIRST_DAY).self::ROW_FIRST.':'.$lastL.$lastRow;

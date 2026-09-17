@@ -148,8 +148,8 @@ it('يضع قائمةً منسدلة بحروف الحالات المفعَّل�
     expect($cell->hasDataValidation())->toBeTrue()
         ->and($cell->getDataValidation()->getType())->toBe(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::TYPE_LIST)
         ->and($cell->getDataValidation()->getErrorStyle())->toBe(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::STYLE_STOP)
-        // بترتيب جدول الحالات: إجازة ثم غائب
-        ->and($cell->getDataValidation()->getFormula1())->toBe('"إ,غ"')
+        // بترتيب جدول الحالات: إجازة ثم غائب — ثم صور الألف الأخرى لمن يكتب بالكيبورد «ا» لا «إ»
+        ->and($cell->getDataValidation()->getFormula1())->toBe('"إ,غ,ا,أ,آ"')
         // خانة الاسم ليست قائمة
         ->and($sheet->getCell('C5')->hasDataValidation())->toBeFalse();
 });
@@ -169,8 +169,8 @@ it('لا تقبل الجمعة والعطلة وما قبل الالتحاق إ�
     expect($rule(4, 5))->toBe('"-"')      // جمعة
         ->and($rule(16, 5))->toBe('"-"')  // عطلة
         ->and($rule(3, 6))->toBe('"-"')   // قبل التحاق الثاني
-        ->and($rule(3, 5))->toBe('"إ,غ"') // يوم عمل للأول
-        ->and($rule(15, 6))->toBe('"إ,غ"') // يوم التحاق الثاني
+        ->and($rule(3, 5))->toBe('"إ,غ,ا,أ,آ"') // يوم عمل للأول
+        ->and($rule(15, 6))->toBe('"إ,غ,ا,أ,آ"') // يوم التحاق الثاني
         ->and($sheet->getCell([5 + 16, 5])->getDataValidation()->getErrorStyle())
         ->toBe(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::STYLE_STOP);
 });
