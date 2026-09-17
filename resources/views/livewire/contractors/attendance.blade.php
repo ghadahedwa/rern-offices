@@ -46,8 +46,13 @@
 
         {{-- الاختيار: المحافظة ← المقر ← الشهر، وبحثٌ عابرٌ للمقارّ --}}
         <div class="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-sm p-5 space-y-3">
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                <div>
+            {{--
+                المحافظة والمقر والشهر في صفّ (المقر أعرضها: أسماؤه تطول)، والبحث في صفٍّ وحده — هو طريقٌ
+                بديل للوصول لا فلترٌ رابع.
+                ⚠️ min-w-0 على كل خانة: حقل الشهر له عرضٌ أدنى ذاتي، فبلاه يتمدّد فوق الخانة المجاورة.
+            --}}
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-4 [&>*]:min-w-0">
+                <div class="lg:col-span-3">
                     <label class="{{ $label }}">{{ __('home.ct_worker_governorate') }}</label>
                     <select wire:model.live="governorate" :disabled="dirty" class="{{ $select }}">
                         <option value="">—</option>
@@ -57,7 +62,7 @@
                     </select>
                 </div>
 
-                <div>
+                <div class="lg:col-span-5">
                     <label class="{{ $label }}">{{ __('home.ct_worker_office') }}</label>
                     <select wire:model.live="office" :disabled="dirty" class="{{ $select }}">
                         <option value="">—</option>
@@ -67,19 +72,19 @@
                     </select>
                 </div>
 
-                <div>
+                <div class="lg:col-span-4">
                     <label class="{{ $label }}">{{ __('home.ct_att_month') }}</label>
-                    <div class="flex items-center gap-1.5">
+                    <div class="flex items-center gap-1.5 min-w-0">
                         {{-- RTL: السابق على اليمين --}}
                         <button type="button" wire:click="shiftMonth(-1)" :disabled="dirty" title="{{ __('home.ct_att_prev_month') }}"
                                 class="shrink-0 w-9 h-9 rounded-lg border border-zinc-300 dark:border-zinc-600 text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800 disabled:opacity-40 disabled:cursor-not-allowed">›</button>
-                        <input type="month" wire:model.live="month" :disabled="dirty" class="{{ $select }}" />
+                        <input type="month" wire:model.live="month" :disabled="dirty" class="{{ $select }} min-w-0 flex-1" />
                         <button type="button" wire:click="shiftMonth(1)" :disabled="dirty" title="{{ __('home.ct_att_next_month') }}"
                                 class="shrink-0 w-9 h-9 rounded-lg border border-zinc-300 dark:border-zinc-600 text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800 disabled:opacity-40 disabled:cursor-not-allowed">‹</button>
                     </div>
                 </div>
 
-                <div class="relative">
+                <div class="relative sm:col-span-2 lg:col-span-12 lg:max-w-md">
                     <label class="{{ $label }}">{{ __('home.ct_att_search') }}</label>
                     <input type="text" wire:model.live.debounce.300ms="search" :disabled="dirty"
                            placeholder="{{ __('home.ct_att_search_placeholder') }}" class="{{ $select }}" />
