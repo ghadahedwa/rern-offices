@@ -163,6 +163,7 @@ return [
     ],
 
     'attributes' => [
+        'monthFile' => 'ملف الكشف',
         'selectedWarehouses' => 'المخازن',
         // المراسلات — أطراف
         'code'                  => 'الرمز',
