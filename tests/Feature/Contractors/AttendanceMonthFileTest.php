@@ -109,6 +109,9 @@ it('ينزل الكشف بعاملي المحافظة ومعرّفاتهم وا�
         ->and($sheet->getCell([5 + 2, 5])->getValue())->toBe('غ')     // المسجَّل ينزل كما هو
         ->and($sheet->getCell([5 + 4, 5])->getValue())->toBe('-')     // جمعة
         ->and($sheet->getCell([5 + 3, 5])->getValue())->toBeNull()     // حاضر = فارغ
+        // وأخضر باهت كالشبكة: #16a34a ممزوجاً بالأبيض ١٢٪
+        ->and($sheet->getStyle([5 + 3, 5])->getFill()->getStartColor()->getRGB())->toBe('E3F4E9')
+        ->and($sheet->getStyle([5 + 4, 5])->getFill()->getStartColor()->getRGB())->toBe('E5E5E5')   // الجمعة رمادية
         ->and($sheet->getCell('C6')->getValue())->toBeNull();           // لا صفّ لعامل محافظة أخرى
 });
 

@@ -59,6 +59,7 @@ final class AttendanceMonthFile
 
     private ?array $sheets = null;
     private ?array $codes = null;
+    private ?string $presentTint = null;
 
     public readonly CarbonImmutable $month;
 
@@ -292,12 +293,34 @@ final class AttendanceMonthFile
                 continue;
             }
 
+            // اليوم المفتوح أخضر باهت كالشبكة («حاضر»)، والحرف المكتوب يغطّيه بلون حالته
+            // (التنسيق الشرطي يعلو تعبئة الخلية) — ومسحُ الحرف يُرجعه أخضر.
+            $sheet->getStyle([$col, $line])->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB($this->presentTint());
+
             $status = $row['marks'][$column['date']] ?? null;
 
             if ($status !== null && isset($codes[$status])) {
                 $sheet->setCellValue([$col, $line], $codes[$status]);
             }
         }
+    }
+
+    /**
+     * لون «حاضر» من جدول الحالات ممزوجاً بالأبيض ١٢٪ — **نفس صبغة الشبكة** (`…1f` في attendance-grid.js).
+     * ⚠️ Excel لا يعرف الشفافية في تعبئة الخلية، فالمزج يُحسب هنا.
+     */
+    private function presentTint(): string
+    {
+        if ($this->presentTint !== null) {
+            return $this->presentTint;
+        }
+
+        $hex = ltrim((string) (AttendanceStatus::where('is_default', true)->value('color') ?? '#16a34a'), '#');
+
+        return $this->presentTint = collect(str_split(str_pad($hex, 6, '0'), 2))
+            ->map(fn ($part) => str_pad(dechex((int) round(255 - (255 - hexdec($part)) * 0x1f / 255)), 2, '0', STR_PAD_LEFT))
+            ->map('strtoupper')
+            ->implode('');
     }
 
     private function styleBody(Worksheet $sheet, string $lastL, int $lastRow): void
