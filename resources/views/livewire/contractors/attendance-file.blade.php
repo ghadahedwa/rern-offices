@@ -107,10 +107,14 @@
                             <span class="px-3 py-1 rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300">{{ __('home.ct_att_file_updated', ['count' => $summary['updated']]) }}</span>
                             {{-- «سيُحذف» صريحٌ لا مطويّ: الخلية الراجعة فارغة تحذف استثناءً مسجَّلاً --}}
                             <span class="px-3 py-1 rounded-full {{ $summary['deleted'] ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300' : 'bg-zinc-200 text-zinc-600 dark:bg-zinc-700 dark:text-zinc-300' }}">{{ __('home.ct_att_file_deleted', ['count' => $summary['deleted']]) }}</span>
-                            @if($filePreview['ignored'])
-                                <span class="px-3 py-1 rounded-full bg-zinc-200 text-zinc-600 dark:bg-zinc-700 dark:text-zinc-300">{{ __('home.ct_att_file_ignored', ['count' => $filePreview['ignored']]) }}</span>
-                            @endif
                         </div>
+
+                        {{-- ⚠️ العلامات في أيامٍ مقفولة تُسمّى أيامها — عطلةٌ أُضيفت بعد تنزيل الملف تبدو فيه يوماً عادياً --}}
+                        @if($filePreview['ignored'])
+                            <div class="rounded-md border border-amber-200 dark:border-amber-900 bg-amber-50 dark:bg-amber-900/20 px-3 py-2 text-xs text-amber-800 dark:text-amber-300">
+                                {{ __('home.ct_att_file_ignored', ['count' => $filePreview['ignored'], 'days' => implode('، ', $filePreview['ignored_days'] ?? [])]) }}
+                            </div>
+                        @endif
 
                         @if($filePreview['errors'])
                             <div class="space-y-1.5">

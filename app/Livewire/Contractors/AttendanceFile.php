@@ -138,6 +138,7 @@ class AttendanceFile extends Component
             'error'   => $parsed['error'],
             'errors'  => $parsed['errors'],
             'ignored' => $parsed['ignored'],
+            'ignored_days' => $parsed['ignored_days'],
             'summary' => $parsed['error'] ? null : $file->summarize($parsed),
             'label'   => $file->monthLabel().' — '.$file->governorate->name,
         ];

@@ -1420,7 +1420,7 @@ return [
     'ct_att_file_updated'          => 'سيُعدَّل :count',
     'ct_att_file_deleted'          => 'سيُحذف :count',
     'ct_att_file_errors'           => 'صفوف مرفوضة لن تُحفظ: :count',
-    'ct_att_file_ignored'          => ':count خلية في يومٍ مقفول تُهمَل',
+    'ct_att_file_ignored'          => ':count علامة في أيامٍ مقفولة لن تُحفظ (جمعة أو عطلة رسمية أو خارج تسكين العامل) — الأيام: :days',
     'ct_att_file_line'             => 'السطر',
     'ct_att_file_err_no_id'        => 'صفٌّ أُضيف باليد — الملف لا يُضيف عاملاً. أضِفه من شاشة العاملين ثم نزّل الكشف من جديد.',
     'ct_att_file_err_not_in_office' => 'العامل ليس في هذا المقر خلال الشهر — نزّل الكشف من جديد.',

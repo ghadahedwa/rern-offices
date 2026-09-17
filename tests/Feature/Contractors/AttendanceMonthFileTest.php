@@ -154,6 +154,27 @@ it('يضع قائمةً منسدلة بحروف الحالات المفعَّل�
         ->and($sheet->getCell('C5')->hasDataValidation())->toBeFalse();
 });
 
+it('لا تقبل الجمعة والعطلة وما قبل الالتحاق إلا «-» في ملف الإكسيل', function () {
+    // بلاغ العميلة: كان يُكتب «غ» في الجمعة والعطلة فيُهمَل عند الرفع بصمت
+    $gov    = Governorate::factory()->create();
+    $office = Office::factory()->create(['governorate_id' => $gov->id]);
+    mfWorker($office, 'أ عامل من أول الشهر');
+    mfWorker($office, 'ب ملتحق يوم ١٥', '2026-09-15');
+    OfficialHoliday::create(['name' => 'عطلة', 'starts_on' => '2026-09-16', 'ends_on' => '2026-09-16']);
+
+    $path  = mfFile($gov)->saveTo(tempnam(sys_get_temp_dir(), 'mf_').'.xlsx');
+    $sheet = IOFactory::load($path)->getSheetByName('الكشف');
+    $rule  = fn (int $day, int $line) => $sheet->getCell([5 + $day, $line])->getDataValidation()->getFormula1();
+
+    expect($rule(4, 5))->toBe('"-"')      // جمعة
+        ->and($rule(16, 5))->toBe('"-"')  // عطلة
+        ->and($rule(3, 6))->toBe('"-"')   // قبل التحاق الثاني
+        ->and($rule(3, 5))->toBe('"إ,غ"') // يوم عمل للأول
+        ->and($rule(15, 6))->toBe('"إ,غ"') // يوم التحاق الثاني
+        ->and($sheet->getCell([5 + 16, 5])->getDataValidation()->getErrorStyle())
+        ->toBe(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::STYLE_STOP);
+});
+
 it('يلفّ اسم المقر الطويل داخل خانته ويرفع ارتفاع الصفّ', function () {
     // ⚠️ بلا التفاف يسيل الاسم فوق خانات الأيام الفارغة المجاورة
     $gov  = Governorate::factory()->create();
@@ -262,6 +283,9 @@ it('يُهمل ما كُتب في يومٍ مقفول', function () {
     mfScreen($gov)
         ->set('monthFile', mfFilled($gov, [5 => [4 => 'غ', 16 => 'غ']]))   // جمعة وعطلة
         ->assertSet('filePreview.ignored', 2)
+        // الأيام تُسمّى — عطلةٌ أُضيفت بعد التنزيل لا يكشفها العدد وحده
+        ->assertSet('filePreview.ignored_days', [4, 16])
+        ->assertSee('الأيام: 4، 16')
         ->call('importMonthFile');
 
     expect(AttendanceDay::count())->toBe(0);

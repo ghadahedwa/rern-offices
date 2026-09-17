@@ -66,6 +66,9 @@ final class AttendanceMonthFile
     private ?array $codes = null;
     private ?string $presentTint = null;
 
+    /** [عمود => [سطر => مفتوح؟]] — يملؤه writeRow ويقرؤه تحقق الخلايا. */
+    private array $cellOpen = [];
+
     public readonly CarbonImmutable $month;
 
     public function __construct(public readonly Governorate $governorate, CarbonImmutable $month)
@@ -301,6 +304,8 @@ final class AttendanceMonthFile
         foreach ($columns as $index => $column) {
             $col = self::COL_FIRST_DAY + $index;
 
+            $this->cellOpen[$col][$line] = isset($open[$column['date']]);
+
             if (! isset($open[$column['date']])) {
                 $sheet->setCellValue([$col, $line], '-');
                 $sheet->getStyle([$col, $line])->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB('E5E5E5');
@@ -339,28 +344,25 @@ final class AttendanceMonthFile
     }
 
     /**
-     * قائمة منسدلة في خانات الأيام بحروف الحالات المفعَّلة (طلب العميلة ٢٠٢٦-٠٩-١٧).
+     * تحقق خانات الأيام (طلب العميلة ٢٠٢٦-٠٩-١٧): **المفتوحة قائمةٌ بحروف الحالات المفعَّلة،
+     * والمقفولة لا تقبل إلا «-» أو الفراغ**.
      *
-     * ⚠️ `STOP` لا تنبيه: Excel يرفض غير الحرف وقت الكتابة، فلا يصل «حرف غير معروف» للرفع.
+     * ⚠️ `STOP` لا تنبيه: Excel يرفض غير المسموح وقت الكتابة، فلا يصل «حرف غير معروف» للرفع.
      *    والكتابة بالكيبورد باقية لمن يكتب «غ» أو «إ» مباشرة، والمسح مسموح (`allowBlank`).
-     * ⚠️ القائمة على كتلة الأيام كلها لا على المفتوحة وحدها: نطاقٌ لكل خلية يضخّم الملف،
-     *    والخلية المقفولة («-») لا تُفحص إلا إن عُدِّلت — وما يُكتب فيها يُهمَل عند الرفع أصلاً.
-     * ⚠️ الحروف مضمّنة في التحقق لا في نطاقٍ مسمّى: حرفان أو ثلاثة لا تقترب من حدّ الـ٢٥٥ حرفاً.
+     * ⚠️ **لا تحققٌ واحد على كتلة الأيام كلها** (بلاغ العميلة): كان يقبل «غ» في الجمعة والعطلة، وما
+     *    يُكتب هناك يُهمَل عند الرفع — فيظنّ المفتش أنه سجّل غياباً لم يُسجَّل.
+     * ⚠️ النطاقات **رأسيةٌ متصلة لكل عمود** لا خليةً خلية: عمود العمل غالباً نطاقٌ واحد من أول صفّ
+     *    لآخره، والجمعة والعطلة كذلك، ولا يتقطّع إلا عند ملتحقٍ أو منقول — فيبقى الملف صغيراً.
+     *    وتحقّقان على خليةٍ واحدة لا يجتمعان في Excel، فالنطاقات لا تتداخل.
      */
-    private function addDayDropdown(Worksheet $sheet, string $range): void
+    private function addDayValidations(Worksheet $sheet): void
     {
         $codes = collect($this->codes())
             ->only(AttendanceStatus::markable()->pluck('id')->all())
             ->values();
 
-        if ($codes->isEmpty()) {
-            return;
-        }
-
-        $names = AttendanceStatus::markable()->ordered()->pluck('name');
-
-        $validation = new DataValidation();
-        $validation->setType(DataValidation::TYPE_LIST)
+        $open = new DataValidation();
+        $open->setType(DataValidation::TYPE_LIST)
             ->setErrorStyle(DataValidation::STYLE_STOP)
             ->setAllowBlank(true)
             ->setShowDropDown(true)
@@ -368,11 +370,46 @@ final class AttendanceMonthFile
             ->setErrorTitle('حرف غير معروف')
             ->setError('اختر من القائمة: '.$codes->implode(' · ').' — أو امسح الخانة للحاضر.')
             ->setShowInputMessage(false)
-            ->setFormula1('"'.$codes->implode(',').'"');
+            ->setFormula1('"'.($codes->isEmpty() ? '-' : $codes->implode(',')).'"');
 
-        $sheet->setDataValidation($range, $validation);
+        $locked = new DataValidation();
+        $locked->setType(DataValidation::TYPE_LIST)
+            ->setErrorStyle(DataValidation::STYLE_STOP)
+            ->setAllowBlank(true)
+            ->setShowDropDown(true)
+            ->setShowErrorMessage(true)
+            ->setErrorTitle('يوم مقفول')
+            ->setError('هذا اليوم جمعة أو عطلة رسمية أو خارج تسكين العامل في هذا المقر — لا يُسجَّل فيه غياب ولا إجازة.')
+            ->setShowInputMessage(false)
+            ->setFormula1('"-"');
+
+        foreach ($this->cellOpen as $col => $lines) {
+            ksort($lines);
+
+            $letter = Coordinate::stringFromColumnIndex($col);
+            $start  = null;
+            $kind   = null;
+            $prev   = null;
+
+            foreach ($lines as $line => $isOpen) {
+                if ($start !== null && ($isOpen !== $kind || $line !== $prev + 1)) {
+                    $sheet->setDataValidation($letter.$start.':'.$letter.$prev, clone ($kind ? $open : $locked));
+                    $start = null;
+                }
+
+                if ($start === null) {
+                    $start = $line;
+                    $kind  = $isOpen;
+                }
+
+                $prev = $line;
+            }
+
+            if ($start !== null) {
+                $sheet->setDataValidation($letter.$start.':'.$letter.$prev, clone ($kind ? $open : $locked));
+            }
+        }
     }
-
     private function styleBody(Worksheet $sheet, string $lastL, int $lastRow): void
     {
         $days = Coordinate::stringFromColumnIndex(self::COL_FIRST_DAY).self::ROW_FIRST.':'.$lastL.$lastRow;
@@ -384,7 +421,7 @@ final class AttendanceMonthFile
         $sheet->getStyle($days)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
         $sheet->getStyle('C'.self::ROW_FIRST.':E'.$lastRow)->getAlignment()->setWrapText(true);
 
-        $this->addDayDropdown($sheet, $days);
+        $this->addDayValidations($sheet);
         $sheet->getStyle($days)->getFont()->setBold(true);
 
         // ⚠️ تلوين الحرف المكتوب بلون حالته — بلا تمييزٍ لوني تغرق العلامات في الشبكة
@@ -428,7 +465,7 @@ final class AttendanceMonthFile
      */
     public function parse(string $path): array
     {
-        $result = ['error' => null, 'offices' => [], 'errors' => [], 'ignored' => 0];
+        $result = ['error' => null, 'offices' => [], 'errors' => [], 'ignored' => 0, 'ignored_days' => []];
 
         $spreadsheet = IOFactory::load($path);
 
@@ -452,6 +489,9 @@ final class AttendanceMonthFile
         } finally {
             $spreadsheet->disconnectWorksheets();
         }
+
+        ksort($result['ignored_days']);
+        $result['ignored_days'] = array_keys($result['ignored_days']);
 
         return $result;
     }
@@ -524,7 +564,12 @@ final class AttendanceMonthFile
 
                 if (! isset($open[$column['date']])) {
                     // يومٌ مقفول: ما كُتب فيه يُهمَل (جمعة · عطلة · خارج التسكين)
-                    $result['ignored'] += $empty ? 0 : 1;
+                    if (! $empty) {
+                        $result['ignored']++;
+                        // ⚠️ اليوم يُسمّى: عطلةٌ أُضيفت بعد تنزيل الملف تبدو في الملف يوماً عادياً،
+                        //    والعدد وحده لا يقول للمفتش أيّ غيابٍ سجّله لن يُحفظ.
+                        $result['ignored_days'][$column['day']] = true;
+                    }
 
                     continue;
                 }
