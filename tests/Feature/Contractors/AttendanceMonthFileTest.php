@@ -115,6 +115,37 @@ it('ينزل الكشف بعاملي المحافظة ومعرّفاتهم وا�
         ->and($sheet->getCell('C6')->getValue())->toBeNull();           // لا صفّ لعامل محافظة أخرى
 });
 
+it('يضع قائمةً منسدلة بحروف الحالات المفعَّلة في خانات الأيام', function () {
+    $gov = Governorate::factory()->create();
+    mfWorker(Office::factory()->create(['governorate_id' => $gov->id]), 'عامل');
+
+    $path  = mfFile($gov)->saveTo(tempnam(sys_get_temp_dir(), 'mf_').'.xlsx');
+    $sheet = IOFactory::load($path)->getSheetByName('الكشف');
+    $cell  = $sheet->getCell([5 + 3, 5]);
+
+    expect($cell->hasDataValidation())->toBeTrue()
+        ->and($cell->getDataValidation()->getType())->toBe(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::TYPE_LIST)
+        ->and($cell->getDataValidation()->getErrorStyle())->toBe(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::STYLE_STOP)
+        // بترتيب جدول الحالات: إجازة ثم غائب
+        ->and($cell->getDataValidation()->getFormula1())->toBe('"إ,غ"')
+        // خانة الاسم ليست قائمة
+        ->and($sheet->getCell('C5')->hasDataValidation())->toBeFalse();
+});
+
+it('يلفّ اسم المقر الطويل داخل خانته ويرفع ارتفاع الصفّ', function () {
+    // ⚠️ بلا التفاف يسيل الاسم فوق خانات الأيام الفارغة المجاورة
+    $gov  = Governorate::factory()->create();
+    $long = str_repeat('مكتب توثيق فرعي ملحق ', 6);
+    mfWorker(Office::factory()->create(['governorate_id' => $gov->id, 'name' => $long]), 'عامل');
+
+    $path  = mfFile($gov)->saveTo(tempnam(sys_get_temp_dir(), 'mf_').'.xlsx');
+    $sheet = IOFactory::load($path)->getSheetByName('الكشف');
+
+    expect($sheet->getStyle('E5')->getAlignment()->getWrapText())->toBeTrue()
+        ->and($sheet->getStyle('C5')->getAlignment()->getWrapText())->toBeTrue()
+        ->and($sheet->getRowDimension(5)->getRowHeight())->toBeGreaterThan(40);
+});
+
 // ── الرفع والحفظ ─────────────────────────────────────────
 
 it('يحفظ الغياب والإجازة ويعلّم وصل الكشف لكل مَن في الملف', function () {

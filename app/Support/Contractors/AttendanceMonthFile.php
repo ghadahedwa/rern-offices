@@ -11,6 +11,7 @@ use App\Support\ArabicText;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\DB;
 use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
+use PhpOffice\PhpSpreadsheet\Cell\DataValidation;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
@@ -50,6 +51,10 @@ final class AttendanceMonthFile
     private const COL_PROFESSION = 4;
     private const COL_OFFICE_NAME = 5;
     private const COL_FIRST_DAY  = 6;   // F
+
+    /** أحرفٌ في السطر الواحد بعرض عمودي الاسم والمقر — تقديرٌ لارتفاع الصفّ، والالتفاف يضمن ألا يسيل النصّ مهما أخطأ. */
+    private const NAME_CHARS_PER_LINE   = 30;
+    private const OFFICE_CHARS_PER_LINE = 34;
 
     private const ROW_DAYS     = 3;
     private const ROW_WEEKDAYS = 4;
@@ -283,6 +288,16 @@ final class AttendanceMonthFile
         $sheet->setCellValue([self::COL_PROFESSION, $line], $row['profession'] ?? '');
         $sheet->setCellValue([self::COL_OFFICE_NAME, $line], $office->name);
 
+        // ⚠️ اسم المقر يبلغ ١٣٦ حرفاً: بلا التفافٍ يسيل فوق خانات الأيام المجاورة الفارغة.
+        //    والالتفاف وحده لا يكفي — Excel لا يعيد حساب ارتفاع الصفّ عند الفتح، فيُقصّ
+        //    النصّ داخل صفٍّ بارتفاع سطرٍ واحد. فالارتفاع يُقدَّر هنا بعدد الأسطر.
+        $lines = max(
+            (int) ceil(mb_strlen($office->name) / self::OFFICE_CHARS_PER_LINE),
+            (int) ceil(mb_strlen($row['name']) / self::NAME_CHARS_PER_LINE),
+            1
+        );
+        $sheet->getRowDimension($line)->setRowHeight(max(20, $lines * 15 + 4));
+
         foreach ($columns as $index => $column) {
             $col = self::COL_FIRST_DAY + $index;
 
@@ -323,6 +338,41 @@ final class AttendanceMonthFile
             ->implode('');
     }
 
+    /**
+     * قائمة منسدلة في خانات الأيام بحروف الحالات المفعَّلة (طلب العميلة ٢٠٢٦-٠٩-١٧).
+     *
+     * ⚠️ `STOP` لا تنبيه: Excel يرفض غير الحرف وقت الكتابة، فلا يصل «حرف غير معروف» للرفع.
+     *    والكتابة بالكيبورد باقية لمن يكتب «غ» أو «إ» مباشرة، والمسح مسموح (`allowBlank`).
+     * ⚠️ القائمة على كتلة الأيام كلها لا على المفتوحة وحدها: نطاقٌ لكل خلية يضخّم الملف،
+     *    والخلية المقفولة («-») لا تُفحص إلا إن عُدِّلت — وما يُكتب فيها يُهمَل عند الرفع أصلاً.
+     * ⚠️ الحروف مضمّنة في التحقق لا في نطاقٍ مسمّى: حرفان أو ثلاثة لا تقترب من حدّ الـ٢٥٥ حرفاً.
+     */
+    private function addDayDropdown(Worksheet $sheet, string $range): void
+    {
+        $codes = collect($this->codes())
+            ->only(AttendanceStatus::markable()->pluck('id')->all())
+            ->values();
+
+        if ($codes->isEmpty()) {
+            return;
+        }
+
+        $names = AttendanceStatus::markable()->ordered()->pluck('name');
+
+        $validation = new DataValidation();
+        $validation->setType(DataValidation::TYPE_LIST)
+            ->setErrorStyle(DataValidation::STYLE_STOP)
+            ->setAllowBlank(true)
+            ->setShowDropDown(true)
+            ->setShowErrorMessage(true)
+            ->setErrorTitle('حرف غير معروف')
+            ->setError('اختر من القائمة: '.$codes->implode(' · ').' — أو امسح الخانة للحاضر.')
+            ->setShowInputMessage(false)
+            ->setFormula1('"'.$codes->implode(',').'"');
+
+        $sheet->setDataValidation($range, $validation);
+    }
+
     private function styleBody(Worksheet $sheet, string $lastL, int $lastRow): void
     {
         $days = Coordinate::stringFromColumnIndex(self::COL_FIRST_DAY).self::ROW_FIRST.':'.$lastL.$lastRow;
@@ -332,6 +382,9 @@ final class AttendanceMonthFile
             'borders'   => ['allBorders' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['rgb' => 'E5E5E5']]],
         ]);
         $sheet->getStyle($days)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+        $sheet->getStyle('C'.self::ROW_FIRST.':E'.$lastRow)->getAlignment()->setWrapText(true);
+
+        $this->addDayDropdown($sheet, $days);
         $sheet->getStyle($days)->getFont()->setBold(true);
 
         // ⚠️ تلوين الحرف المكتوب بلون حالته — بلا تمييزٍ لوني تغرق العلامات في الشبكة
