@@ -30,7 +30,8 @@ function statusUser(array $abilities): User
 it('يزرع الحالات الثلاث أساسيةً ومفعَّلة', function () {
     $seeded = AttendanceStatus::ordered()->get();
 
-    expect($seeded->pluck('name')->all())->toBe(['حاضر', 'غائب', 'إجازة'])
+    // «إجازة» قبل «غائب» منذ هجرة 2026_09_17_000001 (طلب المستخدمة)
+    expect($seeded->pluck('name')->all())->toBe(['حاضر', 'إجازة', 'غائب'])
         ->and($seeded->every->is_system)->toBeTrue()
         ->and($seeded->every->is_active)->toBeTrue();
 });

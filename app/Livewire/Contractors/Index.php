@@ -5,6 +5,7 @@ namespace App\Livewire\Contractors;
 use App\Livewire\Concerns\WithPerPage;
 use App\Livewire\Concerns\WithTableSorting;
 use App\Models\AttendanceDay;
+use App\Models\AttendanceReview;
 use App\Models\ContractorAssignment;
 use App\Models\Contractor;
 use App\Models\OfficeType;
@@ -417,7 +418,9 @@ class Index extends Component
 
         // ⚠️ الحذف لتصحيح إدخالٍ خاطئ لا لطيّ تاريخ موظف: مَن له سجل حضور
         //    تُنهى خدمته ولا يُحذف — وإلا اختفى غيابه من تقارير شهرٍ مضى.
-        if (AttendanceDay::forContractor($contractor)->exists()) {
+        //    و«وصل الكشف» سجلُّ حضورٍ أيضاً: عاملٌ حضر الشهر كله بلا غياب ليس له صفٌّ
+        //    في `attendance_days`، وكشفه المراجَع هو الأثر الوحيد لذلك الشهر.
+        if (AttendanceDay::forContractor($contractor)->exists() || AttendanceReview::forContractor($contractor)->exists()) {
             $this->reset('showDelete', 'deletingId', 'deletingLabel', 'deletingWarning');
             Flux::toast(variant: 'danger', text: __('home.ct_worker_has_attendance'));
 

@@ -20,10 +20,22 @@ class AttendanceStatus extends Model
     protected $fillable = ['name', 'color', 'order', 'is_active', 'is_system'];
 
     protected $casts = [
-        'is_active' => 'boolean',
-        'is_system' => 'boolean',
-        'order'     => 'integer',
+        'is_active'  => 'boolean',
+        'is_system'  => 'boolean',
+        'is_default' => 'boolean',
+        'order'      => 'integer',
     ];
+
+    /**
+     * أدوات التعليم في شبكة التسجيل: المفعَّلة **عدا الافتراضية**.
+     *
+     * ⚠️ الافتراضية («حاضر») معنى الخلية الفارغة ولا تُخزَّن — صفٌّ بها يُحسب استثناءً
+     *    فيُنقص الحضور يوماً. انظر هجرة `is_default`.
+     */
+    public function scopeMarkable(Builder $query): Builder
+    {
+        return $query->selectable()->where('is_default', false);
+    }
 
     /** ترتيب العرض الواحد: الترتيب اليدوي ثم الاسم — تقرأه الشاشة والمنسدلة معاً. */
     public function scopeOrdered(Builder $query): Builder

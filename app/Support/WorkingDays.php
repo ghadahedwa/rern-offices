@@ -145,14 +145,20 @@ final class WorkingDays
         ];
     }
 
-    /** مدد خدمة المدخل: [['from' => 'Y-m-d', 'to' => 'Y-m-d'|null], …] */
-    public static function serviceIntervals(Contractor $contractor): array
+    /**
+     * مدد خدمة المدخل: [['from' => 'Y-m-d', 'to' => 'Y-m-d'|null], …]
+     *
+     * و`$officeId` يقصرها على تسكينه في مقرٍّ بعينه — شبكة المقر لا تُعلِّم يوماً قضاه
+     * العامل في مقرٍّ آخر، وتقرير المقر لا يعدّه.
+     */
+    public static function serviceIntervals(Contractor $contractor, ?int $officeId = null): array
     {
         $assignments = $contractor->relationLoaded('assignments')
             ? $contractor->assignments
             : $contractor->assignments()->orderBy('started_on')->get();
 
         return $assignments
+            ->when($officeId !== null, fn ($items) => $items->where('office_id', $officeId))
             ->map(fn ($assignment) => [
                 'from' => $assignment->started_on?->toDateString(),
                 'to'   => $assignment->ended_on?->toDateString(),
@@ -167,10 +173,11 @@ final class WorkingDays
         Contractor $contractor,
         DateTimeInterface|string $from,
         DateTimeInterface|string $to,
-        ?array $calendar = null
+        ?array $calendar = null,
+        ?int $officeId = null
     ): array {
         $calendar  = $calendar ?? self::calendar($from, $to);
-        $intervals = self::serviceIntervals($contractor);
+        $intervals = self::serviceIntervals($contractor, $officeId);
 
         if ($intervals === []) {
             return [];
