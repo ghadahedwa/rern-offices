@@ -154,6 +154,35 @@ it('يضع قائمةً منسدلة بحروف الحالات المفعَّل�
         ->and($sheet->getCell('C5')->hasDataValidation())->toBeFalse();
 });
 
+it('يلخّص كل صفّ بعد الأيام: أيام العمل والحاضر وعدد كل حالة، ويتغيّر بالكتابة', function () {
+    $gov = Governorate::factory()->create();
+    mfWorker(Office::factory()->create(['governorate_id' => $gov->id]), 'عامل');
+    OfficialHoliday::create(['name' => 'عطلة', 'starts_on' => '2026-09-16', 'ends_on' => '2026-09-16']);
+
+    $path  = mfFile($gov)->saveTo(tempnam(sys_get_temp_dir(), 'mf_').'.xlsx');
+    $book  = IOFactory::load($path);
+    $sheet = $book->getSheetByName('الكشف');
+
+    // أعمدة الملخّص بعد يوم ٣٠ (العمود 5+30): أيام العمل · حاضر · إجازة · غائب
+    $work = 36; $present = 37; $leave = 38; $absent = 39;
+
+    // المفتش يكتب: غياب يومين، وإجازة بألفٍ عادية وأخرى بهمزة
+    foreach ([2 => 'غ', 3 => 'غ', 7 => 'ا', 8 => 'إ'] as $day => $value) {
+        $sheet->setCellValue([5 + $day, 5], $value);
+    }
+
+    $value = fn (int $col) => $sheet->getCell([$col, 5])->getCalculatedValue();
+
+    expect($sheet->getCell([$work, 3])->getValue())->toBe('أيام العمل')
+        ->and($sheet->getCell([$absent, 3])->getValue())->toBe('غائب')
+        ->and($value($work))->toBe(25)          // ٣٠ − ٤ جُمَع − عطلة
+        ->and($value($absent))->toBe(2)
+        ->and($value($leave))->toBe(2)          // «ا» و«إ» كلتاهما إجازة
+        ->and($value($present))->toBe(21);
+
+    $book->disconnectWorksheets();
+});
+
 it('لا تقبل الجمعة والعطلة وما قبل الالتحاق إلا «-» في ملف الإكسيل', function () {
     // بلاغ العميلة: كان يُكتب «غ» في الجمعة والعطلة فيُهمَل عند الرفع بصمت
     $gov    = Governorate::factory()->create();

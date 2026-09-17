@@ -204,6 +204,7 @@ final class AttendanceMonthFile
 
         $lastRow = max(self::ROW_FIRST, $line - 1);
         $this->styleBody($sheet, $lastL, $lastRow);
+        $this->writeTotals($sheet, $lastCol, $lastRow);
         $this->writeMeta($spreadsheet);
 
         $spreadsheet->setActiveSheetIndex(0);
@@ -436,6 +437,83 @@ final class AttendanceMonthFile
         }
 
         return $list->unique()->values();
+    }
+
+    /**
+     * ملخّص كل صفّ بعد الأيام — **كأعمدة الشبكة**: أيام العمل · الحاضر · عددُ كل حالة (طلب العميلة
+     * ٢٠٢٦-٠٩-١٧)، يُحسب **بمعادلات** فيتغيّر لحظة الكتابة، والمفتش يطابقه بالكشف الورقي قبل الرفع.
+     *
+     * ⚠️ **المعادلات لا تُقرأ عند الرفع**: القارئ يقرأ أعمدة الأيام وحدها — الملف لا يُملي رقماً محسوباً.
+     * ⚠️ **أيام العمل رقمٌ ثابت** من الأيام المفتوحة لا معادلة: هي حساب النظام (جُمَع · عطلات · تسكين)،
+     *    وتحويلها معادلةً تعدّ الخانات غير الرمادية يجعلها تتغيّر بخليةٍ عُدِّلت.
+     * ⚠️ **الحاضر = أيام العمل − كل خليةٍ فيها حرف سوى «-»** (كالشبكة: كل علامةٍ تُنقصه)، وعددُ الحالة
+     *    يجمع صور ألفها كلها — «ا» تُعدّ إجازة هنا كما تُقرأ عند الرفع.
+     */
+    private function writeTotals(Worksheet $sheet, int $lastDayCol, int $lastRow): void
+    {
+        $firstDay = Coordinate::stringFromColumnIndex(self::COL_FIRST_DAY);
+        $lastDay  = Coordinate::stringFromColumnIndex($lastDayCol);
+        $statuses = AttendanceStatus::markable()->ordered()->get(['id', 'name', 'color']);
+        $codes    = $this->codes();
+        $present  = AttendanceStatus::where('is_default', true)->first(['name', 'color']);
+
+        $working = [];
+        foreach ($this->cellOpen as $lines) {
+            foreach ($lines as $line => $isOpen) {
+                $working[$line] = ($working[$line] ?? 0) + ($isOpen ? 1 : 0);
+            }
+        }
+
+        $col       = $lastDayCol + 1;
+        $colWork   = $col++;
+        $colPresent = $col++;
+        $colStatus = [];
+        foreach ($statuses as $status) {
+            $colStatus[$status->id] = $col++;
+        }
+        $lastCol = $col - 1;
+
+        $headers = [$colWork => ['أيام العمل', '52525B'], $colPresent => [$present?->name ?? 'حاضر', ltrim((string) ($present?->color ?? '#16a34a'), '#')]];
+        foreach ($statuses as $status) {
+            $headers[$colStatus[$status->id]] = [$status->name, ltrim($status->color, '#')];
+        }
+
+        foreach ($headers as $index => [$title, $rgb]) {
+            $sheet->setCellValue([$index, self::ROW_DAYS], $title);
+            $sheet->mergeCells([$index, self::ROW_DAYS, $index, self::ROW_WEEKDAYS]);
+            $sheet->getStyle([$index, self::ROW_DAYS])->getFont()->setBold(true)->getColor()->setRGB($rgb);
+            $sheet->getColumnDimension(Coordinate::stringFromColumnIndex($index))->setWidth(9);
+        }
+
+        for ($line = self::ROW_FIRST; $line <= $lastRow; $line++) {
+            if (! isset($working[$line])) {
+                continue;
+            }
+
+            $range = $firstDay.$line.':'.$lastDay.$line;
+            $work  = Coordinate::stringFromColumnIndex($colWork).$line;
+
+            $sheet->setCellValue([$colWork, $line], $working[$line]);
+            $sheet->setCellValue([$colPresent, $line], '='.$work.'-(COUNTA('.$range.')-COUNTIF('.$range.',"-"))');
+
+            foreach ($statuses as $status) {
+                $variants = isset($codes[$status->id]) ? $this->typeableCodes([$codes[$status->id]]) : collect();
+                $formula  = $variants->map(fn ($code) => 'COUNTIF('.$range.',"'.$code.'")')->implode('+');
+
+                $sheet->setCellValue([$colStatus[$status->id], $line], $formula === '' ? 0 : '='.$formula);
+            }
+        }
+
+        $block = Coordinate::stringFromColumnIndex($colWork).self::ROW_DAYS.':'.Coordinate::stringFromColumnIndex($lastCol).$lastRow;
+
+        $sheet->getStyle($block)->applyFromArray([
+            'font'      => ['bold' => true],
+            'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER, 'wrapText' => true],
+            'borders'   => ['allBorders' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['rgb' => 'D4D4D4']]],
+        ]);
+        // فاصلٌ واضح بين آخر يوم والملخّص
+        $sheet->getStyle(Coordinate::stringFromColumnIndex($colWork).self::ROW_DAYS.':'.Coordinate::stringFromColumnIndex($colWork).$lastRow)
+            ->getBorders()->getRight()->setBorderStyle(Border::BORDER_MEDIUM)->getColor()->setRGB('A3A3A3');
     }
 
     private function styleBody(Worksheet $sheet, string $lastL, int $lastRow): void
