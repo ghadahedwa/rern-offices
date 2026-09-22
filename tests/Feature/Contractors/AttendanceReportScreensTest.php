@@ -204,6 +204,7 @@ it('يقصر تقرير المقر على المقر المختار', function (
 
     $rows = Livewire::test(OfficeReport::class)
         ->set('from', '2026-09-01')->set('to', '2026-09-30')
+        ->set('governorateId', $gov->id)
         ->set('officeId', $office->id)
         ->call('search')
         ->viewData('rows');
@@ -268,6 +269,38 @@ it('لا يُخرج في تقرير العامل أيامه في محافظةٍ 
 
     expect($rows)->toHaveCount(1)
         ->and($rows[0]['working'])->toBe(13);
+});
+
+it('يرفض تقرير المقر بلا اختيار محافظة ولا يعرض شيئاً', function () {
+    $gov = Governorate::factory()->create();
+    scrWorker(scrOffice($gov));
+
+    $this->actingAs(repUser([$gov]));
+
+    // ⚠️ بلا محافظة كان يجمع عاملي كل مقرات النطاق — تقرير جمهورية لا تقرير مقر.
+    repShow(OfficeReport::class)
+        ->assertSet('hasSearched', false)
+        ->assertSee(__('home.ct_rep_office_prompt'));
+});
+
+it('يُصفّر نتيجةً معروضة حين تُمسح المحافظة ويُعاد العرض', function () {
+    $gov = Governorate::factory()->create();
+    scrWorker(scrOffice($gov));
+
+    $this->actingAs(repUser([$gov]));
+
+    $screen = Livewire::test(OfficeReport::class)
+        ->set('from', '2026-09-01')->set('to', '2026-09-30')
+        ->set('governorateId', $gov->id)
+        ->call('search');
+
+    expect($screen->viewData('rows'))->toHaveCount(1);
+
+    // نتيجةٌ قديمة تحت محدداتٍ جديدة تُقرأ على أنها نتيجتها
+    $screen->set('governorateId', null)->call('search')
+        ->assertSet('hasSearched', false);
+
+    expect($screen->viewData('rows'))->toBe([]);
 });
 
 it('يُصفّر المقر عند تغيير المحافظة', function () {
@@ -414,6 +447,10 @@ it('يُنزّل ملفاً فعلياً من التقارير الثلاثة', 
 
     if ($component === ContractorReport::class) {
         $screen->set('contractorId', $worker->id);
+    }
+
+    if ($component === OfficeReport::class) {
+        $screen->set('governorateId', $gov->id);   // إلزامية في هذا التقرير وحده
     }
 
     $screen->call('search')

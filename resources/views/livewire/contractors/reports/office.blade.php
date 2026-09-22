@@ -13,9 +13,13 @@
 
     <x-contractors.report-filters>
         <div>
-            <label class="{{ $lbl }}">{{ __('home.ct_rep_governorate') }}</label>
+            {{-- المحافظة إلزامية في هذا التقرير وحده — انظر `OfficeReport::search()` --}}
+            <label class="{{ $lbl }}">
+                {{ __('home.ct_rep_governorate') }}
+                <span class="text-red-500">*</span>
+            </label>
             <select wire:model.live="governorateId" class="{{ $inp }}">
-                <option value="">{{ __('home.ct_rep_all_governorates') }}</option>
+                <option value="">{{ __('home.ct_rep_pick_governorate') }}</option>
                 @foreach($governorates as $governorate)
                     <option value="{{ $governorate->id }}">{{ $governorate->name }}</option>
                 @endforeach
@@ -104,7 +108,7 @@
         @endif
     @else
         <div class="rounded-xl border border-dashed border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-900 p-12 text-center">
-            <p class="text-sm text-zinc-400 dark:text-zinc-500">{{ __('home.ct_rep_prompt') }}</p>
+            <p class="text-sm text-zinc-400 dark:text-zinc-500">{{ __('home.ct_rep_office_prompt') }}</p>
         </div>
     @endif
 

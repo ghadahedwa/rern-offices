@@ -23,6 +23,4 @@
             {{ implode(' · ', array_unique(array_values($holidays))) }}
         </p>
     @endif
-
-    <p class="text-xs text-zinc-500 dark:text-zinc-400">{{ __('home.ct_rep_unreviewed_hint') }}</p>
 </div>

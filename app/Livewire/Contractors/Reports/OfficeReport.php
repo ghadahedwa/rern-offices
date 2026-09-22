@@ -5,6 +5,7 @@ namespace App\Livewire\Contractors\Reports;
 use App\Exports\ContractorsAttendanceExport;
 use App\Support\Contractors\AttendanceReport;
 use App\Support\ContractorScope;
+use Flux\Flux;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 use Livewire\Component;
@@ -20,7 +21,10 @@ use Maatwebsite\Excel\Facades\Excel;
 #[Title('تقرير المقر')]
 class OfficeReport extends Component
 {
-    use Concerns\BuildsAttendanceReport;
+    // ⚠️ `search()` من الـtrait يُعاد تعريفه هنا، فيُستعار باسمٍ آخر بدل تكرار جسده.
+    use Concerns\BuildsAttendanceReport {
+        search as protected runSearch;
+    }
 
     public ?int $governorateId = null;
 
@@ -30,6 +34,28 @@ class OfficeReport extends Component
     public function updatedGovernorateId(): void
     {
         $this->officeId = null;
+    }
+
+    /**
+     * ⚠️ **المحافظة إلزامية هنا وحدها** (طلب المستخدمة 2026-09-22): بلا تحديدٍ يجمع
+     *    التقرير عاملي **كل مقرات النطاق** فيخرج جدولٌ بمئات الصفوف لا يقرؤه أحد —
+     *    وهو تقرير **مقر** لا تقرير جمهورية. وتقريرا المحافظات والعامل على حالهما.
+     *
+     * والرفض **يُصفّر المعروض** لا يُبقيه: نتيجةٌ قديمة تحت محدداتٍ جديدة تُقرأ على
+     * أنها نتيجتها.
+     */
+    public function search(): void
+    {
+        if (! $this->governorateId) {
+            Flux::toast(variant: 'warning', text: __('home.ct_rep_need_governorate'));
+
+            $this->applied     = [];
+            $this->hasSearched = false;
+
+            return;
+        }
+
+        $this->runSearch();
     }
 
     protected function appliedFilters(): array
