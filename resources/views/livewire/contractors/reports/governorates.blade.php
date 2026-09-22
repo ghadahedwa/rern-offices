@@ -11,20 +11,34 @@
     ])
 
     <x-contractors.report-filters>
-        {{-- المحافظات: اختيارٌ متعدد، والفارغ = كل نطاق المستخدم --}}
-        <div class="sm:col-span-2">
-            <label class="{{ $lbl }}">{{ __('home.ct_rep_governorate') }}</label>
-            <div class="flex flex-wrap gap-1.5 max-h-28 overflow-y-auto rounded-lg border border-zinc-300 dark:border-zinc-600 p-2">
-                @forelse($governorates as $governorate)
-                    <label class="inline-flex items-center gap-1.5 text-xs px-2 py-1 rounded-md border border-zinc-200 dark:border-zinc-700 cursor-pointer hover:bg-[#c9a847]/10 transition">
-                        <input type="checkbox" wire:model="governorateIds" value="{{ $governorate->id }}"
-                               class="rounded border-zinc-300 text-[#c9a847] focus:ring-[#c9a847]/40">
-                        <span class="text-zinc-700 dark:text-zinc-200">{{ $governorate->name }}</span>
-                    </label>
-                @empty
-                    <span class="text-xs text-zinc-400">—</span>
-                @endforelse
+        {{-- المحافظات: اختيارٌ متعدد، والفارغ = كل نطاق المستخدم.
+             ⚠️ **كلها ظاهرة بلا تمرير** (طلب المستخدمة): الصندوق القصير كان يُخفي أغلب
+                المحافظات خلف سكرول داخليّ، فلا يرى المستخدم ما اختاره ولا ما بقي. --}}
+        <div class="sm:col-span-2 lg:col-span-4">
+            <div class="flex items-center justify-between gap-3 mb-1">
+                <label class="{{ $lbl }} mb-0">{{ __('home.ct_rep_governorate') }}</label>
+                @if(count($governorateIds) > 0)
+                    <button type="button" wire:click="$set('governorateIds', [])"
+                            class="text-xs text-zinc-500 dark:text-zinc-400 hover:text-[#c9a847] transition">
+                        {{ __('home.ct_rep_clear_governorates') }}
+                    </button>
+                @endif
             </div>
+
+            <div class="rounded-lg border border-zinc-300 dark:border-zinc-600 p-2">
+                <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-x-3 gap-y-1.5">
+                    @forelse($governorates as $governorate)
+                        <label class="inline-flex items-center gap-1.5 text-xs px-2 py-1 rounded-md cursor-pointer hover:bg-[#c9a847]/10 transition">
+                            <input type="checkbox" wire:model="governorateIds" value="{{ $governorate->id }}"
+                                   class="rounded border-zinc-300 text-[#c9a847] focus:ring-[#c9a847]/40 shrink-0">
+                            <span class="text-zinc-700 dark:text-zinc-200 truncate" title="{{ $governorate->name }}">{{ $governorate->name }}</span>
+                        </label>
+                    @empty
+                        <span class="text-xs text-zinc-400">—</span>
+                    @endforelse
+                </div>
+            </div>
+
             <p class="text-xs text-zinc-400 dark:text-zinc-500 mt-1">{{ __('home.ct_rep_all_governorates') }}</p>
         </div>
     </x-contractors.report-filters>

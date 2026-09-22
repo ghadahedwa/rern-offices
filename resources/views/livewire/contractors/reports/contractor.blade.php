@@ -21,15 +21,14 @@
                 @endforeach
             </select>
         </div>
-        <div>
-            <label class="{{ $lbl }}">{{ __('home.ct_rep_contractor') }}</label>
-            <select wire:model="contractorId" class="{{ $inp }}">
-                <option value="">{{ __('home.ct_rep_pick_contractor') }}</option>
-                @foreach($candidates as $candidate)
-                    <option value="{{ $candidate->id }}">{{ $candidate->name }}{{ $candidate->phone ? ' — '.$candidate->phone : '' }}</option>
-                @endforeach
-            </select>
-        </div>
+        <x-contractors.searchable-select
+            :label="__('home.ct_rep_contractor')"
+            search-model="contractorSearch"
+            value-model="contractorId"
+            :options="$candidates"
+            :placeholder="__('home.ct_rep_pick_contractor')"
+            :search-placeholder="__('home.ct_rep_search_contractor')"
+            :required="true" />
     </x-contractors.report-filters>
 
     @if($hasSearched)

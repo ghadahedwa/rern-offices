@@ -4,6 +4,7 @@ namespace App\Livewire\Contractors\Reports\Concerns;
 
 use App\Models\Contractor;
 use App\Support\Contractors\AttendanceReport;
+use App\Support\ArabicText;
 use App\Support\ContractorScope;
 use App\Support\LocalTime;
 use App\Support\WorkingDays;
@@ -135,6 +136,40 @@ trait BuildsAttendanceReport
         }
 
         return \App\Models\Office::query()->whereIn('governorate_id', $selected)->pluck('id')->all();
+    }
+
+    /**
+     * تصفية خيارات منسدلةٍ طويلة بكلمة بحث.
+     *
+     * ⚠️ **بـ`ArabicText` لا `str_contains` مجرَّدة** — قاعدة البحث العربي في المشروع:
+     *    تُوحَّد الألف والياء والتاء المربوطة وتُزال المسافات، فيجد المستخدم «مقر
+     *    الاسماعيليه» بكتابة «الإسماعيلية».
+     * ⚠️ **والخيار المختار يبقى في القائمة ولو لم يطابق البحث** — وإلا اختفى من
+     *    المنسدلة فبدا للمستخدم أن اختياره ضاع، أو انتقل الاختيار إلى خيارٍ آخر صامتاً.
+     *
+     * @param  iterable<int,object>  $options  عناصر لها `id` و`name` (و`short_name` إن وُجد)
+     * @return array<int, array{id:int, label:string, title:string}>
+     */
+    protected function searchOptions(iterable $options, string $term, int|string|null $selected = null): array
+    {
+        $needle = ArabicText::normalize($term);
+        $out    = [];
+
+        foreach ($options as $option) {
+            $matches = $needle === ''
+                || str_contains(ArabicText::normalize($option->name), $needle)
+                || (int) $option->id === (int) $selected;
+
+            if ($matches) {
+                $out[] = [
+                    'id'    => $option->id,
+                    'label' => $option->short_name ?? $option->name,
+                    'title' => $option->name,
+                ];
+            }
+        }
+
+        return $out;
     }
 
     /** وصفُ الفترة لرأس التقرير والملف — بتوقيت العرض لا بـUTC. */

@@ -25,16 +25,14 @@
                 @endforeach
             </select>
         </div>
-        <div>
-            <label class="{{ $lbl }}">{{ __('home.ct_rep_office') }}</label>
-            <select wire:model="officeId" class="{{ $inp }}">
-                <option value="">{{ __('home.ct_worker_all_offices') }}</option>
-                @foreach($offices as $office)
-                    {{-- الاسم مقصوص في الخيار والكامل في title: يبلغ ١٣٦ حرفاً فتخرج المنسدلة عن الشاشة --}}
-                    <option value="{{ $office->id }}" title="{{ $office->name }}">{{ $office->short_name }}</option>
-                @endforeach
-            </select>
-        </div>
+        {{-- الاسم مقصوص في الخيار والكامل في title: يبلغ ١٣٦ حرفاً فتخرج المنسدلة عن الشاشة --}}
+        <x-contractors.searchable-select
+            :label="__('home.ct_rep_office')"
+            search-model="officeSearch"
+            value-model="officeId"
+            :options="$offices"
+            :placeholder="__('home.ct_worker_all_offices')"
+            :search-placeholder="__('home.ct_rep_search_office')" />
     </x-contractors.report-filters>
 
     @if($hasSearched)

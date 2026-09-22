@@ -29,9 +29,13 @@ class ContractorReport extends Component
 
     public ?int $contractorId = null;
 
+    /** بحثٌ داخل منسدلة العاملين — المحافظة الواحدة فيها مئات العاملين. */
+    public string $contractorSearch = '';
+
     public function updatedGovernorateId(): void
     {
-        $this->contractorId = null;
+        $this->contractorId     = null;
+        $this->contractorSearch = '';   // بحثٌ من محافظةٍ سابقة لا معنى له في الجديدة
     }
 
     protected function appliedFilters(): array
@@ -44,7 +48,7 @@ class ContractorReport extends Component
 
     protected function filterKeys(): array
     {
-        return ['governorateId', 'contractorId'];
+        return ['governorateId', 'contractorId', 'contractorSearch'];
     }
 
     /**
@@ -178,7 +182,7 @@ class ContractorReport extends Component
 
         return view('livewire.contractors.reports.contractor', [
             'governorates' => ContractorScope::governorateOptions(),
-            'candidates'   => $this->contractorOptions(),
+            'candidates'   => $this->searchOptions($this->contractorOptions(), $this->contractorSearch, $this->contractorId),
             'subject'      => $this->hasSearched ? $this->subject() : null,
             'rows'         => $rows,
             'statuses'     => AttendanceReport::statusColumns($rows),

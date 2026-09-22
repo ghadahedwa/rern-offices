@@ -315,6 +315,71 @@ it('يُصفّر المقر عند تغيير المحافظة', function () {
         ->assertSet('officeId', null);
 });
 
+// ── البحث داخل المنسدلات ────────────────────────────────────────────────
+
+it('يبحث في منسدلة المقرات بتطبيع الألف والتاء المربوطة', function () {
+    $gov = Governorate::factory()->create();
+
+    Office::factory()->create(['governorate_id' => $gov->id, 'name' => 'مكتب توثيق الإسماعيلية']);
+    Office::factory()->create(['governorate_id' => $gov->id, 'name' => 'مكتب توثيق بورسعيد']);
+
+    $this->actingAs(repUser([$gov]));
+
+    // ⚠️ بلا `ArabicText` لا يجد «الاسماعيليه» ما كُتب «الإسماعيلية»
+    $options = Livewire::test(OfficeReport::class)
+        ->set('governorateId', $gov->id)
+        ->set('officeSearch', 'الاسماعيليه')
+        ->viewData('offices');
+
+    expect(collect($options)->pluck('title')->all())->toBe(['مكتب توثيق الإسماعيلية']);
+});
+
+it('يُبقي المقر المختار في القائمة ولو لم يطابق البحث', function () {
+    $gov      = Governorate::factory()->create();
+    $selected = Office::factory()->create(['governorate_id' => $gov->id, 'name' => 'مكتب المختار']);
+    Office::factory()->create(['governorate_id' => $gov->id, 'name' => 'مكتب آخر']);
+
+    $this->actingAs(repUser([$gov]));
+
+    // ⚠️ بدونه يختفي اختياره من المنسدلة فيبدو أنه ضاع أو انتقل إلى غيره صامتاً
+    $options = Livewire::test(OfficeReport::class)
+        ->set('governorateId', $gov->id)
+        ->set('officeId', $selected->id)
+        ->set('officeSearch', 'لا يطابق شيئاً')
+        ->viewData('offices');
+
+    expect(collect($options)->pluck('id')->all())->toBe([$selected->id]);
+});
+
+it('يبحث في منسدلة العاملين ولا يتجاوز النطاق', function () {
+    $mine   = Governorate::factory()->create();
+    $theirs = Governorate::factory()->create();
+
+    scrWorker(scrOffice($mine), name: 'سعيد أحمد');
+    scrWorker(scrOffice($mine), name: 'محمود علي');
+    scrWorker(scrOffice($theirs), name: 'سعيد الغريب');
+
+    $this->actingAs(repUser([$mine]));
+
+    $options = Livewire::test(ContractorReport::class)
+        ->set('contractorSearch', 'سعيد')
+        ->viewData('candidates');
+
+    expect(collect($options)->pluck('label')->all())->toBe(['سعيد أحمد']);
+});
+
+it('يمسح بحث المنسدلة عند تغيير المحافظة', function () {
+    $gov = Governorate::factory()->create();
+
+    $this->actingAs(repUser([$gov]));
+
+    // بحثٌ من محافظةٍ سابقة يُخرج قائمةً فارغة في الجديدة بلا سببٍ ظاهر
+    Livewire::test(OfficeReport::class)
+        ->set('officeSearch', 'بحث قديم')
+        ->set('governorateId', $gov->id)
+        ->assertSet('officeSearch', '');
+});
+
 // ── تقرير العامل ────────────────────────────────────────────────────────
 
 it('لا يُخرج بيانات عاملٍ بمعرّفٍ مدسوس من خارج النطاق', function () {

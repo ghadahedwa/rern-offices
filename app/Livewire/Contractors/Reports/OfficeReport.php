@@ -30,10 +30,14 @@ class OfficeReport extends Component
 
     public ?int $officeId = null;
 
+    /** بحثٌ داخل منسدلة المقرات — القائمة تبلغ مئات المقار في المحافظة الواحدة. */
+    public string $officeSearch = '';
+
     /** تغيير المحافظة يُصفّر المقر — وإلا بقي مقرُّ محافظةٍ أخرى مختاراً بلا صفوف. */
     public function updatedGovernorateId(): void
     {
-        $this->officeId = null;
+        $this->officeId     = null;
+        $this->officeSearch = '';   // بحثٌ من محافظةٍ سابقة لا معنى له في الجديدة
     }
 
     /**
@@ -68,7 +72,7 @@ class OfficeReport extends Component
 
     protected function filterKeys(): array
     {
-        return ['governorateId', 'officeId'];
+        return ['governorateId', 'officeId', 'officeSearch'];
     }
 
     /** مقارُّ التقرير: المقر المختار إن كان داخل النطاق، وإلا مقارُّ المحافظة داخله. */
@@ -138,7 +142,11 @@ class OfficeReport extends Component
 
         return view('livewire.contractors.reports.office', [
             'governorates' => ContractorScope::governorateOptions(),
-            'offices'      => ContractorScope::officeOptions($this->governorateId),
+            'offices'      => $this->searchOptions(
+                ContractorScope::officeOptions($this->governorateId),
+                $this->officeSearch,
+                $this->officeId
+            ),
             'rows'         => $rows,
             'statuses'     => AttendanceReport::statusColumns($rows),
             'totals'       => AttendanceReport::sum($rows),
