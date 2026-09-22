@@ -35,22 +35,14 @@ class GovernorateReport extends Component
         return ['governorateIds'];
     }
 
-    /** صفوف (عامل × مقر) داخل النطاق والمدى — الأساس الذي يُجمع منه كل شيء. */
-    protected function buildRows(): array
+    protected function reportLevel(): string
     {
-        $report = $this->report();
+        return 'governorates';
+    }
 
-        if (! $report) {
-            return [];
-        }
-
-        $officeIds = $this->scopedOfficeIds($this->applied['governorateIds'] ?? []);
-
-        if ($officeIds === []) {
-            return [];
-        }
-
-        return $report->rows($this->scopedContractors($officeIds), $officeIds);
+    protected function appliedGovernorateIds(): array
+    {
+        return $this->applied['governorateIds'] ?? [];
     }
 
     public function exportExcel()
@@ -71,7 +63,7 @@ class GovernorateReport extends Component
                 withContractorCount: true,
                 title: __('home.ct_rep_governorates_title'),
                 period: $this->periodLabel(),
-                breakdown: $this->report()?->breakdown() ?? []
+                breakdown: $this->query()?->report()?->breakdown() ?? []
             ),
             $this->exportFileName('contractors-governorates')
         );
@@ -81,7 +73,7 @@ class GovernorateReport extends Component
     {
         $rows    = $this->hasSearched ? $this->buildRows() : [];
         $groups  = AttendanceReport::groupBy($rows, 'governorate_id');
-        $report  = $this->report();
+        $report  = $this->query()?->report();
 
         // ترتيب المحافظات ترتيبَها التنظيمي لا ترتيبَ ظهورها في الصفوف.
         $order = ContractorScope::governorateOptions()->pluck('name', 'id');

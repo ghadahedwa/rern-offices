@@ -4,8 +4,7 @@ namespace App\Livewire\Contractors\Reports\Concerns;
 
 use App\Models\Contractor;
 use App\Support\Contractors\AttendanceReport;
-use App\Support\ArabicText;
-use App\Support\ContractorScope;
+use App\Support\Contractors\AttendanceReportQuery;
 use App\Support\LocalTime;
 use App\Support\WorkingDays;
 use Carbon\CarbonImmutable;
@@ -84,94 +83,63 @@ trait BuildsAttendanceReport
     }
 
     /**
-     * العاملون داخل نطاق المستخدم.
-     *
-     * 📌 **طبقة احتياط: لا يسقط اختبارٌ بحذف `applyToContractors` منها** (مُثبَتٌ
-     *    بالكسر) — `scopedOfficeIds()` وحده يكفي لمنع التسرّب، لأن صفّاً لا يُبنى
-     *    إلا لمقرٍّ مسموح. وتبقى هنا لأمرين: **تقليل المحمَّل** (لا تُسحب عمالة
-     *    الجمهورية لتقرير محافظة)، **وبقاء الحدّ قائماً** لو نادى مستدعٍ لاحقٌ
-     *    بـ`$officeIds = null` لمستخدمٍ محدود النطاق.
-     *
-     * @return Collection<int,Contractor>
+     * استعلام التقرير على الفلاتر المطبَّقة — **الشاشة والملف والتقرير المطبوع
+     * يقرأون منه جميعاً**، فلا يخرج ملفٌّ بأرقامٍ تخالف الشاشة.
      */
-    protected function scopedContractors(?array $officeIds = null): Collection
+    protected function query(): ?AttendanceReportQuery
     {
-        $query = Contractor::query()->with('profession:id,name');
+        $from = AttendanceReportQuery::parseDate($this->applied["from"] ?? null);
+        $to   = AttendanceReportQuery::parseDate($this->applied["to"] ?? null);
 
-        ContractorScope::applyToContractors($query);
-
-        if ($officeIds !== null) {
-            $query->whereHas('assignments', fn ($q) => $q->whereIn('office_id', $officeIds));
+        if (! $from || ! $to) {
+            return null;
         }
 
-        return $query->orderBy('name')->orderBy('id')->get();
+        return new AttendanceReportQuery(
+            level: $this->reportLevel(),
+            from: $from,
+            to: $to,
+            governorateIds: $this->appliedGovernorateIds(),
+            officeId: $this->applied["officeId"] ?? null,
+            contractorId: $this->applied["contractorId"] ?? null,
+            user: auth()->user(),
+        );
     }
 
-    /**
-     * المقارّ التي تُحتسب أيامها — **حارس تسرّب النطاق**، و`null` تعني بلا حدّ.
-     *
-     * ⚠️ `ContractorScope::applyToContractors` يُبقي العامل مرئياً بتسكينٍ واحدٍ داخل
-     *    النطاق (عمداً: تقارير فتراته عندي تخصّني)، **فصفوفه تحمل معها تسكيناته في
-     *    محافظاتٍ ليست لي**. فلولا قصرُ المقارّ هنا لظهرت في تقريري أيامُ عاملٍ نُقل
-     *    إلى محافظةٍ أخرى — وهو تسرّبٌ صامت لا يشكو منه أحد.
-     *
-     * @param  array<int,mixed>  $selected  محافظاتٌ اختارها المستخدم (فارغة = كل نطاقه)
-     */
-    protected function scopedOfficeIds(array $selected = []): ?array
+    protected function buildRows(): array
     {
-        $scope    = ContractorScope::governorateIds();
-        $selected = array_values(array_filter(array_map('intval', $selected)));
-
-        if ($scope !== null) {
-            // محافظةٌ تصل من الفورم وليست في النطاق تُهمَل ولا تُمرَّر.
-            $selected = $selected === [] ? $scope : array_values(array_intersect($selected, $scope));
-
-            if ($selected === []) {
-                return [];
-            }
-        }
-
-        if ($selected === []) {
-            return null; // super-admin بلا تحديد = الجمهورية
-        }
-
-        return \App\Models\Office::query()->whereIn('governorate_id', $selected)->pluck('id')->all();
+        return $this->query()?->rows() ?? [];
     }
 
-    /**
-     * تصفية خيارات منسدلةٍ طويلة بكلمة بحث.
-     *
-     * ⚠️ **بـ`ArabicText` لا `str_contains` مجرَّدة** — قاعدة البحث العربي في المشروع:
-     *    تُوحَّد الألف والياء والتاء المربوطة وتُزال المسافات، فيجد المستخدم «مقر
-     *    الاسماعيليه» بكتابة «الإسماعيلية».
-     * ⚠️ **والخيار المختار يبقى في القائمة ولو لم يطابق البحث** — وإلا اختفى من
-     *    المنسدلة فبدا للمستخدم أن اختياره ضاع، أو انتقل الاختيار إلى خيارٍ آخر صامتاً.
-     *
-     * @param  iterable<int,object>  $options  عناصر لها `id` و`name` (و`short_name` إن وُجد)
-     * @return array<int, array{id:int, label:string, title:string}>
-     */
+    /** رابط تقرير الـPDF — الفلاتر في الـquery string فالرابط قابل للمشاركة والحفظ. */
+    public function openPdf(): void
+    {
+        if (! $this->guardExport()) {
+            return;
+        }
+
+        $query = $this->query();
+
+        if (! $query) {
+            return;
+        }
+
+        $url = route("contractors.reports.pdf", $query->toQuery());
+
+        $this->js("window.open('".$url."', '_blank')");
+    }
+
+    /** تصفية منسدلةٍ طويلة — التطبيع العربي في الكلاس المشترك. */
     protected function searchOptions(iterable $options, string $term, int|string|null $selected = null): array
     {
-        $needle = ArabicText::normalize($term);
-        $out    = [];
-
-        foreach ($options as $option) {
-            $matches = $needle === ''
-                || str_contains(ArabicText::normalize($option->name), $needle)
-                || (int) $option->id === (int) $selected;
-
-            if ($matches) {
-                $out[] = [
-                    'id'    => $option->id,
-                    'label' => $option->short_name ?? $option->name,
-                    'title' => $option->name,
-                ];
-            }
-        }
-
-        return $out;
+        return AttendanceReportQuery::filterOptions($options, $term, $selected);
     }
 
+    /** مستوى التقرير — يحدّد شكل الصفوف وسطر الفلتر المطبوع. */
+    abstract protected function reportLevel(): string;
+
+    /** @return array<int,int> محافظاتٌ محدَّدة، والفارغ = كل نطاق المستخدم */
+    abstract protected function appliedGovernorateIds(): array;
     /** وصفُ الفترة لرأس التقرير والملف — بتوقيت العرض لا بـUTC. */
     protected function periodLabel(): string
     {

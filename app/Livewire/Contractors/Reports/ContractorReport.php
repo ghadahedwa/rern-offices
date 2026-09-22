@@ -51,105 +51,26 @@ class ContractorReport extends Component
         return ['governorateId', 'contractorId', 'contractorSearch'];
     }
 
-    /**
-     * العامل المطلوب — **يُقرأ عبر النطاق لا بـ`findOrFail`**، فمعرّفٌ مدسوس من
-     * محافظةٍ أخرى لا يُخرج بياناته.
-     */
+    protected function reportLevel(): string
+    {
+        return 'contractor';
+    }
+
+    protected function appliedGovernorateIds(): array
+    {
+        return array_values(array_filter([$this->applied['governorateId'] ?? null]));
+    }
+
+    /** العامل المطلوب — يُقرأ عبر النطاق في الاستعلام المشترك. */
     protected function subject(): ?Contractor
     {
-        $id = $this->applied['contractorId'] ?? null;
-
-        if ($id === null) {
-            return null;
-        }
-
-        return ContractorScope::applyToContractors(
-            Contractor::query()->whereKey($id)->with('profession:id,name')
-        )->first();
+        return $this->query()?->subject();
     }
 
-    protected function buildRows(): array
-    {
-        $report     = $this->report();
-        $contractor = $this->subject();
-
-        if (! $report || ! $contractor) {
-            return [];
-        }
-
-        // ⚠️ حتى لتقرير عاملٍ بعينه تُقصَر المقارّ على النطاق: تسكينه في محافظةٍ
-        //    ليست لي لا يظهر في تقريري وإن كان هو مرئياً لي.
-        $officeIds = $this->scopedOfficeIds(array_filter([$this->applied['governorateId'] ?? null]));
-
-        if ($officeIds === []) {
-            return [];
-        }
-
-        return $report->rows(collect([$contractor]), $officeIds);
-    }
-
-    /**
-     * تواريخ الاستثناءات داخل المدى — **المعروضة منها ما دخل الحساب وحده**.
-     *
-     * ⚠️ يومٌ سُجِّل ثم صار عطلةً لا يُعدّ في الأرقام، فعرضه هنا يُظهر تناقضاً
-     *    بين التفصيل والعمود. لذلك يُقرأ التفصيل من أيام الصفوف لا من الجدول مباشرة.
-     *
-     * @return array<string, array{date:string, status:string, color:string}>
-     */
+    /** تفصيل التواريخ — من الاستعلام المشترك، فالشاشة والمطبوع يعرضان الشيء نفسه. */
     public function exceptionDates(array $rows): array
     {
-        $contractor = $this->subject();
-        $report     = $this->report();
-
-        if (! $contractor || ! $report || $rows === []) {
-            return [];
-        }
-
-        $counted = array_sum(array_map(fn ($row) => array_sum($row['exceptions']), $rows));
-
-        if ($counted === 0) {
-            return [];
-        }
-
-        $officeIds = array_column($rows, 'office_id');
-        $statuses  = AttendanceStatus::query()->get(['id', 'name', 'color'])->keyBy('id');
-        $calendar  = array_flip($report->calendar());
-
-        // أيام هذا العامل التي يملكها أحد الصفوف المعروضة — حدود العرض هي حدود الحساب.
-        $spans = array_map(fn ($row) => [$row['started_on'], $row['ended_on'], $row['office_name']], $rows);
-
-        $out = [];
-
-        AttendanceDay::query()
-            ->where('attendable_type', Contractor::class)
-            ->where('attendable_id', $contractor->getKey())
-            ->between($report->start, $report->end)
-            ->orderBy('date')
-            ->get()
-            ->each(function (AttendanceDay $day) use (&$out, $statuses, $calendar, $spans) {
-                $key = $day->date->toDateString();
-
-                if (! isset($calendar[$key])) {
-                    return; // جمعة أو عطلة — خارج الحساب فخارج التفصيل
-                }
-
-                foreach ($spans as [$from, $to, $office]) {
-                    if ($key >= $from && ($to === null || $key <= $to)) {
-                        $out[$key] = [
-                            'date'   => $key,
-                            'status' => $statuses[$day->status_id]->name ?? '—',
-                            'color'  => $statuses[$day->status_id]->color ?? '#a1a1aa',
-                            'office' => $office,
-                        ];
-
-                        return;
-                    }
-                }
-            });
-
-        ksort($out);
-
-        return $out;
+        return $this->query()?->exceptionDates($rows) ?? [];
     }
 
     public function exportExcel()
@@ -169,7 +90,7 @@ class ContractorReport extends Component
                 withContractorCount: false,
                 title: __('home.ct_rep_contractor_title').' — '.($this->subject()?->name ?? ''),
                 period: $this->periodLabel(),
-                breakdown: $this->report()?->breakdown() ?? []
+                breakdown: $this->query()?->report()?->breakdown() ?? []
             ),
             $this->exportFileName('contractor-attendance')
         );
@@ -178,7 +99,7 @@ class ContractorReport extends Component
     public function render()
     {
         $rows   = $this->hasSearched ? $this->buildRows() : [];
-        $report = $this->report();
+        $report = $this->query()?->report();
 
         return view('livewire.contractors.reports.contractor', [
             'governorates' => ContractorScope::governorateOptions(),

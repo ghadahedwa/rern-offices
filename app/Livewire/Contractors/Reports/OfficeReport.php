@@ -75,39 +75,14 @@ class OfficeReport extends Component
         return ['governorateId', 'officeId', 'officeSearch'];
     }
 
-    /** مقارُّ التقرير: المقر المختار إن كان داخل النطاق، وإلا مقارُّ المحافظة داخله. */
-    protected function reportOfficeIds(): ?array
+    protected function reportLevel(): string
     {
-        $allowed = $this->scopedOfficeIds(array_filter([$this->applied['governorateId'] ?? null]));
-        $office  = $this->applied['officeId'] ?? null;
-
-        if ($office === null) {
-            return $allowed;
-        }
-
-        // ⚠️ `null` هنا تعني «بلا حدّ» (super-admin)، فالمقر يُقبل؛ وإلا يُفحص انتماؤه.
-        if ($allowed === null || in_array($office, $allowed, true)) {
-            return [$office];
-        }
-
-        return [];
+        return 'office';
     }
 
-    protected function buildRows(): array
+    protected function appliedGovernorateIds(): array
     {
-        $report    = $this->report();
-        $officeIds = $this->reportOfficeIds();
-
-        if (! $report || $officeIds === []) {
-            return [];
-        }
-
-        $rows = $report->rows($this->scopedContractors($officeIds), $officeIds);
-
-        // ترتيب الكشف: المقر ثم اسم العامل — ترتيب الورقة التي تُطبع.
-        usort($rows, fn ($a, $b) => [$a['office_name'], $a['contractor_name']] <=> [$b['office_name'], $b['contractor_name']]);
-
-        return $rows;
+        return array_values(array_filter([$this->applied['governorateId'] ?? null]));
     }
 
     public function exportExcel()
@@ -127,7 +102,7 @@ class OfficeReport extends Component
                 withContractorCount: false,
                 title: __('home.ct_rep_offices_title'),
                 period: $this->periodLabel(),
-                breakdown: $this->report()?->breakdown() ?? [],
+                breakdown: $this->query()?->report()?->breakdown() ?? [],
                 secondLabel: __('home.ct_rep_office_col'),
                 secondKey: 'office_name'
             ),
@@ -138,7 +113,7 @@ class OfficeReport extends Component
     public function render()
     {
         $rows   = $this->hasSearched ? $this->buildRows() : [];
-        $report = $this->report();
+        $report = $this->query()?->report();
 
         return view('livewire.contractors.reports.office', [
             'governorates' => ContractorScope::governorateOptions(),

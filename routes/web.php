@@ -250,6 +250,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::livewire('contractors/reports/governorates', \App\Livewire\Contractors\Reports\GovernorateReport::class)->name('contractors.reports.governorates');
     Route::livewire('contractors/reports/office', \App\Livewire\Contractors\Reports\OfficeReport::class)->name('contractors.reports.office');
     Route::livewire('contractors/reports/contractor', \App\Livewire\Contractors\Reports\ContractorReport::class)->name('contractors.reports.contractor');
+    // التقرير المطبوع — كنترولر واحد للمستويات الثلاثة، والفلاتر في الـquery string
+    // فالرابط قابل للمشاركة. الحارس (`contractors.export`) داخل الكنترولر: الرابط يُفتح منسوخاً.
+    Route::get('contractors/reports/pdf', \App\Http\Controllers\Contractors\AttendanceReportPdfController::class)->name('contractors.reports.pdf');
+
     // الاسم القديم يبقى حيّاً: يقصده السايدبار القديم وتحويلة `data-entry/reports`.
     Route::permanentRedirect('contractors/reports', 'contractors/reports/governorates')->name('contractors.reports');
 
