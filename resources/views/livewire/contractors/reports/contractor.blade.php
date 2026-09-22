@@ -132,8 +132,12 @@
                 @endif
             </div>
         @else
+            {{-- ⚠️ «لم تختر عاملاً» ليست «لا بيانات»: الرسالة الواحدة كانت تقول للمستخدم
+                 إن العامل بلا أيام، وهو لم يختر عاملاً أصلاً. --}}
             <div class="rounded-xl border border-dashed border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-900 p-12 text-center">
-                <p class="text-sm text-zinc-400 dark:text-zinc-500">{{ __('home.ct_rep_empty') }}</p>
+                <p class="text-sm text-zinc-400 dark:text-zinc-500">
+                    {{ $subject ? __('home.ct_rep_empty') : __('home.ct_rep_need_contractor') }}
+                </p>
             </div>
         @endif
     @else

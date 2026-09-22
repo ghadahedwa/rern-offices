@@ -302,6 +302,18 @@ it('لا يُخرج بيانات عاملٍ بمعرّفٍ مدسوس من خا�
         ->and($screen->viewData('rows'))->toBe([]);
 });
 
+it('يفرّق بين «لم تختر عاملاً» و«لا بيانات» في تقرير العامل', function () {
+    $gov = Governorate::factory()->create();
+    scrWorker(scrOffice($gov));
+
+    $this->actingAs(repUser([$gov]));
+
+    // بلا اختيار: يطلب الاختيار ولا يقول «لا عاملين»
+    repShow(ContractorReport::class)
+        ->assertSee(__('home.ct_rep_need_contractor'))
+        ->assertDontSee(__('home.ct_rep_empty'));
+});
+
 it('يفصّل تواريخ الغياب والإجازة في تقرير العامل', function () {
     $gov    = Governorate::factory()->create();
     $office = scrOffice($gov);
