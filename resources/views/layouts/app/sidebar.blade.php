@@ -296,9 +296,25 @@
                     @endcan
 
                     @can('contractors.index')
-                    <flux:sidebar.item icon="chart-bar" :href="route('contractors.reports')" :current="request()->routeIs('contractors.reports')" wire:navigate>
-                        {{ __('home.ct_reports') }}
+                    {{-- ⚠️ حارس Route::has على كل تقرير: route() في الـlayout مع cache راوتات قديم
+                         يُسقط كل الصفحات بـ500 — وهي ثلاثة راوتات جديدة في هذه الدفعة --}}
+                    @if(Route::has('contractors.reports.governorates'))
+                    <flux:sidebar.item icon="chart-bar" :href="route('contractors.reports.governorates')" :current="request()->routeIs('contractors.reports.governorates')" wire:navigate>
+                        {{ __('home.ct_rep_governorates_title') }}
                     </flux:sidebar.item>
+                    @endif
+
+                    @if(Route::has('contractors.reports.office'))
+                    <flux:sidebar.item icon="building-office" :href="route('contractors.reports.office')" :current="request()->routeIs('contractors.reports.office')" wire:navigate>
+                        {{ __('home.ct_rep_offices_title') }}
+                    </flux:sidebar.item>
+                    @endif
+
+                    @if(Route::has('contractors.reports.contractor'))
+                    <flux:sidebar.item icon="user" :href="route('contractors.reports.contractor')" :current="request()->routeIs('contractors.reports.contractor')" wire:navigate>
+                        {{ __('home.ct_rep_contractor_title') }}
+                    </flux:sidebar.item>
+                    @endif
                     @endcan
                     @endif {{-- /branch: contractors --}}
 

@@ -245,7 +245,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::livewire('contractors/attendance', \App\Livewire\Contractors\Attendance::class)->name('contractors.attendance');
     // كشف الشهر بالإكسيل — صفحةٌ مستقلة عن الشبكة (طلب العميلة 2026-09-17)، بصلاحية التسجيل نفسها في المكوّن
     Route::livewire('contractors/attendance/file', \App\Livewire\Contractors\AttendanceFile::class)->name('contractors.attendance-file');
-    Route::livewire('contractors/reports', \App\Livewire\Contractors\Reports::class)->name('contractors.reports');
+    // تقارير الحضور الثلاثة — ⚠️ الحراسة `contractors.index` في المكوّن، والتصدير
+    //    وحده بـ`contractors.export` داخل إجراء التصدير (يصل في طلبٍ مستقلٍّ عن mount).
+    Route::livewire('contractors/reports/governorates', \App\Livewire\Contractors\Reports\GovernorateReport::class)->name('contractors.reports.governorates');
+    Route::livewire('contractors/reports/office', \App\Livewire\Contractors\Reports\OfficeReport::class)->name('contractors.reports.office');
+    Route::livewire('contractors/reports/contractor', \App\Livewire\Contractors\Reports\ContractorReport::class)->name('contractors.reports.contractor');
+    // الاسم القديم يبقى حيّاً: يقصده السايدبار القديم وتحويلة `data-entry/reports`.
+    Route::permanentRedirect('contractors/reports', 'contractors/reports/governorates')->name('contractors.reports');
 
     // إعدادات المراسلات (أطراف المراسلات) — صلاحية correspondence.settings
     // تسكن فرع «إدارة النظام» كباقي القوائم المرجعية، لا فرعاً خاصاً — فرع المراسلات

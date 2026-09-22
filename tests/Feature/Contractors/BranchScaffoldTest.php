@@ -23,10 +23,10 @@ function deUser(array $abilities): User
 
 // ── الشاشات وحراستها ─────────────────────────────────────
 
-it('يفتح شاشات الفرع الثلاث لصاحب صلاحياتها', function () {
+it('يفتح شاشات الفرع الخمس لصاحب صلاحياتها', function () {
     $this->actingAs(deUser(['contractors.index', 'contractors.attendance']));
 
-    foreach (['index', 'attendance', 'reports'] as $screen) {
+    foreach (['index', 'attendance', 'reports.governorates', 'reports.office', 'reports.contractor'] as $screen) {
         $this->get(route("contractors.{$screen}"))->assertOk();
     }
 });
@@ -34,7 +34,7 @@ it('يفتح شاشات الفرع الثلاث لصاحب صلاحياتها', 
 it('يمنع من لا يملك صلاحيات العاملين بالتعاقد', function () {
     $this->actingAs(deUser(['offices.index']));
 
-    foreach (['index', 'attendance', 'reports'] as $screen) {
+    foreach (['index', 'attendance', 'reports.governorates', 'reports.office', 'reports.contractor'] as $screen) {
         $this->get(route("contractors.{$screen}"))->assertForbidden();
     }
 });
@@ -46,7 +46,7 @@ it('يفصل التسجيل عن العرض: صاحب التسجيل وحده ي
 
     $this->get(route('contractors.attendance'))->assertOk();
     $this->get(route('contractors.index'))->assertForbidden();
-    $this->get(route('contractors.reports'))->assertForbidden();
+    $this->get(route('contractors.reports.governorates'))->assertForbidden();
 });
 
 it('يمنع التسجيل عن صاحب العرض وحده', function () {
@@ -61,7 +61,7 @@ it('لا يفتح الشاشات بصلاحية التصدير وحدها', func
     $this->actingAs(deUser(['contractors.export']));
 
     $this->get(route('contractors.index'))->assertForbidden();
-    $this->get(route('contractors.reports'))->assertForbidden();
+    $this->get(route('contractors.reports.governorates'))->assertForbidden();
 });
 
 // ── الفرع وصفحة الدخول ───────────────────────────────────
@@ -133,6 +133,8 @@ it('يحوّل الروابط القديمة لمسارات الفرع الجد�
     $this->get('/data-entry')->assertRedirect('/contractors');
     $this->get('/data-entry/attendance')->assertRedirect('/contractors/attendance');
     $this->get('/data-entry/reports')->assertRedirect('/contractors/reports');
+    // والاسم القديم صار تحويلةً لتقرير المحافظات — الرابط المحفوظ لا يكسر
+    $this->get('/contractors/reports')->assertRedirect('/contractors/reports/governorates');
     $this->get('/data-entry/operators/create')->assertRedirect('/contractors/create');
     $this->get('/data-entry/operators/import')->assertRedirect('/contractors/import');
 });

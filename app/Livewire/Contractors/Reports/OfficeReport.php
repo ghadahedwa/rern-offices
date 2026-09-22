@@ -1,0 +1,124 @@
+<?php
+
+namespace App\Livewire\Contractors\Reports;
+
+use App\Exports\ContractorsAttendanceExport;
+use App\Support\Contractors\AttendanceReport;
+use App\Support\ContractorScope;
+use Livewire\Attributes\Layout;
+use Livewire\Attributes\Title;
+use Livewire\Component;
+use Maatwebsite\Excel\Facades\Excel;
+
+/**
+ * تقرير المقر — صفٌّ لكل عامل خدم فيه خلال المدى: الكشف الذي يُطبع ويُرسل.
+ *
+ * ⚠️ **المقر يصل من الفورم فيُفحص على النطاق** (`scopedOfficeIds`) لا يُمرَّر كما جاء،
+ *    ومقرٌّ خارج محافظات المستخدم يُخرج جدولاً فارغاً لا صفوف محافظةٍ ليست له.
+ */
+#[Layout('layouts.app')]
+#[Title('تقرير المقر')]
+class OfficeReport extends Component
+{
+    use Concerns\BuildsAttendanceReport;
+
+    public ?int $governorateId = null;
+
+    public ?int $officeId = null;
+
+    /** تغيير المحافظة يُصفّر المقر — وإلا بقي مقرُّ محافظةٍ أخرى مختاراً بلا صفوف. */
+    public function updatedGovernorateId(): void
+    {
+        $this->officeId = null;
+    }
+
+    protected function appliedFilters(): array
+    {
+        return [
+            'governorateId' => $this->governorateId ? (int) $this->governorateId : null,
+            'officeId'      => $this->officeId ? (int) $this->officeId : null,
+        ];
+    }
+
+    protected function filterKeys(): array
+    {
+        return ['governorateId', 'officeId'];
+    }
+
+    /** مقارُّ التقرير: المقر المختار إن كان داخل النطاق، وإلا مقارُّ المحافظة داخله. */
+    protected function reportOfficeIds(): ?array
+    {
+        $allowed = $this->scopedOfficeIds(array_filter([$this->applied['governorateId'] ?? null]));
+        $office  = $this->applied['officeId'] ?? null;
+
+        if ($office === null) {
+            return $allowed;
+        }
+
+        // ⚠️ `null` هنا تعني «بلا حدّ» (super-admin)، فالمقر يُقبل؛ وإلا يُفحص انتماؤه.
+        if ($allowed === null || in_array($office, $allowed, true)) {
+            return [$office];
+        }
+
+        return [];
+    }
+
+    protected function buildRows(): array
+    {
+        $report    = $this->report();
+        $officeIds = $this->reportOfficeIds();
+
+        if (! $report || $officeIds === []) {
+            return [];
+        }
+
+        $rows = $report->rows($this->scopedContractors($officeIds), $officeIds);
+
+        // ترتيب الكشف: المقر ثم اسم العامل — ترتيب الورقة التي تُطبع.
+        usort($rows, fn ($a, $b) => [$a['office_name'], $a['contractor_name']] <=> [$b['office_name'], $b['contractor_name']]);
+
+        return $rows;
+    }
+
+    public function exportExcel()
+    {
+        if (! $this->guardExport()) {
+            return;
+        }
+
+        $rows = $this->buildRows();
+
+        return Excel::download(
+            new ContractorsAttendanceExport(
+                rows: $rows,
+                statuses: AttendanceReport::statusColumns($rows),
+                subjectLabel: __('home.ct_rep_contractor'),
+                subjectKey: 'contractor_name',
+                withContractorCount: false,
+                title: __('home.ct_rep_offices_title'),
+                period: $this->periodLabel(),
+                breakdown: $this->report()?->breakdown() ?? [],
+                secondLabel: __('home.ct_rep_office_col'),
+                secondKey: 'office_name'
+            ),
+            $this->exportFileName('contractors-office')
+        );
+    }
+
+    public function render()
+    {
+        $rows   = $this->hasSearched ? $this->buildRows() : [];
+        $report = $this->report();
+
+        return view('livewire.contractors.reports.office', [
+            'governorates' => ContractorScope::governorateOptions(),
+            'offices'      => ContractorScope::officeOptions($this->governorateId),
+            'rows'         => $rows,
+            'statuses'     => AttendanceReport::statusColumns($rows),
+            'totals'       => AttendanceReport::sum($rows),
+            'contractors'  => count(array_unique(array_column($rows, 'contractor_id'))),
+            'breakdown'    => $this->hasSearched && $report ? $report->breakdown() : null,
+            'holidays'     => $this->hasSearched && $report ? $report->holidays() : [],
+        ]);
+    }
+}
