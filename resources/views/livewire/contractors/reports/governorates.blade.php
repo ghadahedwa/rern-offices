@@ -52,6 +52,9 @@
             ])
         @endif
 
+        {{-- تنبيه «لم تُرصد أيام حضورهم» — يظهر حين يقع وحده --}}
+        @include('livewire.contractors.reports.includes.unrecorded-note', ['count' => $unrecorded])
+
         @if(count($groups) > 0)
             <div class="overflow-x-auto rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-sm">
                 <table class="w-full text-sm text-center">
@@ -61,7 +64,6 @@
                             <th class="px-3 py-2.5 font-semibold">{{ __('home.ct_rep_col_contractors') }}</th>
                             <th class="px-3 py-2.5 font-semibold">{{ __('home.ct_rep_col_working') }}</th>
                             <th class="px-3 py-2.5 font-semibold">{{ __('home.ct_rep_col_present') }}</th>
-                            <th class="px-3 py-2.5 font-semibold">{{ __('home.ct_rep_col_unreviewed') }}</th>
                             @foreach($statuses as $status)
                                 <th class="px-3 py-2.5 font-semibold">{{ $status->name }}</th>
                             @endforeach
@@ -73,8 +75,7 @@
                                 <td class="px-3 py-2.5 text-right font-medium text-zinc-800 dark:text-zinc-100">{{ $names[$id] ?? '—' }}</td>
                                 <td class="px-3 py-2.5 text-zinc-700 dark:text-zinc-200 font-semibold">{{ $group['contractors'] }}</td>
                                 <td class="px-3 py-2.5 text-zinc-700 dark:text-zinc-200">{{ $group['working'] }}</td>
-                                <td class="px-3 py-2.5 text-emerald-700 dark:text-emerald-400 font-medium">{{ $group['present'] }}</td>
-                                <td class="px-3 py-2.5 {{ $group['unreviewed'] > 0 ? 'text-amber-700 dark:text-amber-400 font-medium' : 'text-zinc-300 dark:text-zinc-600' }}">{{ $group['unreviewed'] }}</td>
+                                <td class="px-3 py-2.5 text-emerald-700 dark:text-emerald-400 font-medium">{{ \App\Support\Contractors\AttendanceReport::attended($group) }}</td>
                                 @foreach($statuses as $status)
                                     @php $value = $group['exceptions'][$status->id] ?? 0; @endphp
                                     <td class="px-3 py-2.5 {{ $value > 0 ? 'text-zinc-700 dark:text-zinc-200 font-medium' : 'text-zinc-300 dark:text-zinc-600' }}">{{ $value }}</td>
@@ -87,8 +88,7 @@
                             <td class="px-3 py-2.5 text-right">{{ __('home.ct_rep_total') }}</td>
                             <td class="px-3 py-2.5">{{ $contractors }}</td>
                             <td class="px-3 py-2.5">{{ $totals['working'] }}</td>
-                            <td class="px-3 py-2.5">{{ $totals['present'] }}</td>
-                            <td class="px-3 py-2.5">{{ $totals['unreviewed'] }}</td>
+                            <td class="px-3 py-2.5">{{ \App\Support\Contractors\AttendanceReport::attended($totals) }}</td>
                             @foreach($statuses as $status)
                                 <td class="px-3 py-2.5">{{ $totals['exceptions'][$status->id] ?? 0 }}</td>
                             @endforeach

@@ -44,6 +44,9 @@
             ])
         @endif
 
+        {{-- تنبيه «لم تُرصد أيام حضورهم» — يظهر حين يقع وحده --}}
+        @include('livewire.contractors.reports.includes.unrecorded-note', ['count' => $unrecorded])
+
         @if(count($rows) > 0)
             <div class="flex items-center gap-2 text-sm text-zinc-600 dark:text-zinc-300">
                 <span class="font-medium">{{ __('home.ct_rep_col_contractors') }}:</span>
@@ -58,7 +61,6 @@
                             <th class="px-3 py-2.5 font-semibold text-right">{{ __('home.ct_rep_office_col') }}</th>
                             <th class="px-3 py-2.5 font-semibold">{{ __('home.ct_rep_col_working') }}</th>
                             <th class="px-3 py-2.5 font-semibold">{{ __('home.ct_rep_col_present') }}</th>
-                            <th class="px-3 py-2.5 font-semibold">{{ __('home.ct_rep_col_unreviewed') }}</th>
                             @foreach($statuses as $status)
                                 <th class="px-3 py-2.5 font-semibold">{{ $status->name }}</th>
                             @endforeach
@@ -75,8 +77,7 @@
                                 </td>
                                 <td class="px-3 py-2.5 text-right text-zinc-600 dark:text-zinc-300 max-w-xs truncate" title="{{ $row['office_name'] }}">{{ $row['office_name'] }}</td>
                                 <td class="px-3 py-2.5 text-zinc-700 dark:text-zinc-200">{{ $row['working'] }}</td>
-                                <td class="px-3 py-2.5 text-emerald-700 dark:text-emerald-400 font-medium">{{ $row['present'] }}</td>
-                                <td class="px-3 py-2.5 {{ $row['unreviewed'] > 0 ? 'text-amber-700 dark:text-amber-400 font-medium' : 'text-zinc-300 dark:text-zinc-600' }}">{{ $row['unreviewed'] }}</td>
+                                <td class="px-3 py-2.5 text-emerald-700 dark:text-emerald-400 font-medium">{{ \App\Support\Contractors\AttendanceReport::attended($row) }}</td>
                                 @foreach($statuses as $status)
                                     @php $value = $row['exceptions'][$status->id] ?? 0; @endphp
                                     <td class="px-3 py-2.5 {{ $value > 0 ? 'text-zinc-700 dark:text-zinc-200 font-medium' : 'text-zinc-300 dark:text-zinc-600' }}">{{ $value }}</td>
@@ -88,8 +89,7 @@
                         <tr class="bg-[#c9a847]/10 font-semibold text-zinc-800 dark:text-zinc-100">
                             <td class="px-3 py-2.5 text-right" colspan="2">{{ __('home.ct_rep_total') }}</td>
                             <td class="px-3 py-2.5">{{ $totals['working'] }}</td>
-                            <td class="px-3 py-2.5">{{ $totals['present'] }}</td>
-                            <td class="px-3 py-2.5">{{ $totals['unreviewed'] }}</td>
+                            <td class="px-3 py-2.5">{{ \App\Support\Contractors\AttendanceReport::attended($totals) }}</td>
                             @foreach($statuses as $status)
                                 <td class="px-3 py-2.5">{{ $totals['exceptions'][$status->id] ?? 0 }}</td>
                             @endforeach

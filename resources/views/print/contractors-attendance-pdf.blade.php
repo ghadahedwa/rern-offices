@@ -16,9 +16,9 @@
     $statusCount = max($statuses->count(), 1);
 
     $fixed = match ($level) {
-        'office'     => [22, 22, 11, 10, 12],   // العامل · المقر · العمل · حضر · غير مراجَع
-        'contractor' => [26, 18, 12, 11, 13],   // المقر · المدة · العمل · حضر · غير مراجَع
-        default      => [24, 12, 12, 11, 13],   // المحافظة · العاملون · العمل · حضر · غير مراجَع
+        'office'     => [26, 26, 12, 12],   // العامل · المقر · أيام العمل · حضر
+        'contractor' => [30, 22, 13, 13],   // المقر · مدة التسكين · أيام العمل · حضر
+        default      => [28, 14, 14, 14],   // المحافظة · العاملون · أيام العمل · حضر
     };
 
     $remaining  = 100 - array_sum($fixed);
@@ -66,6 +66,11 @@
     <div class="warn">{{ __('home.ct_rep_pdf_capped', ['count' => $maxRows]) }}</div>
 @endif
 
+@if($unrecorded > 0)
+    {{-- ⚠️ التنبيه في المطبوع كما في الشاشة: الورقة تُرسَل وتُقرأ بعيداً عنها --}}
+    <div class="warn">{{ $unrecorded === 1 ? __('home.ct_rep_unrecorded_one') : __('home.ct_rep_unrecorded', ['count' => $unrecorded]) }}</div>
+@endif
+
 @php
     $hasRows = $level === 'governorates' ? count($groups) > 0 : count($rows) > 0;
 @endphp
@@ -97,7 +102,6 @@
 
             <th style="width:{{ $fixed[2] }}%">{{ __('home.ct_rep_col_working') }}</th>
             <th style="width:{{ $fixed[3] }}%">{{ __('home.ct_rep_col_present') }}</th>
-            <th style="width:{{ $fixed[4] }}%">{{ __('home.ct_rep_col_unreviewed') }}</th>
 
             @foreach($statuses as $status)
                 <th style="width:{{ $loop->last ? $lastWide : $statusWide }}%">{{ $status->name }}</th>
@@ -111,8 +115,7 @@
                     <td class="rt-start">{{ $group['governorate_name'] ?? '—' }}</td>
                     <td>{{ $group['contractors'] }}</td>
                     <td>{{ $group['working'] }}</td>
-                    <td>{{ $group['present'] }}</td>
-                    <td>{{ $group['unreviewed'] }}</td>
+                    <td>{{ \App\Support\Contractors\AttendanceReport::attended($group) }}</td>
                     @foreach($statuses as $status)
                         @php $value = $group['exceptions'][$status->id] ?? 0; @endphp
                         <td class="{{ $value ? '' : 'muted' }}">{{ $value }}</td>
@@ -134,8 +137,7 @@
                     @endif
 
                     <td>{{ $row['working'] }}</td>
-                    <td>{{ $row['present'] }}</td>
-                    <td>{{ $row['unreviewed'] }}</td>
+                    <td>{{ \App\Support\Contractors\AttendanceReport::attended($row) }}</td>
                     @foreach($statuses as $status)
                         @php $value = $row['exceptions'][$status->id] ?? 0; @endphp
                         <td class="{{ $value ? '' : 'muted' }}">{{ $value }}</td>
@@ -149,8 +151,7 @@
             <td class="rt-start">{{ __('home.ct_rep_total') }}</td>
             <td>{{ $level === 'governorates' ? $contractors : '' }}</td>
             <td>{{ $totals['working'] }}</td>
-            <td>{{ $totals['present'] }}</td>
-            <td>{{ $totals['unreviewed'] }}</td>
+            <td>{{ \App\Support\Contractors\AttendanceReport::attended($totals) }}</td>
             @foreach($statuses as $status)
                 <td>{{ $totals['exceptions'][$status->id] ?? 0 }}</td>
             @endforeach

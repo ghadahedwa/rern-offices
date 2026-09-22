@@ -108,6 +108,8 @@ class ContractorReport extends Component
             'rows'         => $rows,
             'statuses'     => AttendanceReport::statusColumns($rows),
             'totals'       => AttendanceReport::sum($rows),
+            // عددُ عاملين لا أيام — التنبيه يقول «مَن» لا «كم يوماً»
+            'unrecorded'   => AttendanceReport::unrecordedContractors($rows),
             'exceptions'   => $this->exceptionDates($rows),
             'breakdown'    => $this->hasSearched && $report ? $report->breakdown() : null,
             'holidays'     => $this->hasSearched && $report ? $report->holidays() : [],

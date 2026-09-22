@@ -2,6 +2,7 @@
 
 namespace App\Exports;
 
+use App\Support\Contractors\AttendanceReport;
 use Illuminate\Support\Collection;
 use Maatwebsite\Excel\Concerns\FromArray;
 use Maatwebsite\Excel\Concerns\ShouldAutoSize;
@@ -76,8 +77,7 @@ class ContractorsAttendanceExport implements FromArray, ShouldAutoSize, WithEven
             }
 
             $line[] = $row['working'];
-            $line[] = $row['present'];
-            $line[] = $row['unreviewed'];
+            $line[] = AttendanceReport::attended($row);
 
             foreach ($this->statuses as $status) {
                 $line[] = $row['exceptions'][$status->id] ?? 0;
@@ -105,7 +105,6 @@ class ContractorsAttendanceExport implements FromArray, ShouldAutoSize, WithEven
 
         $head[] = __('home.ct_rep_col_working');
         $head[] = __('home.ct_rep_col_present');
-        $head[] = __('home.ct_rep_col_unreviewed');
 
         foreach ($this->statuses as $status) {
             $head[] = $status->name;
@@ -155,9 +154,8 @@ class ContractorsAttendanceExport implements FromArray, ShouldAutoSize, WithEven
             $line[] = count($ids);
         }
 
-        foreach (['working', 'present', 'unreviewed'] as $key) {
-            $line[] = array_sum(array_column($this->rows, $key));
-        }
+        $line[] = array_sum(array_column($this->rows, 'working'));
+        $line[] = array_sum(array_map(fn ($row) => AttendanceReport::attended($row), $this->rows));
 
         foreach ($this->statuses as $status) {
             $line[] = array_sum(array_map(fn ($row) => $row['exceptions'][$status->id] ?? 0, $this->rows));

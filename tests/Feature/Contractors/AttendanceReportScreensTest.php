@@ -565,11 +565,14 @@ it('يكتب في الملف أرقامَ الشاشة نفسها ويغلق ا�
     expect($head[0])->toBe('المحافظة')
         ->and($head[1])->toBe('عدد العاملين')
         ->and($head[2])->toBe('أيام العمل')
+        ->and($head[3])->toBe('حضر')
+        // ⚠️ لا عمود «غير مراجَع» — أيامه داخل «حضر» (طلب المستخدمة)
+        ->and($head)->not->toContain('غير مراجَع')
         ->and($line[0])->toBe('محافظة الملف')
         ->and((int) $line[1])->toBe(1)
         ->and((int) $line[2])->toBe(26)
-        // أيام العمل = حضر + غير مراجَع + الحالات — المعادلة مغلقة في الملف أيضاً
-        ->and((int) $line[3] + (int) $line[4] + (int) $line[5] + (int) $line[6])->toBe(26)
+        // أيام العمل = حضر + الحالات — المعادلة مغلقة في الملف أيضاً
+        ->and((int) $line[3] + (int) $line[4] + (int) $line[5])->toBe(26)
         ->and($cells[5][0])->toBe('الإجمالي')
         // ⚠️ الصفر يُكتب صفراً لا خانةً فارغة — الفارغة تُقرأ «لا بيانات»
         ->and($line[3])->not->toBeNull()
@@ -583,4 +586,81 @@ it('لا يُنزّل ملفاً قبل الضغط على «عرض التقري�
     $this->actingAs(repUser([], ['contractors.index', 'contractors.export']));
 
     Livewire::test(GovernorateReport::class)->call('exportExcel')->assertNoFileDownloaded();
+});
+
+// ── «لم تُرصد أيام حضوره» ────────────────────────────────────────────────
+
+it('يحسب أيام مَن لم يصل كشفه حضوراً فتقفل المعادلة', function () {
+    $gov    = Governorate::factory()->create();
+    $office = scrOffice($gov);
+    $worker = scrWorker($office);
+
+    scrMark($worker, '2026-09-02');   // غياب مسجَّل، وبلا «وصل الكشف» للمقر
+
+    $this->actingAs(repUser([$gov]));
+
+    $rows = Livewire::test(OfficeReport::class)
+        ->set('from', '2026-09-01')->set('to', '2026-09-30')
+        ->set('governorateId', $gov->id)
+        ->call('search')
+        ->viewData('rows');
+
+    $row = $rows[0];
+
+    // ⚠️ «حضر» المعروض يبتلع غير المرصود، فالأعمدة تجمع على أيام العمل بالضبط
+    expect(App\Support\Contractors\AttendanceReport::attended($row) + array_sum($row['exceptions']))
+        ->toBe($row['working'])
+        ->and(App\Support\Contractors\AttendanceReport::attended($row))->toBe(25);
+});
+
+it('ينبّه بعدد مَن لم تُرصد أيام حضورهم، ولا ينبّه حين رُصدوا', function () {
+    $gov    = Governorate::factory()->create();
+    $office = scrOffice($gov);
+    $worker = scrWorker($office);
+
+    $this->actingAs(repUser([$gov]));
+
+    $screen = Livewire::test(OfficeReport::class)
+        ->set('from', '2026-09-01')->set('to', '2026-09-30')
+        ->set('governorateId', $gov->id)
+        ->call('search');
+
+    expect($screen->viewData('unrecorded'))->toBe(1);
+    $screen->assertSee(__('home.ct_rep_unrecorded_one'));
+
+    // ووصولُ الكشف يُسكت التنبيه
+    App\Models\AttendanceReview::create([
+        'attendable_type' => Contractor::class,
+        'attendable_id'   => $worker->id,
+        'office_id'       => $office->id,
+        'month'           => '2026-09-01',
+    ]);
+
+    $after = Livewire::test(OfficeReport::class)
+        ->set('from', '2026-09-01')->set('to', '2026-09-30')
+        ->set('governorateId', $gov->id)
+        ->call('search');
+
+    expect($after->viewData('unrecorded'))->toBe(0);
+    $after->assertDontSee(__('home.ct_rep_unrecorded_one'));
+});
+
+it('لا يعرض «غير مراجَع» عموداً في أي من التقارير الثلاثة', function () {
+    $gov    = Governorate::factory()->create();
+    $office = scrOffice($gov);
+    $worker = scrWorker($office);
+
+    $this->actingAs(repUser([$gov]));
+
+    repShow(GovernorateReport::class)->assertDontSee('غير مراجَع');
+
+    Livewire::test(OfficeReport::class)
+        ->set('from', '2026-09-01')->set('to', '2026-09-30')
+        ->set('governorateId', $gov->id)->call('search')
+        ->assertDontSee('غير مراجَع');
+
+    Livewire::test(ContractorReport::class)
+        ->set('from', '2026-09-01')->set('to', '2026-09-30')
+        ->set('contractorId', $worker->id)->call('search')
+        ->assertDontSee('غير مراجَع');
 });

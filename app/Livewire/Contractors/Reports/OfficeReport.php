@@ -125,6 +125,8 @@ class OfficeReport extends Component
             'rows'         => $rows,
             'statuses'     => AttendanceReport::statusColumns($rows),
             'totals'       => AttendanceReport::sum($rows),
+            // عددُ عاملين لا أيام — التنبيه يقول «مَن» لا «كم يوماً»
+            'unrecorded'   => AttendanceReport::unrecordedContractors($rows),
             'contractors'  => count(array_unique(array_column($rows, 'contractor_id'))),
             'breakdown'    => $this->hasSearched && $report ? $report->breakdown() : null,
             'holidays'     => $this->hasSearched && $report ? $report->holidays() : [],

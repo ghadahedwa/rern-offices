@@ -236,6 +236,7 @@ it('يوزّع عروض أعمدة التقرير المطبوع على ١٠٠٪
         'holidays'    => $query->report()->holidays(),
         'totals'      => App\Support\Contractors\AttendanceReport::sum($rows),
         'capped'      => false,
+        'unrecorded'  => 0,
         'maxRows'     => 2000,
         'title'       => 'عنوان',
         'generatedAt' => now(),
