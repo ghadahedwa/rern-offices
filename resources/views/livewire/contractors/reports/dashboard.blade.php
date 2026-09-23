@@ -122,13 +122,30 @@
         'height' => count($byGovernorate) > 12 ? 420 : 300,
     ])
 
-    {{-- مخطط: التوزيع على الصفات --}}
-    @include('livewire.contractors.reports.includes.bar-chart', [
-        'title'  => __('home.ct_dash_by_profession'),
-        'rows'   => $byProfession,
-        'name'   => 'prof',
-        'height' => 260,
-    ])
+    {{--
+        التوزيع على الصفات **بطاقات لا مخططاً** (طلب المستخدمة 2026-09-23): الصفات
+        خمسٌ معدودة، والمخطط يحتاج قراءةَ محورٍ ليقول ما يقوله الرقم مباشرة —
+        بخلاف المحافظات، فعددها يجعل المقارنة البصرية هي المعلومة.
+    --}}
+    <div class="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-sm p-5">
+        <div class="flex items-center gap-3 mb-5">
+            <div class="w-1 h-5 bg-[#c9a847] rounded-full"></div>
+            <h3 class="text-sm font-semibold text-zinc-600 dark:text-zinc-400 uppercase tracking-wide">{{ __('home.ct_dash_by_profession') }}</h3>
+        </div>
+
+        @if($byProfession === [])
+            <p class="text-sm text-zinc-400 dark:text-zinc-500 text-center py-8">{{ __('home.ct_dash_no_data') }}</p>
+        @else
+            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+                @foreach($byProfession as $row)
+                    <div class="rounded-lg border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/50 p-4 text-center">
+                        <p class="text-2xl font-semibold text-[#b8962e]">{{ $row['value'] }}</p>
+                        <p class="text-xs text-zinc-500 dark:text-zinc-400 mt-1 truncate" title="{{ $row['label'] }}">{{ $row['label'] }}</p>
+                    </div>
+                @endforeach
+            </div>
+        @endif
+    </div>
 
     {{-- keepalive: يجدد الـ snapshot والـ CSRF كل 10 دقائق --}}
     <div x-data x-init="setInterval(() => $wire.$refresh(), 600000)" class="hidden"></div>

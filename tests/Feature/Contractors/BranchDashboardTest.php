@@ -266,3 +266,19 @@ it('لا يعرض مجموع أيام العمل بطاقةً مفردة بل م
         'present' => 52,
     ]));
 });
+
+it('يعرض الصفات بطاقات والمحافظات مخططاً', function () {
+    // ⚠️ `assertSee` على الاسم لا يفرّق: المخطط يكتب أسماءه في الـHTML أيضاً
+    //    (`Js::from`). الفارق الحقيقي وجودُ `canvas` — فواحدٌ للمحافظات لا اثنان.
+    $gov    = Governorate::factory()->create(['name' => 'محافظة الكروت']);
+    $office = dashOffice($gov);
+
+    dashWorker($office, professionId: Profession::where('is_system', true)->value('id'));
+
+    $this->actingAs(dashUser([$gov]));
+
+    $html = dashScreen()->html();
+
+    expect(substr_count($html, 'x-ref="bar"'))->toBe(1)
+        ->and($html)->toContain(__('home.ct_dash_by_profession'));
+});
