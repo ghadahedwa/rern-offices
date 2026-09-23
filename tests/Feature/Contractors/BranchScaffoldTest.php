@@ -66,10 +66,12 @@ it('لا يفتح الشاشات بصلاحية التصدير وحدها', func
 
 // ── الفرع وصفحة الدخول ───────────────────────────────────
 
-it('يجعل قائمة العاملين صفحة دخول الفرع', function () {
+it('يجعل اللوحة صفحة دخول الفرع', function () {
+    // ⚠️ خريطة `entries` هي **اسم الراوت => الصلاحية**، وتطابقُ الطرفين في الصيغة
+    //    القديمة كان يُخفي الاتجاه — فقلبُها يهبط بصاحب العرض على شاشة الحضور.
     $user = deUser(['contractors.index', 'contractors.attendance']);
 
-    expect(Branch::entryUrlFor('contractors', $user))->toBe(route('contractors.index'));
+    expect(Branch::entryUrlFor('contractors', $user))->toBe(route('contractors.dashboard'));
 });
 
 it('يهبط بصاحب التسجيل وحده على شاشة الحضور لا على قائمةٍ تردّه ٤٠٣', function () {

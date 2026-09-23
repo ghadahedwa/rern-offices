@@ -1,0 +1,124 @@
+@php
+    $lbl = 'block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1';
+
+    $cards = [
+        ['home.ct_dash_in_service',   $headline['in_service'],   'text-[#b8962e]'],
+        ['home.ct_dash_offices',      $headline['offices'],      'text-zinc-800 dark:text-zinc-100'],
+        ['home.ct_dash_governorates', $headline['governorates'], 'text-zinc-800 dark:text-zinc-100'],
+        ['home.ct_dash_archived',     $headline['archived'],     'text-zinc-400 dark:text-zinc-500'],
+    ];
+@endphp
+
+<div class="max-w-7xl mx-auto p-6 space-y-6">
+
+    {{-- الرأس --}}
+    <div class="flex items-center gap-4">
+        <div class="w-11 h-11 rounded-xl bg-[#c9a847]/10 flex items-center justify-center shrink-0">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-[#c9a847]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z"/>
+            </svg>
+        </div>
+        <div>
+            <h1 class="text-2xl font-semibold text-zinc-800 dark:text-zinc-100">{{ __('home.ct_dash_title') }}</h1>
+            <p class="text-sm text-zinc-500 dark:text-zinc-400">{{ __('home.ct_dash_hint') }}</p>
+        </div>
+    </div>
+
+    {{-- المحددات: تُطبَّق فوراً (auto) — اللوحة تُفتح للنظرة الأولى لا بعد ضغط زرّ --}}
+    <x-contractors.report-filters :auto="true">
+        <div class="sm:col-span-2">
+            <div class="flex items-center justify-between gap-3 mb-1">
+                <label class="{{ $lbl }} mb-0">{{ __('home.ct_rep_governorate') }}</label>
+                @if(count($governorateIds) > 0)
+                    <button type="button" wire:click="$set('governorateIds', [])"
+                            class="text-xs text-zinc-500 dark:text-zinc-400 hover:text-[#c9a847] transition">
+                        {{ __('home.ct_rep_clear_governorates') }}
+                    </button>
+                @endif
+            </div>
+
+            <div class="rounded-lg border border-zinc-300 dark:border-zinc-600 p-2">
+                <div class="grid grid-cols-2 sm:grid-cols-3 gap-x-3 gap-y-1.5 max-h-24 overflow-y-auto">
+                    @forelse($governorates as $governorate)
+                        <label class="inline-flex items-center gap-1.5 text-xs px-2 py-1 rounded-md cursor-pointer hover:bg-[#c9a847]/10 transition">
+                            <input type="checkbox" wire:model.live="governorateIds" value="{{ $governorate->id }}"
+                                   class="rounded border-zinc-300 text-[#c9a847] focus:ring-[#c9a847]/40 shrink-0">
+                            <span class="text-zinc-700 dark:text-zinc-200 truncate" title="{{ $governorate->name }}">{{ $governorate->name }}</span>
+                        </label>
+                    @empty
+                        <span class="text-xs text-zinc-400">—</span>
+                    @endforelse
+                </div>
+            </div>
+        </div>
+    </x-contractors.report-filters>
+
+    {{-- الأعداد --}}
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        @foreach($cards as [$key, $value, $tone])
+            <div class="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-sm p-5">
+                <p class="text-xs text-zinc-400 dark:text-zinc-500 mb-1">{{ __($key) }}</p>
+                <p class="text-3xl font-semibold {{ $tone }}">{{ $value }}</p>
+            </div>
+        @endforeach
+    </div>
+
+    {{-- حضور الفترة --}}
+    <div class="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-sm p-5 space-y-4">
+        <div class="flex items-center gap-3">
+            <div class="w-1 h-5 bg-[#c9a847] rounded-full"></div>
+            <h3 class="text-sm font-semibold text-zinc-600 dark:text-zinc-400 uppercase tracking-wide">{{ __('home.ct_dash_attendance') }}</h3>
+        </div>
+
+        @if($breakdown)
+            <p class="text-xs text-zinc-500 dark:text-zinc-400">
+                {{ $this->periodLabel() }} — {{ __('home.ct_rep_breakdown', [
+                    'total'    => $breakdown['total'],
+                    'weekend'  => $breakdown['weekend'],
+                    'holidays' => $breakdown['holidays'],
+                    'working'  => $breakdown['working'],
+                ]) }}
+            </p>
+        @endif
+
+        <div class="flex flex-wrap gap-6">
+            <div>
+                <p class="text-xs text-zinc-400 dark:text-zinc-500">{{ __('home.ct_rep_col_working') }}</p>
+                <p class="text-2xl font-semibold text-zinc-800 dark:text-zinc-100">{{ $attendance['working'] }}</p>
+            </div>
+            <div>
+                <p class="text-xs text-zinc-400 dark:text-zinc-500">{{ __('home.ct_rep_col_present') }}</p>
+                <p class="text-2xl font-semibold text-emerald-700 dark:text-emerald-400">{{ \App\Support\Contractors\AttendanceReport::attended($attendance) }}</p>
+            </div>
+            @foreach($statuses as $status)
+                <div>
+                    <p class="text-xs text-zinc-400 dark:text-zinc-500">{{ $status->name }}</p>
+                    <p class="text-2xl font-semibold" style="color: {{ $status->color }}">{{ $attendance['exceptions'][$status->id] ?? 0 }}</p>
+                </div>
+            @endforeach
+        </div>
+
+        @include('livewire.contractors.reports.includes.unrecorded-note', ['count' => $unrecorded])
+
+        <p class="text-xs text-zinc-400 dark:text-zinc-500">{{ __('home.ct_rep_equation') }}</p>
+    </div>
+
+    {{-- مخطط: التوزيع على المحافظات --}}
+    @include('livewire.contractors.reports.includes.bar-chart', [
+        'title'  => __('home.ct_dash_by_governorate'),
+        'rows'   => $byGovernorate,
+        'name'   => 'gov',
+        'height' => count($byGovernorate) > 12 ? 420 : 300,
+    ])
+
+    {{-- مخطط: التوزيع على الصفات --}}
+    @include('livewire.contractors.reports.includes.bar-chart', [
+        'title'  => __('home.ct_dash_by_profession'),
+        'rows'   => $byProfession,
+        'name'   => 'prof',
+        'height' => 260,
+    ])
+
+    {{-- keepalive: يجدد الـ snapshot والـ CSRF كل 10 دقائق --}}
+    <div x-data x-init="setInterval(() => $wire.$refresh(), 600000)" class="hidden"></div>
+</div>

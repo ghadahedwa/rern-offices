@@ -245,6 +245,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::livewire('contractors/attendance', \App\Livewire\Contractors\Attendance::class)->name('contractors.attendance');
     // كشف الشهر بالإكسيل — صفحةٌ مستقلة عن الشبكة (طلب العميلة 2026-09-17)، بصلاحية التسجيل نفسها في المكوّن
     Route::livewire('contractors/attendance/file', \App\Livewire\Contractors\AttendanceFile::class)->name('contractors.attendance-file');
+    // لوحة الفرع — صفحة دخوله (قرار العميل)، بصلاحية `contractors.index` في المكوّن.
+    Route::livewire('contractors/dashboard', \App\Livewire\Contractors\Reports\BranchDashboard::class)->name('contractors.dashboard');
+
     // تقارير الحضور الثلاثة — ⚠️ الحراسة `contractors.index` في المكوّن، والتصدير
     //    وحده بـ`contractors.export` داخل إجراء التصدير (يصل في طلبٍ مستقلٍّ عن mount).
     Route::livewire('contractors/reports/governorates', \App\Livewire\Contractors\Reports\GovernorateReport::class)->name('contractors.reports.governorates');

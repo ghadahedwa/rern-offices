@@ -75,9 +75,13 @@ return [
     'contractors' => [
         'label'         => 'home.branch_contractors',
         'icon'          => 'user-group',
-        'default_route' => 'contractors.index',
+        'default_route' => 'contractors.dashboard',
+        // ⚠️ الخريطة **اسم الراوت => الصلاحية** لا العكس — وتطابقُ الطرفين في
+        //    الصيغة القديمة (`contractors.index => contractors.index`) كان يُخفي الاتجاه.
+        // ⚠️ صاحب العرض يهبط على اللوحة، وصاحب التسجيل وحده على شاشة الحضور —
+        //    اللوحة بصلاحية `contractors.index` فتردّه ٤٠٣ لو صارت مدخله.
         'entries' => [
-            'contractors.index'      => 'contractors.index',
+            'contractors.dashboard'  => 'contractors.index',
             'contractors.attendance' => 'contractors.attendance',
         ],
         'route_patterns' => [

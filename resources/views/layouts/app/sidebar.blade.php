@@ -278,6 +278,13 @@
                     {{-- كل بند بصلاحيته: مَن له التسجيل وحده لا يرى القائمة والتقارير،
                          ومَن له العرض وحده لا يرى شاشة التسجيل — رابطٌ يؤدي إلى ٤٠٣ أسوأ من غيابه --}}
                     @can('contractors.index')
+                    {{-- ⚠️ حارس Route::has: route() في الـlayout مع cache راوتات قديم يُسقط كل الصفحات بـ500 --}}
+                    @if(Route::has('contractors.dashboard'))
+                    <flux:sidebar.item icon="squares-2x2" :href="route('contractors.dashboard')" :current="request()->routeIs('contractors.dashboard')" wire:navigate>
+                        {{ __('home.ct_dash_title') }}
+                    </flux:sidebar.item>
+                    @endif
+
                     <flux:sidebar.item icon="user-group" :href="route('contractors.index')" :current="request()->routeIs('contractors.index')" wire:navigate>
                         {{ __('home.ct_workers') }}
                     </flux:sidebar.item>
