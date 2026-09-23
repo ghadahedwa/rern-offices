@@ -24,20 +24,7 @@
         </div>
     </div>
 
-    {{--
-        ⚠️ **نطاقٌ مُضيَّق يُعلَن فوق الأرقام**: الفلتر في أسفل الصفحة (طلب المستخدمة:
-           اللوحة تُفتح لتُقرأ لا لتُملأ)، و**اختيار المحافظات يحرّك كل رقم فيها**
-           بخلاف التاريخ الذي يحرّك «حضور الفترة» وحدها. فقارئٌ لا يرى الفلتر قد
-           يقرأ أرقام محافظةٍ واحدة على أنها الجمهورية.
-    --}}
-    @if(count($governorateIds) > 0)
-        <div class="rounded-lg border border-[#c9a847]/30 bg-[#c9a847]/5 px-4 py-2 flex flex-wrap items-center gap-2 text-xs">
-            <span class="text-zinc-500 dark:text-zinc-400">{{ __('home.ct_dash_scoped_to') }}</span>
-            <span class="font-medium text-[#b8962e]">{{ $governorates->whereIn('id', $governorateIds)->pluck('name')->implode(' · ') }}</span>
-            <button type="button" wire:click="$set('governorateIds', [])"
-                    class="text-zinc-500 dark:text-zinc-400 hover:text-[#c9a847] transition underline">{{ __('home.ct_rep_clear_governorates') }}</button>
-        </div>
-    @endif
+    @include('livewire.contractors.reports.includes.dashboard-filters')
 
     {{-- الأعداد --}}
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -132,35 +119,6 @@
         'name'   => 'gov',
         'height' => count($byGovernorate) > 12 ? 420 : 300,
     ])
-
-    {{-- المحددات: تُطبَّق فوراً (auto) — اللوحة تُفتح للنظرة الأولى لا بعد ضغط زرّ --}}
-    <x-contractors.report-filters :auto="true">
-        <div class="sm:col-span-2">
-            <div class="flex items-center justify-between gap-3 mb-1">
-                <label class="{{ $lbl }} mb-0">{{ __('home.ct_rep_governorate') }}</label>
-                @if(count($governorateIds) > 0)
-                    <button type="button" wire:click="$set('governorateIds', [])"
-                            class="text-xs text-zinc-500 dark:text-zinc-400 hover:text-[#c9a847] transition">
-                        {{ __('home.ct_rep_clear_governorates') }}
-                    </button>
-                @endif
-            </div>
-
-            <div class="rounded-lg border border-zinc-300 dark:border-zinc-600 p-2">
-                <div class="grid grid-cols-2 sm:grid-cols-3 gap-x-3 gap-y-1.5 max-h-24 overflow-y-auto">
-                    @forelse($governorates as $governorate)
-                        <label class="inline-flex items-center gap-1.5 text-xs px-2 py-1 rounded-md cursor-pointer hover:bg-[#c9a847]/10 transition">
-                            <input type="checkbox" wire:model.live="governorateIds" value="{{ $governorate->id }}"
-                                   class="rounded border-zinc-300 text-[#c9a847] focus:ring-[#c9a847]/40 shrink-0">
-                            <span class="text-zinc-700 dark:text-zinc-200 truncate" title="{{ $governorate->name }}">{{ $governorate->name }}</span>
-                        </label>
-                    @empty
-                        <span class="text-xs text-zinc-400">—</span>
-                    @endforelse
-                </div>
-            </div>
-        </div>
-    </x-contractors.report-filters>
 
     {{-- keepalive: يجدد الـ snapshot والـ CSRF كل 10 دقائق --}}
     <div x-data x-init="setInterval(() => $wire.$refresh(), 600000)" class="hidden"></div>

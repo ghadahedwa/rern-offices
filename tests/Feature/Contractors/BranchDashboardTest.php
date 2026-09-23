@@ -283,11 +283,11 @@ it('يعرض الصفات بطاقات والمحافظات مخططاً', funct
         ->and($html)->toContain(__('home.ct_dash_by_profession'));
 });
 
-// ── الترتيب وسطر النطاق ─────────────────────────────────────────────────
+// ── الفلتر يسبق ما يفلتره ───────────────────────────────────────────────
 
-it('يضع الأرقام قبل الفلتر لا بعده', function () {
-    // ⚠️ اللوحة تُفتح لتُقرأ لا لتُملأ (طلب المستخدمة): فلترٌ فوق يدفع كل معلومة
-    //    تحت حدّ الشاشة.
+it('يضع الفلتر قبل الأرقام التي يفلترها', function () {
+    // ⚠️ وُضع أسفل الصفحة مرةً ليترك أول شاشةٍ للأرقام، فصار المستخدم يقرأ نتيجةً
+    //    مفلترة ولا يرى ما فلترها (تصحيح المستخدمة). والحلّ أنه يبقى فوق ويصغر.
     $gov = Governorate::factory()->create();
     dashWorker(dashOffice($gov));
 
@@ -295,31 +295,23 @@ it('يضع الأرقام قبل الفلتر لا بعده', function () {
 
     $html = dashScreen()->html();
 
-    expect(strpos($html, __('home.ct_dash_in_service')))
-        ->toBeLessThan(strpos($html, __('home.ct_rep_filters')))
-        ->and(strpos($html, __('home.ct_dash_by_governorate')))
-        ->toBeLessThan(strpos($html, __('home.ct_rep_filters')));
+    expect(strpos($html, __('home.ct_rep_period_this_month')))
+        ->toBeLessThan(strpos($html, __('home.ct_dash_in_service')))
+        ->and(strpos($html, __('home.ct_rep_period_this_month')))
+        ->toBeLessThan(strpos($html, __('home.ct_dash_by_governorate')));
 });
 
-it('يُعلن النطاق المُضيَّق فوق الأرقام ولا يُعلنه بلا تحديد', function () {
-    // ⚠️ الفلتر أسفل الصفحة و**المحافظة تحرّك كل رقم فيها** — فقارئٌ لا يراه قد
-    //    يقرأ أرقام محافظةٍ واحدة على أنها الجمهورية.
-    $first  = Governorate::factory()->create(['name' => 'محافظة معروضة']);
-    $second = Governorate::factory()->create(['name' => 'محافظة أخرى']);
+it('يُظهر عدد المحافظات المختارة في المنسدلة فيبقى النطاق معلوماً', function () {
+    // ⚠️ بديلٌ عن سطرٍ يشرح النطاق فوق الأرقام: النطاق يُقرأ من الفلتر نفسه.
+    $first  = Governorate::factory()->create(['name' => 'محافظة أولى']);
+    $second = Governorate::factory()->create(['name' => 'محافظة ثانية']);
 
     dashWorker(dashOffice($first));
-    dashWorker(dashOffice($second));
 
     $this->actingAs(dashUser([$first, $second]));
 
-    // بلا تحديد: لا سطر
-    dashScreen()->assertDontSee(__('home.ct_dash_scoped_to'));
+    dashScreen()->assertSee(__('home.ct_rep_all_governorates'));
 
-    // وبتحديد: السطر باسم المحافظة، وقبل الأرقام
-    $html = dashScreen()->set('governorateIds', [$first->id])->html();
-
-    expect($html)->toContain(__('home.ct_dash_scoped_to'))
-        ->and($html)->toContain('محافظة معروضة')
-        ->and(strpos($html, __('home.ct_dash_scoped_to')))
-        ->toBeLessThan(strpos($html, __('home.ct_dash_in_service')));
+    dashScreen()->set('governorateIds', [$first->id])
+        ->assertSee(__('home.ct_dash_picked_governorates', ['count' => 1]));
 });

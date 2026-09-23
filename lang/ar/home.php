@@ -1442,7 +1442,7 @@ return [
     'ct_dash_attendance'        => 'حضور الفترة',
     'ct_dash_by_governorate'    => 'توزيع العاملين على المحافظات',
     'ct_dash_by_profession'     => 'توزيع العاملين على الصفات',
-    'ct_dash_scoped_to'         => 'الأرقام معروضة لـ:',
+    'ct_dash_picked_governorates' => ':count محافظة مختارة',
     'ct_dash_day_unit'          => 'يوم',
     'ct_dash_no_exceptions'     => 'لا غياب ولا إجازات مسجَّلة في هذه الفترة.',
     // ⚠️ المجموع **مقامٌ يشرح وحدته**: «أيام العمل» في التقارير أيامُ عاملٍ واحد،
