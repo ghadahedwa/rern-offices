@@ -24,34 +24,20 @@
         </div>
     </div>
 
-    {{-- المحددات: تُطبَّق فوراً (auto) — اللوحة تُفتح للنظرة الأولى لا بعد ضغط زرّ --}}
-    <x-contractors.report-filters :auto="true">
-        <div class="sm:col-span-2">
-            <div class="flex items-center justify-between gap-3 mb-1">
-                <label class="{{ $lbl }} mb-0">{{ __('home.ct_rep_governorate') }}</label>
-                @if(count($governorateIds) > 0)
-                    <button type="button" wire:click="$set('governorateIds', [])"
-                            class="text-xs text-zinc-500 dark:text-zinc-400 hover:text-[#c9a847] transition">
-                        {{ __('home.ct_rep_clear_governorates') }}
-                    </button>
-                @endif
-            </div>
-
-            <div class="rounded-lg border border-zinc-300 dark:border-zinc-600 p-2">
-                <div class="grid grid-cols-2 sm:grid-cols-3 gap-x-3 gap-y-1.5 max-h-24 overflow-y-auto">
-                    @forelse($governorates as $governorate)
-                        <label class="inline-flex items-center gap-1.5 text-xs px-2 py-1 rounded-md cursor-pointer hover:bg-[#c9a847]/10 transition">
-                            <input type="checkbox" wire:model.live="governorateIds" value="{{ $governorate->id }}"
-                                   class="rounded border-zinc-300 text-[#c9a847] focus:ring-[#c9a847]/40 shrink-0">
-                            <span class="text-zinc-700 dark:text-zinc-200 truncate" title="{{ $governorate->name }}">{{ $governorate->name }}</span>
-                        </label>
-                    @empty
-                        <span class="text-xs text-zinc-400">—</span>
-                    @endforelse
-                </div>
-            </div>
+    {{--
+        ⚠️ **نطاقٌ مُضيَّق يُعلَن فوق الأرقام**: الفلتر في أسفل الصفحة (طلب المستخدمة:
+           اللوحة تُفتح لتُقرأ لا لتُملأ)، و**اختيار المحافظات يحرّك كل رقم فيها**
+           بخلاف التاريخ الذي يحرّك «حضور الفترة» وحدها. فقارئٌ لا يرى الفلتر قد
+           يقرأ أرقام محافظةٍ واحدة على أنها الجمهورية.
+    --}}
+    @if(count($governorateIds) > 0)
+        <div class="rounded-lg border border-[#c9a847]/30 bg-[#c9a847]/5 px-4 py-2 flex flex-wrap items-center gap-2 text-xs">
+            <span class="text-zinc-500 dark:text-zinc-400">{{ __('home.ct_dash_scoped_to') }}</span>
+            <span class="font-medium text-[#b8962e]">{{ $governorates->whereIn('id', $governorateIds)->pluck('name')->implode(' · ') }}</span>
+            <button type="button" wire:click="$set('governorateIds', [])"
+                    class="text-zinc-500 dark:text-zinc-400 hover:text-[#c9a847] transition underline">{{ __('home.ct_rep_clear_governorates') }}</button>
         </div>
-    </x-contractors.report-filters>
+    @endif
 
     {{-- الأعداد --}}
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -61,6 +47,31 @@
                 <p class="text-3xl font-semibold {{ $tone }}">{{ $value }}</p>
             </div>
         @endforeach
+    </div>
+
+    {{--
+        التوزيع على الصفات **بطاقات لا مخططاً** (طلب المستخدمة 2026-09-23): الصفات
+        خمسٌ معدودة، والمخطط يحتاج قراءةَ محورٍ ليقول ما يقوله الرقم مباشرة —
+        بخلاف المحافظات، فعددها يجعل المقارنة البصرية هي المعلومة.
+    --}}
+    <div class="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-sm p-5">
+        <div class="flex items-center gap-3 mb-5">
+            <div class="w-1 h-5 bg-[#c9a847] rounded-full"></div>
+            <h3 class="text-sm font-semibold text-zinc-600 dark:text-zinc-400 uppercase tracking-wide">{{ __('home.ct_dash_by_profession') }}</h3>
+        </div>
+
+        @if($byProfession === [])
+            <p class="text-sm text-zinc-400 dark:text-zinc-500 text-center py-8">{{ __('home.ct_dash_no_data') }}</p>
+        @else
+            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+                @foreach($byProfession as $row)
+                    <div class="rounded-lg border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/50 p-4 text-center">
+                        <p class="text-2xl font-semibold text-[#b8962e]">{{ $row['value'] }}</p>
+                        <p class="text-xs text-zinc-500 dark:text-zinc-400 mt-1 truncate" title="{{ $row['label'] }}">{{ $row['label'] }}</p>
+                    </div>
+                @endforeach
+            </div>
+        @endif
     </div>
 
     {{-- حضور الفترة --}}
@@ -122,30 +133,34 @@
         'height' => count($byGovernorate) > 12 ? 420 : 300,
     ])
 
-    {{--
-        التوزيع على الصفات **بطاقات لا مخططاً** (طلب المستخدمة 2026-09-23): الصفات
-        خمسٌ معدودة، والمخطط يحتاج قراءةَ محورٍ ليقول ما يقوله الرقم مباشرة —
-        بخلاف المحافظات، فعددها يجعل المقارنة البصرية هي المعلومة.
-    --}}
-    <div class="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-sm p-5">
-        <div class="flex items-center gap-3 mb-5">
-            <div class="w-1 h-5 bg-[#c9a847] rounded-full"></div>
-            <h3 class="text-sm font-semibold text-zinc-600 dark:text-zinc-400 uppercase tracking-wide">{{ __('home.ct_dash_by_profession') }}</h3>
-        </div>
-
-        @if($byProfession === [])
-            <p class="text-sm text-zinc-400 dark:text-zinc-500 text-center py-8">{{ __('home.ct_dash_no_data') }}</p>
-        @else
-            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
-                @foreach($byProfession as $row)
-                    <div class="rounded-lg border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/50 p-4 text-center">
-                        <p class="text-2xl font-semibold text-[#b8962e]">{{ $row['value'] }}</p>
-                        <p class="text-xs text-zinc-500 dark:text-zinc-400 mt-1 truncate" title="{{ $row['label'] }}">{{ $row['label'] }}</p>
-                    </div>
-                @endforeach
+    {{-- المحددات: تُطبَّق فوراً (auto) — اللوحة تُفتح للنظرة الأولى لا بعد ضغط زرّ --}}
+    <x-contractors.report-filters :auto="true">
+        <div class="sm:col-span-2">
+            <div class="flex items-center justify-between gap-3 mb-1">
+                <label class="{{ $lbl }} mb-0">{{ __('home.ct_rep_governorate') }}</label>
+                @if(count($governorateIds) > 0)
+                    <button type="button" wire:click="$set('governorateIds', [])"
+                            class="text-xs text-zinc-500 dark:text-zinc-400 hover:text-[#c9a847] transition">
+                        {{ __('home.ct_rep_clear_governorates') }}
+                    </button>
+                @endif
             </div>
-        @endif
-    </div>
+
+            <div class="rounded-lg border border-zinc-300 dark:border-zinc-600 p-2">
+                <div class="grid grid-cols-2 sm:grid-cols-3 gap-x-3 gap-y-1.5 max-h-24 overflow-y-auto">
+                    @forelse($governorates as $governorate)
+                        <label class="inline-flex items-center gap-1.5 text-xs px-2 py-1 rounded-md cursor-pointer hover:bg-[#c9a847]/10 transition">
+                            <input type="checkbox" wire:model.live="governorateIds" value="{{ $governorate->id }}"
+                                   class="rounded border-zinc-300 text-[#c9a847] focus:ring-[#c9a847]/40 shrink-0">
+                            <span class="text-zinc-700 dark:text-zinc-200 truncate" title="{{ $governorate->name }}">{{ $governorate->name }}</span>
+                        </label>
+                    @empty
+                        <span class="text-xs text-zinc-400">—</span>
+                    @endforelse
+                </div>
+            </div>
+        </div>
+    </x-contractors.report-filters>
 
     {{-- keepalive: يجدد الـ snapshot والـ CSRF كل 10 دقائق --}}
     <div x-data x-init="setInterval(() => $wire.$refresh(), 600000)" class="hidden"></div>

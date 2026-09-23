@@ -282,3 +282,44 @@ it('يعرض الصفات بطاقات والمحافظات مخططاً', funct
     expect(substr_count($html, 'x-ref="bar"'))->toBe(1)
         ->and($html)->toContain(__('home.ct_dash_by_profession'));
 });
+
+// ── الترتيب وسطر النطاق ─────────────────────────────────────────────────
+
+it('يضع الأرقام قبل الفلتر لا بعده', function () {
+    // ⚠️ اللوحة تُفتح لتُقرأ لا لتُملأ (طلب المستخدمة): فلترٌ فوق يدفع كل معلومة
+    //    تحت حدّ الشاشة.
+    $gov = Governorate::factory()->create();
+    dashWorker(dashOffice($gov));
+
+    $this->actingAs(dashUser([$gov]));
+
+    $html = dashScreen()->html();
+
+    expect(strpos($html, __('home.ct_dash_in_service')))
+        ->toBeLessThan(strpos($html, __('home.ct_rep_filters')))
+        ->and(strpos($html, __('home.ct_dash_by_governorate')))
+        ->toBeLessThan(strpos($html, __('home.ct_rep_filters')));
+});
+
+it('يُعلن النطاق المُضيَّق فوق الأرقام ولا يُعلنه بلا تحديد', function () {
+    // ⚠️ الفلتر أسفل الصفحة و**المحافظة تحرّك كل رقم فيها** — فقارئٌ لا يراه قد
+    //    يقرأ أرقام محافظةٍ واحدة على أنها الجمهورية.
+    $first  = Governorate::factory()->create(['name' => 'محافظة معروضة']);
+    $second = Governorate::factory()->create(['name' => 'محافظة أخرى']);
+
+    dashWorker(dashOffice($first));
+    dashWorker(dashOffice($second));
+
+    $this->actingAs(dashUser([$first, $second]));
+
+    // بلا تحديد: لا سطر
+    dashScreen()->assertDontSee(__('home.ct_dash_scoped_to'));
+
+    // وبتحديد: السطر باسم المحافظة، وقبل الأرقام
+    $html = dashScreen()->set('governorateIds', [$first->id])->html();
+
+    expect($html)->toContain(__('home.ct_dash_scoped_to'))
+        ->and($html)->toContain('محافظة معروضة')
+        ->and(strpos($html, __('home.ct_dash_scoped_to')))
+        ->toBeLessThan(strpos($html, __('home.ct_dash_in_service')));
+});
