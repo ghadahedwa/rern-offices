@@ -81,26 +81,37 @@
             </p>
         @endif
 
+        {{--
+            ⚠️ **الأرقام الكبيرة ليست عناوين هنا**: «أيام العمل» في التقارير أيامُ
+               **عاملٍ واحد** (٢٦)، وعلى اللوحة **مجموع أيام كل العاملين** (٢٩٣٣٦) —
+               الكلمة واحدة والوحدة مختلفة، فيقرؤها المستخدم لبساً. فالعنوان هنا
+               **الغياب والإجازات** (أرقامٌ صغيرة تُقرأ كما هي)، والمجموع تحتها
+               **مقاماً يشرح نفسه** لا بطاقةً مفردة.
+        --}}
         <div class="flex flex-wrap gap-6">
-            <div>
-                <p class="text-xs text-zinc-400 dark:text-zinc-500">{{ __('home.ct_rep_col_working') }}</p>
-                <p class="text-2xl font-semibold text-zinc-800 dark:text-zinc-100">{{ $attendance['working'] }}</p>
-            </div>
-            <div>
-                <p class="text-xs text-zinc-400 dark:text-zinc-500">{{ __('home.ct_rep_col_present') }}</p>
-                <p class="text-2xl font-semibold text-emerald-700 dark:text-emerald-400">{{ \App\Support\Contractors\AttendanceReport::attended($attendance) }}</p>
-            </div>
-            @foreach($statuses as $status)
+            @forelse($statuses as $status)
                 <div>
                     <p class="text-xs text-zinc-400 dark:text-zinc-500">{{ $status->name }}</p>
-                    <p class="text-2xl font-semibold" style="color: {{ $status->color }}">{{ $attendance['exceptions'][$status->id] ?? 0 }}</p>
+                    <p class="text-2xl font-semibold" style="color: {{ $status->color }}">
+                        {{ $attendance['exceptions'][$status->id] ?? 0 }}
+                        <span class="text-xs font-normal text-zinc-400">{{ __('home.ct_dash_day_unit') }}</span>
+                    </p>
                 </div>
-            @endforeach
+            @empty
+                <p class="text-sm text-zinc-400 dark:text-zinc-500">{{ __('home.ct_dash_no_exceptions') }}</p>
+            @endforelse
         </div>
 
         @include('livewire.contractors.reports.includes.unrecorded-note', ['count' => $unrecorded])
 
-        <p class="text-xs text-zinc-400 dark:text-zinc-500">{{ __('home.ct_rep_equation') }}</p>
+        {{-- المجموع مقاماً: «من أصل … لـ… عاملاً» يشرح الوحدة بلا حاشية --}}
+        <p class="text-xs text-zinc-500 dark:text-zinc-400 border-t border-zinc-100 dark:border-zinc-800 pt-3">
+            {{ __('home.ct_dash_person_days', [
+                'total'   => $attendance['working'],
+                'workers' => $headline['in_service'],
+                'present' => \App\Support\Contractors\AttendanceReport::attended($attendance),
+            ]) }}
+        </p>
     </div>
 
     {{-- مخطط: التوزيع على المحافظات --}}

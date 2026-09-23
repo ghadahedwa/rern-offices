@@ -241,3 +241,28 @@ it('ينبّه بعدد مَن لم تُرصد أيام حضورهم', function 
 
     expect(dashScreen()->viewData('unrecorded'))->toBe(1);
 });
+
+// ── الوحدة تشرح نفسها ───────────────────────────────────────────────────
+
+it('لا يعرض مجموع أيام العمل بطاقةً مفردة بل مقاماً يشرح وحدته', function () {
+    // ⚠️ «أيام العمل» في التقارير أيامُ عاملٍ واحد (٢٦) وعلى اللوحة مجموع أيام كل
+    //    العاملين (آلاف) — الكلمة واحدة والوحدة مختلفة، فالرقم الكبير وحده لبس.
+    $gov    = Governorate::factory()->create();
+    $office = dashOffice($gov);
+
+    dashWorker($office);
+    dashWorker($office);
+
+    $this->actingAs(dashUser([$gov]));
+
+    $screen = dashScreen();
+
+    // ٢٦ يوم عمل × عاملين = ٥٢، ويظهر داخل جملةٍ تذكر العدد والعاملين معاً
+    expect($screen->viewData('attendance')['working'])->toBe(52);
+
+    $screen->assertSee(__('home.ct_dash_person_days', [
+        'total'   => 52,
+        'workers' => 2,
+        'present' => 52,
+    ]));
+});
