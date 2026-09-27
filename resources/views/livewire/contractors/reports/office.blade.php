@@ -12,27 +12,23 @@
     ])
 
     <x-contractors.report-filters>
-        <div>
-            {{-- المحافظة إلزامية في هذا التقرير وحده — انظر `OfficeReport::search()` --}}
-            <label class="{{ $lbl }}">
-                {{ __('home.ct_rep_governorate') }}
-                <span class="text-red-500">*</span>
-            </label>
-            <select wire:model.live="governorateId" class="{{ $inp }}">
-                <option value="">{{ __('home.ct_rep_pick_governorate') }}</option>
-                @foreach($governorates as $governorate)
-                    <option value="{{ $governorate->id }}">{{ $governorate->name }}</option>
-                @endforeach
-            </select>
-        </div>
-        {{-- الاسم مقصوص في الخيار والكامل في title: يبلغ ١٣٦ حرفاً فتخرج المنسدلة عن الشاشة --}}
-        <x-contractors.searchable-select
-            :label="__('home.ct_rep_office')"
-            search-model="officeSearch"
-            value-model="officeId"
-            :options="$offices"
-            :placeholder="__('home.ct_worker_all_offices')"
-            :search-placeholder="__('home.ct_rep_search_office')" />
+        {{-- المحافظة إلزامية في هذا التقرير وحده، وتُختار أكثر من واحدة — انظر `OfficeReport::search()`. --}}
+        @include('livewire.contractors.reports.includes.governorate-picker', ['selected' => $governorateIds, 'choices' => $governorateChoices, 'required' => true])
+        {{-- المقارّ بطريقة المحافظات نفسها (2026-09-27): اختيارٌ متعدد وبحث. الاسم مقصوص في الخيار
+             والكامل في title — يبلغ ١٣٦ حرفاً. وقائمةٌ طويلة فعمودٌ بسكرول، والمختار شاراتٌ تحت الزرّ. --}}
+        @include('livewire.contractors.reports.includes.multi-picker', [
+            'model'       => 'officeIds',
+            'searchModel' => 'officeSearch',
+            'selected'    => $officeIds,
+            'choices'     => $offices,
+            'layout'      => 'list',
+            'label'       => __('home.ct_rep_office'),
+            'allText'     => __('home.ct_worker_all_offices'),
+            'pickText'    => __('home.ct_worker_all_offices'),
+            'pickedKey'   => 'home.ct_rep_picked_offices',
+            'searchText'  => __('home.ct_rep_search_office'),
+            'emptyText'   => $governorateIds ? null : __('home.ct_rep_pick_governorate_first'),
+        ])
     </x-contractors.report-filters>
 
     @if($hasSearched)

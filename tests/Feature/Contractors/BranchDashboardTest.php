@@ -312,6 +312,31 @@ it('يُظهر عدد المحافظات المختارة في المنسدلة 
 
     dashScreen()->assertSee(__('home.ct_rep_all_governorates'));
 
+    // واحدةٌ باسمها، وأكثر بعددها (2026-09-27)
     dashScreen()->set('governorateIds', [$first->id])
-        ->assertSee(__('home.ct_dash_picked_governorates', ['count' => 1]));
+        ->assertSeeHtml('<span class="truncate">محافظة أولى</span>');
+
+    dashScreen()->set('governorateIds', [$first->id, $second->id])
+        ->assertSee(__('home.ct_dash_picked_governorates', ['count' => 2]));
 });
+
+it('يبحث في منسدلة المحافظات بالتطبيع العربي ويُبقي المختارة ظاهرة — في اللوحة والتقريرين', function (string $screen) {
+    $cairo  = Governorate::factory()->create(['name' => 'القاهرة']);
+    $alex   = Governorate::factory()->create(['name' => 'الإسكندرية']);
+    $giza   = Governorate::factory()->create(['name' => 'الجيزة']);
+
+    $this->actingAs(dashUser([$cairo, $alex, $giza]));
+
+    $choices = fn ($test) => collect($test->viewData('governorateChoices'))->pluck('title')->sort()->values()->all();
+
+    $test = Livewire::test($screen)->set('governorateSearch', 'اسكندريه');   // ألف بلا همزة وهاء بدل تاء مربوطة
+    expect($choices($test))->toBe(['الإسكندرية']);
+
+    // المختارة تبقى ولو لم تطابق — وإلا بدا أنها ضاعت
+    $test->set('governorateIds', [$giza->id])->set('governorateSearch', 'قاهر');
+    expect($choices($test))->toBe(['الجيزة', 'القاهرة']);
+})->with([
+    'اللوحة'           => \App\Livewire\Contractors\Reports\BranchDashboard::class,
+    'تقرير المحافظات' => \App\Livewire\Contractors\Reports\GovernorateReport::class,
+    'تقرير المقر'      => \App\Livewire\Contractors\Reports\OfficeReport::class,
+]);

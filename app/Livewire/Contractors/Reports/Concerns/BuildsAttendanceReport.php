@@ -5,6 +5,7 @@ namespace App\Livewire\Contractors\Reports\Concerns;
 use App\Models\Contractor;
 use App\Support\Contractors\AttendanceReport;
 use App\Support\Contractors\AttendanceReportQuery;
+use App\Support\ContractorScope;
 use App\Support\LocalTime;
 use App\Support\WorkingDays;
 use Carbon\CarbonImmutable;
@@ -100,7 +101,7 @@ trait BuildsAttendanceReport
             from: $from,
             to: $to,
             governorateIds: $this->appliedGovernorateIds(),
-            officeId: $this->applied["officeId"] ?? null,
+            officeFilter: $this->applied["officeIds"] ?? [],
             contractorId: $this->applied["contractorId"] ?? null,
             user: auth()->user(),
         );
@@ -130,9 +131,21 @@ trait BuildsAttendanceReport
     }
 
     /** تصفية منسدلةٍ طويلة — التطبيع العربي في الكلاس المشترك. */
-    protected function searchOptions(iterable $options, string $term, int|string|null $selected = null): array
+    protected function searchOptions(iterable $options, string $term, int|string|array|null $selected = null): array
     {
         return AttendanceReportQuery::filterOptions($options, $term, $selected);
+    }
+
+    /** بحثٌ داخل منسدلة المحافظات (اللوحة وتقريرا المحافظات والمقر). */
+    public string $governorateSearch = '';
+
+    /**
+     * خيارات منسدلة المحافظات بعد البحث — **في السيرفر بـ`ArabicText`** كبقية منسدلات
+     * التقارير، والمختارة تبقى ظاهرةً ولو لم تطابق.
+     */
+    protected function governorateChoices(array $selected): array
+    {
+        return $this->searchOptions(ContractorScope::governorateOptions(), $this->governorateSearch, $selected);
     }
 
     /** مستوى التقرير — يحدّد شكل الصفوف وسطر الفلتر المطبوع. */

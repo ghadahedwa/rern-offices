@@ -204,8 +204,8 @@ it('يقصر تقرير المقر على المقر المختار', function (
 
     $rows = Livewire::test(OfficeReport::class)
         ->set('from', '2026-09-01')->set('to', '2026-09-30')
-        ->set('governorateId', $gov->id)
-        ->set('officeId', $office->id)
+        ->set('governorateIds', [$gov->id])
+        ->set('officeIds', [$office->id])
         ->call('search')
         ->viewData('rows');
 
@@ -224,7 +224,7 @@ it('لا يُخرج صفوفاً لمقرٍّ مدسوس من خارج نطاق 
 
     $rows = Livewire::test(OfficeReport::class)
         ->set('from', '2026-09-01')->set('to', '2026-09-30')
-        ->set('officeId', $office->id)
+        ->set('officeIds', [$office->id])
         ->call('search')
         ->viewData('rows');
 
@@ -245,7 +245,7 @@ it('لا يُخرج أيام مقرٍّ خارج النطاق ولو كان عا
 
     $rows = Livewire::test(OfficeReport::class)
         ->set('from', '2026-09-01')->set('to', '2026-09-30')
-        ->set('officeId', $abroad->id)
+        ->set('officeIds', [$abroad->id])
         ->call('search')
         ->viewData('rows');
 
@@ -291,28 +291,166 @@ it('يُصفّر نتيجةً معروضة حين تُمسح المحافظة و
 
     $screen = Livewire::test(OfficeReport::class)
         ->set('from', '2026-09-01')->set('to', '2026-09-30')
-        ->set('governorateId', $gov->id)
+        ->set('governorateIds', [$gov->id])
         ->call('search');
 
     expect($screen->viewData('rows'))->toHaveCount(1);
 
     // نتيجةٌ قديمة تحت محدداتٍ جديدة تُقرأ على أنها نتيجتها
-    $screen->set('governorateId', null)->call('search')
+    $screen->set('governorateIds', [])->call('search')
         ->assertSet('hasSearched', false);
 
     expect($screen->viewData('rows'))->toBe([]);
 });
 
-it('يُصفّر المقر عند تغيير المحافظة', function () {
+it('يُصفّر المقر حين تُلغى محافظته ويُبقيه حين تُضاف محافظةٌ أخرى', function () {
     $gov    = Governorate::factory()->create();
+    $second = Governorate::factory()->create();
     $office = scrOffice($gov);
+
+    $this->actingAs(repUser([$gov, $second]));
+
+    Livewire::test(OfficeReport::class)
+        ->set('governorateIds', [$gov->id])
+        ->set('officeIds', [$office->id])
+        ->set('governorateIds', [$gov->id, $second->id])
+        ->assertSet('officeIds', [$office->id])
+        ->set('governorateIds', [$second->id])
+        ->assertSet('officeIds', []);
+});
+
+it('يجمع تقرير المقر عاملي أكثر من محافظة ويعرض مقراتها في المنسدلة', function () {
+    $first  = Governorate::factory()->create();
+    $second = Governorate::factory()->create();
+    $third  = Governorate::factory()->create();
+    $a      = scrOffice($first);
+    $b      = scrOffice($second);
+    scrWorker($a, name: 'عامل الأولى');
+    scrWorker($b, name: 'عامل الثانية');
+    scrWorker(scrOffice($third), name: 'عامل الثالثة');
+
+    $this->actingAs(repUser([$first, $second, $third]));
+
+    $screen = Livewire::test(OfficeReport::class)
+        ->set('from', '2026-09-01')->set('to', '2026-09-30')
+        ->set('governorateIds', [$first->id, $second->id])
+        ->call('search');
+
+    expect(collect($screen->viewData('rows'))->pluck('contractor_name')->sort()->values()->all())->toBe(['عامل الأولى', 'عامل الثانية'])
+        ->and(collect($screen->viewData('offices'))->pluck('id')->sort()->values()->all())->toBe(collect([$a->id, $b->id])->sort()->values()->all());
+});
+
+it('يجمع تقرير المقر أكثر من مقر مختار ويُسقط غير المختار', function () {
+    $gov = Governorate::factory()->create();
+    [$a, $b, $c] = [scrOffice($gov), scrOffice($gov), scrOffice($gov)];
+    scrWorker($a, name: 'عامل أ');
+    scrWorker($b, name: 'عامل ب');
+    scrWorker($c, name: 'عامل ج');
 
     $this->actingAs(repUser([$gov]));
 
+    $rows = Livewire::test(OfficeReport::class)
+        ->set('from', '2026-09-01')->set('to', '2026-09-30')
+        ->set('governorateIds', [$gov->id])
+        ->set('officeIds', [$a->id, $b->id])
+        ->call('search')
+        ->viewData('rows');
+
+    expect(collect($rows)->pluck('contractor_name')->sort()->values()->all())->toBe(['عامل أ', 'عامل ب']);
+});
+
+it('يُسقط من المقارّ المختارة مقرَّ المحافظة المُلغاة وحده', function () {
+    $first  = Governorate::factory()->create();
+    $second = Governorate::factory()->create();
+    $a      = scrOffice($first);
+    $b      = scrOffice($second);
+
+    $this->actingAs(repUser([$first, $second]));
+
     Livewire::test(OfficeReport::class)
-        ->set('officeId', $office->id)
-        ->set('governorateId', $gov->id)
-        ->assertSet('officeId', null);
+        ->set('governorateIds', [$first->id, $second->id])
+        ->set('officeIds', [$a->id, $b->id])
+        ->set('governorateIds', [$second->id])
+        ->assertSet('officeIds', [$b->id]);
+});
+
+it('يُهمل المقرَّ المدسوس ويُبقي المختار السليم معه', function () {
+    $mine   = Governorate::factory()->create();
+    $theirs = Governorate::factory()->create();
+    $ok     = scrOffice($mine);
+    $abroad = scrOffice($theirs);
+    scrWorker($ok, name: 'عاملي');
+    scrWorker($abroad, name: 'عامل غيري');
+
+    $this->actingAs(repUser([$mine]));
+
+    $rows = Livewire::test(OfficeReport::class)
+        ->set('from', '2026-09-01')->set('to', '2026-09-30')
+        ->set('governorateIds', [$mine->id])
+        ->set('officeIds', [$ok->id, $abroad->id, 'x'])
+        ->call('search')
+        ->viewData('rows');
+
+    expect(collect($rows)->pluck('contractor_name')->all())->toBe(['عاملي']);
+});
+
+it('لا يُظهر أيام المنقول في مقرٍّ خارج نطاقي ولو دُسّ معرّفه بين المقارّ المختارة', function () {
+    // ⚠️ العامل مرئيٌّ لي بتسكينه القديم عندي، فطبقة العاملين لا تحجبه — المقارّ وحدها تحرس
+    $mine   = Governorate::factory()->create();
+    $theirs = Governorate::factory()->create();
+    $home   = scrOffice($mine);
+    $abroad = scrOffice($theirs);
+    $worker = scrWorker($home, '2026-09-01', '2026-09-15', name: 'منقول');
+    scrAssign($worker, $abroad, '2026-09-16');
+
+    $this->actingAs(repUser([$mine]));
+
+    $rows = Livewire::test(OfficeReport::class)
+        ->set('from', '2026-09-01')->set('to', '2026-09-30')
+        ->set('governorateIds', [$mine->id])
+        ->set('officeIds', [$home->id, $abroad->id])
+        ->call('search')
+        ->viewData('rows');
+
+    expect(collect($rows)->pluck('office_id')->unique()->values()->all())->toBe([$home->id])
+        ->and(collect($rows)->sum('working'))->toBe(13);   // ١–١٥ سبتمبر وحدها
+});
+
+it('يحمل رابط الـPDF المقارّ المختارة ويسمّيها في رأس التقرير', function () {
+    $gov = Governorate::factory()->create();
+    $a   = Office::factory()->create(['governorate_id' => $gov->id, 'name' => 'مكتب أ']);
+    $b   = Office::factory()->create(['governorate_id' => $gov->id, 'name' => 'مكتب ب']);
+
+    $query = new \App\Support\Contractors\AttendanceReportQuery(
+        level: 'office',
+        from: \Carbon\CarbonImmutable::parse('2026-09-01'),
+        to: \Carbon\CarbonImmutable::parse('2026-09-30'),
+        governorateIds: [$gov->id],
+        officeFilter: [$a->id, $b->id],
+    );
+
+    $back = \App\Support\Contractors\AttendanceReportQuery::fromRequest(\Illuminate\Http\Request::create('/', 'GET', $query->toQuery()));
+
+    expect($back->officeFilter)->toBe([$a->id, $b->id])
+        ->and(collect($query->describe())->firstWhere(0, __('home.ct_rep_office'))[1])->toBe('مكتب أ · مكتب ب');
+});
+
+it('لا يتجاوز نطاق المستخدم بمحافظةٍ مدسوسة في تحديدٍ متعدد', function () {
+    $mine     = Governorate::factory()->create();
+    $theirs   = Governorate::factory()->create();
+    $myOffice = scrOffice($mine);
+    scrWorker($myOffice, name: 'عاملي');
+    scrWorker(scrOffice($theirs), name: 'عامل غيري');
+
+    $this->actingAs(repUser([$mine]));
+
+    $screen = Livewire::test(OfficeReport::class)
+        ->set('from', '2026-09-01')->set('to', '2026-09-30')
+        ->set('governorateIds', [$mine->id, $theirs->id, 'x'])
+        ->call('search');
+
+    expect(collect($screen->viewData('rows'))->pluck('contractor_name')->all())->toBe(['عاملي'])
+        ->and(collect($screen->viewData('offices'))->pluck('id')->all())->toBe([$myOffice->id]);
 });
 
 // ── البحث داخل المنسدلات ────────────────────────────────────────────────
@@ -327,7 +465,7 @@ it('يبحث في منسدلة المقرات بتطبيع الألف والتا
 
     // ⚠️ بلا `ArabicText` لا يجد «الاسماعيليه» ما كُتب «الإسماعيلية»
     $options = Livewire::test(OfficeReport::class)
-        ->set('governorateId', $gov->id)
+        ->set('governorateIds', [$gov->id])
         ->set('officeSearch', 'الاسماعيليه')
         ->viewData('offices');
 
@@ -343,8 +481,8 @@ it('يُبقي المقر المختار في القائمة ولو لم يطا�
 
     // ⚠️ بدونه يختفي اختياره من المنسدلة فيبدو أنه ضاع أو انتقل إلى غيره صامتاً
     $options = Livewire::test(OfficeReport::class)
-        ->set('governorateId', $gov->id)
-        ->set('officeId', $selected->id)
+        ->set('governorateIds', [$gov->id])
+        ->set('officeIds', [$selected->id])
         ->set('officeSearch', 'لا يطابق شيئاً')
         ->viewData('offices');
 
@@ -376,7 +514,7 @@ it('يمسح بحث المنسدلة عند تغيير المحافظة', functi
     // بحثٌ من محافظةٍ سابقة يُخرج قائمةً فارغة في الجديدة بلا سببٍ ظاهر
     Livewire::test(OfficeReport::class)
         ->set('officeSearch', 'بحث قديم')
-        ->set('governorateId', $gov->id)
+        ->set('governorateIds', [$gov->id])
         ->assertSet('officeSearch', '');
 });
 
@@ -515,7 +653,7 @@ it('يُنزّل ملفاً فعلياً من التقارير الثلاثة', 
     }
 
     if ($component === OfficeReport::class) {
-        $screen->set('governorateId', $gov->id);   // إلزامية في هذا التقرير وحده
+        $screen->set('governorateIds', [$gov->id]);   // إلزامية في هذا التقرير وحده
     }
 
     $screen->call('search')
@@ -601,7 +739,7 @@ it('يحسب أيام مَن لم يصل كشفه حضوراً فتقفل الم
 
     $rows = Livewire::test(OfficeReport::class)
         ->set('from', '2026-09-01')->set('to', '2026-09-30')
-        ->set('governorateId', $gov->id)
+        ->set('governorateIds', [$gov->id])
         ->call('search')
         ->viewData('rows');
 
@@ -622,7 +760,7 @@ it('ينبّه بعدد مَن لم تُرصد أيام حضورهم، ولا ي
 
     $screen = Livewire::test(OfficeReport::class)
         ->set('from', '2026-09-01')->set('to', '2026-09-30')
-        ->set('governorateId', $gov->id)
+        ->set('governorateIds', [$gov->id])
         ->call('search');
 
     expect($screen->viewData('unrecorded'))->toBe(1);
@@ -638,7 +776,7 @@ it('ينبّه بعدد مَن لم تُرصد أيام حضورهم، ولا ي
 
     $after = Livewire::test(OfficeReport::class)
         ->set('from', '2026-09-01')->set('to', '2026-09-30')
-        ->set('governorateId', $gov->id)
+        ->set('governorateIds', [$gov->id])
         ->call('search');
 
     expect($after->viewData('unrecorded'))->toBe(0);
@@ -656,7 +794,7 @@ it('لا يعرض «غير مراجَع» عموداً في أي من التقا
 
     Livewire::test(OfficeReport::class)
         ->set('from', '2026-09-01')->set('to', '2026-09-30')
-        ->set('governorateId', $gov->id)->call('search')
+        ->set('governorateIds', [$gov->id])->call('search')
         ->assertDontSee('غير مراجَع');
 
     Livewire::test(ContractorReport::class)

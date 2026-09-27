@@ -221,7 +221,7 @@ it('يوزّع عروض أعمدة التقرير المطبوع على ١٠٠٪
         from: Carbon\CarbonImmutable::parse('2026-09-01'),
         to: Carbon\CarbonImmutable::parse('2026-09-30'),
         governorateIds: [$gov->id],
-        officeId: $level === 'office' ? $office->id : null,
+        officeFilter: $level === 'office' ? [$office->id] : [],
         contractorId: $level === 'contractor' ? $worker->id : null,
         user: pdfUser([$gov]),
     );

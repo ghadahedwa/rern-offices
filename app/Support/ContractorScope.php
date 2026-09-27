@@ -171,13 +171,14 @@ class ContractorScope
      * ⚠️ فلتر النوع يضيّق المنسدلة كما يضيّق الصفوف: خيارٌ بلا صفوف خلفه يُوهم
      *    المستخدم أن الشاشة معطّلة لا أن مقراتها من نوعٍ آخر.
      */
-    public static function officeOptions(?int $governorateId = null, ?int $typeId = null, ?Authenticatable $user = null)
+    /** @param int|array<int,int>|null $governorateId محافظةٌ أو أكثر (تقرير المقر يقبل عدّة محافظات) */
+    public static function officeOptions(int|array|null $governorateId = null, ?int $typeId = null, ?Authenticatable $user = null)
     {
         $ids = self::governorateIds($user);
 
         return Office::query()
             ->when($ids !== null, fn ($q) => $q->whereIn('governorate_id', $ids ?: [0]))
-            ->when($governorateId, fn ($q) => $q->where('governorate_id', $governorateId))
+            ->when($governorateId, fn ($q) => $q->whereIn('governorate_id', (array) $governorateId))
             ->when($typeId, fn ($q) => $q->where('type_id', $typeId))
             ->orderBy('name')
             ->get(['id', 'name', 'governorate_id'])

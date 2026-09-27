@@ -34,13 +34,14 @@ final class AttendanceReportQuery
 
     /**
      * @param  array<int,int>  $governorateIds  محافظاتٌ محدَّدة، والفارغ = كل نطاق المستخدم
+     * @param  array<int,int>  $officeFilter    مقارٌّ محدَّدة (تقرير المقر يقبل أكثر من مقر — 2026-09-27)، والفارغ = كل مقرات المحافظات
      */
     public function __construct(
         public readonly string $level,
         public readonly CarbonImmutable $from,
         public readonly CarbonImmutable $to,
         public readonly array $governorateIds = [],
-        public readonly ?int $officeId = null,
+        public readonly array $officeFilter = [],
         public readonly ?int $contractorId = null,
         private readonly ?Authenticatable $user = null,
     ) {}
@@ -72,7 +73,7 @@ final class AttendanceReportQuery
             from: $from,
             to: $to,
             governorateIds: self::ids($request->query('gov')),
-            officeId: self::id($request->query('office')),
+            officeFilter: self::ids($request->query('office')),
             contractorId: self::id($request->query('contractor')),
             user: $user,
         );
@@ -86,7 +87,7 @@ final class AttendanceReportQuery
             'from'       => $this->from->toDateString(),
             'to'         => $this->to->toDateString(),
             'gov'        => implode(',', $this->governorateIds),
-            'office'     => $this->officeId,
+            'office'     => implode(',', $this->officeFilter),
             'contractor' => $this->contractorId,
         ], fn ($value) => $value !== null && $value !== '');
     }
@@ -124,12 +125,13 @@ final class AttendanceReportQuery
 
         $offices = Office::query()->whereIn('governorate_id', $selected)->pluck('id')->all();
 
-        if ($this->officeId === null) {
+        if ($this->officeFilter === []) {
             return $offices;
         }
 
-        // ⚠️ المقر يصل من العميل فيُفحص انتماؤه للنطاق، ولا يُمرَّر كما جاء.
-        return in_array($this->officeId, $offices, true) ? [$this->officeId] : [];
+        // ⚠️ المقارّ تصل من العميل فيُفحص انتماؤها للنطاق، ولا تُمرَّر كما جاءت: مقرٌّ خارجه يُهمَل،
+        //    ولو أُهملت كلها خرج التقرير فارغاً لا تقريرَ مقرات المحافظات كلها.
+        return array_values(array_intersect($this->officeFilter, $offices));
     }
 
     /**
@@ -273,8 +275,8 @@ final class AttendanceReportQuery
         $out[] = [__('home.ct_rep_governorate'), $this->governorateNames()];
 
         if ($this->level === 'office') {
-            $out[] = [__('home.ct_rep_office'), $this->officeId
-                ? (Office::whereKey($this->officeId)->value('name') ?? '—')
+            $out[] = [__('home.ct_rep_office'), $this->officeFilter
+                ? (implode(' · ', Office::whereKey($this->officeFilter)->orderBy('name')->pluck('name')->all()) ?: '—')
                 : __('home.ct_worker_all_offices')];
         }
 
@@ -299,16 +301,18 @@ final class AttendanceReportQuery
     }
 
     /** تصفية خيارات منسدلةٍ طويلة — يقرؤها منتقي المقر والعامل في الشاشة. */
-    public static function filterOptions(iterable $options, string $term, int|string|null $selected = null): array
+    /** @param int|string|array|null $selected المختار — واحدٌ أو قائمة (منتقي المحافظات متعدد) */
+    public static function filterOptions(iterable $options, string $term, int|string|array|null $selected = null): array
     {
         $needle = ArabicText::normalize($term);
+        $picked = array_map('intval', (array) $selected);
         $out    = [];
 
         foreach ($options as $option) {
             $matches = $needle === ''
                 || str_contains(ArabicText::normalize($option->name), $needle)
                 // ⚠️ المختار يبقى ولو لم يطابق — وإلا بدا للمستخدم أنه ضاع أو انتقل صامتاً.
-                || (int) $option->id === (int) $selected;
+                || in_array((int) $option->id, $picked, true);
 
             if ($matches) {
                 $out[] = [

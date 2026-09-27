@@ -87,7 +87,7 @@ class BranchDashboard extends Component
 
     protected function filterKeys(): array
     {
-        return ['governorateIds'];
+        return ['governorateIds', 'governorateSearch'];
     }
 
     public function render()
@@ -99,6 +99,7 @@ class BranchDashboard extends Component
 
         return view('livewire.contractors.reports.dashboard', [
             'governorates'  => ContractorScope::governorateOptions(),
+            'governorateChoices' => $this->governorateChoices($this->governorateIds),
             'headline'      => $report?->headline() ?? ['in_service' => 0, 'offices' => 0, 'governorates' => 0, 'archived' => 0],
             'byGovernorate' => $report?->byGovernorate() ?? [],
             'byProfession'  => $report?->byProfession() ?? [],

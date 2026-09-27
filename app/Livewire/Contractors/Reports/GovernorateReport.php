@@ -32,7 +32,7 @@ class GovernorateReport extends Component
 
     protected function filterKeys(): array
     {
-        return ['governorateIds'];
+        return ['governorateIds', 'governorateSearch'];
     }
 
     protected function reportLevel(): string
@@ -81,6 +81,7 @@ class GovernorateReport extends Component
 
         return view('livewire.contractors.reports.governorates', [
             'governorates' => ContractorScope::governorateOptions(),
+            'governorateChoices' => $this->governorateChoices($this->governorateIds),
             'groups'       => $groups,
             'statuses'     => AttendanceReport::statusColumns($rows),
             'totals'       => AttendanceReport::sum($rows),

@@ -3,24 +3,16 @@
 namespace App\Support\Contractors;
 
 use App\Models\AttendanceStatus;
-use App\Models\ContractorAssignment;
-use App\Models\Governorate;
 use App\Models\Office;
-use App\Models\User;
 use App\Support\ArabicText;
-use Carbon\CarbonImmutable;
-use Illuminate\Support\Facades\DB;
 use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
 use PhpOffice\PhpSpreadsheet\Cell\DataValidation;
-use PhpOffice\PhpSpreadsheet\IOFactory;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
 use PhpOffice\PhpSpreadsheet\Style\Border;
 use PhpOffice\PhpSpreadsheet\Style\Conditional;
 use PhpOffice\PhpSpreadsheet\Style\Fill;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
-use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
-use RuntimeException;
 
 /**
  * كشف حضور الشهر لمحافظة في ملف Excel — **صورة شبكة التسجيل** بنفس قواعدها (قرار العميلة
@@ -38,12 +30,9 @@ use RuntimeException;
  * ⚠️ **ملفُّ شهرٍ أو محافظةٍ غير المعروضين يُرفض** لا يُنبَّه عليه: أعمدة الأيام تخصّ شهرها.
  * ⚠️ **المطابقة بمعرّفَي العامل والمقر في عمودين مخفيين** لا بالاسم — الأسماء تتشابه في المئات.
  */
-final class AttendanceMonthFile
+final class AttendanceMonthFile extends AttendanceWorkbook
 {
     public const VERSION = 'attendance-month-v1';
-
-    private const SHEET_DATA = 'الكشف';
-    private const SHEET_META = 'بيانات';
 
     private const COL_WORKER     = 1;   // A — مخفي
     private const COL_OFFICE     = 2;   // B — مخفي
@@ -62,69 +51,15 @@ final class AttendanceMonthFile
 
     private const WEEKDAYS = ['ح', 'ن', 'ث', 'ر', 'خ', 'ج', 'س'];
 
-    private ?array $sheets = null;
     private ?array $codes = null;
     private ?string $presentTint = null;
 
     /** [عمود => [سطر => مفتوح؟]] — يملؤه writeRow ويقرؤه تحقق الخلايا. */
     private array $cellOpen = [];
 
-    public readonly CarbonImmutable $month;
-
-    public function __construct(public readonly Governorate $governorate, CarbonImmutable $month)
-    {
-        $this->month = $month->startOfMonth()->startOfDay();
-    }
-
     public function filename(): string
     {
         return 'كشف الحضور - '.$this->governorate->name.' - '.$this->month->format('Y-m').'.xlsx';
-    }
-
-    public function monthLabel(): string
-    {
-        return $this->month->locale('ar')->translatedFormat('F Y');
-    }
-
-    /**
-     * كشوف مقرات المحافظة التي خدم فيها عاملٌ خلال الشهر، مرتّبةً بالاسم.
-     *
-     * @return array<int, AttendanceSheet> [officeId => sheet]
-     */
-    public function sheets(): array
-    {
-        if ($this->sheets !== null) {
-            return $this->sheets;
-        }
-
-        $officeIds = ContractorAssignment::query()
-            ->overlapping($this->month, $this->month->endOfMonth())
-            ->whereHas('office', fn ($q) => $q->where('governorate_id', $this->governorate->id))
-            ->distinct()
-            ->pluck('office_id');
-
-        $this->sheets = [];
-
-        foreach (Office::whereKey($officeIds)->orderBy('name')->get() as $office) {
-            $this->sheets[$office->id] = new AttendanceSheet($office, $this->month);
-        }
-
-        return $this->sheets;
-    }
-
-    /** بصمة كل مقر — تُحفظ عند المعاينة وتُقارن عند الحفظ. @return array<int,string> */
-    public function fingerprints(array $officeIds): array
-    {
-        $sheets = $this->sheets();
-        $prints = [];
-
-        foreach ($officeIds as $id) {
-            if (isset($sheets[$id])) {
-                $prints[$id] = $sheets[$id]->fingerprint();
-            }
-        }
-
-        return $prints;
     }
 
     /**
@@ -168,18 +103,6 @@ final class AttendanceMonthFile
 
     // ── البناء ───────────────────────────────────────────────
 
-    public function saveTo(string $path): string
-    {
-        $spreadsheet = $this->build();
-
-        (new Xlsx($spreadsheet))->save($path);
-
-        // ⚠️ مراجع PhpSpreadsheet الدائرية — انظر ContractorsTemplate
-        $spreadsheet->disconnectWorksheets();
-
-        return $path;
-    }
-
     public function build(): Spreadsheet
     {
         $spreadsheet = new Spreadsheet();
@@ -211,17 +134,6 @@ final class AttendanceMonthFile
         $sheet->setSelectedCell(Coordinate::stringFromColumnIndex(self::COL_FIRST_DAY).self::ROW_FIRST);
 
         return $spreadsheet;
-    }
-
-    /** @return array<int, array{date:string, day:int, weekday:int, kind:string, holiday:?string}> */
-    private function columns(): array
-    {
-        $sheets = $this->sheets();
-        $first  = reset($sheets);
-
-        return $first
-            ? $first->columns()
-            : (new AttendanceSheet(new Office(), $this->month))->columns();
     }
 
     private function writeHeader(Worksheet $sheet, array $columns, string $lastL): void
@@ -551,59 +463,11 @@ final class AttendanceMonthFile
         $sheet->getStyle($days)->setConditionalStyles($rules);
     }
 
-    /** بصمة الملف: المحافظة والشهر والإصدار — تُقرأ عند الرفع. */
-    private function writeMeta(Spreadsheet $spreadsheet): void
-    {
-        $meta = $spreadsheet->createSheet();
-        $meta->setTitle(self::SHEET_META);
-        $meta->setCellValue('A1', self::VERSION);
-        $meta->setCellValue('A2', (string) $this->governorate->id);
-        $meta->setCellValue('A3', $this->month->format('Y-m'));
-        $meta->setSheetState(Worksheet::SHEETSTATE_HIDDEN);
-    }
-
     // ── القراءة ──────────────────────────────────────────────
 
-    /**
-     * يقرأ الملف المملوء — **قراءة وفحص بلا حفظ**.
-     *
-     * @return array{error:?string, offices:array<int, array{marks:array, reviewed:array}>, errors:array<int, array{line:int, name:string, message:string}>, ignored:int}
-     */
-    public function parse(string $path): array
+    protected function readRows(Spreadsheet $spreadsheet, array &$result): void
     {
-        $result = ['error' => null, 'offices' => [], 'errors' => [], 'ignored' => 0, 'ignored_days' => []];
-
-        $spreadsheet = IOFactory::load($path);
-
-        try {
-            $meta = $spreadsheet->getSheetByName(self::SHEET_META);
-
-            if (! $meta || (string) $meta->getCell('A1')->getValue() !== self::VERSION) {
-                $result['error'] = 'not_template';
-
-                return $result;
-            }
-
-            if ((string) $meta->getCell('A2')->getValue() !== (string) $this->governorate->id
-                || (string) $meta->getCell('A3')->getValue() !== $this->month->format('Y-m')) {
-                $result['error'] = 'wrong_month';
-
-                return $result;
-            }
-
-            $this->readRows($spreadsheet->getSheetByName(self::SHEET_DATA) ?? $spreadsheet->getSheet(0), $result);
-        } finally {
-            $spreadsheet->disconnectWorksheets();
-        }
-
-        ksort($result['ignored_days']);
-        $result['ignored_days'] = array_keys($result['ignored_days']);
-
-        return $result;
-    }
-
-    private function readRows(Worksheet $sheet, array &$result): void
-    {
+        $sheet   = $this->dataSheet($spreadsheet);
         $columns = $this->columns();
 
         // ⚠️ أعمدة الأيام تُطابَق بأرقامها في الرأس — عمودٌ أُدرج أو حُذف يُزيح الشهر كله
@@ -616,50 +480,27 @@ final class AttendanceMonthFile
         }
 
         $lookup = $this->codeLookup();
-        $rows   = [];
-
-        foreach ($this->sheets() as $officeId => $officeSheet) {
-            foreach ($officeSheet->rows() as $row) {
-                $rows[$officeId][$row['id']] = $row;
-            }
-        }
+        $rows   = $this->storedRows();
 
         $seen = [];
         $last = $sheet->getHighestDataRow();
 
         for ($line = self::ROW_FIRST; $line <= $last; $line++) {
-            $workerId = trim((string) $sheet->getCell([self::COL_WORKER, $line])->getValue());
-            $officeId = trim((string) $sheet->getCell([self::COL_OFFICE, $line])->getValue());
-            $name     = trim((string) $sheet->getCell([self::COL_NAME, $line])->getValue());
+            $name = trim((string) $sheet->getCell([self::COL_NAME, $line])->getValue());
 
-            if ($workerId === '' && $officeId === '' && $name === '') {
+            if ($name === ''
+                && trim((string) $sheet->getCell([self::COL_WORKER, $line])->getValue()) === ''
+                && trim((string) $sheet->getCell([self::COL_OFFICE, $line])->getValue()) === '') {
                 continue;
             }
 
-            // ⚠️ صفٌّ بلا معرّف خطأٌ صريح لا مطابقةٌ بالاسم احتياطاً — والملف لا يُنشئ عاملاً
-            if (! ctype_digit($workerId) || ! ctype_digit($officeId)) {
-                $result['errors'][] = ['line' => $line, 'name' => $name, 'message' => 'no_id'];
+            $match = $this->matchRow($sheet, $line, $name, $rows, $seen, $result);
 
+            if (! $match) {
                 continue;
             }
 
-            $row = $rows[(int) $officeId][(int) $workerId] ?? null;
-
-            if (! $row) {
-                $result['errors'][] = ['line' => $line, 'name' => $name, 'message' => 'not_in_office'];
-
-                continue;
-            }
-
-            $key = $officeId.'-'.$workerId;
-
-            if (isset($seen[$key])) {
-                $result['errors'][] = ['line' => $line, 'name' => $name, 'message' => 'duplicate'];
-
-                continue;
-            }
-
-            $seen[$key] = true;
+            [$officeId, $workerId, $row] = $match;
             $open       = array_flip($row['open']);
             $marks      = [];
             $bad        = [];
@@ -697,7 +538,7 @@ final class AttendanceMonthFile
 
             // ⚠️ صفٌّ فيه خليةٌ مجهولة لا يُحفظ جزئياً — نصف شهرٍ صحيح ونصفه ساقط أسوأ من صفٍّ مرفوض ظاهر
             if ($bad !== []) {
-                $result['errors'][] = ['line' => $line, 'name' => $name, 'message' => 'bad_cells', 'cells' => implode('، ', $bad)];
+                $result['errors'][] = ['line' => $line, 'name' => $name, 'message' => 'bad_cells', 'cells' => implode('، ', $bad), 'office_id' => $officeId, 'worker_id' => $workerId];
 
                 continue;
             }
@@ -721,80 +562,5 @@ final class AttendanceMonthFile
         unset($lookup['']);
 
         return $lookup;
-    }
-
-    // ── المعاينة والحفظ ──────────────────────────────────────
-
-    /** ما سيقع عند الحفظ: @return array{workers:int, offices:int, created:int, updated:int, deleted:int} */
-    public function summarize(array $parsed): array
-    {
-        $summary = ['workers' => 0, 'offices' => 0, 'created' => 0, 'updated' => 0, 'deleted' => 0];
-        $sheets  = $this->sheets();
-
-        foreach ($parsed['offices'] as $officeId => $data) {
-            if (! isset($sheets[$officeId])) {
-                continue;
-            }
-
-            $summary['offices']++;
-            $stored = collect($sheets[$officeId]->rows())->keyBy('id');
-
-            foreach ($data['reviewed'] as $workerId => $_) {
-                $summary['workers']++;
-                $before = $stored[$workerId]['marks'] ?? [];
-                $after  = $data['marks'][$workerId] ?? [];
-
-                $summary['deleted'] += count(array_diff_key($before, $after));
-
-                foreach ($after as $date => $status) {
-                    if (! isset($before[$date])) {
-                        $summary['created']++;
-                    } elseif ($before[$date] !== $status) {
-                        $summary['updated']++;
-                    }
-                }
-            }
-        }
-
-        return $summary;
-    }
-
-    /**
-     * يحفظ المقرات كلها **أو لا شيء**: مقرٌّ تغيّرت بصمته بعد المعاينة يُلغي الحفظ كله.
-     *
-     * @return string|array{created:int, updated:int, deleted:int}
-     */
-    public function apply(array $parsed, array $fingerprints, User $user): string|array
-    {
-        $sheets = $this->sheets();
-        $totals = ['created' => 0, 'updated' => 0, 'deleted' => 0];
-
-        try {
-            DB::transaction(function () use ($parsed, $fingerprints, $user, $sheets, &$totals) {
-                foreach ($parsed['offices'] as $officeId => $data) {
-                    if (! isset($sheets[$officeId], $fingerprints[$officeId])) {
-                        continue;
-                    }
-
-                    $result = $sheets[$officeId]->save($data['marks'], $data['reviewed'], $fingerprints[$officeId], $user);
-
-                    if ($result === AttendanceSheet::STALE) {
-                        throw new RuntimeException(AttendanceSheet::STALE);
-                    }
-
-                    foreach ($totals as $key => $value) {
-                        $totals[$key] = $value + $result[$key];
-                    }
-                }
-            });
-        } catch (RuntimeException $e) {
-            if ($e->getMessage() === AttendanceSheet::STALE) {
-                return AttendanceSheet::STALE;
-            }
-
-            throw $e;
-        }
-
-        return $totals;
     }
 }

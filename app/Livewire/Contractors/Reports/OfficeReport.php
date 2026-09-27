@@ -26,31 +26,61 @@ class OfficeReport extends Component
         search as protected runSearch;
     }
 
-    public ?int $governorateId = null;
+    /** محافظةٌ أو أكثر (طلب المستخدمة 2026-09-24 — كانت محافظةً واحدة). */
+    public array $governorateIds = [];
 
-    public ?int $officeId = null;
+    /** مقرٌّ أو أكثر (طلب المستخدمة 2026-09-27 — كان مقراً واحداً)، والفارغ = كل مقرات المحافظات. */
+    public array $officeIds = [];
 
     /** بحثٌ داخل منسدلة المقرات — القائمة تبلغ مئات المقار في المحافظة الواحدة. */
     public string $officeSearch = '';
 
-    /** تغيير المحافظة يُصفّر المقر — وإلا بقي مقرُّ محافظةٍ أخرى مختاراً بلا صفوف. */
-    public function updatedGovernorateId(): void
+    /**
+     * تغيير المحافظات يُسقط من المقارّ المختارة **ما خرج منها وحده** — وإلا بقي مقرُّ محافظةٍ
+     * أُلغيت مختاراً بلا صفوف. وإضافة محافظةٍ لا تُضيّع مقاراً اختارها المستخدم.
+     */
+    public function updatedGovernorateIds(): void
     {
-        $this->officeId     = null;
-        $this->officeSearch = '';   // بحثٌ من محافظةٍ سابقة لا معنى له في الجديدة
+        $this->officeSearch = '';   // بحثٌ من تحديدٍ سابق قد يُخرج قائمةً فارغة بلا سببٍ ظاهر
+
+        if ($this->officeIds !== []) {
+            $valid           = ContractorScope::officeOptions($this->selectedGovernorateIds())->pluck('id')->all();
+            $this->officeIds = array_values(array_intersect($this->selectedOfficeIds(), $valid));
+        }
+    }
+
+    /** ⚠️ كالمحافظات: أرقامٌ خالصة وحدها، وانتماؤها للنطاق يُفحص في الاستعلام. */
+    private function selectedOfficeIds(): array
+    {
+        return self::cleanIds($this->officeIds);
+    }
+
+    private static function cleanIds(array $ids): array
+    {
+        return array_values(array_unique(array_map('intval', array_filter(
+            $ids,
+            fn ($id) => is_int($id) || (is_string($id) && ctype_digit($id))
+        ))));
+    }
+
+    /** ⚠️ المعرّفات تصل من العميل: أرقامٌ خالصة وحدها، والنطاق يُطبَّق بعدها في الاستعلام. */
+    private function selectedGovernorateIds(): array
+    {
+        return self::cleanIds($this->governorateIds);
     }
 
     /**
      * ⚠️ **المحافظة إلزامية هنا وحدها** (طلب المستخدمة 2026-09-22): بلا تحديدٍ يجمع
      *    التقرير عاملي **كل مقرات النطاق** فيخرج جدولٌ بمئات الصفوف لا يقرؤه أحد —
      *    وهو تقرير **مقر** لا تقرير جمهورية. وتقريرا المحافظات والعامل على حالهما.
+     *    واختيار أكثر من محافظة مسموح (2026-09-24) — الحجم هنا باختيار المستخدم لا بغفلته.
      *
      * والرفض **يُصفّر المعروض** لا يُبقيه: نتيجةٌ قديمة تحت محدداتٍ جديدة تُقرأ على
      * أنها نتيجتها.
      */
     public function search(): void
     {
-        if (! $this->governorateId) {
+        if ($this->selectedGovernorateIds() === []) {
             Flux::toast(variant: 'warning', text: __('home.ct_rep_need_governorate'));
 
             $this->applied     = [];
@@ -65,14 +95,14 @@ class OfficeReport extends Component
     protected function appliedFilters(): array
     {
         return [
-            'governorateId' => $this->governorateId ? (int) $this->governorateId : null,
-            'officeId'      => $this->officeId ? (int) $this->officeId : null,
+            'governorateIds' => $this->selectedGovernorateIds(),
+            'officeIds'      => $this->selectedOfficeIds(),
         ];
     }
 
     protected function filterKeys(): array
     {
-        return ['governorateId', 'officeId', 'officeSearch'];
+        return ['governorateIds', 'governorateSearch', 'officeIds', 'officeSearch'];
     }
 
     protected function reportLevel(): string
@@ -82,7 +112,7 @@ class OfficeReport extends Component
 
     protected function appliedGovernorateIds(): array
     {
-        return array_values(array_filter([$this->applied['governorateId'] ?? null]));
+        return $this->applied['governorateIds'] ?? [];
     }
 
     public function exportExcel()
@@ -116,11 +146,12 @@ class OfficeReport extends Component
         $report = $this->query()?->report();
 
         return view('livewire.contractors.reports.office', [
-            'governorates' => ContractorScope::governorateOptions(),
+            'governorateChoices' => $this->governorateChoices($this->governorateIds),
             'offices'      => $this->searchOptions(
-                ContractorScope::officeOptions($this->governorateId),
+                // بلا محافظة لا مقرات: القائمة كانت ستعرض مقرات النطاق كله والتقرير يرفضه
+                $this->selectedGovernorateIds() ? ContractorScope::officeOptions($this->selectedGovernorateIds()) : collect(),
                 $this->officeSearch,
-                $this->officeId
+                $this->selectedOfficeIds()
             ),
             'rows'         => $rows,
             'statuses'     => AttendanceReport::statusColumns($rows),

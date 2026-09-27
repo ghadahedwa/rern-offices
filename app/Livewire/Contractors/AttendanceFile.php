@@ -3,9 +3,12 @@
 namespace App\Livewire\Contractors;
 
 use App\Models\Governorate;
+use App\Support\ArabicText;
 use App\Support\ContractorScope;
+use App\Support\Contractors\AttendanceCompactFile;
 use App\Support\Contractors\AttendanceMonthFile;
 use App\Support\Contractors\AttendanceSheet;
+use App\Support\Contractors\AttendanceWorkbook;
 use App\Support\WorkingDays;
 use Carbon\CarbonImmutable;
 use Flux\Flux;
@@ -52,6 +55,9 @@ class AttendanceFile extends Component
     #[Locked]
     public array $fileFingerprints = [];
 
+    /** بحثٌ بالاسم داخل المعاينة — يُفتح له المقرّ الذي فيه العامل. */
+    public string $previewSearch = '';
+
     /** آخر حفظ ناجح — لرابط «افتح الكشف على الشاشة». */
     #[Locked]
     public array $savedResult = [];
@@ -97,18 +103,37 @@ class AttendanceFile extends Component
             : null;
     }
 
-    private function monthFile(): ?AttendanceMonthFile
+    /**
+     * الكشفان المتاحان للتنزيل (طلب العميلة ٢٠٢٦-٠٩-٢٤: المختصر بجوار كشف الأيام لا بدلاً منه).
+     * ⚠️ النوع يصل من الزرّ فيُقرأ من قائمةٍ بيضاء.
+     */
+    private const KINDS = [
+        'days'    => AttendanceMonthFile::class,
+        'compact' => AttendanceCompactFile::class,
+    ];
+
+    /** @param class-string<AttendanceWorkbook> $class */
+    private function monthFile(string $class = AttendanceMonthFile::class): ?AttendanceWorkbook
     {
         $governorate = $this->scopedGovernorate();
 
-        return $governorate ? new AttendanceMonthFile($governorate, $this->monthStart()) : null;
+        return $governorate ? new $class($governorate, $this->monthStart()) : null;
     }
 
-    public function downloadMonthFile()
+    /**
+     * كشف الملف المرفوع بنوعه — **يُعرف من الملف نفسه** فلا يختار المفتش شيئاً عند الرفع.
+     * الملف المجهول يُقرأ ككشف أيام فيخرج «ليس كشفاً من النظام» بالرسالة المعتادة.
+     */
+    private function uploadedFile(): ?AttendanceWorkbook
+    {
+        return $this->monthFile(AttendanceWorkbook::kindOf($this->monthFile->getRealPath()) ?? AttendanceMonthFile::class);
+    }
+
+    public function downloadMonthFile(string $kind = 'days')
     {
         abort_unless(Auth::user()?->can('contractors.attendance'), 403);
 
-        $file = $this->monthFile();
+        $file = $this->monthFile(self::KINDS[$kind] ?? AttendanceMonthFile::class);
 
         if (! $file || $file->sheets() === []) {
             Flux::toast(variant: 'warning', text: __('home.ct_att_no_offices'));
@@ -126,10 +151,10 @@ class AttendanceFile extends Component
     {
         abort_unless(Auth::user()?->can('contractors.attendance'), 403);
 
-        $this->reset('filePreview', 'fileFingerprints', 'savedResult');
+        $this->reset('filePreview', 'fileFingerprints', 'savedResult', 'previewSearch');
         $this->validate(['monthFile' => ['required', 'file', 'mimes:xlsx', 'max:5120']]);
 
-        $file = $this->monthFile();
+        $file = $this->uploadedFile();
         abort_unless($file !== null, 403);
 
         $parsed = $file->parse($this->monthFile->getRealPath());
@@ -140,6 +165,8 @@ class AttendanceFile extends Component
             'ignored' => $parsed['ignored'],
             'ignored_days' => $parsed['ignored_days'],
             'summary' => $parsed['error'] ? null : $file->summarize($parsed),
+            // المعاينة مقرّاً مقرّاً — انظر `AttendanceWorkbook::preview()`
+            'details' => $parsed['error'] ? null : $file->preview($parsed),
             'label'   => $file->monthLabel().' — '.$file->governorate->name,
         ];
 
@@ -155,7 +182,7 @@ class AttendanceFile extends Component
             return;
         }
 
-        $file = $this->monthFile();
+        $file = $this->uploadedFile();
         abort_unless($file !== null, 403);
 
         // ⚠️ الملف يُعاد قراءته الآن لا من حالة المكوّن — وما في المتصفح لا يُوثَق به
@@ -184,8 +211,38 @@ class AttendanceFile extends Component
 
     public function cancelMonthFile(): void
     {
-        $this->reset('monthFile', 'filePreview', 'fileFingerprints', 'savedResult');
+        $this->reset('monthFile', 'filePreview', 'fileFingerprints', 'savedResult', 'previewSearch');
         $this->resetValidation('monthFile');
+    }
+
+    /**
+     * مقرات المعاينة بعد البحث بالاسم — **بـ`ArabicText`** كبقية بحث المشروع. المقرّ الذي لا عامل
+     * فيه يطابق يسقط، وما بقي يُفتح (`match`) ليظهر مَن بُحث عنه بلا نقرة.
+     */
+    private function previewOffices(): array
+    {
+        $offices = $this->filePreview['details']['offices'] ?? [];
+        $needle  = ArabicText::normalize($this->previewSearch);
+
+        if ($needle === '') {
+            return $offices;
+        }
+
+        $out = [];
+
+        foreach ($offices as $office) {
+            $keep = fn (array $item) => str_contains(ArabicText::normalize($item['name']), $needle);
+
+            $office['workers'] = array_values(array_filter($office['workers'], $keep));
+            $office['errors']  = array_values(array_filter($office['errors'], $keep));
+
+            if ($office['workers'] !== [] || $office['errors'] !== []) {
+                $office['match'] = true;
+                $out[] = $office;
+            }
+        }
+
+        return $out;
     }
 
     public function render()
@@ -197,6 +254,7 @@ class AttendanceFile extends Component
             'governorates' => ContractorScope::governorateOptions(),
             'monthLabel'   => $month->locale('ar')->translatedFormat('F Y'),
             'fileLabel'    => $governorate ? $month->locale('ar')->translatedFormat('F Y').' — '.$governorate->name : null,
+            'previewOffices' => $this->previewOffices(),
         ]);
     }
 }
