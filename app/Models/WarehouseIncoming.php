@@ -5,16 +5,18 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Support\Facades\Storage;
 
 class WarehouseIncoming extends Model
 {
+    use Concerns\HasWarehouseAttachments;
+
+    public const ATTACHMENT_TYPE = 'incoming';
+    public const ATTACHMENT_DIR  = 'warehouses/incoming';
+
     protected $fillable = [
         'warehouse_id',
         'received_at',
         'supplier_name',
-        'attachment_path',
-        'attachment_original_name',
         'created_by',
     ];
 
@@ -35,15 +37,5 @@ class WarehouseIncoming extends Model
     public function creator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
-    }
-
-    protected static function booted(): void
-    {
-        // حذف ملف المرفق من التخزين عند حذف السجل
-        static::deleting(function (self $incoming) {
-            if ($incoming->attachment_path) {
-                Storage::disk('public')->delete($incoming->attachment_path);
-            }
-        });
     }
 }

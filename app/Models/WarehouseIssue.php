@@ -5,7 +5,6 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Support\Facades\Storage;
 
 /**
  * مستند صرف من مخزن إلى **مقر** — النوع الخامس من الحركة.
@@ -15,13 +14,16 @@ use Illuminate\Support\Facades\Storage;
  */
 class WarehouseIssue extends Model
 {
+    use Concerns\HasWarehouseAttachments;
+
+    public const ATTACHMENT_TYPE = 'issue';
+    public const ATTACHMENT_DIR  = 'warehouses/issues';
+
     protected $fillable = [
         'warehouse_id',
         'office_id',
         'issued_at',
         'document_type',
-        'attachment_path',
-        'attachment_original_name',
         'created_by',
     ];
 
@@ -48,15 +50,5 @@ class WarehouseIssue extends Model
     public function creator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
-    }
-
-    protected static function booted(): void
-    {
-        // حذف ملف المرفق من التخزين عند حذف السجل (كالوارد والنقل)
-        static::deleting(function (self $issue) {
-            if ($issue->attachment_path) {
-                Storage::disk('public')->delete($issue->attachment_path);
-            }
-        });
     }
 }

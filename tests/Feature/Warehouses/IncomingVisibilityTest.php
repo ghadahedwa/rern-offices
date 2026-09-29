@@ -102,8 +102,6 @@ it('يُبقي شاشة الوارد مفتوحةً لمن أُخفي عنه ا�
         'warehouse_id'             => $main->id,
         'received_at'              => '2026-08-20',
         'supplier_name'            => 'مورّد',
-        'attachment_path'          => 'x.pdf',
-        'attachment_original_name' => 'x.pdf',
     ]);
 
     $this->actingAs(ivUser([ivWarehouse('بنها', 3)]));

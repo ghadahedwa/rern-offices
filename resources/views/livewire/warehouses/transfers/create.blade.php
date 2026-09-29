@@ -131,21 +131,12 @@
                 </button>
             </div>
 
-            {{-- المرفق --}}
-            <div class="flex flex-col gap-1">
-                <label class="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                    {{ __('home.wh_attachment') }} <span class="text-red-500">*</span>
-                </label>
-                <input type="file" wire:model="attachment" accept="image/*,.pdf"
-                       class="block w-full text-sm text-zinc-600 dark:text-zinc-300 file:me-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-[#c9a847]/10 file:text-[#b8962e] hover:file:bg-[#c9a847]/20" />
-                <p class="text-xs text-zinc-400 dark:text-zinc-500">{{ __('home.wh_attachment_required') }}</p>
-                <div wire:loading wire:target="attachment" class="text-xs text-zinc-400">{{ __('home.uploading') }}</div>
-                @error('attachment') <p class="text-red-500 text-xs">{{ $message }}</p> @enderror
-            </div>
+            {{-- المرفقات --}}
+            @include('livewire.warehouses.partials.attachments-picker', ['limit' => \App\Models\WarehouseAttachment::MAX_PER_DOCUMENT, 'required' => true, 'hint' => __('home.wh_attachment_required', ['max' => \App\Models\WarehouseAttachment::MAX_PER_DOCUMENT])])
 
             <div class="flex items-center gap-3 pt-2 border-t border-zinc-100 dark:border-zinc-800">
-                <button type="submit"
-                        class="mt-4 bg-[#c9a847] hover:bg-[#b8962e] text-white text-sm font-medium px-5 py-2 rounded-lg transition">
+                <button type="submit" wire:loading.attr="disabled" wire:target="pickedFiles,save"
+                        class="mt-4 bg-[#c9a847] hover:bg-[#b8962e] text-white text-sm font-medium px-5 py-2 rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed">
                     {{ __('home.save') }}
                 </button>
                 <a href="{{ route('warehouses.transfers.index') }}" wire:navigate

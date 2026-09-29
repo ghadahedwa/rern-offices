@@ -45,8 +45,6 @@ function tdfTransfer(Warehouse $from, Warehouse $to, string $date = '2026-08-20'
         'from_warehouse_id'        => $from->id,
         'to_warehouse_id'          => $to->id,
         'transferred_at'           => $date,
-        'attachment_path'          => 'x.pdf',
-        'attachment_original_name' => 'x.pdf',
     ]);
 }
 

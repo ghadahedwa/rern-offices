@@ -13,7 +13,6 @@ use App\Support\WarehouseScope;
 use Flux\Flux;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 use Livewire\Component;
@@ -31,6 +30,7 @@ class Create extends Component
 {
     use \App\Livewire\Warehouses\Concerns\FiltersItemsByCategory;
     use WithFileUploads;
+    use \App\Livewire\Warehouses\Concerns\CollectsAttachments;
 
     public ?int $warehouse_id = null;
     public ?int $office_id = null;
@@ -39,8 +39,6 @@ class Create extends Component
 
     /** صفوف الأصناف: كل عنصر ['item_id' => null, 'quantity' => null] */
     public array $lines = [];
-
-    public $attachment = null;
 
     public function mount(): void
     {
@@ -82,7 +80,7 @@ class Create extends Component
             'lines.*.item_id'   => ['nullable', 'exists:items,id'],
             'lines.*.quantity'  => ['nullable', 'integer', 'min:1'],
             // المرفق إجباري كالوارد والنقل — إذن الصرف هو سند الحركة
-            'attachment'        => ['required', 'file', 'mimes:jpg,jpeg,png,pdf', 'max:10240'],
+            ...$this->attachmentRules(),
         ];
     }
 
@@ -140,17 +138,13 @@ class Create extends Component
             return;
         }
 
-        $path = $this->attachment->store('warehouses/issues', 'public');
-
         try {
-            DB::transaction(function () use ($valid, $path) {
+            DB::transaction(function () use ($valid) {
                 $issue = WarehouseIssue::create([
                     'warehouse_id'             => $this->warehouse_id,
                     'office_id'                => $this->office_id,
                     'issued_at'                => $this->issued_at,
                     'document_type'            => $this->document_type,
-                    'attachment_path'          => $path,
-                    'attachment_original_name' => $this->attachment->getClientOriginalName(),
                     'created_by'               => Auth::id(),
                 ]);
 
@@ -161,14 +155,19 @@ class Create extends Component
                     ]);
                 }
 
+                $this->storeAttachments($issue);
+
                 WarehouseLedger::recordIssue($issue->fresh('items'));
             });
         } catch (WarehouseException $e) {
-            // المرفق رُفع قبل المحاولة — يُحذف كي لا يبقى ملفٌّ بلا مستند
-            Storage::disk('public')->delete($path);
+            // المرفقات خُزِّنت على القرص داخل المعاملة — تراجعُها لا يمسّ القرص
+            $this->discardStoredAttachments();
             $this->addError('lines', $e->getMessage());
 
             return;
+        } catch (\Throwable $e) {
+            $this->discardStoredAttachments();
+            throw $e;
         }
 
         Flux::toast(variant: 'success', text: __('home.wh_issue_saved'));

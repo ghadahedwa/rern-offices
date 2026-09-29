@@ -289,8 +289,6 @@ it('يمنع حذف نقلٍ مصدرُه خارج نطاق المستخدم', f
         'from_warehouse_id' => $main->id,
         'to_warehouse_id'   => $mine->id,
         'transferred_at'    => '2026-08-20',
-        'attachment_path'   => 'x.pdf',
-        'attachment_original_name' => 'x.pdf',
     ]);
 
     // ⚠️ المستلِم يرى النقل (طرفٌ فيه) لكنه لا يحذفه: الحذف يعكس الحركة على
@@ -310,11 +308,11 @@ it('يُظهر النقل لمن هو طرفٌ فيه ولو لم يملك ال�
 
     WarehouseTransfer::create([
         'from_warehouse_id' => $main->id, 'to_warehouse_id' => $mine->id,
-        'transferred_at' => '2026-08-20', 'attachment_path' => 'a.pdf', 'attachment_original_name' => 'a.pdf',
+        'transferred_at' => '2026-08-20',
     ]);
     WarehouseTransfer::create([
         'from_warehouse_id' => $main->id, 'to_warehouse_id' => $out->id,
-        'transferred_at' => '2026-08-21', 'attachment_path' => 'b.pdf', 'attachment_original_name' => 'b.pdf',
+        'transferred_at' => '2026-08-21',
     ]);
 
     $this->actingAs(wsUser(['warehouses.index'], 'ws-either', [$mine]));
@@ -330,8 +328,6 @@ it('يمنع عرض واردٍ على مخزنٍ خارج النطاق ولو د
         'warehouse_id' => $main->id,
         'received_at'  => '2026-08-20',
         'supplier_name' => 'مورد',
-        'attachment_path' => 'x.pdf',
-        'attachment_original_name' => 'x.pdf',
     ]);
 
     $this->actingAs(wsUser(['warehouses.index'], 'ws-inc', [$mine]));

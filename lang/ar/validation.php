@@ -219,6 +219,8 @@ return [
         'supplier_name'         => 'المورد',
         'document_type'         => 'نوع المستند',
         'attachment'            => 'المرفق',
+        'attachments'           => 'المرفقات',
+        'attachments.*'         => 'المرفق',
         'lines'                 => 'الأصناف',
         'lines.*.item_id'       => 'الصنف',
         'lines.*.quantity'      => 'الكمية',

@@ -154,8 +154,8 @@ it('يرتّب الوارد بعدد أصنافه', function () {
     [$main] = tblTwoWarehouses();
     $this->actingAs(tblUser());
 
-    $one = WarehouseIncoming::create(['warehouse_id' => $main->id, 'received_at' => '2026-08-01', 'created_by' => auth()->id(), 'attachment_path' => 'x.pdf', 'attachment_original_name' => 'x.pdf']);
-    $two = WarehouseIncoming::create(['warehouse_id' => $main->id, 'received_at' => '2026-08-02', 'created_by' => auth()->id(), 'attachment_path' => 'x.pdf', 'attachment_original_name' => 'x.pdf']);
+    $one = WarehouseIncoming::create(['warehouse_id' => $main->id, 'received_at' => '2026-08-01', 'created_by' => auth()->id()]);
+    $two = WarehouseIncoming::create(['warehouse_id' => $main->id, 'received_at' => '2026-08-02', 'created_by' => auth()->id()]);
 
     $itemA = tblItem('حبر');
     $itemB = tblItem('ورق');
@@ -305,7 +305,7 @@ it('يُدخل آخر لحظة في يوم النهاية', function () {
 it('يفلتر الوارد بيوم كتبه المستخدم بلا إزاحة توقيت', function () {
     [$main] = tblTwoWarehouses();
     $this->actingAs(tblUser());
-    WarehouseIncoming::create(['warehouse_id' => $main->id, 'received_at' => '2026-08-26', 'created_by' => auth()->id(), 'attachment_path' => 'x.pdf', 'attachment_original_name' => 'x.pdf']);
+    WarehouseIncoming::create(['warehouse_id' => $main->id, 'received_at' => '2026-08-26', 'created_by' => auth()->id()]);
 
     $rows = Livewire::test(IncomingIndex::class)
         ->set('dateFrom', '2026-08-26')
@@ -350,8 +350,6 @@ it('يعرض شاشة النقل ويرتّبها بنوع المستند', func
             'to_warehouse_id'          => $branch->id,
             'transferred_at'           => $day,
             'document_type'            => $doc,
-            'attachment_path'          => 'x.pdf',
-            'attachment_original_name' => 'x.pdf',
             'created_by'               => auth()->id(),
         ]);
     }

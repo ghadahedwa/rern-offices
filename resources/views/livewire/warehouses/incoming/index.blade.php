@@ -116,13 +116,7 @@
                     </div>
 
                     @if($canAttach)
-                        <a href="{{ asset('storage/' . $viewing->attachment_path) }}" target="_blank"
-                           class="inline-flex items-center gap-2 text-sm text-[#b8962e] hover:text-[#c9a847] font-medium transition">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                            </svg>
-                            {{ $viewing->attachment_original_name }}
-                        </a>
+                        <livewire:warehouses.document-attachments type="incoming" :document-id="$viewing->id" :key="'att-incoming-'.$viewing->id" />
                     @endif
                 </div>
             @endif

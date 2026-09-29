@@ -79,8 +79,6 @@ function isoIssue(Warehouse $w, Office $o, Item $i, int $qty): WarehouseIssue
         'warehouse_id'             => $w->id,
         'office_id'                => $o->id,
         'issued_at'                => '2026-08-20',
-        'attachment_path'          => 'x.pdf',
-        'attachment_original_name' => 'x.pdf',
     ]);
 
     $issue->items()->create(['item_id' => $i->id, 'quantity' => $qty]);
@@ -229,7 +227,7 @@ it('يرفض مقراً من محافظة أخرى يُدسّ في الطلب', 
         ->set('warehouse_id', $wh->id)
         ->set('office_id', $far->id)
         ->set('lines', [['item_id' => $item->id, 'quantity' => 5]])
-        ->set('attachment', UploadedFile::fake()->create('doc.pdf', 100, 'application/pdf'))
+        ->set('pickedFiles', [UploadedFile::fake()->create('doc.pdf', 100, 'application/pdf')])
         ->call('save')
         ->assertHasErrors('office_id');
 
@@ -272,7 +270,7 @@ it('يمنع الصرف من مخزنٍ خارج النطاق ولو دُسّ م
         ->set('warehouse_id', $theirs->id)
         ->set('office_id', $off->id)
         ->set('lines', [['item_id' => $item->id, 'quantity' => 5]])
-        ->set('attachment', UploadedFile::fake()->create('doc.pdf', 100, 'application/pdf'))
+        ->set('pickedFiles', [UploadedFile::fake()->create('doc.pdf', 100, 'application/pdf')])
         ->call('save')
         ->assertStatus(403);
 

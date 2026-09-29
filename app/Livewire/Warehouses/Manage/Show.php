@@ -260,12 +260,15 @@ class Show extends Component
     public function viewIncoming(int $id): void
     {
         $this->viewingIncoming = WarehouseIncoming::with(['warehouse', 'items.item.unit'])->findOrFail($id);
+        // ⚠️ المعرّف من العميل — مستندٌ لمخزنٍ آخر لا يُفتح من بروفايل هذا
+        abort_unless((int) $this->viewingIncoming->warehouse_id === $this->warehouse->id, 403);
         $this->showViewIncoming = true;
     }
 
     public function viewTransfer(int $id): void
     {
         $this->viewingTransfer = WarehouseTransfer::with(['fromWarehouse', 'toWarehouse', 'items.item.unit'])->findOrFail($id);
+        abort_unless(in_array($this->warehouse->id, [(int) $this->viewingTransfer->from_warehouse_id, (int) $this->viewingTransfer->to_warehouse_id], true), 403);
         $this->showViewTransfer = true;
     }
 
