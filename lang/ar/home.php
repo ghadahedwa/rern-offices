@@ -310,8 +310,27 @@ return [
     // Office create — step labels
     'step_1_label'             => 'المعلومات الأساسية',
     'step_2_label'             => 'خدمات وتجهيزات المقر',
-    'step_3_label'             => 'التقييمات والملاحظات',
+    'step_3_label'             => 'تقرير زيارة مفتش',
     'step_4_label'             => 'الوسائط',
+    // تقريرا الزيارة — صفحتان مستقلتان (كانا تاب «التقييمات والملاحظات» في المقر)
+    'inspector_visit_report'   => 'تقرير زيارة مفتش',
+    'counselor_visit_report'   => 'تقرير زيارة المستشار',
+    'inspector_visit_reports'  => 'تقارير زيارة المفتش',
+    'counselor_visit_reports'  => 'تقارير زيارة المستشار',
+    'vr_open'                  => 'فتح التقرير',
+    'vr_view_office'           => 'عرض تفاصيل المقر',
+    'vr_visit_filter'          => 'الزيارة',
+    'vr_filter_m3'             => 'لم يُزر منذ ٣ شهور',
+    'vr_filter_m6'             => 'لم يُزر منذ ٦ شهور',
+    'vr_filter_m12'            => 'لم يُزر منذ سنة',
+    'vr_filter_never'          => 'لم يُزر أبداً',
+    'rows_unit'                  => 'صف',
+    'vr_not_visited'           => 'لم يُزر',
+    'vr_no_offices'            => 'لا توجد مقرات',
+    'vr_no_match'              => 'لا توجد مقرات تطابق الفلتر',
+    'vr_saved'                 => 'تم حفظ التقرير',
+    'vr_read_only'             => 'للاطلاع فقط — لا تملك صلاحية تعديل هذا التقرير',
+    'vr_save'                  => 'حفظ التقرير',
 
     // Office create — section headers
     'section_basic_data'       => 'البيانات الأساسية',

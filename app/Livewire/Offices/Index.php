@@ -21,12 +21,16 @@ use Livewire\Attributes\Title;
 use Livewire\Attributes\Url;
 use Livewire\Component;
 use Livewire\WithPagination;
+use App\Livewire\Concerns\WithPerPage;
+use App\Livewire\Concerns\WithTableSorting;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\DB;
 
 #[Layout('layouts.app')]
 #[Title('المقرات')]
 class Index extends Component
 {
-    use WithPagination;
+    use WithPagination, WithPerPage, WithTableSorting;
 
     public string $search = '';
 
@@ -141,6 +145,37 @@ class Index extends Component
     public function updatingSurveillanceCameras(): void { $this->resetPage(); }
     public function updatingQueueManagementSystem(): void { $this->resetPage(); }
 
+    /**
+     * أعمدة الترتيب: مفتاح الرابط => عمود أو تعبير SQL.
+     * ⚠️ أعمدة الجداول المرتبطة **استعلامات فرعية لا joins**: الـjoin يجعل `name` و`created_at`
+     *    ملتبسين في فلاتر الشاشة القائمة (البحث مثلاً)، والاستعلام الفرعي لا يمسّها.
+     *    والمحافظة بترتيبها المعتمد (`order`) كمنسدلة المحافظات لا أبجدياً.
+     */
+    protected function sortableColumns(): array
+    {
+        $related = fn (string $table, string $column, string $foreignKey) => [DB::raw(sprintf(
+            '(select %s from %s where %s = %s)',
+            DB::getQueryGrammar()->wrap("{$table}.{$column}"),
+            DB::getQueryGrammar()->wrap($table),
+            DB::getQueryGrammar()->wrap("{$table}.id"),
+            DB::getQueryGrammar()->wrap("offices.{$foreignKey}"),
+        ))];
+
+        return [
+            'name'        => 'offices.name',
+            'governorate' => $related('governorates', 'order', 'governorate_id'),
+            'type'        => $related('office_types', 'name', 'type_id'),
+            'location'    => $related('location_descriptions', 'name', 'location_description_id'),
+            'connection'  => $related('connection_types', 'name', 'connection_type_id'),
+        ];
+    }
+
+    /** الأحدث إضافةً أولاً — ترتيب الشاشة قبل إضافة الترتيب */
+    protected function defaultOrder(Builder $query): Builder
+    {
+        return $query->orderByDesc('offices.created_at');
+    }
+
     public function render()
     {
         $user         = auth()->user();
@@ -179,8 +214,9 @@ class Index extends Component
             ->when($this->document_photocopying_service_id, fn($q) => $q->where('document_photocopying_service_id', $this->document_photocopying_service_id))
             ->when($this->buffet_service_id, fn($q) => $q->where('buffet_service_id', $this->buffet_service_id))
             ->when($this->surveillance_cameras, fn($q) => $q->where('surveillance_cameras', $this->surveillance_cameras))
-            ->when($this->queue_management_system, fn($q) => $q->where('queue_management_system', $this->queue_management_system))
-            ->latest();
+            ->when($this->queue_management_system, fn($q) => $q->where('queue_management_system', $this->queue_management_system));
+
+        $query = $this->applySorting($query, 'offices.id', 'desc');
 
         // خيارات البحث المتقدم تُحمَّل فقط عند فتح اللوحة (إبقاء التحميل الأولي خفيفاً)
         $advancedOptions = $this->showAdvanced ? [
@@ -196,7 +232,7 @@ class Index extends Component
         ] : [];
 
         return view('livewire.offices.index', [
-            'offices'               => $query->paginate(10),
+            'offices'               => $query->paginate($this->perPage()),
             'governorates'          => $governorates,
             'officeTypes'           => OfficeType::orderBy('name')->get(),
             'locationDescriptions'  => LocationDescription::orderBy('name')->get(),

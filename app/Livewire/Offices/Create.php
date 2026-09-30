@@ -6,7 +6,6 @@ use App\Models\BuffetService;
 use App\Models\DeviceType;
 use App\Models\OfficeBrokenDevice;
 use App\Models\OfficeMedia;
-use App\Models\OfficeStat;
 use App\Models\StructuralCondition;
 use App\Models\CleanlinessContract;
 use App\Models\ConnectionType;
@@ -33,9 +32,16 @@ use Livewire\WithFileUploads;
 class Create extends Component
 {
     use WithFileUploads;
+    /**
+     * أرقام الخطوات (هي ما في الرابط). تقريرا الزيارة خرجا من الفورم إلى صفحتين
+     * مستقلتين بصلاحيتين مستقلتين عن `offices.edit` — App\Livewire\Offices\VisitReport.
+     */
+    public const STEP_BASIC     = 1;
+    public const STEP_SERVICES  = 2;
+    public const STEP_MEDIA     = 3;
+
     #[Url]
     public int $step = 1;
-    public int $totalSteps = 4;
     #[Url]
     public ?int $office_id = null;
     public bool $isEditing = false;
@@ -68,7 +74,6 @@ class Create extends Component
     public string $avg_daily_transactions = '';
     public $contractual_status_id = null;
 
-    public $structural_condition_id = null;
     public string $office_area = '';
     public string $district_court = '';
 
@@ -97,18 +102,7 @@ class Create extends Component
     public string $water_meter_type = '';
     public string $water_meter_debt = '';
 
-    // Step 3 — Assessments
-    public string $visited_at = '';
-    public string $cleanliness_rating = '';
-    public string $archive_rating = '';
-    public string $work_schedule_commitment = '';
-    public string $citizen_treatment_commitment = '';
-    public string $surveillance_cameras = '';
-    public string $negatives_and_solutions = '';
-    public string $development_proposals = '';
-    public string $office_needs = '';
-
-    // Step 3 — Broken devices (array of [device_type_id => int, count => int])
+    // Step 2 — Broken devices (array of [device_type_id => int, count => int])
     public array $brokenDevices = [];
 
     // Step 4 — Statistics
@@ -148,6 +142,31 @@ class Create extends Component
         } else {
             abort_unless($user?->hasRole('super-admin') || $user?->can('offices.create'), 403);
         }
+
+        // الرابط قد يحمل خطوةً غير موجودة (رابط قديم كان فيه التقريران)، أو خطوةً بعد
+        // الأولى لمقرٍّ لم يُحفظ بعد
+        if (! $this->office_id || ! array_key_exists($this->step, $this->steps())) {
+            $this->step = self::STEP_BASIC;
+        }
+    }
+
+    /** الخطوات: رقمها => عنوانها */
+    public function steps(): array
+    {
+        return [
+            self::STEP_BASIC    => __('home.step_1_label'),
+            self::STEP_SERVICES => __('home.step_2_label'),
+            self::STEP_MEDIA    => __('home.step_4_label'),
+        ];
+    }
+
+    /** الخطوة الظاهرة التالية (+1) أو السابقة (-1)، أو null */
+    private function adjacentStep(int $direction): ?int
+    {
+        $nums = array_keys($this->steps());
+        $i    = array_search($this->step, $nums, true);
+
+        return $i === false ? null : ($nums[$i + $direction] ?? null);
     }
 
     /**
@@ -195,7 +214,6 @@ class Create extends Component
         $this->working_days            = $office->working_days ?? '';
         $this->avg_daily_transactions  = (string) ($office->avg_daily_transactions ?? '');
         $this->contractual_status_id   = $office->contractual_status_id;
-        $this->structural_condition_id = $office->structural_condition_id;
         $this->office_area             = (string) ($office->office_area ?? '');
         $this->district_court          = $office->district_court ?? '';
 
@@ -221,17 +239,6 @@ class Create extends Component
         $this->electricity_meter_debt           = $office->electricity_meter_debt ?? '';
         $this->water_meter_type                 = $office->water_meter_type ?? '';
         $this->water_meter_debt                 = $office->water_meter_debt ?? '';
-
-        // Step 3
-        $this->visited_at                   = $office->visited_at?->format('Y-m-d') ?? '';
-        $this->cleanliness_rating           = $office->cleanliness_rating ?? '';
-        $this->archive_rating               = $office->archive_rating ?? '';
-        $this->work_schedule_commitment     = $office->work_schedule_commitment ?? '';
-        $this->citizen_treatment_commitment = $office->citizen_treatment_commitment ?? '';
-        $this->surveillance_cameras         = $office->surveillance_cameras ?? '';
-        $this->negatives_and_solutions      = $office->negatives_and_solutions ?? '';
-        $this->development_proposals        = $office->development_proposals ?? '';
-        $this->office_needs                 = $office->office_needs ?? '';
 
         $this->brokenDevices = $office->brokenDevices()
             ->get()
@@ -382,28 +389,6 @@ $existing = OfficeMedia::where('office_id', $this->office_id)->where('type', 'do
         }
     }
 
-    private function step3Validation(): void
-    {
-        $commitmentKeys = array_keys(\App\Models\Office::COMMITMENT_RATINGS);
-
-        $this->validate([
-            'visited_at'                   => 'required|date',
-            'structural_condition_id'      => 'required|exists:structural_conditions,id',
-            'cleanliness_rating'           => 'required|in:' . implode(',', array_keys(\App\Models\Office::CLEANLINESS_RATINGS)),
-            'archive_rating'               => 'required|in:' . implode(',', array_keys(\App\Models\Office::ARCHIVE_RATINGS)),
-            'work_schedule_commitment'     => 'required|in:' . implode(',', $commitmentKeys),
-            'citizen_treatment_commitment' => 'required|in:' . implode(',', $commitmentKeys),
-        ], [
-            'visited_at.required'                   => 'يرجى إدخال تاريخ الزيارة',
-            'visited_at.date'                       => 'تاريخ الزيارة غير صحيح',
-            'structural_condition_id.required'      => 'يرجى اختيار الحالة الإنشائية',
-            'cleanliness_rating.required'           => 'يرجى اختيار تقييم النظافة',
-            'archive_rating.required'               => 'يرجى اختيار تقييم غرف الحفظ',
-            'work_schedule_commitment.required'     => 'يرجى اختيار مدى الالتزام بمواعيد العمل',
-            'citizen_treatment_commitment.required' => 'يرجى اختيار مدى الالتزام بحسن المعاملة',
-        ]);
-    }
-
     private function step1Data(): array
     {
         return [
@@ -430,22 +415,6 @@ $existing = OfficeMedia::where('office_id', $this->office_id)->where('type', 'do
             'office_area'            => $this->office_area !== '' ? (int) $this->office_area : null,
             'district_court'         => $this->district_court ?: null,
             'windows_count'          => $this->windows_count !== '' ? (int) $this->windows_count : null,
-        ];
-    }
-
-    private function step3Data(): array
-    {
-        return [
-            'visited_at'                  => $this->visited_at ?: null,
-            'structural_condition_id'     => $this->structural_condition_id ?: null,
-            'cleanliness_rating'          => $this->cleanliness_rating ?: null,
-            'archive_rating'              => $this->archive_rating ?: null,
-            'work_schedule_commitment'    => $this->work_schedule_commitment ?: null,
-            'citizen_treatment_commitment' => $this->citizen_treatment_commitment ?: null,
-            'surveillance_cameras'        => $this->surveillance_cameras ?: null,
-            'negatives_and_solutions'     => $this->negatives_and_solutions ?: null,
-            'development_proposals'       => $this->development_proposals ?: null,
-            'office_needs'                => $this->office_needs ?: null,
         ];
     }
 
@@ -497,32 +466,6 @@ $existing = OfficeMedia::where('office_id', $this->office_id)->where('type', 'do
                     'device_type_id' => $row['device_type_id'],
                     'count'          => (int) $row['count'],
                 ]);
-            }
-        }
-    }
-
-    private function persistStep3(): void
-    {
-        Office::find($this->office_id)?->update($this->step3Data());
-    }
-
-    private function persistStep4(): void
-    {
-        OfficeStat::where('office_id', $this->office_id)->delete();
-
-        foreach ($this->transactionStats as $row) {
-            if (!empty($row['year'])) {
-                OfficeStat::create(['office_id' => $this->office_id, 'stat_type_id' => 1, 'year' => $row['year'], 'month' => null, 'value' => $row['value'] ?? 0]);
-            }
-        }
-        foreach ($this->formSalesStats as $row) {
-            if (!empty($row['year']) && !empty($row['month'])) {
-                OfficeStat::create(['office_id' => $this->office_id, 'stat_type_id' => 2, 'year' => $row['year'], 'month' => $row['month'], 'value' => $row['value'] ?? 0]);
-            }
-        }
-        foreach ($this->folderSalesStats as $row) {
-            if (!empty($row['year']) && !empty($row['month'])) {
-                OfficeStat::create(['office_id' => $this->office_id, 'stat_type_id' => 3, 'year' => $row['year'], 'month' => $row['month'], 'value' => $row['value'] ?? 0]);
             }
         }
     }
@@ -587,37 +530,44 @@ $existing = OfficeMedia::where('office_id', $this->office_id)->where('type', 'do
 
     public function nextStep(): void
     {
-        if ($this->step === 1) {
+        $next = $this->adjacentStep(1);
+        if ($next === null) return;
+
+        if ($this->step === self::STEP_BASIC) {
             $this->step1Validation();
             $this->persistStep1();
-        } elseif ($this->step === 3) {
-            //$this->step3Validation();
-            $this->persistStep3();
         } else {
             $this->saveCurrentStep();
         }
-        $this->step++;
+        $this->step = $next;
     }
 
     public function prevStep(): void
     {
+        $prev = $this->adjacentStep(-1);
+        if ($prev === null) return;
+
         $this->saveCurrentStep();
-        $this->step--;
+        $this->step = $prev;
     }
 
+    /** بعد حفظ البيانات الأساسية تُفتح أي خطوة ظاهرة بلا ترتيب */
     public function goToStep(int $target): void
     {
-        if (!$this->office_id || $target === $this->step) return;
+        if (! $this->office_id || $target === $this->step || ! array_key_exists($target, $this->steps())) return;
         $this->saveCurrentStep();
         $this->step = $target;
     }
 
+    /**
+     * ⚠️ خطوة الوسائط لا تحفظ شيئاً عند مغادرتها (الرفع فوري). كانت تستدعي حفظ
+     *    الإحصائيات القديم الذي **يحذف كل إحصائيات المقر** ثم يعيد ثلاثة أنواع منها فقط —
+     *    فكانت ضغطة «السابق» من الوسائط تمسح إحصائيات الشهر والسجل وقانوني ٩ و٢٧.
+     */
     private function saveCurrentStep(): void
     {
         match($this->step) {
-            2 => $this->persistStep2(),
-            3 => $this->persistStep3(),
-            4 => $this->persistStep4(),
+            self::STEP_SERVICES  => $this->persistStep2(),
             default => null,
         };
     }
@@ -633,6 +583,10 @@ $existing = OfficeMedia::where('office_id', $this->office_id)->where('type', 'do
         $user = auth()->user();
         return view('livewire.offices.create', [
             'canView'             => $user?->hasRole('super-admin') || $user?->can('offices.view'),
+            'steps'               => $this->steps(),
+            'savedOffice'         => $this->office_id
+                ? Office::with(['governorate:id,name', 'officeType:id,name'])->find($this->office_id, ['id', 'name', 'governorate_id', 'type_id'])
+                : null,
             'governorates'        => $user?->hasRole('super-admin')
                 ? Governorate::orderBy('order')->orderBy('id')->get()
                 : auth()->user()->governorates()->orderBy('order')->orderBy('id')->get(),

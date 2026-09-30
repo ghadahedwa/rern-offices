@@ -3,6 +3,7 @@
 namespace App\Livewire\Offices;
 
 use App\Models\Office;
+use App\Support\OfficeVisitReports;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 use Livewire\Component;
@@ -39,7 +40,6 @@ class Show extends Component
             'workingHour',
             'connectionType',
             'contractualStatus',
-            'structuralCondition',
             'MicrofilmOption',
             'DisabilitieAccess',
             'FireSafety',
@@ -51,8 +51,28 @@ class Show extends Component
         ]);
     }
 
+    /** التابات: مفتاحها => عنوانها. تقريرا الزيارة صفحتان مستقلتان بزرّين في الرأس. */
+    public function tabs(): array
+    {
+        return [
+            'basic'    => __('home.step_1_label'),
+            'services' => __('home.step_2_label'),
+            'media'    => __('home.step_4_label'),
+        ];
+    }
+
     public function render()
     {
-        return view('livewire.offices.show');
+        // التاب يُضبط من المتصفح (`$set`) — قيمة مجهولة تُردّ للأولى
+        $tabs = $this->tabs();
+        if (! array_key_exists($this->activeTab, $tabs)) {
+            $this->activeTab = 'basic';
+        }
+
+        return view('livewire.offices.show', [
+            'tabs'    => $tabs,
+            // زرّ لكل تقريرٍ يملك المستخدم عرضه — الصفحة نفسها تحرس نفسها
+            'reports' => OfficeVisitReports::viewable(auth()->user()),
+        ]);
     }
 }

@@ -64,6 +64,16 @@ class PermissionGroups
      * فيقرأ المدير الفرق بين الأدوار الثلاثة من أعلى الجدول إلى أسفله.
      */
     public const DISPLAY_ORDER = [
+        // المقرات: صلاحيات المقر أولاً، ثم تقريرا الزيارة متجاوِرَين (مستقلّان عن صلاحيات المقر)
+        'offices.index',
+        'offices.view',
+        'offices.create',
+        'offices.edit',
+        'offices.inspector-report.view',
+        'offices.inspector-report.edit',
+        'offices.counselor-report.view',
+        'offices.counselor-report.edit',
+
         'correspondence.index',
         'correspondence.view',
         'correspondence.create',

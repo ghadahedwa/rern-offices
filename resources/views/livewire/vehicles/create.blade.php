@@ -28,6 +28,19 @@
         @endif
     </div>
 
+    {{-- اسم السيارة ثابتاً أعلى الشاشة أثناء التنقّل بين التابات والتمرير فيها —
+         يُقرأ من المحفوظ لا من خانة الاسم، فلا يتغيّر مع الكتابة قبل الحفظ --}}
+    @if($savedVehicle)
+    <div class="sticky top-0 z-30 flex items-center gap-2 rounded-xl border border-[#c9a847]/40 bg-white dark:bg-zinc-900 shadow-sm px-4 py-2.5">
+        <div class="w-1 h-5 bg-[#c9a847] rounded-full shrink-0"></div>
+        <span class="text-sm font-semibold text-zinc-800 dark:text-zinc-100 truncate" title="{{ $savedVehicle->name }}">{{ $savedVehicle->name }}</span>
+        <span class="text-xs text-zinc-500 dark:text-zinc-400 shrink-0">
+            {{ $savedVehicle->governorate->name ?? '—' }}
+            @if($savedVehicle->type) &mdash; {{ $savedVehicle->type->name }} @endif
+        </span>
+    </div>
+    @endif
+
     {{-- Tab Progress --}}
     <div class="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-700 shadow-sm p-6">
         <div class="flex items-center justify-between">

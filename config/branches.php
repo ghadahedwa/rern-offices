@@ -37,6 +37,11 @@ return [
             'offices.index',
             'offices.export',
             'offices.phone-directory',
+            // صاحب تقرير الزيارة وحده يدخل الفرع ليصل إلى قائمته من المنيو
+            'offices.inspector-report.view',
+            'offices.inspector-report.edit',
+            'offices.counselor-report.view',
+            'offices.counselor-report.edit',
             'vehicles.index',
             'vehicles.export',
             'claims.index',

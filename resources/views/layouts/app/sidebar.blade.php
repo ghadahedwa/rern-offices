@@ -89,6 +89,15 @@
                         {{ __('home.offices') }}
                     </flux:sidebar.item>
                     @endif
+                    {{-- تقريرا الزيارة — بابهما هنا لا من قائمة المقرات: صلاحيتهما مستقلة عنها --}}
+                    @if(Route::has('offices.visit-reports'))
+                    @foreach(\App\Support\OfficeVisitReports::viewable(auth()->user()) as $vrType)
+                    <flux:sidebar.item icon="clipboard-document-check" :href="route('offices.visit-reports', $vrType)"
+                        :current="request()->routeIs('offices.visit-report*') && request()->route('type') === $vrType" wire:navigate>
+                        {{ __(\App\Support\OfficeVisitReports::REPORTS[$vrType]['list_label']) }}
+                    </flux:sidebar.item>
+                    @endforeach
+                    @endif
                     @if(auth()->user()?->hasRole('super-admin') || auth()->user()?->can('vehicles.index'))
                     <flux:sidebar.item icon="truck" :href="route('vehicles.index')" :current="request()->routeIs('vehicles.*')" wire:navigate>
                         {{ __('home.vehicles_title') }}

@@ -484,6 +484,10 @@ class Create extends Component
     {
         $user = auth()->user();
         return view('livewire.vehicles.create', [
+            // اسم السيارة المحفوظ ثابتاً أعلى الشاشة (لا خانة الاسم أثناء الكتابة)
+            'savedVehicle' => $this->vehicle_id
+                ? Vehicle::with(['governorate:id,name', 'type:id,name'])->find($this->vehicle_id)
+                : null,
             'governorates' => $user?->hasRole('super-admin')
                 ? Governorate::orderBy('order')->orderBy('id')->get()
                 : $user->governorates()->orderBy('order')->orderBy('id')->get(),

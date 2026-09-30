@@ -47,6 +47,12 @@ class Office extends Model
         'working_days', 'mechanization_at',
         'electricity_meter_type', 'electricity_meter_debt',
         'water_meter_type', 'water_meter_debt',
+        // تقرير زيارة المستشار — نفس بنود المفتش ببادئة (App\Support\OfficeVisitReports)
+        'counselor_visited_at', 'counselor_structural_condition_id',
+        'counselor_cleanliness_rating', 'counselor_archive_rating',
+        'counselor_work_schedule_commitment', 'counselor_citizen_treatment_commitment',
+        'counselor_surveillance_cameras',
+        'counselor_office_needs', 'counselor_negatives_and_solutions', 'counselor_development_proposals',
     ];
 
     protected $casts = [
@@ -54,6 +60,7 @@ class Office extends Model
         'established_at'  => 'date',
         'opened_at'       => 'date',
         'visited_at'      => 'date',
+        'counselor_visited_at' => 'date',
         'mechanization_at' => 'date',
     ];
 
@@ -88,6 +95,11 @@ class Office extends Model
     public function structuralCondition(): BelongsTo
     {
         return $this->belongsTo(StructuralCondition::class, 'structural_condition_id');
+    }
+
+    public function counselorStructuralCondition(): BelongsTo
+    {
+        return $this->belongsTo(StructuralCondition::class, 'counselor_structural_condition_id');
     }
 
     public function officeType(): BelongsTo

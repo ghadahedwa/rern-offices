@@ -111,8 +111,9 @@
         <table>
             <tr>
                 <td><div class="office-name">{{ $office->name }}</div></td>
-                @if($office->visited_at)
-                <td><div class="office-meta-text">تاريخ الزيارة: {{ $office->visited_at->format('Y-m-d') }}</div></td>
+                {{-- تاريخ زيارة المفتش — بند في تقريره، فيتبع صلاحية عرضه --}}
+                @if(in_array(\App\Support\OfficeVisitReports::INSPECTOR, $reports, true) && $office->visited_at)
+                <td><div class="office-meta-text">{{ __('home.visited_at') }}: {{ $office->visited_at->format('Y-m-d') }}</div></td>
                 @endif
             </tr>
         </table>
@@ -274,41 +275,54 @@
     </div>
     @endif
 
-    {{-- ── بيانات الزيارة والتقييم ── --}}
+    {{-- ── تقريرا الزيارة (المفتش · المستشار) — كلٌّ بصلاحية عرضه ── --}}
+    @foreach($reports as $reportType)
+    @php
+        $r = fn (string $field) => $office->{\App\Support\OfficeVisitReports::column($reportType, $field)};
+        $structural = $reportType === \App\Support\OfficeVisitReports::COUNSELOR
+            ? $office->counselorStructuralCondition
+            : $office->structuralCondition;
+        $cameraLabels = [
+            'available'     => __('home.option_available'),
+            'not_available' => __('home.option_not_available'),
+            'broken'        => __('home.option_broken'),
+        ];
+    @endphp
     <div class="section">
         <table class="section-hdr"><tr>
             <td class="bar-cell">&nbsp;</td>
-            <td><span class="section-title">بيانات الزيارة والتقييم</span></td>
+            <td><span class="section-title">{{ __(\App\Support\OfficeVisitReports::REPORTS[$reportType]['label']) }}</span></td>
         </tr></table>
         <table class="grid-table">
             <tr>
-                <td><div class="lbl">تاريخ الزيارة</div><div class="val">{{ $office->visited_at?->format('Y-m-d') ?? $dash }}</div></td>
-                <td><div class="lbl">الحالة الإنشائية</div><div class="val">{{ $office->structuralCondition->name ?? $dash }}</div></td>
+                <td><div class="lbl">{{ __('home.visited_at') }}</div><div class="val">{{ $r('visited_at')?->format('Y-m-d') ?? $dash }}</div></td>
+                <td><div class="lbl">{{ __('home.structural_condition') }}</div><div class="val">{{ $structural->name ?? $dash }}</div></td>
             </tr>
             <tr>
-                <td><div class="lbl">تقييم النظافة</div><div class="val">{{ \App\Models\Office::CLEANLINESS_RATINGS[$office->cleanliness_rating] ?? $dash }}</div></td>
-                <td><div class="lbl">تقييم الأرشيف</div><div class="val">{{ \App\Models\Office::ARCHIVE_RATINGS[$office->archive_rating] ?? $dash }}</div></td>
+                <td><div class="lbl">{{ __('home.cleanliness_rating') }}</div><div class="val">{{ \App\Models\Office::CLEANLINESS_RATINGS[$r('cleanliness_rating')] ?? $dash }}</div></td>
+                <td><div class="lbl">{{ __('home.archive_rating') }}</div><div class="val">{{ \App\Models\Office::ARCHIVE_RATINGS[$r('archive_rating')] ?? $dash }}</div></td>
             </tr>
             <tr>
-                <td><div class="lbl">الالتزام بجدول العمل</div><div class="val">{{ \App\Models\Office::COMMITMENT_RATINGS[$office->work_schedule_commitment] ?? $dash }}</div></td>
-                <td><div class="lbl">التعامل مع المواطنين</div><div class="val">{{ \App\Models\Office::COMMITMENT_RATINGS[$office->citizen_treatment_commitment] ?? $dash }}</div></td>
+                <td><div class="lbl">{{ __('home.work_schedule_commitment') }}</div><div class="val">{{ \App\Models\Office::COMMITMENT_RATINGS[$r('work_schedule_commitment')] ?? $dash }}</div></td>
+                <td><div class="lbl">{{ __('home.citizen_treatment_commitment') }}</div><div class="val">{{ \App\Models\Office::COMMITMENT_RATINGS[$r('citizen_treatment_commitment')] ?? $dash }}</div></td>
+            </tr>
+            <tr>
+                <td><div class="lbl">{{ __('home.surveillance_cameras') }}</div><div class="val">{{ $cameraLabels[$r('surveillance_cameras')] ?? $dash }}</div></td>
+                <td></td>
             </tr>
         </table>
 
-        @if($office->office_needs || $office->negatives_and_solutions || $office->development_proposals)
+        @if($r('office_needs') || $r('negatives_and_solutions') || $r('development_proposals'))
         <div style="margin-top:8px;">
-            @if($office->office_needs)
-            <div class="txt-block"><div class="lbl">احتياجات المقر</div><div class="val">{{ $office->office_needs }}</div></div>
+            @foreach(['office_needs', 'negatives_and_solutions', 'development_proposals'] as $field)
+            @if($r($field))
+            <div class="txt-block"><div class="lbl">{{ __('home.'.$field) }}</div><div class="val">{{ $r($field) }}</div></div>
             @endif
-            @if($office->negatives_and_solutions)
-            <div class="txt-block"><div class="lbl">السلبيات والحلول</div><div class="val">{{ $office->negatives_and_solutions }}</div></div>
-            @endif
-            @if($office->development_proposals)
-            <div class="txt-block"><div class="lbl">مقترحات التطوير</div><div class="val">{{ $office->development_proposals }}</div></div>
-            @endif
+            @endforeach
         </div>
         @endif
     </div>
+    @endforeach
 
     {{-- ── ملخص الإحصائيات ── --}}
     @if($statGroups->isNotEmpty())

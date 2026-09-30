@@ -30,6 +30,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::livewire('offices/{office}/edit', \App\Livewire\Offices\Create::class)->name('offices.edit');
     Route::livewire('offices/{office}/statistics', \App\Livewire\Offices\Statistics::class)->name('offices.statistics');
 
+    // تقريرا الزيارة (المفتش · المستشار) — صلاحيتان مستقلتان عن offices.* تُفحصان داخل mount()
+    Route::livewire('visit-reports/{type}', \App\Livewire\Offices\VisitReportsIndex::class)
+        ->whereIn('type', ['inspector', 'counselor'])->name('offices.visit-reports');
+    Route::livewire('offices/{office}/visit-reports/{type}', \App\Livewire\Offices\VisitReport::class)
+        ->whereIn('type', ['inspector', 'counselor'])->name('offices.visit-report');
+
     // Vehicles — access controlled per-permission inside component mount()
     Route::livewire('vehicles', \App\Livewire\Vehicles\Index::class)->name('vehicles.index');
     Route::livewire('vehicles/create', \App\Livewire\Vehicles\Create::class)->name('vehicles.create');

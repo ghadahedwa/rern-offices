@@ -18,7 +18,7 @@
             </div>
         </div>
 
-        <div class="flex items-center gap-2">
+        <div class="flex flex-wrap items-center justify-end gap-2">
             <a href="{{ route('offices.pdf', $office->id) }}" target="_blank"
                class="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-zinc-300 dark:border-zinc-600 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700 text-sm font-medium transition">
                 <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -33,6 +33,12 @@
                 </svg>
                 {{ __('home.office_statistics') }}
             </a>
+            @foreach($reports as $reportType)
+            <a href="{{ route('offices.visit-report', [$office->id, $reportType]) }}" wire:navigate
+               class="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-[#c9a847] text-[#c9a847] hover:bg-[#c9a847]/10 text-sm font-medium transition">
+                {{ __(\App\Support\OfficeVisitReports::REPORTS[$reportType]['label']) }}
+            </a>
+            @endforeach
             @if($canEdit)
             <a href="{{ route('offices.edit', $office->id) }}" wire:navigate
                class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[#c9a847] hover:bg-[#b8962e] text-white text-sm font-medium transition">
@@ -48,15 +54,8 @@
     {{-- Step Progress --}}
     <div class="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-700 shadow-sm p-6">
         <div class="flex items-center justify-between">
-            @php
-                $tabs = [
-                    'basic'      => __('home.step_1_label'),
-                    'services'   => __('home.step_2_label'),
-                    'assessment' => __('home.step_3_label'),
-                    'media'      => __('home.step_4_label'),
-                ];
-                $tabKeys = array_keys($tabs);
-            @endphp
+            {{-- $tabs من المكوّن: تابا التقريرين يظهران بصلاحية كلٍّ منهما --}}
+            @php $tabKeys = array_keys($tabs); @endphp
             @foreach($tabs as $key => $label)
             @php $num = array_search($key, $tabKeys) + 1; @endphp
             <div class="flex items-center {{ !$loop->last ? 'flex-1' : '' }}">
@@ -90,8 +89,6 @@
             @elseif($activeTab === 'services')
                 @include('livewire.offices.includes.show-tab-services')
 
-            @elseif($activeTab === 'assessment')
-                @include('livewire.offices.includes.show-tab-assessment')
 
             @elseif($activeTab === 'media')
                 @include('livewire.offices.includes.show-tab-media')
@@ -102,7 +99,7 @@
 
     {{-- Prev / Next --}}
     @php
-        $tabOrder     = ['basic', 'services', 'assessment', 'media'];
+        $tabOrder     = array_keys($tabs);
         $currentIndex = array_search($activeTab, $tabOrder);
         $prevTab      = $currentIndex > 0 ? $tabOrder[$currentIndex - 1] : null;
         $nextTab      = $currentIndex < count($tabOrder) - 1 ? $tabOrder[$currentIndex + 1] : null;

@@ -1,11 +1,6 @@
 
-            {{-- ── Section: بيانات الزيارة والتقييم ── --}}
+            {{-- بنود تقرير الزيارة — للمفتش والمستشار معاً (App\Support\OfficeVisitReports::FIELDS) --}}
             <div class="mb-1">
-                <div class="flex items-center gap-3 mb-5">
-                    <div class="w-1 h-5 bg-[#c9a847] rounded-full"></div>
-                    <h3 class="text-sm font-semibold text-zinc-600 dark:text-zinc-400 uppercase tracking-wide">{{ __('home.step_3_label') }}</h3>
-                </div>
-
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
 
                     {{-- تاريخ الزيارة --}}
@@ -84,6 +79,7 @@
                             <option value="not_available">{{ __('home.option_not_available') }}</option>
                             <option value="broken">{{ __('home.option_broken') }}</option>
                         </select>
+                        @error('surveillance_cameras') <p class="{{ $err }}">{{ $message }}</p> @enderror
                     </div>
 
                 </div>
@@ -93,9 +89,10 @@
                     <label class="{{ $lbl }}">{{ __('home.office_needs') }}</label>
                     <textarea wire:model="office_needs" rows="4"
                               class="{{ $inp }} resize-none"
-                              placeholder="احتياجات المقر..."></textarea>
+                              placeholder="{{ __('home.office_needs') }}..."></textarea>
+                    @error('office_needs') <p class="{{ $err }}">{{ $message }}</p> @enderror
                 </div>
-                
+
                 {{-- السلبيات ومقترحات الحل --}}
                 <div class="mt-5">
                     <label class="{{ $lbl }}">{{ __('home.negatives_and_solutions') }}</label>
@@ -114,7 +111,4 @@
                     @error('development_proposals') <p class="{{ $err }}">{{ $message }}</p> @enderror
                 </div>
 
-
             </div>
-
-

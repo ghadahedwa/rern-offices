@@ -163,6 +163,28 @@ return [
     ],
 
     'attributes' => [
+        // المقرات — تقريرا الزيارة (المفتش بلا بادئة · المستشار ببادئة counselor_)
+        'visited_at'                             => 'تاريخ الزيارة',
+        'structural_condition_id'                => 'الحالة الإنشائية',
+        'cleanliness_rating'                     => 'تقييم النظافة',
+        'archive_rating'                         => 'تقييم غرف الحفظ',
+        'work_schedule_commitment'               => 'الالتزام بمواعيد العمل',
+        'citizen_treatment_commitment'           => 'الالتزام بحسن معاملة المواطنين',
+        'surveillance_cameras'                   => 'كاميرات المراقبة',
+        'office_needs'                           => 'احتياجات المقر',
+        'negatives_and_solutions'                => 'السلبيات ومقترحات الحل',
+        'development_proposals'                  => 'مقترحات التطوير',
+        'counselor_visited_at'                   => 'تاريخ الزيارة',
+        'counselor_structural_condition_id'      => 'الحالة الإنشائية',
+        'counselor_cleanliness_rating'           => 'تقييم النظافة',
+        'counselor_archive_rating'               => 'تقييم غرف الحفظ',
+        'counselor_work_schedule_commitment'     => 'الالتزام بمواعيد العمل',
+        'counselor_citizen_treatment_commitment' => 'الالتزام بحسن معاملة المواطنين',
+        'counselor_surveillance_cameras'         => 'كاميرات المراقبة',
+        'counselor_office_needs'                 => 'احتياجات المقر',
+        'counselor_negatives_and_solutions'      => 'السلبيات ومقترحات الحل',
+        'counselor_development_proposals'        => 'مقترحات التطوير',
+
         'monthFile' => 'ملف الكشف',
         'selectedWarehouses' => 'المخازن',
         // المراسلات — أطراف

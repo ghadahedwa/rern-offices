@@ -37,17 +37,24 @@
         @endif
     </div>
 
+    {{-- اسم المقر ثابتاً أعلى الشاشة أثناء التنقّل بين الخطوات والتمرير فيها —
+         يُقرأ من المحفوظ لا من خانة الاسم، فلا يتغيّر مع الكتابة قبل الحفظ --}}
+    @if($savedOffice)
+    <div class="sticky top-0 z-30 flex items-center gap-2 rounded-xl border border-[#c9a847]/40 bg-white dark:bg-zinc-900 shadow-sm px-4 py-2.5">
+        <div class="w-1 h-5 bg-[#c9a847] rounded-full shrink-0"></div>
+        <span class="text-sm font-semibold text-zinc-800 dark:text-zinc-100 truncate" title="{{ $savedOffice->name }}">{{ $savedOffice->name }}</span>
+        <span class="text-xs text-zinc-500 dark:text-zinc-400 shrink-0">
+            {{ $savedOffice->governorate->name ?? '—' }}
+            @if($savedOffice->officeType) &mdash; {{ $savedOffice->officeType->name }} @endif
+        </span>
+    </div>
+    @endif
+
     {{-- Step Progress --}}
     <div class="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-700 shadow-sm p-6">
         <div class="flex items-center justify-between">
-            @php
-                $steps = [
-                    1 => __('home.step_1_label'),
-                    2 => __('home.step_2_label'),
-                    3 => __('home.step_3_label'),
-                    4 => __('home.step_4_label'),
-                ];
-            @endphp
+            {{-- $steps من المكوّن: رقم الخطوة الثابت => عنوانها، والظاهر يتبع الصلاحيات.
+                 الرقم المعروض في الدائرة ترتيبها الظاهر لا رقمها الثابت. --}}
             @foreach ($steps as $num => $label)
                 <div class="flex items-center {{ !$loop->last ? 'flex-1' : '' }}">
                     <div class="flex flex-col items-center gap-1">
@@ -60,7 +67,7 @@
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
                                 </svg>
                             @else
-                                {{ $num }}
+                                {{ $loop->iteration }}
                             @endif
                         </button>
                         @else
@@ -71,7 +78,7 @@
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
                                 </svg>
                             @else
-                                {{ $num }}
+                                {{ $loop->iteration }}
                             @endif
                         </div>
                         @endif
@@ -99,12 +106,8 @@
             @include('livewire.offices.includes.create-step1')
         @elseif ($step === 2)
             @include('livewire.offices.includes.create-step2')
-        @elseif ($step === 3)
-            @include('livewire.offices.includes.create-step3')
-        @elseif ($step === 4)
+        @elseif ($step === \App\Livewire\Offices\Create::STEP_MEDIA)
             @include('livewire.offices.includes.create-step4')
-        @elseif ($step === 5)
-            @include('livewire.offices.includes.create-step5')
         @endif
     </div>
 
@@ -132,7 +135,7 @@
                     {{ __('home.save_and_exit') }}
                 </button>
             @endif
-            @if ($step < $totalSteps)
+            @if ($step !== array_key_last($steps))
                 <button wire:click="nextStep" type="button"
                         class="inline-flex items-center gap-2 bg-[#c9a847] hover:bg-[#b8962e] text-white text-sm font-medium px-5 py-2.5 rounded-lg transition">
                     {{ __('home.next_step') }}

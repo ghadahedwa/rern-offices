@@ -28,6 +28,7 @@ class OfficePdfController extends Controller
             'connectionType',
             'contractualStatus',
             'structuralCondition',
+            'counselorStructuralCondition',
             'MicrofilmOption',
             'DisabilitieAccess',
             'FireSafety',
@@ -51,7 +52,10 @@ class OfficePdfController extends Controller
             ? 'data:image/png;base64,' . base64_encode(file_get_contents($logoPath))
             : null;
 
-        $html = view('print.office-pdf', compact('office', 'statGroups', 'logoBase64'))->render();
+        // تقريرا الزيارة يخرجان في الملف بصلاحية عرض كلٍّ منهما — كالتابين في شاشة العرض
+        $reports = \App\Support\OfficeVisitReports::viewable($user);
+
+        $html = view('print.office-pdf', compact('office', 'statGroups', 'logoBase64', 'reports'))->render();
 
         $defaultConfig = (new ConfigVariables())->getDefaults();
         $fontDirs = $defaultConfig['fontDir'];

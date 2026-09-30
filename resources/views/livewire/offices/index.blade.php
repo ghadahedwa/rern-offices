@@ -90,6 +90,13 @@
                 {{ __('home.advanced_search') }}
                 <flux:icon.chevron-down variant="micro" class="w-3.5 h-3.5 transition {{ $showAdvanced ? 'rotate-180' : '' }}" />
             </button>
+
+            {{-- عدد الصفوف بجوار البحث المتقدم — في سطر الأزرار نفسه فلا ينزل الجدول --}}
+            <select wire:model.live="perPage" title="{{ __('home.per_page') }}" class="{{ str_replace('w-full', 'w-auto', $filterCls) }}">
+                @foreach($this->perPageOptions() as $option)
+                    <option value="{{ $option }}">{{ $option }} {{ __('home.rows_unit') }}</option>
+                @endforeach
+            </select>
         </div>
 
         {{-- لوحة البحث المتقدم (كله single select، فوري) --}}
@@ -180,11 +187,11 @@
             <thead class="bg-zinc-50 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 text-xs uppercase">
                 <tr>
                     <th class="px-4 py-3 font-medium">#</th>
-                    <th class="px-4 py-3 font-medium">{{ __('home.office_name') }}</th>
-                    <th class="px-4 py-3 font-medium">{{ __('home.governorate_name') }}</th>
-                    <th class="px-4 py-3 font-medium">{{ __('home.office_type') }}</th>
-                    <th class="px-4 py-3 font-medium">{{ __('home.location_description') }}</th>
-                    <th class="px-4 py-3 font-medium">{{ __('home.connection_type') }}</th>
+                    @include('livewire.partials.sortable-th', ['column' => 'name', 'label' => __('home.office_name')])
+                    @include('livewire.partials.sortable-th', ['column' => 'governorate', 'label' => __('home.governorate_name')])
+                    @include('livewire.partials.sortable-th', ['column' => 'type', 'label' => __('home.office_type')])
+                    @include('livewire.partials.sortable-th', ['column' => 'location', 'label' => __('home.location_description')])
+                    @include('livewire.partials.sortable-th', ['column' => 'connection', 'label' => __('home.connection_type')])
                     @if($canView || $canEdit || $canDelete)
                         <th class="px-4 py-3 font-medium">{{ __('home.actions') }}</th>
                     @endif
@@ -215,19 +222,12 @@
                                     @if($canEdit)
                                         <a href="{{ route('offices.edit', $office) }}" wire:navigate
                                            class="inline-flex items-center gap-1 text-xs px-3 py-1.5 rounded-md border border-zinc-300 dark:border-zinc-600 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition">
-                                            <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                                <path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
-                                            </svg>
                                             {{ __('home.edit') }}
                                         </a>
                                     @endif
                                     @if($canView)
                                         <a href="{{ route('offices.show', $office) }}" wire:navigate
                                            class="inline-flex items-center gap-1 text-xs px-3 py-1.5 rounded-md border border-[#c9a847] text-[#c9a847] hover:bg-[#c9a847]/10 transition">
-                                            <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                                <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                                                <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
-                                            </svg>
                                             {{ __('home.view_office') }}
                                         </a>
                                     @endif

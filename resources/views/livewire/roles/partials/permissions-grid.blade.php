@@ -14,6 +14,11 @@
         'offices.edit'   => 'تعديل مقر',
         'offices.delete' => 'حذف مقر',
         'offices.export' => 'تصدير بيانات المقرات',
+        // تقريرا الزيارة — مستقلتان عن صلاحيات المقر: لكلٍّ صفحته وقائمته في المنيو، والتعديل يشمل العرض
+        'offices.inspector-report.view' => 'عرض تقرير زيارة المفتش',
+        'offices.inspector-report.edit' => 'تعديل تقرير زيارة المفتش',
+        'offices.counselor-report.view' => 'عرض تقرير زيارة المستشار',
+        'offices.counselor-report.edit' => 'تعديل تقرير زيارة المستشار',
         'offices.phone-directory' => 'دليل الهاتف للمقرات',
         'offices.settings' => 'إدارة إعدادات المقرات (القوائم المرجعية)',
         'governorates.index'  => 'عرض المحافظات',
