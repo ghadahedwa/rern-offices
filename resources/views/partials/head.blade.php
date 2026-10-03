@@ -20,6 +20,12 @@
     if ('serviceWorker' in navigator && window.isSecureContext) {
         window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js').catch(() => {}));
     }
+    // يُلتقط هنا لا في app.js: قد يُطلقه المتصفح قبل تحميل الحزمة فيضيع. يقرؤه زرّ «تثبيت التطبيق» (resources/js/pwa-install.js).
+    window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        window.__pwaDeferred = e;
+        window.dispatchEvent(new Event('pwa:installable'));
+    });
 </script>
 
 <link rel="preconnect" href="https://fonts.bunny.net">

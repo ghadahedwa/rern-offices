@@ -571,6 +571,47 @@
 
             <flux:spacer />
 
+            {{-- 📲 تثبيت التطبيق — يظهر حين يقبل المتصفح التثبيت (أندرويد/كمبيوتر) أو على آيفون (تعليمات)،
+                 ويختفي داخل التطبيق المثبَّت. المنطق في resources/js/pwa-install.js. --}}
+            <div x-data="pwaInstall">
+                {{-- display:none مبدئياً: لا يومض قبل أن يقرر Alpine (x-show يزيله حين يظهر) --}}
+                <button type="button" x-show="visible" style="display: none" @click="install()"
+                        class="flex items-center gap-1.5 h-9 px-2.5 rounded-lg hover:bg-black/10 transition text-white text-sm font-semibold"
+                        title="{{ __('home.pwa_install') }}">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v12m0 0l-4-4m4 4l4-4M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2"/>
+                    </svg>
+                    <span>{{ __('home.pwa_install') }}</span>
+                </button>
+
+                <template x-teleport="body">
+                    <div x-show="showIos" x-transition.opacity @keydown.escape.window="showIos = false"
+                         class="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 p-4"
+                         @click.self="showIos = false">
+                        <div class="w-full max-w-sm rounded-2xl bg-white dark:bg-zinc-900 shadow-xl p-5 space-y-4" dir="rtl">
+                            <div class="flex items-center gap-3">
+                                <img src="/icons/icon-192.png" alt="" class="w-11 h-11">
+                                <h2 class="text-base font-semibold text-zinc-800 dark:text-zinc-100">{{ __('home.pwa_ios_title') }}</h2>
+                            </div>
+                            <p class="text-sm text-zinc-500 dark:text-zinc-400">{{ __('home.pwa_ios_intro') }}</p>
+                            <ol class="space-y-3 text-sm text-zinc-700 dark:text-zinc-200">
+                                @foreach(['pwa_ios_step1', 'pwa_ios_step2', 'pwa_ios_step3'] as $n => $step)
+                                    <li class="flex items-start gap-3">
+                                        <span class="shrink-0 w-6 h-6 rounded-full bg-[#c9a847] text-white text-xs font-bold grid place-items-center">{{ $n + 1 }}</span>
+                                        <span class="pt-0.5">{{ __('home.'.$step) }}</span>
+                                    </li>
+                                @endforeach
+                            </ol>
+                            <p class="text-xs text-zinc-400">{{ __('home.pwa_ios_safari_note') }}</p>
+                            <button type="button" @click="showIos = false"
+                                    class="w-full py-2 rounded-lg bg-[#c9a847] hover:bg-[#b8962e] text-white text-sm font-medium transition">
+                                {{ __('home.close') }}
+                            </button>
+                        </div>
+                    </div>
+                </template>
+            </div>
+
             {{-- ✉️ الظرف — المؤشّر الوحيد الظاهر لمن يعمل في فرع آخر.
                  قائمة الفروع dropdown مقفول، فعدّادٌ عليها يكون مدفوناً.
                  blade لا Livewire: يتحدّث مع كل تنقّل (الشريط ليس داخل @persist)،
