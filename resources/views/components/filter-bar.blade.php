@@ -21,7 +21,29 @@
     };
 @endphp
 
-<div class="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-sm p-5 space-y-4">
+{{-- على الموبايل (أضيق من sm) الفلاتر مطويّة خلف زرّ، وإلا دفعت الجدول تحت الشاشة.
+     الفئة الأولى `max-sm:hidden` تُرسَم مطويّةً قبل تشغيل Alpine فلا تومض مفتوحة، و`:class` يزيلها عند الفتح —
+     ومُجرَّب أنها تبقى مفتوحة بعد تحديث Livewire (اختيار فلتر): Livewire 4 يحفظ ما يضبطه Alpine.
+     الشاشة العريضة لا تتأثر: الطيّ كله `max-sm:`. --}}
+<div x-data="{ open: false }"
+     class="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-sm p-5 space-y-4 max-sm:space-y-3">
+    <button type="button" data-filter-toggle @click="open = !open" :aria-expanded="open.toString()"
+            class="sm:hidden w-full flex items-center justify-between text-sm font-medium text-zinc-700 dark:text-zinc-200">
+        <span class="inline-flex items-center gap-2">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-[#c9a847]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M3 4h18l-7 8v6l-4 2v-8L3 4z"/>
+            </svg>
+            {{ __('home.filters_toggle') }}
+            @if($active)
+                <span class="text-xs px-2 py-0.5 rounded-full bg-[#c9a847]/15 text-[#b8962e]">{{ __('home.filters_active') }}</span>
+            @endif
+        </span>
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-zinc-400 transition" :class="open && 'rotate-180'" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
+        </svg>
+    </button>
+
+    <div :class="{ 'max-sm:hidden': !open }" class="max-sm:hidden space-y-4">
     <div class="grid grid-cols-1 sm:grid-cols-2 {{ $grid }} gap-4">
         {{ $slot }}
     </div>
@@ -59,4 +81,5 @@
             @endif
         </div>
     @endif
+    </div>
 </div>

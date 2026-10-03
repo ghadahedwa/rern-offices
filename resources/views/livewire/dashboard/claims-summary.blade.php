@@ -8,7 +8,8 @@
     </div>
 
     <div class="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-sm p-5">
-        <div class="grid gap-4" style="grid-template-columns: repeat(5, minmax(0, 1fr));">
+        {{-- خمسة أعمدة من sm فأعلى (كما كانت دائماً)، وعمود واحد على الموبايل: المبالغ بعشرة أرقام تتداخل في خُمس الشاشة. --}}
+        <div class="grid gap-4 grid-cols-1 sm:grid-cols-5">
 
             {{-- إجمالي المطالبات --}}
             <div class="flex items-start gap-2">

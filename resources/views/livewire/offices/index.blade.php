@@ -17,7 +17,8 @@
     {{-- Filters --}}
     @php $filterCls = 'w-full border border-zinc-300 dark:border-zinc-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-[#c9a847]'; @endphp
     <div class="space-y-3">
-        <div class="grid grid-cols-4 gap-3">
+        {{-- عمود واحد على الموبايل: أربعة أعمدة ثابتة كانت تمدّ الصفحة إلى ٦٠٠px فتخرج عن الشاشة وتُربك فتح المنيو --}}
+        <div class="grid grid-cols-4 max-sm:grid-cols-1 gap-3">
             <input wire:model.live.debounce.300ms="search" type="text"
                    placeholder="{{ __('home.search') }}"
                    class="{{ $filterCls }}" />
@@ -41,7 +42,7 @@
             </select>
         </div>
 
-        <div class="flex items-center gap-3">
+        <div class="flex max-sm:flex-wrap items-center gap-3 max-sm:gap-2">
             <button wire:click="$toggle('needs_visit')"
                 class="inline-flex items-center gap-2 text-sm px-4 py-2 rounded-lg border transition
                     {{ $needs_visit
@@ -186,12 +187,13 @@
         <table class="w-full text-sm text-right">
             <thead class="bg-zinc-50 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 text-xs uppercase">
                 <tr>
-                    <th class="px-4 py-3 font-medium">#</th>
+                    {{-- على الموبايل: الاسم والمحافظة والعمليات وحدها — النوع والوصف والربط في صفحة عرض المقر --}}
+                    <th class="px-4 py-3 font-medium max-sm:hidden">#</th>
                     @include('livewire.partials.sortable-th', ['column' => 'name', 'label' => __('home.office_name')])
                     @include('livewire.partials.sortable-th', ['column' => 'governorate', 'label' => __('home.governorate_name')])
-                    @include('livewire.partials.sortable-th', ['column' => 'type', 'label' => __('home.office_type')])
-                    @include('livewire.partials.sortable-th', ['column' => 'location', 'label' => __('home.location_description')])
-                    @include('livewire.partials.sortable-th', ['column' => 'connection', 'label' => __('home.connection_type')])
+                    @include('livewire.partials.sortable-th', ['column' => 'type', 'label' => __('home.office_type'), 'thClass' => 'max-sm:hidden'])
+                    @include('livewire.partials.sortable-th', ['column' => 'location', 'label' => __('home.location_description'), 'thClass' => 'max-sm:hidden'])
+                    @include('livewire.partials.sortable-th', ['column' => 'connection', 'label' => __('home.connection_type'), 'thClass' => 'max-sm:hidden'])
                     @if($canView || $canEdit || $canDelete)
                         <th class="px-4 py-3 font-medium">{{ __('home.actions') }}</th>
                     @endif
@@ -200,25 +202,26 @@
             <tbody class="divide-y divide-zinc-100 dark:divide-zinc-700">
                 @forelse ($offices as $office)
                     <tr class="hover:bg-zinc-50 dark:hover:bg-zinc-800 transition">
-                        <td class="px-4 py-3 text-zinc-500">{{ $offices->firstItem() + $loop->index }}</td>
-                        <td class="px-4 py-3 font-medium text-zinc-800 dark:text-zinc-100">{{ $office->name }}</td>
-                        <td class="px-4 py-3 text-zinc-600 dark:text-zinc-300">{{ $office->governorate->name }}</td>
-                        <td class="px-4 py-3">
+                        <td class="px-4 py-3 text-zinc-500 max-sm:hidden">{{ $offices->firstItem() + $loop->index }}</td>
+                        <td class="px-4 py-3 max-sm:px-3 font-medium text-zinc-800 dark:text-zinc-100">{{ $office->name }}</td>
+                        <td class="px-4 py-3 max-sm:px-2 text-zinc-600 dark:text-zinc-300">{{ $office->governorate->name }}</td>
+                        <td class="px-4 py-3 max-sm:hidden">
                             <span class="inline-block px-2 py-0.5 rounded-full text-xs font-medium bg-[#c9a847]/15 text-[#b8962e] dark:text-[#c9a847]">
                               {{ $office->officeType->name ?? '—' }}
                             </span>
                         </td>
-                        <td class="px-4 py-3 text-zinc-600 dark:text-zinc-300">
+                        <td class="px-4 py-3 max-sm:hidden text-zinc-600 dark:text-zinc-300">
                             <span class="inline-block px-2 py-0.5 rounded-full text-xs font-medium bg-[#c9a847]/15 text-[#b8962e] dark:text-[#c9a847]">
                               {{ $office->locationDescription->name ?? '—' }}
                             </span>
                         </td>
-                        <td class="px-4 py-3 text-zinc-600 dark:text-zinc-300">
+                        <td class="px-4 py-3 max-sm:hidden text-zinc-600 dark:text-zinc-300">
                             {{ $office->connectionType->name ?? '—' }}
                         </td>
                         @if($canView || $canEdit || $canDelete)
-                            <td class="px-4 py-3">
-                                <div class="flex items-center gap-2">
+                            <td class="px-4 py-3 max-sm:px-2">
+                                {{-- الأزرار تحت بعضها على الموبايل بدل صفٍّ يمدّ الجدول --}}
+                                <div class="flex max-sm:flex-col max-sm:items-stretch items-center gap-2">
                                     @if($canEdit)
                                         <a href="{{ route('offices.edit', $office) }}" wire:navigate
                                            class="inline-flex items-center gap-1 text-xs px-3 py-1.5 rounded-md border border-zinc-300 dark:border-zinc-600 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition">

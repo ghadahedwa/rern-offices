@@ -52,10 +52,11 @@
             <div class="space-y-2">
                 @foreach($attendees as $i => $a)
                     <div wire:key="attendee-{{ $i }}" class="flex items-center gap-2">
+                        {{-- max-sm:min-w-0: الخانة لا تنكمش تحت عرضها الطبيعي (~٢٠ حرفاً) فتمدّ الصف خارج الموبايل --}}
                         <input type="text" wire:model="attendees.{{ $i }}.name" placeholder="{{ __('home.attendee_name') }}"
-                               class="flex-1 border border-zinc-300 dark:border-zinc-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-[#c9a847]" />
+                               class="flex-1 max-sm:min-w-0 border border-zinc-300 dark:border-zinc-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-[#c9a847]" />
                         <input type="text" wire:model="attendees.{{ $i }}.title" placeholder="{{ __('home.attendee_title') }}"
-                               class="flex-1 border border-zinc-300 dark:border-zinc-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-[#c9a847]" />
+                               class="flex-1 max-sm:min-w-0 border border-zinc-300 dark:border-zinc-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-[#c9a847]" />
                         <button type="button" wire:click="removeAttendee({{ $i }})"
                                 @class(['shrink-0 w-9 h-9 flex items-center justify-center rounded-lg border border-red-200 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition', 'invisible' => count($attendees) <= 1])>✕</button>
                     </div>

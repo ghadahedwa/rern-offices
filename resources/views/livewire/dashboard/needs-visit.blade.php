@@ -1,6 +1,6 @@
 {{-- مقرات تحتاج زيارة --}}
 @if($needsVisitCount > 0)
-<div class="rounded-xl border border-amber-200 dark:border-amber-800/50 bg-amber-50 dark:bg-amber-900/10 p-4 flex items-center justify-between gap-4">
+<div class="rounded-xl border border-amber-200 dark:border-amber-800/50 bg-amber-50 dark:bg-amber-900/10 p-4 flex max-sm:flex-wrap items-center justify-between gap-4">
     <div class="flex items-center gap-3">
         <div class="w-10 h-10 rounded-lg bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center shrink-0">
             <flux:icon.exclamation-triangle variant="outline" class="w-5 h-5 text-amber-600 dark:text-amber-400" />

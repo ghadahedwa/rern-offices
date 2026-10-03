@@ -1,0 +1,19 @@
+{
+    "id": "/dashboard",
+    "name": "منظومة قطاع الشهر العقاري والتوثيق",
+    "short_name": "الشهر العقاري",
+    "description": "منظومة إدارة مقرات الشهر العقاري والتوثيق",
+    "lang": "ar",
+    "dir": "rtl",
+    "start_url": "/dashboard",
+    "scope": "/",
+    "display": "standalone",
+    "background_color": "#ffffff",
+    "theme_color": "#c9a847",
+    "icons": [
+        { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+        { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+        { "src": "/icons/maskable-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
+        { "src": "/icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+    ]
+}

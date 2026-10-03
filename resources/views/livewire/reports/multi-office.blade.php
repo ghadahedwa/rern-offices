@@ -60,15 +60,16 @@
         </div>
         --}}
 
-        {{-- الصف الأول: المحافظة والمقر + VIP --}}
-        <div class="flex gap-5 items-end">
-            <div style="flex: 2; min-width: 0;">
+        {{-- الصف الأول: المحافظة والمقر + VIP — وعلى الموبايل كلٌّ في سطر (كفلاتر شاشة المقرات).
+             النِّسَب فئات لا style: الـstyle لا يُلغى على الموبايل وحده. --}}
+        <div class="flex max-sm:flex-col max-sm:items-stretch gap-5 items-end">
+            <div class="flex-2 min-w-0 max-sm:flex-none">
                 @include('livewire.reports.includes.checkbox-group', ['field' => 'governorateIds', 'options' => $governorates->pluck('name', 'id')->all(), 'label' => __('home.governorate_name'), 'live' => true])
             </div>
-            <div style="flex: 2; min-width: 0;">
+            <div class="flex-2 min-w-0 max-sm:flex-none">
                 @include('livewire.reports.includes.checkbox-group', ['field' => 'officeIds', 'options' => $officeOptions->pluck('name', 'id')->all(), 'label' => __('home.report_office_multi'), 'wireKey' => 'officeIds-' . md5($officeOptions->pluck('id')->implode(','))])
             </div>
-            <div style="flex: 1; min-width: 0;">
+            <div class="flex-1 min-w-0 max-sm:flex-none">
                 <p class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">{{ __('home.is_vip') }}</p>
                 <label class="inline-flex items-center justify-center gap-2 w-full py-2 rounded-lg border cursor-pointer select-none transition
                               {{ $isVip ? 'bg-[#c9a847] text-white border-[#c9a847] shadow-sm' : 'border-zinc-300 dark:border-zinc-600 text-zinc-500 dark:text-zinc-400' }}">
@@ -82,7 +83,8 @@
         </div>
 
         {{-- باقي الفلاتر الأساسية: 4 في الصف --}}
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-5 items-start">
+        {{-- عمود واحد على الموبايل: عمودان مع خانتي تاريخ متجاورتين كانا يمدّان الصفحة خارج الشاشة فيُربكان المنيو --}}
+        <div class="grid grid-cols-2 max-sm:grid-cols-1 md:grid-cols-4 gap-5 items-start">
             @include('livewire.reports.includes.checkbox-group', ['field' => 'typeIds', 'options' => $officeTypes->pluck('name', 'id')->all(), 'label' => __('home.office_type')])
             @include('livewire.reports.includes.checkbox-group', ['field' => 'locationIds', 'options' => $locations->pluck('name', 'id')->all(), 'label' => __('home.location_description')])
             @include('livewire.reports.includes.checkbox-group', ['field' => 'workSystemIds', 'options' => $workSystems->pluck('name', 'id')->all(), 'label' => __('home.work_system')])
@@ -97,7 +99,7 @@
         <div class="flex flex-col gap-4">
             <div>
                 <label class="{{ $lbl }}">{{ __('home.established_at') }}</label>
-                <div class="flex items-center gap-2">
+                <div class="flex max-sm:flex-col max-sm:items-stretch items-center gap-2">
                     <input wire:model="establishedFrom" type="date" class="{{ $inp }}" aria-label="{{ __('home.report_from') }}" />
                     <span class="text-xs text-zinc-400 shrink-0">{{ __('home.report_to') }}</span>
                     <input wire:model="establishedTo" type="date" class="{{ $inp }}" aria-label="{{ __('home.report_to') }}" />
@@ -105,7 +107,7 @@
             </div>
             <div>
                 <label class="{{ $lbl }}">{{ __('home.opened_at') }}</label>
-                <div class="flex items-center gap-2">
+                <div class="flex max-sm:flex-col max-sm:items-stretch items-center gap-2">
                     <input wire:model="openedFrom" type="date" class="{{ $inp }}" aria-label="{{ __('home.report_from') }}" />
                     <span class="text-xs text-zinc-400 shrink-0">{{ __('home.report_to') }}</span>
                     <input wire:model="openedTo" type="date" class="{{ $inp }}" aria-label="{{ __('home.report_to') }}" />
@@ -113,7 +115,7 @@
             </div>
             <div>
                 <label class="{{ $lbl }}">{{ __('home.mechanization_at') }}</label>
-                <div class="flex items-center gap-2">
+                <div class="flex max-sm:flex-col max-sm:items-stretch items-center gap-2">
                     <input wire:model="mechanizationFrom" type="date" class="{{ $inp }}" aria-label="{{ __('home.report_from') }}" />
                     <span class="text-xs text-zinc-400 shrink-0">{{ __('home.report_to') }}</span>
                     <input wire:model="mechanizationTo" type="date" class="{{ $inp }}" aria-label="{{ __('home.report_to') }}" />
@@ -143,7 +145,7 @@
                 <div class="w-1 h-5 bg-[#c9a847] rounded-full"></div>
                 <h3 class="text-sm font-semibold text-zinc-600 dark:text-zinc-400 uppercase tracking-wide">{{ __('home.report_group_services_tech') }}</h3>
             </div>
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-5">
+            <div class="grid grid-cols-2 max-sm:grid-cols-1 md:grid-cols-4 gap-5">
                 @include('livewire.reports.includes.checkbox-group', ['field' => 'microfilmIds', 'options' => $microfilmOptions->pluck('name', 'id')->all(), 'label' => __('home.microfilm_option')])
                 @include('livewire.reports.includes.checkbox-group', ['field' => 'disabilitiesAccessIds', 'options' => $disabilitiesAccess->pluck('name', 'id')->all(), 'label' => __('home.disabilities_access_label')])
                 @include('livewire.reports.includes.checkbox-group', ['field' => 'fireSafetyIds', 'options' => $fireSafetyOptions->pluck('name', 'id')->all(), 'label' => __('home.fire_safety_label')])
@@ -187,7 +189,7 @@
                 <div class="w-1 h-5 bg-[#c9a847] rounded-full"></div>
                 <h3 class="text-sm font-semibold text-zinc-600 dark:text-zinc-400 uppercase tracking-wide">{{ __('home.report_group_assessment') }}</h3>
             </div>
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-5">
+            <div class="grid grid-cols-2 max-sm:grid-cols-1 md:grid-cols-4 gap-5">
                 @include('livewire.reports.includes.checkbox-group', ['field' => 'cleanlinessRating', 'options' => \App\Models\Office::CLEANLINESS_RATINGS, 'label' => __('home.cleanliness_rating')])
                 @include('livewire.reports.includes.checkbox-group', ['field' => 'archiveRating', 'options' => \App\Models\Office::ARCHIVE_RATINGS, 'label' => __('home.archive_rating')])
                 @include('livewire.reports.includes.checkbox-group', ['field' => 'scheduleCommitment', 'options' => \App\Models\Office::COMMITMENT_RATINGS, 'label' => __('home.work_schedule_commitment')])

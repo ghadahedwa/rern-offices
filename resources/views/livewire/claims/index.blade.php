@@ -15,7 +15,8 @@
 
     {{-- ── Tabs ── --}}
     <div class="border-b border-zinc-200 dark:border-zinc-700">
-        <nav class="flex gap-1">
+        {{-- التابات الأربعة لا تسع الموبايل: تتمرّر داخل شريطها بدل أن تمدّ الصفحة --}}
+        <nav class="flex gap-1 max-sm:overflow-x-auto max-sm:whitespace-nowrap">
             <button type="button" wire:click="setTab('debt')"
                 class="px-4 py-2.5 text-sm font-medium border-b-2 transition cursor-pointer
                 {{ $tab === 'debt' ? 'border-[#c9a847] text-[#c9a847]' : 'border-transparent text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300' }}">

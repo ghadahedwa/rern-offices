@@ -1,0 +1,48 @@
+<!doctype html>
+<!--
+    صفحة «لا يوجد اتصال» — يعرضها sw.js حين يفشل فتح صفحة لانقطاع الشبكة.
+    ⚠️ ملف ثابت لا قالب Blade: يُعرض والسيرفر غير متاح، فلا يمرّ بـ __() ولا يحمّل أصول Vite —
+    ولذلك نصّه العربي مكتوب هنا مباشرة، وأسلوبه كله داخل الملف.
+-->
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#c9a847">
+    <title>لا يوجد اتصال - منظومة قطاع الشهر العقاري والتوثيق</title>
+    <style>
+        :root { color-scheme: light dark; }
+        * { box-sizing: border-box; }
+        body {
+            margin: 0; min-height: 100vh; display: flex; align-items: center; justify-content: center;
+            padding: 24px; font-family: system-ui, -apple-system, "Segoe UI", Tahoma, sans-serif;
+            background: #fafafa; color: #27272a;
+        }
+        .card {
+            max-width: 380px; width: 100%; text-align: center; background: #fff;
+            border: 1px solid #e4e4e7; border-radius: 16px; padding: 32px 24px;
+        }
+        img { width: 88px; height: 88px; }
+        h1 { font-size: 20px; margin: 16px 0 8px; }
+        p { font-size: 14px; line-height: 1.8; color: #71717a; margin: 0 0 24px; }
+        button {
+            font: inherit; font-size: 15px; padding: 10px 28px; border-radius: 10px; cursor: pointer;
+            border: 1px solid #c9a847; background: #c9a847; color: #fff;
+        }
+        button:hover { background: #b8962e; }
+        @media (prefers-color-scheme: dark) {
+            body { background: #18181b; color: #f4f4f5; }
+            .card { background: #27272a; border-color: #3f3f46; }
+            p { color: #a1a1aa; }
+        }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <img src="/icons/icon-192.png" alt="">
+        <h1>لا يوجد اتصال بالإنترنت</h1>
+        <p>تعذّر فتح الصفحة. تأكّد من اتصال الجهاز بالإنترنت ثم أعد المحاولة.</p>
+        <button type="button" onclick="location.reload()">إعادة المحاولة</button>
+    </div>
+</body>
+</html>

@@ -7,7 +7,8 @@
         </h3>
     </div>
 
-    <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+    {{-- عمود واحد على الموبايل: كل بطاقة فيها مقارنة سنتين جنباً إلى جنب، فبطاقتان في الصف تتداخل أرقامهما. --}}
+    <div class="grid grid-cols-2 max-sm:grid-cols-1 md:grid-cols-3 gap-4">
         @foreach($statsSummary as $stat)
         <div class="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-sm p-5">
 

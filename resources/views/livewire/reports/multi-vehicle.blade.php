@@ -47,18 +47,18 @@
             <h3 class="text-sm font-semibold text-zinc-600 dark:text-zinc-400 uppercase tracking-wide">{{ __('home.report_basic_filters') }}</h3>
         </div>
 
-        {{-- الصف الأول: المحافظة والسيارة --}}
-        <div class="flex gap-5 items-end">
-            <div style="flex: 1; min-width: 0;">
+        {{-- الصف الأول: المحافظة والسيارة — وعلى الموبايل كلٌّ في سطر (كتقرير المقرات المتقدم) --}}
+        <div class="flex max-sm:flex-col max-sm:items-stretch gap-5 items-end">
+            <div class="flex-1 min-w-0 max-sm:flex-none">
                 @include('livewire.reports.includes.checkbox-group', ['field' => 'governorateIds', 'options' => $governorates->pluck('name', 'id')->all(), 'label' => __('home.governorate_name'), 'live' => true])
             </div>
-            <div style="flex: 1; min-width: 0;">
+            <div class="flex-1 min-w-0 max-sm:flex-none">
                 @include('livewire.reports.includes.checkbox-group', ['field' => 'vehicleIds', 'options' => $vehicleOptions->pluck('name', 'id')->all(), 'label' => __('home.report_vehicle_multi'), 'wireKey' => 'vehicleIds-' . md5($vehicleOptions->pluck('id')->implode(','))])
             </div>
         </div>
 
         {{-- باقي الفلاتر: 4 في الصف --}}
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-5 items-start">
+        <div class="grid grid-cols-2 max-sm:grid-cols-1 md:grid-cols-4 gap-5 items-start">
             @include('livewire.reports.includes.checkbox-group', ['field' => 'typeIds', 'options' => $vehicleTypes->pluck('name', 'id')->all(), 'label' => __('home.vehicle_type')])
             @include('livewire.reports.includes.checkbox-group', ['field' => 'workSystemIds', 'options' => $workSystems->pluck('name', 'id')->all(), 'label' => __('home.vehicle_work_system')])
             @include('livewire.reports.includes.checkbox-group', ['field' => 'workingHoursIds', 'options' => $workingHoursOptions->pluck('name', 'id')->all(), 'label' => __('home.working_hours')])
@@ -79,7 +79,7 @@
         <div class="flex flex-col gap-4">
             <div>
                 <label class="{{ $lbl }}">{{ __('home.report_manufacture_year_range') }}</label>
-                <div class="flex items-center gap-2">
+                <div class="flex max-sm:flex-col max-sm:items-stretch items-center gap-2">
                     <input wire:model="manufactureYearFrom" type="number" min="1980" max="{{ date('Y') + 1 }}" class="{{ $inp }}" aria-label="{{ __('home.report_from') }}" />
                     <span class="text-xs text-zinc-400 shrink-0">{{ __('home.report_to') }}</span>
                     <input wire:model="manufactureYearTo" type="number" min="1980" max="{{ date('Y') + 1 }}" class="{{ $inp }}" aria-label="{{ __('home.report_to') }}" />
@@ -87,7 +87,7 @@
             </div>
             <div>
                 <label class="{{ $lbl }}">{{ __('home.vehicle_operated_at') }}</label>
-                <div class="flex items-center gap-2">
+                <div class="flex max-sm:flex-col max-sm:items-stretch items-center gap-2">
                     <input wire:model="operatedAtFrom" type="date" class="{{ $inp }}" aria-label="{{ __('home.report_from') }}" />
                     <span class="text-xs text-zinc-400 shrink-0">{{ __('home.report_to') }}</span>
                     <input wire:model="operatedAtTo" type="date" class="{{ $inp }}" aria-label="{{ __('home.report_to') }}" />
@@ -95,7 +95,7 @@
             </div>
             <div>
                 <label class="{{ $lbl }}">{{ __('home.license_expiry_date') }}</label>
-                <div class="flex items-center gap-2">
+                <div class="flex max-sm:flex-col max-sm:items-stretch items-center gap-2">
                     <input wire:model="licenseExpiryFrom" type="date" class="{{ $inp }}" aria-label="{{ __('home.report_from') }}" />
                     <span class="text-xs text-zinc-400 shrink-0">{{ __('home.report_to') }}</span>
                     <input wire:model="licenseExpiryTo" type="date" class="{{ $inp }}" aria-label="{{ __('home.report_to') }}" />

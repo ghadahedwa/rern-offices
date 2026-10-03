@@ -2,6 +2,11 @@
 
 return [
     'app_name'  => 'منظومة قطاع الشهر العقاري والتوثيق',
+    // اسم التطبيق المثبَّت تحت أيقونته (آيفون) — يطابق short_name في public/manifest.webmanifest.
+    'pwa_short_name' => 'الشهر العقاري',
+    // زرّ طيّ الفلاتر على الموبايل (components/filter-bar).
+    'filters_toggle' => 'الفلاتر',
+    'filters_active' => 'مفعّلة',
     'exit'      => 'خروج',
     'next_tab'  => 'التالي',
 
