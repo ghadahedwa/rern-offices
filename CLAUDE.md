@@ -109,7 +109,7 @@ stat_types.group_key:
 
 ## Routes (web.php)
 ```php
-/                                    → redirect إلى /feedback (name: home)  ← الجذر يفتح البوابة العامة
+/                                    → redirect إلى /login (name: home)  ← الجذر يفتح شاشة الدخول (2026-10-04)؛ البوابة العامة على /feedback
 offices                              → Offices\Index       (offices.index)
 offices/create                       → Offices\Create      (offices.create)
 offices/{office}                     → Offices\Show        (offices.show)
@@ -456,7 +456,7 @@ resources/views/livewire/offices/
 ---
 
 ## بوابة رأي المواطن (Citizen Feedback) ✅ **منجزة (جهة المواطن)**
-بوابة عامة **بدون تسجيل دخول** تحت `/feedback`. الجذر `/` يوجّه لها. الموظفون يدخلون عبر `/login` مباشرة (لا رابط دخول في البوابة).
+بوابة عامة **بدون تسجيل دخول** تحت `/feedback`. (الجذر `/` كان يوجّه لها، وصار يوجّه لـ`/login` منذ 2026-10-04.) الموظفون يدخلون عبر `/login` مباشرة (لا رابط دخول في البوابة).
 
 ### الشاشات
 - `feedback.landing` (blade) — **ثلاثة كروت**: **تقييم الخدمة** / **تقديم اقتراح** / **تقييم المنصات الرقمية** + **شريط إرشادي للشكاوى الرسمية** (منظومة الشكاوى الموحدة بمجلس الوزراء: 16528 · واتساب · shakwa.eg — لا منظومة شكاوى داخلية).

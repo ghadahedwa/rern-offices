@@ -1,7 +1,7 @@
 <?php
 
 test('the root url redirects to the citizen feedback portal', function () {
-    $this->get(route('home'))->assertRedirect(route('feedback'));
+    $this->get(route('home'))->assertRedirect(route('login'));
 });
 
 test('the citizen feedback portal is reachable without logging in', function () {

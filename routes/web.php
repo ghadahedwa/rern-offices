@@ -2,8 +2,8 @@
 
 use Illuminate\Support\Facades\Route;
 
-// الجذر يفتح بوابة رأي المواطن العامة؛ الموظفون يدخلون عبر رابط "دخول الموظفين" في فوتر البوابة → /login
-Route::redirect('/', '/feedback')->name('home');
+// الجذر يفتح شاشة الدخول؛ بوابة رأي المواطن العامة على /feedback مباشرة
+Route::redirect('/', '/login')->name('home');
 
 // بوابة رأي المواطن — صفحات عامة (بدون تسجيل دخول): اقتراح / تقييم
 Route::view('feedback', 'feedback.landing')->name('feedback');
