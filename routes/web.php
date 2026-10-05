@@ -15,6 +15,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     //Route::view('dashboard', 'dashboard')->name('dashboard');
     Route::livewire('dashboard', \App\Livewire\Dashboard::class)->name('dashboard');
 
+    // حساب بلا أي فرع متاح (دورٌ بلا صلاحيات) — بدل لفّ /dashboard إلى نفسه
+    Route::get('no-access', \App\Http\Controllers\NoAccessController::class)->name('no-access');
+
     // Governorates — access controlled per-permission inside component mount()
     Route::livewire('governorates', \App\Livewire\Governorates\Index::class)->name('governorates.index');
     Route::livewire('governorates/create', \App\Livewire\Governorates\Create::class)->name('governorates.create');

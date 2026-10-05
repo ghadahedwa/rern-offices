@@ -26,7 +26,8 @@ class Dashboard extends Component
     {
         // داشبورد المقرات لمن يدخل فرع المقرات فقط؛ غيره يُوجَّه لصفحة دخول فرعه
         if (! Branch::canAccess('offices')) {
-            return $this->redirect(Branch::defaultUrlFor(), navigate: true);
+            // ⚠️ landingUrlFor لا defaultUrlFor: الثانية قد ترجع هذه الصفحة نفسها فيلفّ المتصفح
+            return $this->redirect(Branch::landingUrlFor(), navigate: true);
         }
     }
 

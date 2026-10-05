@@ -16,8 +16,9 @@ test('a user with access to the offices branch can visit the dashboard', functio
     $this->actingAs($user)->get(route('dashboard'))->assertOk();
 });
 
-test('a user with no branch access is redirected away from the dashboard', function () {
+test('a user with no branch access is redirected to the no-access page', function () {
     $user = User::factory()->create();
 
-    $this->actingAs($user)->get(route('dashboard'))->assertRedirect();
+    // ⚠️ assertRedirect() بلا وجهة كان ينجح والداشبورد يوجّه لنفسه بلا نهاية — الوجهة صريحة
+    $this->actingAs($user)->get(route('dashboard'))->assertRedirect(route('no-access'));
 });

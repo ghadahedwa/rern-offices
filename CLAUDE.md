@@ -35,6 +35,12 @@ offices.export  — تصدير (غير منفذ بعد)
 - super-admin مستبعد دائماً من رؤية أي مشرف (فوق الجميع)
 - مستخدم في `Dashboard.php` فقط (سجل النشاط + المتصلون الآن)
 
+### حساب بلا فرع متاح ← صفحة `no-access` (2026-10-05)
+بلاغ العميل من شبكة الوزارة: `ERR_TOO_MANY_REDIRECTS` لحساب بدور `Boss` الفارغ — الداشبورد يردّ مَن لا يدخل فرع المقرات إلى `Branch::defaultUrlFor()`، وكانت ترجع `dashboard` لمن لا فرع له فيلفّ (حتى `/login` يلفّ: الجلسة باقية).
+- ⚠️ **أي توجيه «إلى فرع المستخدم» يقرأ `Branch::landingUrlFor()` لا `defaultUrlFor()`** — الأولى تضمن ألّا ترجع `/dashboard` لمن لا يدخل المقرات (`entryUrlFor` يسقط إلى `default_route`، وفرع المقرات `dashboard`).
+- صفحة `no-access` تُوجّه مَن صارت له وجهة إلى فرعه، فلا يعلق أحد بعد إسناد دوره.
+- الحارس `tests/Feature/NoAccessTest.php` (٧ — يتتبّع التوجيه بسقف؛ `followingRedirects()` بلا سقف يعلّق على الحلقة). 📌 كُسِرت حراساته الخمسة وسقطت. واختبار `DashboardTest` القديم كان `assertRedirect()` بلا وجهة **فنجح والحلقة قائمة**.
+
 ---
 
 ## Models والعلاقات
@@ -115,6 +121,7 @@ offices/create                       → Offices\Create      (offices.create)
 offices/{office}                     → Offices\Show        (offices.show)
 offices/{office}/edit                → Offices\Create      (offices.edit)  ← نفس component
 offices/{office}/statistics          → Offices\Statistics  (offices.statistics)
+no-access                            → NoAccessController  (no-access)  ← حساب بلا أي فرع متاح (2026-10-05)
 
 // بوابة رأي المواطن — عامة (بدون auth):
 feedback                             → view feedback.landing (feedback)

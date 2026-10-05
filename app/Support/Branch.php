@@ -158,11 +158,35 @@ class Branch
         return route($branch['default_route'] ?? 'dashboard');
     }
 
-    /** URL التوجيه بعد اللوجين = صفحة دخول أول فرع متاح للمستخدم. */
+    /**
+     * URL التوجيه بعد اللوجين = صفحة دخول أول فرع متاح للمستخدم.
+     *
+     * ⚠️ مستخدم بلا فرع متاح (دورٌ بلا صلاحيات) يذهب إلى صفحة «لا توجد صلاحيات» لا إلى
+     *    `dashboard`: داشبورد المقرات يردّ مَن لا يدخل فرع المقرات إلى هنا، فكانت تُرجعه
+     *    إليه فيلفّ المتصفح حتى ERR_TOO_MANY_REDIRECTS (حساب بدور Boss الفارغ — 2026-10-04).
+     */
     public static function defaultUrlFor($user = null): string
     {
         $key = static::defaultKeyFor($user);
 
-        return $key ? static::entryUrlFor($key, $user) : route('dashboard');
+        return $key ? static::entryUrlFor($key, $user) : route('no-access');
+    }
+
+    /**
+     * وجهةٌ مضمونة لا تُرجِع المستخدم إلى داشبورد المقرات وهو لا يدخل فرعه.
+     *
+     * ⚠️ entryUrlFor() يسقط إلى default_route حين لا يطابق أي مدخل، وفرع المقرات
+     *    default_route = dashboard. فلو وصل إليه مَن لا يدخل فرع المقرات لردّه الداشبورد
+     *    إلى هنا من جديد. يقرؤها الداشبورد وصفحة «لا توجد صلاحيات» معاً، فلا يلفّ أيٌّ منهما.
+     */
+    public static function landingUrlFor($user = null): string
+    {
+        $target = static::defaultUrlFor($user);
+
+        if ($target === route('dashboard') && ! static::canAccess('offices', $user)) {
+            return route('no-access');
+        }
+
+        return $target;
     }
 }
