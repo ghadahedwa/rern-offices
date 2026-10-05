@@ -1025,6 +1025,15 @@ contractors.reports              → تحويلةٌ للأولى (الرابط �
 
 ---
 
+## الدومين والسيرفر (2026-10-05)
+- **العنوان الرسمي: `https://rern-online.com`** (Cloudflare، DNS only — السحابة رمادية). `www` يحوّل إليه.
+- `https://rern-offices.duckdns.org` و`http://62.238.42.83` يحوّلان إليه بـ301 مع المسار. شهادة duckdns باقية وتتجدد حتى لا تنكسر الروابط القديمة.
+- nginx: `sites-available/rern-online` يخدم التطبيق · `sites-available/rern-offices` تحويل فقط.
+- الشهادات `certbot certonly --webroot` (لا `--nginx`) وتتجدد تلقائياً.
+- `.env`: `APP_URL=https://rern-online.com` · `SESSION_SECURE_COOKIE=true` · `SESSION_DOMAIN=null` عمداً · `QUEUE_CONNECTION=sync` (لا workers).
+- منع الفهرسة: هيدر `X-Robots-Tag: noindex, nofollow` من nginx، و`robots.txt` يسمح بالزحف عمداً ليرى المحرّك الهيدر. لا Google Search Console (قرار: نظام داخلي).
+- الوصول بالـIP مباشرةً بـHTTP غير مدعوم: الكوكي Secure.
+
 ## أوامر السيرفر المعلقة
 بعد كل `git push` يجب تذكير المستخدم بتشغيل على السيرفر:
 ```bash
