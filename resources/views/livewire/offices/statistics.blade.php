@@ -39,9 +39,21 @@
     
 
     {{-- Tabs Nav --}}
-    <div class="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-700 shadow-sm p-6">
-        <div class="flex items-start justify-between">
-            @php $tabKeys = array_keys($this->tabs); @endphp
+    <div class="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-700 shadow-sm p-6 max-sm:p-4">
+        @php $tabKeys = array_keys($this->tabs); @endphp
+
+        {{-- ⚠️ الموبايل: الدوائر الثماني تُخفي أسماءها (لا تتّسع) فيبقى رقمٌ بلا معنى — قائمةٌ منسدلة بالرقم والاسم بدلها --}}
+        <div class="sm:hidden">
+            <label for="stat-tab-select" class="block text-xs font-medium text-zinc-500 dark:text-zinc-400 mb-1">{{ __('home.stat_tab_select') }}</label>
+            <select id="stat-tab-select" wire:model.live="activeTab"
+                    class="w-full border border-zinc-300 dark:border-zinc-600 rounded-lg px-3 py-2 text-base bg-white dark:bg-zinc-800 text-zinc-800 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-[#c9a847]/40 focus:border-[#c9a847]">
+                @foreach($this->tabs as $key => $label)
+                    <option value="{{ $key }}">{{ $loop->iteration }}. {{ $label }}</option>
+                @endforeach
+            </select>
+        </div>
+
+        <div class="flex items-start justify-between max-sm:hidden">
             @foreach($this->tabs as $key => $label)
             @php $num = array_search($key, $tabKeys) + 1; @endphp
             <div class="flex items-start {{ !$loop->last ? 'flex-1' : '' }}">

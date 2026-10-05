@@ -204,11 +204,14 @@
                 <table class="text-xs text-center border-collapse w-max min-w-full">
                     <thead class="bg-zinc-50 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400">
                         <tr>
-                            <th class="sticky start-0 z-20 bg-zinc-50 dark:bg-zinc-800 px-3 py-2 text-right font-medium min-w-48 border-b border-e border-zinc-200 dark:border-zinc-700">
+                            {{-- ⚠️ الموبايل: عمود الاسم الثابت بعرض min-w-48 كان يأخذ ثلثي الشاشة فلا يظهر إلا أربعة أيام،
+                                 والأيام تمرّ تحته فتقع لمسة اليوم على الاسم — فيضيق إلى 7rem ويلتفّ الاسم سطرين --}}
+                            <th class="sticky start-0 z-20 bg-zinc-50 dark:bg-zinc-800 px-3 max-sm:px-2 py-2 text-right font-medium min-w-48 max-sm:min-w-0 max-sm:w-28 border-b border-e border-zinc-200 dark:border-zinc-700">
                                 {{ __('home.ct_worker_name') }}
                             </th>
                             {{-- «وصل الكشف» بجوار الاسم لا في آخر الصفّ: الشهر ثلاثون عموداً، وما بعدها يحتاج تمريراً فيُنسى --}}
-                            <th class="px-2 py-2 font-medium border-b border-e border-zinc-200 dark:border-zinc-700 whitespace-nowrap">{{ __('home.ct_att_reviewed') }}</th>
+                            {{-- الموبايل: الرأس سطرين — بسطرٍ واحد كان العمود ١٠٨px فيأكل مع الاسم ثلثي الشاشة --}}
+                            <th class="px-2 max-sm:px-1 py-2 font-medium border-b border-e border-zinc-200 dark:border-zinc-700 whitespace-nowrap max-sm:whitespace-normal max-sm:w-12 max-sm:leading-tight">{{ __('home.ct_att_reviewed') }}</th>
                             @foreach($columns as $col)
                                 <th class="w-7 min-w-7 px-0 py-1.5 font-medium border-b border-zinc-200 dark:border-zinc-700
                                            {{ $col['kind'] === 'weekend' ? 'bg-zinc-300/70 dark:bg-zinc-700' : '' }}
@@ -229,8 +232,8 @@
                         @foreach($visibleRows as $row)
                             @php($open = array_flip($row['open']))
                             <tr wire:key="att-row-{{ $row['id'] }}" class="group">
-                                <td class="sticky start-0 z-10 bg-white dark:bg-zinc-900 group-hover:bg-zinc-50 dark:group-hover:bg-zinc-800 px-3 py-1.5 text-right border-b border-e border-zinc-100 dark:border-zinc-800 max-w-56">
-                                    <div class="text-sm text-zinc-800 dark:text-zinc-100 truncate" title="{{ $row['name'] }}">{{ $row['name'] }}</div>
+                                <td class="sticky start-0 z-10 bg-white dark:bg-zinc-900 group-hover:bg-zinc-50 dark:group-hover:bg-zinc-800 px-3 max-sm:px-2 py-1.5 text-right border-b border-e border-zinc-100 dark:border-zinc-800 max-w-56 max-sm:max-w-28">
+                                    <div class="text-sm max-sm:text-xs max-sm:leading-snug text-zinc-800 dark:text-zinc-100 truncate max-sm:whitespace-normal max-sm:line-clamp-2" title="{{ $row['name'] }}">{{ $row['name'] }}</div>
                                     @if($row['profession'])
                                         <div class="text-[11px] text-[#b8962e] dark:text-[#d4b65e] truncate">{{ $row['profession'] }}</div>
                                     @endif
