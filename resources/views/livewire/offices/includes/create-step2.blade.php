@@ -90,6 +90,15 @@
                         </select>
                     </div>
                     <div>
+                        <label class="{{ $lbl }}">{{ __('home.surveillance_cameras') }}</label>
+                        <select wire:model="surveillance_cameras" class="{{ $inp }}">
+                            <option value="">{{ __('home.select_option') }}</option>
+                            <option value="available">{{ __('home.option_available') }}</option>
+                            <option value="not_available">{{ __('home.option_not_available') }}</option>
+                            <option value="broken">{{ __('home.option_broken') }}</option>
+                        </select>
+                    </div>
+                    <div>
                         <label class="{{ $lbl }}">{{ __('home.payment_machine_count') }}</label>
                         <input wire:model="payment_machine_count" type="number" min="0" placeholder="0" class="{{ $inp }}" />
                     </div>

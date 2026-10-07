@@ -72,6 +72,14 @@
                         <p class="text-sm font-medium text-zinc-800 dark:text-zinc-100">{{ $queueLabels[$office->queue_management_system] ?? __('home.no_data') }}</p>
                     </div>
                     <div>
+                        <p class="text-xs text-zinc-400 dark:text-zinc-500 mb-0.5">{{ __('home.surveillance_cameras') }}</p>
+                        <p class="text-sm font-medium text-zinc-800 dark:text-zinc-100">{{ [
+                            'available'     => __('home.option_available'),
+                            'not_available' => __('home.option_not_available'),
+                            'broken'        => __('home.option_broken'),
+                        ][$office->surveillance_cameras] ?? __('home.no_data') }}</p>
+                    </div>
+                    <div>
                         <p class="text-xs text-zinc-400 dark:text-zinc-500 mb-0.5">{{ __('home.payment_machine_count') }}</p>
                         <p class="text-sm font-medium text-zinc-800 dark:text-zinc-100">{{ $office->payment_machine_count ?? __('home.no_data') }}</p>
                     </div>

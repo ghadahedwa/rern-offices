@@ -70,18 +70,6 @@
                         @error('citizen_treatment_commitment') <p class="{{ $err }}">{{ $message }}</p> @enderror
                     </div>
 
-                    {{-- كاميرات المراقبة --}}
-                    <div>
-                        <label class="{{ $lbl }}">{{ __('home.surveillance_cameras') }}</label>
-                        <select wire:model="surveillance_cameras" class="{{ $inp }}">
-                            <option value="">{{ __('home.select_option') }}</option>
-                            <option value="available">{{ __('home.option_available') }}</option>
-                            <option value="not_available">{{ __('home.option_not_available') }}</option>
-                            <option value="broken">{{ __('home.option_broken') }}</option>
-                        </select>
-                        @error('surveillance_cameras') <p class="{{ $err }}">{{ $message }}</p> @enderror
-                    </div>
-
                 </div>
 
                 {{-- احتياجات المقر --}}

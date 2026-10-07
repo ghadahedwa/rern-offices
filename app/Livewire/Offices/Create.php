@@ -86,6 +86,7 @@ class Create extends Component
     public $cleanliness_contract_id = null;
     public string $Braille_sign_device = '';
     public string $queue_management_system = '';
+    public string $surveillance_cameras = '';
     public string $payment_machine_count = '';
     public string $computers_count = '';
     public string $monitors_count = '';
@@ -226,6 +227,7 @@ class Create extends Component
         $this->cleanliness_contract_id          = $office->cleanliness_contract_id;
         $this->Braille_sign_device              = $office->Braille_sign_device ?? '';
         $this->queue_management_system          = $office->queue_management_system ?? '';
+        $this->surveillance_cameras             = $office->surveillance_cameras ?? '';
         $this->payment_machine_count            = (string) ($office->payment_machine_count ?? '');
         $this->computers_count                  = (string) ($office->computers_count ?? '');
         $this->monitors_count                   = (string) ($office->monitors_count ?? '');
@@ -429,6 +431,7 @@ $existing = OfficeMedia::where('office_id', $this->office_id)->where('type', 'do
             'cleanliness_contract_id'           => $this->cleanliness_contract_id ?: null,
             'Braille_sign_device'               => $this->Braille_sign_device ?: null,
             'queue_management_system'           => $this->queue_management_system ?: null,
+            'surveillance_cameras'              => $this->surveillance_cameras ?: null,
             'payment_machine_count'             => $this->payment_machine_count !== '' ? (int) $this->payment_machine_count : null,
             'computers_count'                   => $this->computers_count !== '' ? (int) $this->computers_count : null,
             'monitors_count'                    => $this->monitors_count !== '' ? (int) $this->monitors_count : null,

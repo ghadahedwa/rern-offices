@@ -51,7 +51,6 @@ class Office extends Model
         'counselor_visited_at', 'counselor_structural_condition_id',
         'counselor_cleanliness_rating', 'counselor_archive_rating',
         'counselor_work_schedule_commitment', 'counselor_citizen_treatment_commitment',
-        'counselor_surveillance_cameras',
         'counselor_office_needs', 'counselor_negatives_and_solutions', 'counselor_development_proposals',
     ];
 

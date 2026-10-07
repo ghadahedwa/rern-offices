@@ -306,10 +306,6 @@
                 <td><div class="lbl">{{ __('home.work_schedule_commitment') }}</div><div class="val">{{ \App\Models\Office::COMMITMENT_RATINGS[$r('work_schedule_commitment')] ?? $dash }}</div></td>
                 <td><div class="lbl">{{ __('home.citizen_treatment_commitment') }}</div><div class="val">{{ \App\Models\Office::COMMITMENT_RATINGS[$r('citizen_treatment_commitment')] ?? $dash }}</div></td>
             </tr>
-            <tr>
-                <td><div class="lbl">{{ __('home.surveillance_cameras') }}</div><div class="val">{{ $cameraLabels[$r('surveillance_cameras')] ?? $dash }}</div></td>
-                <td></td>
-            </tr>
         </table>
 
         @if($r('office_needs') || $r('negatives_and_solutions') || $r('development_proposals'))

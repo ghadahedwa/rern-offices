@@ -33,7 +33,6 @@ class VisitReport extends Component
     public string $archive_rating = '';
     public string $work_schedule_commitment = '';
     public string $citizen_treatment_commitment = '';
-    public string $surveillance_cameras = '';
     public string $office_needs = '';
     public string $negatives_and_solutions = '';
     public string $development_proposals = '';
@@ -84,7 +83,6 @@ class VisitReport extends Component
             'archive_rating'               => 'nullable|in:' . implode(',', array_keys(Office::ARCHIVE_RATINGS)),
             'work_schedule_commitment'     => 'nullable|in:' . $commitment,
             'citizen_treatment_commitment' => 'nullable|in:' . $commitment,
-            'surveillance_cameras'         => 'nullable|in:' . implode(',', OfficeVisitReports::SURVEILLANCE_OPTIONS),
             'office_needs'                 => 'nullable|string|max:65000',
             'negatives_and_solutions'      => 'nullable|string|max:65000',
             'development_proposals'        => 'nullable|string|max:65000',

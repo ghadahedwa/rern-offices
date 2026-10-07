@@ -36,13 +36,10 @@ class OfficeVisitReports
         'archive_rating',
         'work_schedule_commitment',
         'citizen_treatment_commitment',
-        'surveillance_cameras',
         'office_needs',
         'negatives_and_solutions',
         'development_proposals',
     ];
-
-    public const SURVEILLANCE_OPTIONS = ['available', 'not_available', 'broken'];
 
     public static function column(string $type, string $field): string
     {
