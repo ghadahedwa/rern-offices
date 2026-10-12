@@ -17,23 +17,25 @@
         <table class="w-full text-sm text-right">
             <thead class="bg-zinc-50 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 text-xs uppercase">
                 <tr>
-                    <th class="px-4 py-3 font-medium">#</th>
+                    {{-- على الموبايل: التصاريح عددٌ تحت اسم الدور — قائمتها كاملة في صفحة التعديل --}}
+                    <th class="px-4 py-3 font-medium max-sm:hidden">#</th>
                     <th class="px-4 py-3 font-medium">{{ __('home.role_name') }}</th>
-                    <th class="px-4 py-3 font-medium">{{ __('home.permissions') }}</th>
+                    <th class="px-4 py-3 font-medium max-sm:hidden">{{ __('home.permissions') }}</th>
                     <th class="px-4 py-3 font-medium">{{ __('home.actions') }}</th>
                 </tr>
             </thead>
             <tbody class="divide-y divide-zinc-100 dark:divide-zinc-700">
                 @forelse ($roles as $role)
                     <tr class="hover:bg-zinc-50 dark:hover:bg-zinc-800 transition">
-                        <td class="px-4 py-3 text-zinc-500">{{ $loop->iteration }}</td>
-                        <td class="px-4 py-3 font-medium text-zinc-800 dark:text-zinc-100">
+                        <td class="px-4 py-3 text-zinc-500 max-sm:hidden">{{ $loop->iteration }}</td>
+                        <td class="px-4 py-3 max-sm:px-3 font-medium text-zinc-800 dark:text-zinc-100">
                             {{ $role->name }}
                             @if($role->name === 'super-admin')
-                                <span class="mr-2 inline-block px-2 py-0.5 rounded-full text-xs bg-[#c9a847]/15 text-[#b8962e] dark:text-[#c9a847]">محمي</span>
+                                <span class="mr-2 inline-block px-2 py-0.5 rounded-full text-xs bg-[#c9a847]/15 text-[#b8962e] dark:text-[#c9a847]">{{ __('home.role_protected') }}</span>
                             @endif
+                            <p class="sm:hidden text-xs font-normal text-zinc-500 dark:text-zinc-400 mt-0.5">{{ __('home.role_permissions_count', ['count' => $role->permissions->count()]) }}</p>
                         </td>
-                        <td class="px-4 py-3">
+                        <td class="px-4 py-3 max-sm:hidden">
                             <div class="flex flex-wrap gap-1">
                                 @foreach($role->permissions as $permission)
                                     <span class="inline-block px-2 py-0.5 rounded-full text-xs bg-zinc-100 dark:bg-zinc-700 text-zinc-600 dark:text-zinc-300">
@@ -45,8 +47,8 @@
                                 @endif
                             </div>
                         </td>
-                        <td class="px-4 py-4">
-                            <div class="flex items-center gap-2">
+                        <td class="px-4 py-4 max-sm:px-2">
+                            <div class="flex max-sm:flex-col max-sm:items-stretch items-center gap-2">
                                 <a href="{{ route('roles.edit', $role) }}" wire:navigate
                                    class="inline-flex items-center text-xs px-3 py-1.5 rounded-md border border-zinc-300 dark:border-zinc-600 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition">
                                     {{ __('home.edit') }}

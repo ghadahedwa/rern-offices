@@ -244,6 +244,8 @@ return [
     'add_role'                       => 'إضافة دور',
     'edit_role'                      => 'تعديل الدور',
     'no_roles'                       => 'لا يوجد أدوار',
+    'role_protected'                 => 'محمي',
+    'role_permissions_count'         => 'عدد التصاريح: :count',
     'role_created'                   => 'تم إنشاء الدور بنجاح',
     'role_updated'                   => 'تم تحديث الدور بنجاح',
 

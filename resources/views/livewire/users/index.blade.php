@@ -18,11 +18,11 @@
                 wire:model.live.debounce.300ms="search"
                 type="text"
                 placeholder="{{ __('home.search') }}"
-                class="w-64 border border-zinc-300 dark:border-zinc-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-[#c9a847]"
+                class="w-64 max-sm:w-full border border-zinc-300 dark:border-zinc-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-[#c9a847]"
             />
             <select
                 wire:model.live="roleFilter"
-                class="border border-zinc-300 dark:border-zinc-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-zinc-800 text-zinc-800 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-[#c9a847]"
+                class="max-sm:w-full border border-zinc-300 dark:border-zinc-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-zinc-800 text-zinc-800 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-[#c9a847]"
             >
                 <option value="">{{ __('home.all_roles') }}</option>
                 @foreach($roles as $role)
@@ -31,7 +31,7 @@
             </select>
             <select
                 wire:model.live="entityFilter"
-                class="border border-zinc-300 dark:border-zinc-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-zinc-800 text-zinc-800 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-[#c9a847]"
+                class="max-sm:w-full border border-zinc-300 dark:border-zinc-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-zinc-800 text-zinc-800 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-[#c9a847]"
             >
                 <option value="">{{ __('home.all_entities') }}</option>
                 @foreach($entities as $entity)
@@ -42,33 +42,35 @@
 
         {{-- Table --}}
         <div class="overflow-x-auto rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-sm">
-            <table class="w-full table-fixed text-[13px] text-right">
+            <table class="w-full sm:table-fixed text-[13px] text-right">
                 <thead class="bg-zinc-50 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 text-[11px] uppercase">
                     <tr>
-                        {{-- مجموع النِسَب ١٠٠٪ بالضبط — الناقص يوزّعه المتصفح كما يشاء --}}
-                        <th class="px-2 py-2.5 font-medium w-[4%]">#</th>
-                        <th class="px-2 py-2.5 font-medium w-[18%]">{{ __('home.name') }}</th>
-                        <th class="px-2 py-2.5 font-medium w-[12%]">{{ __('home.username') }}</th>
-                        <th class="px-2 py-2.5 font-medium w-[16%]">{{ __('home.role') }}</th>
+                        {{-- مجموع النِسَب ١٠٠٪ بالضبط — الناقص يوزّعه المتصفح كما يشاء.
+                             على الموبايل كشاشة المقرات: الاسم (واسم المستخدم تحته) والدور والعمليات وحدها --}}
+                        <th class="px-2 py-2.5 font-medium w-[4%] max-sm:hidden">#</th>
+                        <th class="px-2 py-2.5 font-medium sm:w-[18%]">{{ __('home.name') }}</th>
+                        <th class="px-2 py-2.5 font-medium w-[12%] max-sm:hidden">{{ __('home.username') }}</th>
+                        <th class="px-2 py-2.5 font-medium sm:w-[16%]">{{ __('home.role') }}</th>
                         {{-- الطرف والمسمّى في عمود واحد: بيانا نطاق واحد (المراسلات)، ودمجهما يفرّج للدور --}}
-                        <th class="px-2 py-2.5 font-medium w-[20%]">{{ __('home.user_entity_and_title') }}</th>
-                        <th class="px-2 py-2.5 font-medium w-[14%]">{{ __('home.governorates') }}</th>
-                        <th class="px-2 py-2.5 font-medium w-[16%]">{{ __('home.actions') }}</th>
+                        <th class="px-2 py-2.5 font-medium w-[20%] max-sm:hidden">{{ __('home.user_entity_and_title') }}</th>
+                        <th class="px-2 py-2.5 font-medium w-[14%] max-sm:hidden">{{ __('home.governorates') }}</th>
+                        <th class="px-2 py-2.5 font-medium sm:w-[16%]">{{ __('home.actions') }}</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-zinc-100 dark:divide-zinc-700">
                     @forelse ($users as $user)
                         <tr class="hover:bg-zinc-50 dark:hover:bg-zinc-800 transition">
-                            <td class="px-2 py-2.5 text-zinc-500">{{ $users->firstItem() + $loop->index }}</td>
-                            <td class="px-2 py-2.5 font-medium text-zinc-800 dark:text-zinc-100 truncate" title="{{ $user->name }}">
+                            <td class="px-2 py-2.5 text-zinc-500 max-sm:hidden">{{ $users->firstItem() + $loop->index }}</td>
+                            <td class="px-2 py-2.5 font-medium text-zinc-800 dark:text-zinc-100 sm:truncate" title="{{ $user->name }}">
                                 {{ $user->name }}
+                                <div class="sm:hidden text-[11px] font-normal text-zinc-500 dark:text-zinc-400">{{ $user->username }}</div>
                             </td>
-                            <td class="px-2 py-2.5 text-zinc-600 dark:text-zinc-300 truncate" title="{{ $user->username }}">
+                            <td class="px-2 py-2.5 text-zinc-600 dark:text-zinc-300 truncate max-sm:hidden" title="{{ $user->username }}">
                                 {{ $user->username }}
                             </td>
                             <td class="px-2 py-2.5">
                                 @if($user->roles->first())
-                                    <span class="inline-block max-w-full truncate px-2 py-0.5 rounded-full text-[11px] font-medium bg-[#c9a847]/15 text-[#b8962e] dark:text-[#c9a847]"
+                                    <span class="inline-block max-w-full truncate max-sm:whitespace-normal max-sm:rounded-lg px-2 py-0.5 rounded-full text-[11px] font-medium bg-[#c9a847]/15 text-[#b8962e] dark:text-[#c9a847]"
                                           title="{{ $user->roles->first()->name }}">
                                         {{ $user->roles->first()->name }}
                                     </span>
@@ -76,7 +78,7 @@
                                     <span class="text-zinc-400">—</span>
                                 @endif
                             </td>
-                            <td class="px-2 py-2.5">
+                            <td class="px-2 py-2.5 max-sm:hidden">
                                 @if($user->correspondenceEntity || $user->job_title)
                                     @if($user->correspondenceEntity)
                                         <span class="inline-block max-w-full truncate px-2 py-0.5 rounded-full text-[11px] font-medium bg-[#c9a847]/15 text-[#b8962e] dark:text-[#c9a847]"
@@ -93,7 +95,7 @@
                                     <span class="text-zinc-400">—</span>
                                 @endif
                             </td>
-                            <td class="px-2 py-2.5">
+                            <td class="px-2 py-2.5 max-sm:hidden">
                                 @if($user->governorates->isNotEmpty())
                                     {{-- شارتان فقط ثم «+N» — المستخدم قد يُربط بـ٢٧ محافظة، فسردها كلها يمدّ الصف --}}
                                     <div class="flex flex-wrap gap-1" title="{{ $user->governorates->pluck('name')->implode(' · ') }}">
@@ -115,7 +117,7 @@
                             </td>
                             <td class="px-2 py-2.5">
                                 @if($user->id !== 1)
-                                <div class="flex items-center gap-1.5">
+                                <div class="flex max-sm:flex-col max-sm:items-stretch items-center gap-1.5">
                                     <a href="{{ route('users.edit', $user) }}" wire:navigate
                                        class="inline-flex items-center text-[11px] px-2.5 py-1 rounded-md border border-zinc-300 dark:border-zinc-600 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition">
                                         {{ __('home.edit') }}
