@@ -26,7 +26,8 @@
         <table class="w-full text-sm text-right">
             <thead class="bg-zinc-50 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 text-xs uppercase">
                 <tr>
-                    <th class="px-4 py-3 font-medium">#</th>
+                    {{-- على الموبايل: الترقيم يختفي والأزرار تحت بعضها --}}
+                    <th class="px-4 py-3 font-medium max-sm:hidden">#</th>
                     <th class="px-4 py-3 font-medium">{{ __('home.name') }}</th>
                     <th class="px-4 py-3 font-medium">{{ __('home.warehouse_type_level') }}</th>
                     @if($canManage)
@@ -37,14 +38,14 @@
             <tbody class="divide-y divide-zinc-100 dark:divide-zinc-700">
                 @forelse($types as $type)
                     <tr class="hover:bg-zinc-50 dark:hover:bg-zinc-800 transition">
-                        <td class="px-4 py-3 text-zinc-500">{{ $types->firstItem() + $loop->index }}</td>
-                        <td class="px-4 py-3 font-medium text-zinc-800 dark:text-zinc-100">{{ $type->name }}</td>
+                        <td class="px-4 py-3 text-zinc-500 max-sm:hidden">{{ $types->firstItem() + $loop->index }}</td>
+                        <td class="px-4 py-3 max-sm:px-3 font-medium text-zinc-800 dark:text-zinc-100">{{ $type->name }}</td>
                         <td class="px-4 py-3 text-zinc-600 dark:text-zinc-300">
                             <span class="inline-flex items-center justify-center min-w-6 px-2 py-0.5 rounded-md text-xs font-semibold text-[#b8962e] bg-[#c9a847]/15">{{ $type->level }}</span>
                         </td>
                         @if($canManage)
-                            <td class="px-4 py-3">
-                                <div class="flex items-center gap-2">
+                            <td class="px-4 py-3 max-sm:px-2">
+                                <div class="flex max-sm:flex-col max-sm:items-stretch items-center gap-2">
                                     <a href="{{ route('warehouse-types.edit', $type) }}" wire:navigate
                                        class="inline-flex items-center text-xs px-3 py-1.5 rounded-md border border-zinc-300 dark:border-zinc-600 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition">
                                         {{ __('home.edit') }}

@@ -47,11 +47,12 @@
         <table class="w-full text-sm text-right">
             <thead class="bg-zinc-50 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 text-xs uppercase">
                 <tr>
-                    <th class="px-4 py-3 font-medium">#</th>
+                    {{-- على الموبايل: الاسم (والقسم تحته) والحالة والعمليات — الوحدة والحد الأدنى في صفحة الصنف --}}
+                    <th class="px-4 py-3 font-medium max-sm:hidden">#</th>
                     @include('livewire.partials.sortable-th', ['column' => 'name',      'label' => __('home.item_name')])
-                    @include('livewire.partials.sortable-th', ['column' => 'category',  'label' => __('home.item_category')])
-                    @include('livewire.partials.sortable-th', ['column' => 'unit',      'label' => __('home.item_unit')])
-                    @include('livewire.partials.sortable-th', ['column' => 'min_stock', 'label' => __('home.item_min_stock')])
+                    @include('livewire.partials.sortable-th', ['column' => 'category',  'label' => __('home.item_category'), 'thClass' => 'max-sm:hidden'])
+                    @include('livewire.partials.sortable-th', ['column' => 'unit',      'label' => __('home.item_unit'), 'thClass' => 'max-sm:hidden'])
+                    @include('livewire.partials.sortable-th', ['column' => 'min_stock', 'label' => __('home.item_min_stock'), 'thClass' => 'max-sm:hidden'])
                     @include('livewire.partials.sortable-th', ['column' => 'status',    'label' => __('home.warehouse_status')])
                     @if($canManage)
                         <th class="px-4 py-3 font-medium">{{ __('home.actions') }}</th>
@@ -61,8 +62,8 @@
             <tbody class="divide-y divide-zinc-100 dark:divide-zinc-700">
                 @forelse($items as $item)
                     <tr class="hover:bg-zinc-50 dark:hover:bg-zinc-800 transition">
-                        <td class="px-4 py-3 text-zinc-500">{{ $items->firstItem() + $loop->index }}</td>
-                        <td class="px-4 py-3 font-medium text-zinc-800 dark:text-zinc-100">
+                        <td class="px-4 py-3 text-zinc-500 max-sm:hidden">{{ $items->firstItem() + $loop->index }}</td>
+                        <td class="px-4 py-3 max-sm:px-3 font-medium text-zinc-800 dark:text-zinc-100">
                             {{-- الاسم رابطٌ يبدو رابطاً: التسطير المنقّط أهدأ من اللون
                                  على ٣٧٧ صفاً، ويبقى ظاهراً بلا مرور الماوس --}}
                             <a href="{{ route('warehouses.items.show', $item) }}" wire:navigate
@@ -70,17 +71,18 @@
                             @if($item->code)
                                 <span class="mr-2 inline-flex items-center px-1.5 py-0.5 rounded text-[11px] font-normal text-zinc-500 bg-zinc-100 dark:text-zinc-400 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700">{{ $item->code }}</span>
                             @endif
+                            <div class="sm:hidden text-xs font-normal text-zinc-500 dark:text-zinc-400 mt-1">{{ $item->category?->name ?? __('home.item_category_none') }}</div>
                         </td>
-                        <td class="px-4 py-3">
+                        <td class="px-4 py-3 max-sm:hidden">
                             @if($item->category)
                                 <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium text-[#8a7020] bg-[#c9a847]/15 dark:text-[#e0c76b] dark:bg-[#c9a847]/10">{{ $item->category->name }}</span>
                             @else
                                 <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium text-amber-700 bg-amber-100 dark:text-amber-300 dark:bg-amber-900/30">{{ __('home.item_category_none') }}</span>
                             @endif
                         </td>
-                        <td class="px-4 py-3 text-zinc-600 dark:text-zinc-300">{{ $item->unit?->name ?? '—' }}</td>
-                        <td class="px-4 py-3 text-zinc-600 dark:text-zinc-300">{{ $item->min_stock ?? '—' }}</td>
-                        <td class="px-4 py-3">
+                        <td class="px-4 py-3 text-zinc-600 dark:text-zinc-300 max-sm:hidden">{{ $item->unit?->name ?? '—' }}</td>
+                        <td class="px-4 py-3 text-zinc-600 dark:text-zinc-300 max-sm:hidden">{{ $item->min_stock ?? '—' }}</td>
+                        <td class="px-4 py-3 max-sm:px-2">
                             @if($item->is_active)
                                 <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium text-green-700 bg-green-100 dark:text-green-300 dark:bg-green-900/30">{{ __('home.warehouse_active') }}</span>
                             @else
@@ -88,8 +90,8 @@
                             @endif
                         </td>
                         @if($canManage)
-                            <td class="px-4 py-3">
-                                <div class="flex items-center gap-2">
+                            <td class="px-4 py-3 max-sm:px-2">
+                                <div class="flex max-sm:flex-col max-sm:items-stretch items-center gap-2">
                                     {{-- «عرض» أولاً كنمط جداول المشروع — الاسم رابطٌ كذلك،
                                          والزرّ هو ما تقع عليه العين في عمود العمليات --}}
                                     <a href="{{ route('warehouses.items.show', $item) }}" wire:navigate

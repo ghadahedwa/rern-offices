@@ -23,13 +23,14 @@
 
     {{-- Table --}}
     <div class="overflow-x-auto rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-sm">
-        <table class="w-full text-sm text-right">
+        <table class="w-full text-sm text-right max-sm:[&_th]:px-2 max-sm:[&_td]:px-2">
             <thead class="bg-zinc-50 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 text-xs uppercase">
                 <tr>
-                    <th class="px-4 py-3 font-medium">#</th>
+                    {{-- على الموبايل: الترقيم والترتيب يختفيان والأزرار تحت بعضها --}}
+                    <th class="px-4 py-3 font-medium max-sm:hidden">#</th>
                     <th class="px-4 py-3 font-medium">{{ __('home.name') }}</th>
                     <th class="px-4 py-3 font-medium">{{ __('home.item_category_items_count') }}</th>
-                    <th class="px-4 py-3 font-medium">{{ __('home.order') }}</th>
+                    <th class="px-4 py-3 font-medium max-sm:hidden">{{ __('home.order') }}</th>
                     <th class="px-4 py-3 font-medium">{{ __('home.warehouse_status') }}</th>
                     @if($canManage)
                         <th class="px-4 py-3 font-medium">{{ __('home.actions') }}</th>
@@ -39,14 +40,14 @@
             <tbody class="divide-y divide-zinc-100 dark:divide-zinc-700">
                 @forelse($categories as $category)
                     <tr class="hover:bg-zinc-50 dark:hover:bg-zinc-800 transition">
-                        <td class="px-4 py-3 text-zinc-500">{{ $categories->firstItem() + $loop->index }}</td>
-                        <td class="px-4 py-3 font-medium text-zinc-800 dark:text-zinc-100">{{ $category->name }}</td>
-                        <td class="px-4 py-3 text-zinc-600 dark:text-zinc-300">
+                        <td class="px-4 py-3 text-zinc-500 max-sm:hidden">{{ $categories->firstItem() + $loop->index }}</td>
+                        <td class="px-4 py-3 max-sm:px-3 font-medium text-zinc-800 dark:text-zinc-100">{{ $category->name }}</td>
+                        <td class="px-4 py-3 max-sm:px-2 text-zinc-600 dark:text-zinc-300">
                             <a href="{{ route('items.index', ['category' => $category->id]) }}" wire:navigate
                                class="text-[#c9a847] hover:underline">{{ $category->items_count }}</a>
                         </td>
-                        <td class="px-4 py-3 text-zinc-600 dark:text-zinc-300">{{ $category->order }}</td>
-                        <td class="px-4 py-3">
+                        <td class="px-4 py-3 text-zinc-600 dark:text-zinc-300 max-sm:hidden">{{ $category->order }}</td>
+                        <td class="px-4 py-3 max-sm:px-2">
                             @if($category->is_active)
                                 <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium text-green-700 bg-green-100 dark:text-green-300 dark:bg-green-900/30">{{ __('home.warehouse_active') }}</span>
                             @else
@@ -54,8 +55,8 @@
                             @endif
                         </td>
                         @if($canManage)
-                            <td class="px-4 py-3">
-                                <div class="flex items-center gap-2">
+                            <td class="px-4 py-3 max-sm:px-2">
+                                <div class="flex max-sm:flex-col max-sm:items-stretch items-center gap-2">
                                     <a href="{{ route('item-categories.edit', $category) }}" wire:navigate
                                        class="inline-flex items-center text-xs px-3 py-1.5 rounded-md border border-zinc-300 dark:border-zinc-600 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition">
                                         {{ __('home.edit') }}
