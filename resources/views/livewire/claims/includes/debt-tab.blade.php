@@ -21,8 +21,9 @@
     </div>
 
     @if($debtRows->isNotEmpty())
-    <div class="rounded-lg border border-zinc-200 dark:border-zinc-700 overflow-hidden">
-        <table class="w-full text-sm text-right">
+    {{-- الجدول أعرض من الموبايل: يتمرّر أفقياً داخل إطاره بدل أن يُقصّ --}}
+    <div class="rounded-lg border border-zinc-200 dark:border-zinc-700 overflow-x-auto">
+        <table class="w-full text-sm text-right max-sm:whitespace-nowrap">
             <thead class="bg-zinc-50 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 text-xs">
                 <tr>
                     @php
