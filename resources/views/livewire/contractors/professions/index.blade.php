@@ -26,18 +26,19 @@
         <table class="w-full text-sm text-right">
             <thead class="bg-zinc-50 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 text-xs uppercase">
                 <tr>
-                    <th class="px-4 py-3 font-medium">#</th>
+                    {{-- على الموبايل: الترقيم والترتيب يختفيان والأزرار تحت بعضها — كان «حذف» يخرج عن الشاشة --}}
+                    <th class="px-4 py-3 font-medium max-sm:hidden">#</th>
                     <th class="px-4 py-3 font-medium">{{ __('home.name') }}</th>
                     <th class="px-4 py-3 font-medium">{{ __('home.ct_profession_count') }}</th>
-                    <th class="px-4 py-3 font-medium">{{ __('home.ct_status_order') }}</th>
+                    <th class="px-4 py-3 font-medium max-sm:hidden">{{ __('home.ct_status_order') }}</th>
                     <th class="px-4 py-3 font-medium">{{ __('home.actions') }}</th>
                 </tr>
             </thead>
             <tbody class="divide-y divide-zinc-100 dark:divide-zinc-700">
                 @forelse($professions as $profession)
                     <tr class="hover:bg-zinc-50 dark:hover:bg-zinc-800 transition">
-                        <td class="px-4 py-3 text-zinc-500">{{ $professions->firstItem() + $loop->index }}</td>
-                        <td class="px-4 py-3 font-medium text-zinc-800 dark:text-zinc-100">
+                        <td class="px-4 py-3 text-zinc-500 max-sm:hidden">{{ $professions->firstItem() + $loop->index }}</td>
+                        <td class="px-4 py-3 max-sm:px-3 font-medium text-zinc-800 dark:text-zinc-100">
                             {{ $profession->name }}
                             @if($profession->is_system)
                                 <span class="inline-flex items-center ms-2 text-[11px] font-medium px-2 py-0.5 rounded-full bg-[#c9a847]/15 text-[#b8962e] dark:text-[#d8b856]">
@@ -51,10 +52,10 @@
                             @endunless
                         </td>
                         {{-- عدد العاملين عليها: يقول للمدير لماذا لا تُحذف قبل أن يحاول --}}
-                        <td class="px-4 py-3 text-zinc-500">{{ $profession->contractors_count }}</td>
-                        <td class="px-4 py-3 text-zinc-500">{{ $profession->order }}</td>
-                        <td class="px-4 py-3">
-                            <div class="flex items-center gap-2">
+                        <td class="px-4 py-3 max-sm:px-2 text-zinc-500">{{ $profession->contractors_count }}</td>
+                        <td class="px-4 py-3 text-zinc-500 max-sm:hidden">{{ $profession->order }}</td>
+                        <td class="px-4 py-3 max-sm:px-2">
+                            <div class="flex max-sm:flex-col max-sm:items-stretch items-center gap-2">
                                 <a href="{{ route('professions.edit', $profession) }}" wire:navigate
                                    class="inline-flex items-center text-xs font-medium px-3 py-1.5 rounded-full bg-blue-100 text-blue-700 hover:bg-blue-200 dark:bg-blue-900/40 dark:text-blue-300 dark:hover:bg-blue-900/60 transition">
                                     {{ __('home.edit') }}

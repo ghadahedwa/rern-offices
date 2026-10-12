@@ -26,17 +26,18 @@
         <table class="w-full text-sm text-right">
             <thead class="bg-zinc-50 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 text-xs uppercase">
                 <tr>
-                    <th class="px-4 py-3 font-medium">#</th>
+                    {{-- على الموبايل: الترقيم والترتيب يختفيان والأزرار تحت بعضها — كان «حذف» يخرج عن الشاشة --}}
+                    <th class="px-4 py-3 font-medium max-sm:hidden">#</th>
                     <th class="px-4 py-3 font-medium">{{ __('home.name') }}</th>
-                    <th class="px-4 py-3 font-medium">{{ __('home.ct_status_order') }}</th>
+                    <th class="px-4 py-3 font-medium max-sm:hidden">{{ __('home.ct_status_order') }}</th>
                     <th class="px-4 py-3 font-medium">{{ __('home.actions') }}</th>
                 </tr>
             </thead>
             <tbody class="divide-y divide-zinc-100 dark:divide-zinc-700">
                 @forelse($statuses as $status)
                     <tr class="hover:bg-zinc-50 dark:hover:bg-zinc-800 transition">
-                        <td class="px-4 py-3 text-zinc-500">{{ $statuses->firstItem() + $loop->index }}</td>
-                        <td class="px-4 py-3 font-medium text-zinc-800 dark:text-zinc-100">
+                        <td class="px-4 py-3 text-zinc-500 max-sm:hidden">{{ $statuses->firstItem() + $loop->index }}</td>
+                        <td class="px-4 py-3 max-sm:px-3 font-medium text-zinc-800 dark:text-zinc-100">
                             <span class="inline-flex items-center gap-2">
                                 {{-- ⚠️ اللون inline لا فئة Tailwind — الفئة المركَّبة نصّاً لا يراها البناء --}}
                                 <span class="w-3 h-3 rounded-full shrink-0" style="background-color: {{ $status->color }}"></span>
@@ -53,9 +54,9 @@
                                 </span>
                             @endunless
                         </td>
-                        <td class="px-4 py-3 text-zinc-500">{{ $status->order }}</td>
-                        <td class="px-4 py-3">
-                            <div class="flex items-center gap-2">
+                        <td class="px-4 py-3 text-zinc-500 max-sm:hidden">{{ $status->order }}</td>
+                        <td class="px-4 py-3 max-sm:px-2">
+                            <div class="flex max-sm:flex-col max-sm:items-stretch items-center gap-2">
                                 <a href="{{ route('attendance-statuses.edit', $status) }}" wire:navigate
                                    class="inline-flex items-center text-xs px-3 py-1.5 rounded-md border border-zinc-300 dark:border-zinc-600 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition">
                                     {{ __('home.edit') }}

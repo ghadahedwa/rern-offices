@@ -1705,6 +1705,7 @@ return [
     'ct_holiday_name'             => 'اسم العطلة',
     'ct_holiday_starts_on'        => 'من تاريخ',
     'ct_holiday_ends_on'          => 'إلى تاريخ',
+    'ct_holiday_to'               => 'إلى',
     'ct_holiday_ends_on_hint'     => 'اتركه كما هو لعطلة يوم واحد، ومدّه لعطلة متصلة (وقفة وعيد).',
     'ct_holiday_days_count'       => 'عدد الأيام',
     'ct_holiday_year'             => 'السنة',

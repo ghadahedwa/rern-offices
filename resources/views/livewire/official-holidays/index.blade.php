@@ -40,13 +40,14 @@
 
     {{-- Table --}}
     <div class="overflow-x-auto rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-sm">
-        <table class="w-full text-sm text-right">
+        <table class="w-full text-sm text-right max-sm:[&_th]:px-2 max-sm:[&_td]:px-2">
             <thead class="bg-zinc-50 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 text-xs uppercase">
                 <tr>
-                    <th class="px-4 py-3 font-medium">#</th>
+                    {{-- على الموبايل: الترقيم يختفي، و«إلى» سطرٌ تحت «من» بدل عمودها، والأزرار تحت بعضها --}}
+                    <th class="px-4 py-3 font-medium max-sm:hidden">#</th>
                     <th class="px-4 py-3 font-medium">{{ __('home.ct_holiday_name') }}</th>
                     <th class="px-4 py-3 font-medium">{{ __('home.ct_holiday_starts_on') }}</th>
-                    <th class="px-4 py-3 font-medium">{{ __('home.ct_holiday_ends_on') }}</th>
+                    <th class="px-4 py-3 font-medium max-sm:hidden">{{ __('home.ct_holiday_ends_on') }}</th>
                     <th class="px-4 py-3 font-medium">{{ __('home.ct_holiday_days_count') }}</th>
                     <th class="px-4 py-3 font-medium">{{ __('home.actions') }}</th>
                 </tr>
@@ -54,13 +55,16 @@
             <tbody class="divide-y divide-zinc-100 dark:divide-zinc-700">
                 @forelse($holidays as $holiday)
                     <tr class="hover:bg-zinc-50 dark:hover:bg-zinc-800 transition">
-                        <td class="px-4 py-3 text-zinc-500">{{ $holidays->firstItem() + $loop->index }}</td>
-                        <td class="px-4 py-3 font-medium text-zinc-800 dark:text-zinc-100">{{ $holiday->name }}</td>
-                        <td class="px-4 py-3 text-zinc-600 dark:text-zinc-300">{{ $holiday->starts_on->toDateString() }}</td>
-                        <td class="px-4 py-3 text-zinc-600 dark:text-zinc-300">{{ $holiday->ends_on->toDateString() }}</td>
-                        <td class="px-4 py-3 text-zinc-500">{{ count($holiday->dates()) }}</td>
-                        <td class="px-4 py-3">
-                            <div class="flex items-center gap-2">
+                        <td class="px-4 py-3 text-zinc-500 max-sm:hidden">{{ $holidays->firstItem() + $loop->index }}</td>
+                        <td class="px-4 py-3 max-sm:px-3 font-medium text-zinc-800 dark:text-zinc-100">{{ $holiday->name }}</td>
+                        <td class="px-4 py-3 max-sm:px-2 text-zinc-600 dark:text-zinc-300 whitespace-nowrap">
+                            {{ $holiday->starts_on->toDateString() }}
+                            <div class="sm:hidden text-xs text-zinc-400">{{ __('home.ct_holiday_to') }} <span dir="ltr">{{ $holiday->ends_on->toDateString() }}</span></div>
+                        </td>
+                        <td class="px-4 py-3 text-zinc-600 dark:text-zinc-300 max-sm:hidden">{{ $holiday->ends_on->toDateString() }}</td>
+                        <td class="px-4 py-3 max-sm:px-2 text-zinc-500">{{ count($holiday->dates()) }}</td>
+                        <td class="px-4 py-3 max-sm:px-2">
+                            <div class="flex max-sm:flex-col max-sm:items-stretch items-center gap-2">
                                 <a href="{{ route('official-holidays.edit', $holiday) }}" wire:navigate
                                    class="inline-flex items-center text-xs px-3 py-1.5 rounded-md border border-zinc-300 dark:border-zinc-600 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition">
                                     {{ __('home.edit') }}
