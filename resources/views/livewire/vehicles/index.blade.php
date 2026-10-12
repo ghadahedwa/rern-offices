@@ -17,7 +17,8 @@
     {{-- Filters --}}
     @php $filterCls = 'w-full border border-zinc-300 dark:border-zinc-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-[#c9a847]'; @endphp
     <div class="space-y-3">
-        <div class="grid grid-cols-4 gap-3">
+        {{-- عمود واحد على الموبايل كشاشة المقرات --}}
+        <div class="grid grid-cols-4 max-sm:grid-cols-1 gap-3">
             <input wire:model.live.debounce.300ms="search" type="text"
                    placeholder="{{ __('home.search') }}"
                    class="{{ $filterCls }}" />
@@ -54,7 +55,7 @@
         </div>
 
         @if($showAdvanced)
-            <div class="grid grid-cols-4 gap-3 pt-3 border-t border-zinc-200 dark:border-zinc-700">
+            <div class="grid grid-cols-4 max-sm:grid-cols-1 gap-3 pt-3 border-t border-zinc-200 dark:border-zinc-700">
                 <select wire:model.live="status" class="{{ $filterCls }}">
                     <option value="">— {{ __('home.vehicle_status') }} —</option>
                     @foreach(\App\Models\Vehicle::STATUSES as $val => $label)
@@ -67,14 +68,15 @@
 
     {{-- Table --}}
     <div class="overflow-x-auto rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-sm">
-        <table class="w-full text-sm text-right">
+        <table class="w-full text-sm text-right max-sm:[&_th]:px-2 max-sm:[&_td]:px-2">
             <thead class="bg-zinc-50 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 text-xs uppercase">
                 <tr>
-                    <th class="px-4 py-3 font-medium">#</th>
+                    {{-- على الموبايل: الاسم والمحافظة والحالة والعمليات — النوع ونظام العمل في صفحة العرض --}}
+                    <th class="px-4 py-3 font-medium max-sm:hidden">#</th>
                     <th class="px-4 py-3 font-medium">{{ __('home.vehicle_name') }}</th>
                     <th class="px-4 py-3 font-medium">{{ __('home.governorate') }}</th>
-                    <th class="px-4 py-3 font-medium">{{ __('home.vehicle_type') }}</th>
-                    <th class="px-4 py-3 font-medium">{{ __('home.vehicle_work_system') }}</th>
+                    <th class="px-4 py-3 font-medium max-sm:hidden">{{ __('home.vehicle_type') }}</th>
+                    <th class="px-4 py-3 font-medium max-sm:hidden">{{ __('home.vehicle_work_system') }}</th>
                     <th class="px-4 py-3 font-medium">{{ __('home.vehicle_status') }}</th>
                     @if($canView || $canEdit || $canDelete)
                         <th class="px-4 py-3 font-medium">{{ __('home.actions') }}</th>
@@ -84,18 +86,18 @@
             <tbody class="divide-y divide-zinc-100 dark:divide-zinc-700">
                 @forelse($vehicles as $vehicle)
                     <tr class="hover:bg-zinc-50 dark:hover:bg-zinc-800 transition">
-                        <td class="px-4 py-3 text-zinc-500">{{ $vehicles->firstItem() + $loop->index }}</td>
-                        <td class="px-4 py-3 font-medium text-zinc-800 dark:text-zinc-100">{{ $vehicle->name }}</td>
-                        <td class="px-4 py-3 text-zinc-600 dark:text-zinc-300">{{ $vehicle->governorate->name }}</td>
-                        <td class="px-4 py-3">
+                        <td class="px-4 py-3 text-zinc-500 max-sm:hidden">{{ $vehicles->firstItem() + $loop->index }}</td>
+                        <td class="px-4 py-3 max-sm:px-3 font-medium text-zinc-800 dark:text-zinc-100">{{ $vehicle->name }}</td>
+                        <td class="px-4 py-3 max-sm:px-2 text-zinc-600 dark:text-zinc-300">{{ $vehicle->governorate->name }}</td>
+                        <td class="px-4 py-3 max-sm:hidden">
                             <span class="inline-block px-2 py-0.5 rounded-full text-xs font-medium bg-[#c9a847]/15 text-[#b8962e] dark:text-[#c9a847]">
                                 {{ $vehicle->type->name ?? '—' }}
                             </span>
                         </td>
-                        <td class="px-4 py-3 text-zinc-600 dark:text-zinc-300">
+                        <td class="px-4 py-3 max-sm:hidden text-zinc-600 dark:text-zinc-300">
                             {{ $vehicle->workSystem->name ?? '—' }}
                         </td>
-                        <td class="px-4 py-3">
+                        <td class="px-4 py-3 max-sm:px-2">
                             @if($vehicle->status)
                                 @php
                                     $colors = [
@@ -112,8 +114,9 @@
                             @endif
                         </td>
                         @if($canView || $canEdit || $canDelete)
-                            <td class="px-4 py-3">
-                                <div class="flex items-center gap-2">
+                            <td class="px-4 py-3 max-sm:px-2">
+                                {{-- الأزرار تحت بعضها على الموبايل بدل صفٍّ يمدّ الجدول --}}
+                                <div class="flex max-sm:flex-col max-sm:items-stretch items-center gap-2">
                                     @if($canEdit)
                                         <a href="{{ route('vehicles.edit', $vehicle) }}" wire:navigate
                                            class="inline-flex items-center gap-1 text-xs px-3 py-1.5 rounded-md border border-zinc-300 dark:border-zinc-600 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition">

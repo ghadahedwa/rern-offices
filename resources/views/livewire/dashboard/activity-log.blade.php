@@ -33,7 +33,7 @@
             <p class="text-sm text-zinc-400 py-8 text-center">{{ __('home.activity_empty') }}</p>
         @else
             <div class="overflow-x-auto">
-                <table class="w-full text-sm">
+                <table class="w-full text-sm max-sm:[&_th]:px-1.5 max-sm:[&_td]:px-1.5">
                     <thead>
                         <tr class="border-b border-zinc-200 dark:border-zinc-700">
                             <th class="text-right py-2 px-3 text-xs font-semibold text-zinc-500 dark:text-zinc-400 whitespace-nowrap">{{ __('home.activity_col_time') }}</th>
@@ -47,7 +47,8 @@
                         <tr class="hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition">
                             <td class="py-2.5 px-3 whitespace-nowrap">
                                 <p class="text-xs text-zinc-400 dark:text-zinc-500">{{ $activity->created_at->diffForHumans() }}</p>
-                                <p class="text-xs text-zinc-300 dark:text-zinc-600">{{ \App\Support\LocalTime::stamp($activity->created_at) }}</p>
+                                {{-- التاريخ الكامل يمدّ الجدول على الموبايل — يكفيه «منذ…» --}}
+                                <p class="text-xs text-zinc-300 dark:text-zinc-600 max-sm:hidden">{{ \App\Support\LocalTime::stamp($activity->created_at) }}</p>
                             </td>
                             <td class="py-2.5 px-3 font-medium text-zinc-700 dark:text-zinc-300 whitespace-nowrap text-xs">
                                 {{ optional($activity->causer)->name ?? '—' }}

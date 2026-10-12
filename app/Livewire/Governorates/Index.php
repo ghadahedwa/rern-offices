@@ -3,6 +3,7 @@
 namespace App\Livewire\Governorates;
 
 use App\Models\Governorate;
+use App\Support\ArabicText;
 use Flux\Flux;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Layout;
@@ -68,19 +69,18 @@ class Index extends Component
     {
         $isSuperAdmin = Auth::user()?->hasRole('super-admin');
 
-        if ($isSuperAdmin) {
-            $governorates = Governorate::withCount('offices')
-                ->where('name', 'like', "%{$this->search}%")
-                ->orderBy('order')->orderBy('id')
-                ->paginate(10);
-        } else {
-            $governorates = auth()->user()
-                ->governorates()
-                ->withCount('offices')
-                ->where('name', 'like', "%{$this->search}%")
-                ->orderBy('order')->orderBy('id')
-                ->paginate(10);
-        }
+        $query = $isSuperAdmin ? Governorate::query() : auth()->user()->governorates();
+
+        // البحث المطبَّع (الألف/الياء/التاء المربوطة) في اسم المحافظة والمستشار المشرف — كباقي الشاشات
+        $term = ArabicText::normalize($this->search);
+
+        $governorates = $query->withCount('offices')
+            ->when($term !== '', fn ($q) => $q->where(fn ($w) => $w
+                ->whereRaw(ArabicText::sqlNormalize('governorates.name').' LIKE ?', ['%'.$term.'%'])
+                ->orWhereRaw(ArabicText::sqlNormalize('governorates.supervising_counselor').' LIKE ?', ['%'.$term.'%'])
+            ))
+            ->orderBy('governorates.order')->orderBy('governorates.id')
+            ->paginate(10);
 
         $user = Auth::user();
 

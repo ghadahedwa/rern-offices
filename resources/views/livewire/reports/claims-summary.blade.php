@@ -25,8 +25,8 @@
     </div>
 
     <div class="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-sm p-5">
-        <div class="rounded-lg border border-zinc-200 dark:border-zinc-700 overflow-hidden">
-            <table class="w-full text-sm text-right">
+        <div class="rounded-lg border border-zinc-200 dark:border-zinc-700 overflow-x-auto">
+            <table class="w-full max-sm:whitespace-nowrap text-sm text-right">
                 <thead class="bg-zinc-50 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 text-xs">
                     <tr>
                         <th class="px-4 py-2.5 font-medium">{{ __('home.claims_governorate') }}</th>

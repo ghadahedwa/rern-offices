@@ -26,9 +26,10 @@
         <table class="w-full text-sm text-right">
             <thead class="bg-zinc-50 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 text-xs uppercase">
                 <tr>
-                    <th class="px-4 py-3 font-medium">#</th>
+                    {{-- على الموبايل كشاشة المقرات: الترقيم يختفي، والمستشار سطرٌ تحت اسم المحافظة --}}
+                    <th class="px-4 py-3 font-medium max-sm:hidden">#</th>
                     <th class="px-4 py-3 font-medium">{{ __('home.governorate_name') }}</th>
-                    <th class="px-4 py-3 font-medium">{{ __('home.supervising_counselor') }}</th>
+                    <th class="px-4 py-3 font-medium max-sm:hidden">{{ __('home.supervising_counselor') }}</th>
                     <th class="px-4 py-3 font-medium">{{ __('home.offices') }}</th>
                     @if($canEdit || $canDelete)
                         <th class="px-4 py-3 font-medium">{{ __('home.actions') }}</th>
@@ -38,22 +39,27 @@
             <tbody class="divide-y divide-zinc-100 dark:divide-zinc-700">
                 @forelse ($governorates as $governorate)
                     <tr class="hover:bg-zinc-50 dark:hover:bg-zinc-800 transition">
-                        <td class="px-4 py-3 text-zinc-500">{{ $governorates->firstItem() + $loop->index }}</td>
-                        <td class="px-4 py-3 font-medium text-zinc-800 dark:text-zinc-100">{{ $governorate->name }}</td>
-                        <td class="px-4 py-3 text-zinc-600 dark:text-zinc-300">{{ $governorate->supervising_counselor ?? '—' }}</td>
-                        <td class="px-4 py-3">
+                        <td class="px-4 py-3 text-zinc-500 max-sm:hidden">{{ $governorates->firstItem() + $loop->index }}</td>
+                        <td class="px-4 py-3 max-sm:px-3 font-medium text-zinc-800 dark:text-zinc-100">
+                            {{ $governorate->name }}
+                            @if($governorate->supervising_counselor)
+                                <p class="sm:hidden text-xs font-normal text-zinc-500 dark:text-zinc-400 mt-0.5">{{ $governorate->supervising_counselor }}</p>
+                            @endif
+                        </td>
+                        <td class="px-4 py-3 max-sm:hidden text-zinc-600 dark:text-zinc-300">{{ $governorate->supervising_counselor ?? '—' }}</td>
+                        <td class="px-4 py-3 max-sm:px-2 whitespace-nowrap">
                             <a href="{{ route('offices.index', ['governorate_id' => $governorate->id]) }}" wire:navigate
                                class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold transition
                                    {{ $governorate->offices_count > 0 ? 'bg-[#c9a847]/15 text-[#b8962e] dark:text-[#c9a847] hover:bg-[#c9a847]/25' : 'bg-zinc-100 dark:bg-zinc-700 text-zinc-400 hover:bg-zinc-200' }}">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
                                 </svg>
-                                {{ $governorate->offices_count }} مقر
+                                {{ $governorate->offices_count }} {{ __('home.office') }}
                             </a>
                         </td>
                         @if($canEdit || $canDelete)
-                            <td class="px-4 py-3">
-                                <div class="flex items-center gap-2">
+                            <td class="px-4 py-3 max-sm:px-2">
+                                <div class="flex max-sm:flex-col max-sm:items-stretch items-center gap-2">
                                     @if($canEdit)
                                     <a href="{{ route('governorates.edit', $governorate) }}" wire:navigate
                                        class="inline-flex items-center text-xs px-3 py-1.5 rounded-md border border-zinc-300 dark:border-zinc-600 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition">
