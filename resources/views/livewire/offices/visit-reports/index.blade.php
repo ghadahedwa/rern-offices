@@ -38,36 +38,39 @@
         </div>
     </div>
 
+    {{-- على الموبايل كشاشة المقرات: الجدول بعرض الشاشة بلا تمرير — الترقيم يختفي، والمحافظة سطرٌ تحت الاسم، والاسم يلتفّ ولا يُقصّ --}}
     <div class="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-sm overflow-x-auto">
-        <table class="w-full min-w-140 table-fixed text-sm text-right">
+        <table class="w-full sm:min-w-140 sm:table-fixed text-sm text-right">
             <thead class="bg-zinc-50 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 text-xs">
                 <tr>
-                    <th class="px-3 py-3 font-medium w-[6%]">#</th>
-                    @include('livewire.partials.sortable-th', ['column' => 'name', 'label' => __('home.office_name'), 'thClass' => 'w-[41%]'])
-                    @include('livewire.partials.sortable-th', ['column' => 'governorate', 'label' => __('home.governorate'), 'thClass' => 'w-[20%]'])
-                    @include('livewire.partials.sortable-th', ['column' => 'visited', 'label' => __('home.visited_at'), 'thClass' => 'w-[16%]'])
-                    <th class="px-3 py-3 font-medium w-[17%]"></th>
+                    <th class="px-3 py-3 font-medium w-[6%] max-sm:hidden">#</th>
+                    @include('livewire.partials.sortable-th', ['column' => 'name', 'label' => __('home.office_name'), 'thClass' => 'sm:w-[41%]'])
+                    @include('livewire.partials.sortable-th', ['column' => 'governorate', 'label' => __('home.governorate'), 'thClass' => 'w-[20%] max-sm:hidden'])
+                    @include('livewire.partials.sortable-th', ['column' => 'visited', 'label' => __('home.visited_at'), 'thClass' => 'sm:w-[16%]'])
+                    <th class="px-3 py-3 font-medium sm:w-[17%]"></th>
                 </tr>
             </thead>
             <tbody class="divide-y divide-zinc-100 dark:divide-zinc-800">
                 @forelse($offices as $office)
                     <tr wire:key="vr-{{ $office->id }}" class="hover:bg-zinc-50 dark:hover:bg-zinc-800/50">
-                        <td class="px-3 py-3 text-zinc-500">{{ $offices->firstItem() + $loop->index }}</td>
+                        <td class="px-3 py-3 text-zinc-500 max-sm:hidden">{{ $offices->firstItem() + $loop->index }}</td>
                         <td class="px-3 py-3">
-                            <p class="font-medium text-zinc-800 dark:text-zinc-100 truncate" title="{{ $office->name }}">{{ $office->name }}</p>
-                            <p class="text-xs text-zinc-400 dark:text-zinc-500 truncate">{{ $office->officeType->name ?? '—' }}</p>
+                            <p class="font-medium text-zinc-800 dark:text-zinc-100 sm:truncate" title="{{ $office->name }}">{{ $office->name }}</p>
+                            <p class="text-xs text-zinc-400 dark:text-zinc-500 sm:truncate">
+                                {{ $office->officeType->name ?? '—' }}<span class="sm:hidden"> &mdash; {{ $office->governorate->name ?? '—' }}</span>
+                            </p>
                         </td>
-                        <td class="px-3 py-3 text-zinc-600 dark:text-zinc-300 truncate" title="{{ $office->governorate->name ?? '' }}">
+                        <td class="px-3 py-3 text-zinc-600 dark:text-zinc-300 truncate max-sm:hidden" title="{{ $office->governorate->name ?? '' }}">
                             {{ $office->governorate->name ?? '—' }}
                         </td>
-                        <td class="px-3 py-3 text-zinc-600 dark:text-zinc-300">
+                        <td class="px-3 py-3 max-sm:px-2 text-zinc-600 dark:text-zinc-300 max-sm:text-xs max-sm:whitespace-nowrap">
                             @if($office->{$visitedField})
                                 {{ $office->{$visitedField}->format('Y-m-d') }}
                             @else
                                 <span class="text-xs text-zinc-400">{{ __('home.vr_not_visited') }}</span>
                             @endif
                         </td>
-                        <td class="px-3 py-3">
+                        <td class="px-3 py-3 max-sm:px-2">
                             <a href="{{ route('offices.visit-report', [$office->id, $type]) }}" wire:navigate
                                class="inline-flex items-center text-xs px-3 py-1.5 rounded-md border border-[#c9a847] text-[#c9a847] hover:bg-[#c9a847]/10 transition">
                                 {{ __('home.vr_open') }}

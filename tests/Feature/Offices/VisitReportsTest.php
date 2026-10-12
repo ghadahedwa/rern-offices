@@ -304,8 +304,8 @@ it('numbers report list rows continuously across pages', function () {
 
     Livewire::withQueryParams(['page' => 2])->actingAs($user)
         ->test(VisitReportsIndex::class, ['type' => 'inspector'])
-        ->assertSeeHtml('<td class="px-3 py-3 text-zinc-500">16</td>')
-        ->assertDontSeeHtml('<td class="px-3 py-3 text-zinc-500">1</td>');
+        ->assertSeeHtml('<td class="px-3 py-3 text-zinc-500 max-sm:hidden">16</td>')
+        ->assertDontSeeHtml('<td class="px-3 py-3 text-zinc-500 max-sm:hidden">1</td>');
 });
 
 it('sorts the offices list by a related column and falls back to newest for an unknown key', function () {
