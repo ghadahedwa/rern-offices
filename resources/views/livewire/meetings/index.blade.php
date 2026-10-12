@@ -1,7 +1,7 @@
 <div class="p-6 space-y-6">
 
-    {{-- Header --}}
-    <div class="flex items-center justify-between gap-4">
+    {{-- Header — على الموبايل الأزرار تنزل سطراً حين يظهر «طباعة اليوم» --}}
+    <div class="flex max-sm:flex-wrap items-center justify-between gap-4">
         <h1 class="text-2xl font-semibold text-zinc-800 dark:text-zinc-100">{{ __('home.meetings_title') }}</h1>
         <div class="flex items-center gap-2">
             @if($dateFilter)
@@ -42,14 +42,15 @@
 
     {{-- Table --}}
     <div class="overflow-x-auto rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-sm">
-        <table class="w-full text-sm text-right whitespace-nowrap">
+        {{-- على الموبايل: الموضوع (والتاريخ والمكان تحته) والعمليات — المعنيون في صفحة التعديل --}}
+        <table class="w-full text-sm text-right sm:whitespace-nowrap">
             <thead class="bg-zinc-50 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 text-xs uppercase">
                 <tr>
-                    <th class="px-4 py-3 font-medium">#</th>
-                    <th class="px-4 py-3 font-medium">{{ __('home.meeting_date') }}</th>
+                    <th class="px-4 py-3 font-medium max-sm:hidden">#</th>
+                    <th class="px-4 py-3 font-medium max-sm:hidden">{{ __('home.meeting_date') }}</th>
                     <th class="px-4 py-3 font-medium">{{ __('home.meeting_subject') }}</th>
-                    <th class="px-4 py-3 font-medium">{{ __('home.meeting_location') }}</th>
-                    <th class="px-4 py-3 font-medium">{{ __('home.meeting_concerned_party') }}</th>
+                    <th class="px-4 py-3 font-medium max-sm:hidden">{{ __('home.meeting_location') }}</th>
+                    <th class="px-4 py-3 font-medium max-sm:hidden">{{ __('home.meeting_concerned_party') }}</th>
                     @if($canEdit || $canDelete)
                         <th class="px-4 py-3 font-medium">{{ __('home.actions') }}</th>
                     @endif
@@ -58,18 +59,22 @@
             <tbody class="divide-y divide-zinc-100 dark:divide-zinc-700">
                 @forelse ($meetings as $meeting)
                     <tr class="hover:bg-zinc-50 dark:hover:bg-zinc-800 transition">
-                        <td class="px-4 py-3 text-zinc-500">{{ $meetings->firstItem() + $loop->index }}</td>
-                        <td class="px-4 py-3 text-zinc-800 dark:text-zinc-100">
+                        <td class="px-4 py-3 text-zinc-500 max-sm:hidden">{{ $meetings->firstItem() + $loop->index }}</td>
+                        <td class="px-4 py-3 text-zinc-800 dark:text-zinc-100 whitespace-nowrap max-sm:hidden">
                             {{ optional($meeting->date)->format('Y-m-d') }}
                             <span class="block text-xs text-zinc-400">{{ optional($meeting->date)->locale('ar')->dayName }}@if($meeting->time) · {{ \App\Support\LocalTime::clock($meeting->time) }}@endif</span>
                         </td>
-                        <td class="px-4 py-3 font-medium text-zinc-800 dark:text-zinc-100" title="{{ $meeting->subject }}">
+                        <td class="px-4 py-3 max-sm:px-3 font-medium text-zinc-800 dark:text-zinc-100" title="{{ $meeting->subject }}">
                             <div style="max-width:280px; white-space:normal; display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; overflow:hidden;">{{ $meeting->subject }}</div>
+                            <div class="sm:hidden mt-1 text-xs font-normal text-zinc-500 dark:text-zinc-400">
+                                <span dir="ltr">{{ optional($meeting->date)->format('Y-m-d') }}</span> · {{ optional($meeting->date)->locale('ar')->dayName }}@if($meeting->time) · {{ \App\Support\LocalTime::clock($meeting->time) }}@endif
+                                @if($meeting->location)<div>{{ $meeting->location }}</div>@endif
+                            </div>
                         </td>
-                        <td class="px-4 py-3 text-zinc-600 dark:text-zinc-300" title="{{ $meeting->location }}">
+                        <td class="px-4 py-3 text-zinc-600 dark:text-zinc-300 max-sm:hidden" title="{{ $meeting->location }}">
                             <div style="max-width:200px; white-space:normal; display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; overflow:hidden;">{{ $meeting->location ?: '—' }}</div>
                         </td>
-                        <td class="px-4 py-3 text-zinc-600 dark:text-zinc-300">
+                        <td class="px-4 py-3 text-zinc-600 dark:text-zinc-300 max-sm:hidden">
                             @forelse($meeting->attendees as $att)
                                 <span class="block">{{ $att->name }}@if($att->title)<span class="text-xs text-zinc-400"> ({{ $att->title }})</span>@endif</span>
                             @empty
@@ -77,8 +82,8 @@
                             @endforelse
                         </td>
                         @if($canEdit || $canDelete)
-                            <td class="px-4 py-3">
-                                <div class="flex items-center gap-2">
+                            <td class="px-4 py-3 max-sm:px-2">
+                                <div class="flex max-sm:flex-col max-sm:items-stretch items-center gap-2">
                                     @if($canEdit)
                                     <a href="{{ route('meetings.edit', $meeting) }}" wire:navigate
                                        class="inline-flex items-center text-xs px-3 py-1.5 rounded-md border border-zinc-300 dark:border-zinc-600 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition">
