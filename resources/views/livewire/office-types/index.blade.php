@@ -20,13 +20,13 @@
                placeholder="{{ __('home.search') }}"
                class="max-w-sm flex-1 min-w-50 border border-zinc-300 dark:border-zinc-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-[#c9a847]" />
         <select wire:model.live="publicFilter"
-                class="border border-zinc-300 dark:border-zinc-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-[#c9a847]">
+                class="max-sm:w-full border border-zinc-300 dark:border-zinc-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-[#c9a847]">
             <option value="">— {{ __('home.public_visibility') }} —</option>
             <option value="yes">{{ __('home.public_visible') }}</option>
             <option value="no">{{ __('home.public_hidden') }}</option>
         </select>
         <select wire:model.live="workersFilter"
-                class="border border-zinc-300 dark:border-zinc-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-[#c9a847]">
+                class="max-sm:w-full border border-zinc-300 dark:border-zinc-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-[#c9a847]">
             <option value="">— {{ __('home.office_type_workers_filter') }} —</option>
             <option value="yes">{{ __('home.office_type_workers_yes') }}</option>
             <option value="no">{{ __('home.office_type_workers_no') }}</option>

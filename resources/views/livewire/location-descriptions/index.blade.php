@@ -23,7 +23,8 @@
         <table class="w-full text-sm text-right">
             <thead class="bg-zinc-50 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 text-xs uppercase">
                 <tr>
-                    <th class="px-4 py-3 font-medium">#</th>
+                    {{-- على الموبايل: الترقيم يختفي والأزرار تحت بعضها — كان «حذف» يخرج عن الشاشة --}}
+                    <th class="px-4 py-3 font-medium max-sm:hidden">#</th>
                     <th class="px-4 py-3 font-medium">{{ __('home.name') }}</th>
                     <th class="px-4 py-3 font-medium">{{ __('home.allows_windows_count') }}</th>
                     @if($isSuperAdmin)
@@ -34,8 +35,8 @@
             <tbody class="divide-y divide-zinc-100 dark:divide-zinc-700">
                 @forelse($items as $item)
                     <tr class="hover:bg-zinc-50 dark:hover:bg-zinc-800 transition">
-                        <td class="px-4 py-3 text-zinc-500">{{ $items->firstItem() + $loop->index }}</td>
-                        <td class="px-4 py-3 font-medium text-zinc-800 dark:text-zinc-100">{{ $item->name }}</td>
+                        <td class="px-4 py-3 text-zinc-500 max-sm:hidden">{{ $items->firstItem() + $loop->index }}</td>
+                        <td class="px-4 py-3 max-sm:px-3 font-medium text-zinc-800 dark:text-zinc-100">{{ $item->name }}</td>
                         <td class="px-4 py-3">
                             @if($item->shows_windows_count)
                                 <span class="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-full bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400">
@@ -47,8 +48,8 @@
                             @endif
                         </td>
                         @if($isSuperAdmin)
-                            <td class="px-4 py-3">
-                                <div class="flex items-center gap-2">
+                            <td class="px-4 py-3 max-sm:px-2">
+                                <div class="flex max-sm:flex-col max-sm:items-stretch items-center gap-2">
                                     <a href="{{ route('location-descriptions.edit', $item) }}" wire:navigate
                                        class="inline-flex items-center text-xs px-3 py-1.5 rounded-md border border-zinc-300 dark:border-zinc-600 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition">
                                         {{ __('home.edit') }}
