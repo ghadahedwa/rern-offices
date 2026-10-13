@@ -28,7 +28,8 @@
 
         @if(count($groups) > 0)
             <div class="overflow-x-auto rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-sm">
-                <table class="w-full text-sm text-center">
+                {{-- على الموبايل: حشوة أضيق — الأعمدة كلها أرقام والجدول يدخل الشاشة --}}
+                <table class="w-full text-sm text-center max-sm:[&_th]:px-1.5 max-sm:[&_td]:px-1.5">
                     <thead class="text-xs">
                         <tr class="bg-[#c9a847] text-white">
                             <th class="px-3 py-2.5 font-semibold text-right">{{ __('home.ct_rep_governorate') }}</th>

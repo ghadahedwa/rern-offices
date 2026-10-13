@@ -68,14 +68,15 @@
 
     {{-- Table --}}
     <div class="overflow-x-auto rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-sm">
-        <table class="w-full text-sm text-right table-fixed min-w-140">
+        {{-- على الموبايل: الاسم (والهاتف والصفة والمقر وتاريخ الالتحاق تحته) والعمليات — بلا min-w-140 ولا أعمدة ثابتة --}}
+        <table class="w-full text-sm text-right sm:table-fixed sm:min-w-140">
             <thead class="bg-zinc-50 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 text-xs uppercase">
                 <tr>
                     <th class="px-4 py-3 font-medium w-[4%] hidden 2xl:table-cell">#</th>
-                    @include('livewire.partials.sortable-th', ['column' => 'name', 'label' => __('home.ct_worker_name'), 'thClass' => 'w-[30%]'])
-                    <th class="px-4 py-3 font-medium w-[32%]">{{ __('home.ct_worker_current_office') }}</th>
+                    @include('livewire.partials.sortable-th', ['column' => 'name', 'label' => __('home.ct_worker_name'), 'thClass' => 'sm:w-[30%]'])
+                    <th class="px-4 py-3 font-medium w-[32%] max-sm:hidden">{{ __('home.ct_worker_current_office') }}</th>
                     @include('livewire.partials.sortable-th', ['column' => 'governorate', 'label' => __('home.ct_worker_governorate'), 'thClass' => 'w-[12%] hidden xl:table-cell'])
-                    <th class="px-4 py-3 font-medium w-[22%]">{{ __('home.actions') }}</th>
+                    <th class="px-4 py-3 font-medium sm:w-[22%]">{{ __('home.actions') }}</th>
                 </tr>
             </thead>
             <tbody class="divide-y divide-zinc-100 dark:divide-zinc-700">
@@ -96,8 +97,8 @@
                     {{-- الصفّ المؤرشَف بخلفيةٍ باهتة: في فلتر «الكل» يختلط المنتهية خدمته بالعامل --}}
                     <tr class="transition {{ $assignment ? 'hover:bg-zinc-50 dark:hover:bg-zinc-800' : 'bg-zinc-50 hover:bg-zinc-100 dark:bg-zinc-800/40 dark:hover:bg-zinc-800' }}">
                         <td class="px-4 py-3 text-zinc-500 hidden 2xl:table-cell">{{ $contractors->firstItem() + $loop->index }}</td>
-                        <td class="px-4 py-3">
-                            <div class="font-medium text-zinc-800 dark:text-zinc-100 truncate" title="{{ $contractor->name }}">
+                        <td class="px-4 py-3 max-sm:px-3">
+                            <div class="font-medium text-zinc-800 dark:text-zinc-100 sm:truncate" title="{{ $contractor->name }}">
                                 {{ $contractor->name }}
                                 @unless($assignment)
                                     <span class="inline-flex items-center ms-2 text-[11px] font-medium px-2 py-0.5 rounded-full bg-zinc-200 dark:bg-zinc-700 text-zinc-600 dark:text-zinc-300">
@@ -113,8 +114,12 @@
                                     <span class="text-[#b8962e] dark:text-[#d4b65e]">{{ $contractor->profession->name }}</span>
                                 @endif
                             </div>
+                            <div class="sm:hidden mt-1 text-xs text-zinc-600 dark:text-zinc-300">{{ $assignment?->office?->name ?? __('home.ct_worker_no_office') }}</div>
+                            @if($assignment)
+                                <div class="sm:hidden text-xs text-zinc-500 dark:text-zinc-400">{{ __('home.ct_worker_started_on') }}: <span dir="ltr" class="inline-block">{{ $assignment->started_on?->toDateString() ?? '—' }}</span></div>
+                            @endif
                         </td>
-                        <td class="px-4 py-3">
+                        <td class="px-4 py-3 max-sm:hidden">
                             <div class="text-zinc-600 dark:text-zinc-300 truncate"
                                  title="{{ $assignment?->office?->name ?? __('home.ct_worker_no_office') }}">
                                 {{ $assignment?->office?->name ?? __('home.ct_worker_no_office') }}
@@ -127,8 +132,8 @@
                             @endif
                         </td>
                         <td class="px-4 py-3 text-zinc-500 truncate hidden xl:table-cell">{{ $assignment?->office?->governorate?->name ?? '—' }}</td>
-                        <td class="px-4 py-3">
-                            <div class="flex flex-wrap items-center gap-2">
+                        <td class="px-4 py-3 max-sm:px-2">
+                            <div class="flex flex-wrap max-sm:flex-col max-sm:items-stretch items-center gap-2">
                                 @can('contractors.edit')
                                     <a href="{{ route('contractors.edit', $contractor) }}" wire:navigate class="{{ $pillBlue }}">
                                         {{ __('home.edit') }}

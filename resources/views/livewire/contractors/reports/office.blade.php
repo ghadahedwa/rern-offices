@@ -50,11 +50,12 @@
             </div>
 
             <div class="overflow-x-auto rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-sm">
-                <table class="w-full text-sm text-center">
+                {{-- على الموبايل: المقر سطرٌ تحت اسم العامل بدل عموده، والأرقام بحشوة أضيق — هي المعلومة --}}
+                <table class="w-full text-sm text-center max-sm:[&_th]:px-1.5 max-sm:[&_td]:px-1.5">
                     <thead class="text-xs">
                         <tr class="bg-[#c9a847] text-white">
                             <th class="px-3 py-2.5 font-semibold text-right">{{ __('home.ct_rep_contractor') }}</th>
-                            <th class="px-3 py-2.5 font-semibold text-right">{{ __('home.ct_rep_office_col') }}</th>
+                            <th class="px-3 py-2.5 font-semibold text-right max-sm:hidden">{{ __('home.ct_rep_office_col') }}</th>
                             <th class="px-3 py-2.5 font-semibold">{{ __('home.ct_rep_col_working') }}</th>
                             <th class="px-3 py-2.5 font-semibold">{{ __('home.ct_rep_col_present') }}</th>
                             @foreach($statuses as $status)
@@ -70,8 +71,9 @@
                                     @if($row['profession'])
                                         <span class="block text-xs text-zinc-400 dark:text-zinc-500">{{ $row['profession'] }}</span>
                                     @endif
+                                    <span class="sm:hidden block text-xs text-zinc-500 dark:text-zinc-400">{{ $row['office_name'] }}</span>
                                 </td>
-                                <td class="px-3 py-2.5 text-right text-zinc-600 dark:text-zinc-300 max-w-xs truncate" title="{{ $row['office_name'] }}">{{ $row['office_name'] }}</td>
+                                <td class="px-3 py-2.5 text-right text-zinc-600 dark:text-zinc-300 max-w-xs truncate max-sm:hidden" title="{{ $row['office_name'] }}">{{ $row['office_name'] }}</td>
                                 <td class="px-3 py-2.5 text-zinc-700 dark:text-zinc-200">{{ $row['working'] }}</td>
                                 <td class="px-3 py-2.5 text-emerald-700 dark:text-emerald-400 font-medium">{{ \App\Support\Contractors\AttendanceReport::attended($row) }}</td>
                                 @foreach($statuses as $status)
@@ -83,7 +85,9 @@
                     </tbody>
                     <tfoot>
                         <tr class="bg-[#c9a847]/10 font-semibold text-zinc-800 dark:text-zinc-100">
-                            <td class="px-3 py-2.5 text-right" colspan="2">{{ __('home.ct_rep_total') }}</td>
+                            {{-- خليّتان لا colspan: إخفاء عمود المقر على الموبايل كان سيزيح الإجماليات عمودًا --}}
+                            <td class="px-3 py-2.5 text-right">{{ __('home.ct_rep_total') }}</td>
+                            <td class="max-sm:hidden"></td>
                             <td class="px-3 py-2.5">{{ $totals['working'] }}</td>
                             <td class="px-3 py-2.5">{{ \App\Support\Contractors\AttendanceReport::attended($totals) }}</td>
                             @foreach($statuses as $status)
