@@ -2,7 +2,7 @@
      الحقول الثلاثة اختيارية؛ «مجهول» = بلا رقم قومي وبلا هاتف (تعريفه الواحد في HasFeedbackIdentity).
      مَن كتب اسمه وحده يُعرض اسمه ومعه الشارة — الاسم لا يُعرّف صاحبه. --}}
 @if($row->name)
-    <span class="block font-medium text-zinc-800 dark:text-zinc-100 truncate" title="{{ $row->name }}">{{ $row->name }}</span>
+    <span class="block font-medium text-zinc-800 dark:text-zinc-100 sm:truncate" title="{{ $row->name }}">{{ $row->name }}</span>
 @endif
 
 @if($row->isAnonymous())

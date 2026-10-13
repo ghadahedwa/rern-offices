@@ -194,7 +194,7 @@
         <p class="text-xs text-zinc-400 mb-5">{{ __('home.fr_dg_trend_hint') }}</p>
 
         <div class="overflow-x-auto">
-            <table class="w-full min-w-140 table-fixed text-sm text-right">
+            <table class="w-full sm:min-w-140 sm:table-fixed text-sm text-right max-sm:[&_th]:px-1.5 max-sm:[&_td]:px-1.5">
                 <thead class="text-xs text-zinc-500 dark:text-zinc-400 border-b border-zinc-200 dark:border-zinc-700">
                     <tr>
                         <th class="px-3 py-2 font-medium w-[18%]">{{ __('home.fr_export_month') }}</th>
@@ -210,10 +210,10 @@
                             <td class="px-3 py-2 text-zinc-600 dark:text-zinc-300">{{ $m['count'] }}</td>
                             <td class="px-3 py-2">
                                 <div class="flex items-center gap-3">
-                                    <div class="flex-1 h-2 rounded-full bg-zinc-100 dark:bg-zinc-800 overflow-hidden">
+                                    <div class="flex-1 h-2 rounded-full bg-zinc-100 dark:bg-zinc-800 overflow-hidden max-sm:hidden">
                                         <div class="h-full bg-[#c9a847] rounded-full" style="width: {{ $m['booked_percent'] ?? 0 }}%"></div>
                                     </div>
-                                    <span class="text-xs text-zinc-500 w-24 text-left">{{ $m['booked_percent'] }}% ({{ $m['booked'] }})</span>
+                                    <span class="text-xs text-zinc-500 sm:w-24 sm:text-left">{{ $m['booked_percent'] }}% ({{ $m['booked'] }})</span>
                                 </div>
                             </td>
                             <td class="px-3 py-2 text-zinc-700 dark:text-zinc-200">{{ $m['score_avg'] ?? '—' }}</td>
@@ -239,7 +239,7 @@
         </div>
 
         <div class="overflow-x-auto">
-            <table class="w-full min-w-140 table-fixed text-sm text-right">
+            <table class="w-full sm:min-w-140 sm:table-fixed text-sm text-right max-sm:[&_th]:px-1.5 max-sm:[&_td]:px-1.5">
                 <thead class="text-xs text-zinc-500 dark:text-zinc-400 border-b border-zinc-200 dark:border-zinc-700">
                     <tr>
                         <th class="px-3 py-2 font-medium w-[34%]">{{ __('home.fr_office') }}</th>
@@ -253,16 +253,16 @@
                     @foreach($offices as $o)
                         <tr class="{{ $o['enough'] ? '' : 'bg-zinc-50 dark:bg-zinc-800/40' }}">
                             <td class="px-3 py-2">
-                                <span class="block text-zinc-800 dark:text-zinc-100 truncate" title="{{ $o['office'] }}">{{ $o['office'] }}</span>
-                                <span class="block text-xs text-zinc-400 truncate">{{ $o['governorate'] }}</span>
+                                <span class="block text-zinc-800 dark:text-zinc-100 sm:truncate" title="{{ $o['office'] }}">{{ $o['office'] }}</span>
+                                <span class="block text-xs text-zinc-400 sm:truncate">{{ $o['governorate'] }}</span>
                             </td>
                             <td class="px-3 py-2 text-zinc-600 dark:text-zinc-300">{{ $o['count'] }}</td>
                             <td class="px-3 py-2">
                                 <div class="flex items-center gap-3">
-                                    <div class="flex-1 h-2 rounded-full bg-zinc-100 dark:bg-zinc-800 overflow-hidden">
+                                    <div class="flex-1 h-2 rounded-full bg-zinc-100 dark:bg-zinc-800 overflow-hidden max-sm:hidden">
                                         <div class="h-full rounded-full {{ $o['enough'] ? 'bg-[#c9a847]' : 'bg-zinc-300 dark:bg-zinc-600' }}" style="width: {{ $o['booked_percent'] ?? 0 }}%"></div>
                                     </div>
-                                    <span class="text-xs text-zinc-500 w-20 text-left">{{ $o['booked_percent'] }}% ({{ $o['booked'] }})</span>
+                                    <span class="text-xs text-zinc-500 sm:w-20 sm:text-left">{{ $o['booked_percent'] }}% ({{ $o['booked'] }})</span>
                                 </div>
                             </td>
                             <td class="px-3 py-2 text-zinc-700 dark:text-zinc-200">{{ $o['score_avg'] ?? '—' }}</td>

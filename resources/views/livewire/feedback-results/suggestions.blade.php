@@ -31,16 +31,17 @@
     {{-- Table --}}
     <div class="overflow-x-auto rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-sm">
         {{-- نفس مبدأ شاشة التقييمات: نِسَب مئوية مجموعها ١٠٠٪ + min-w --}}
-        <table class="w-full min-w-140 table-fixed text-sm text-right">
+        {{-- على الموبايل: بلا min-w-140 ولا أعمدة ثابتة — التاريخ والمواطن سطران تحت المقر بدل عموديهما --}}
+        <table class="w-full sm:min-w-140 sm:table-fixed text-sm text-right max-sm:[&_th]:px-1.5 max-sm:[&_td]:px-1.5">
             <thead class="bg-zinc-50 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 text-xs uppercase">
                 <tr>
                     @include('livewire.feedback-results.includes.bulk-th', ['pageIds' => $pageIds])
                     <th class="px-3 py-3 font-medium w-[4%] hidden 2xl:table-cell">#</th>
                     @include('livewire.partials.sortable-th', [
-                        'column' => 'created_at', 'label' => __('home.fr_date'), 'thClass' => 'w-[11%]',
+                        'column' => 'created_at', 'label' => __('home.fr_date'), 'thClass' => 'w-[11%] max-sm:hidden',
                     ])
-                    <th class="px-3 py-3 font-medium w-[22%]">{{ __('home.fr_office') }}</th>
-                    <th class="px-3 py-3 font-medium w-[18%]">{{ __('home.fr_citizen') }}</th>
+                    <th class="px-3 py-3 font-medium sm:w-[22%]">{{ __('home.fr_office') }}</th>
+                    <th class="px-3 py-3 font-medium w-[18%] max-sm:hidden">{{ __('home.fr_citizen') }}</th>
                     @include('livewire.partials.sortable-th', [
                         'column' => 'topics_count', 'label' => __('home.fr_topics_count'), 'thClass' => 'w-[10%]',
                     ])
@@ -56,19 +57,21 @@
                         : 'hover:bg-zinc-50 dark:hover:bg-zinc-800' }}">
                         @include('livewire.feedback-results.includes.bulk-td', ['rowId' => $suggestion->id])
                         <td class="px-3 py-3 text-zinc-500 hidden 2xl:table-cell">{{ $suggestions->firstItem() + $loop->index }}</td>
-                        <td class="px-3 py-3 text-zinc-600 dark:text-zinc-300 whitespace-nowrap">
+                        <td class="px-3 py-3 text-zinc-600 dark:text-zinc-300 whitespace-nowrap max-sm:hidden">
                             {{ \App\Support\LocalTime::date($suggestion->created_at) }}
                             <span class="block text-xs text-zinc-400">{{ \App\Support\LocalTime::time($suggestion->created_at) }}</span>
                         </td>
                         {{-- المحافظة سطر فرعي تحت المقر — نفس ترتيب شاشة التقييمات --}}
                         <td class="px-3 py-3">
-                            <span class="block font-medium text-zinc-800 dark:text-zinc-100 truncate"
+                            <span class="block font-medium text-zinc-800 dark:text-zinc-100 sm:truncate"
                                   title="{{ $suggestion->office?->name }}">
                                 {{ $suggestion->office?->name ?? __('home.fr_deleted_office') }}
                             </span>
-                            <span class="block text-xs text-zinc-400 truncate">{{ $suggestion->governorate?->name ?? '—' }}</span>
+                            <span class="block text-xs text-zinc-400 sm:truncate">{{ $suggestion->governorate?->name ?? '—' }}</span>
+                            <div class="sm:hidden mt-1 text-xs text-zinc-500 dark:text-zinc-400"><span dir="ltr" class="inline-block">{{ \App\Support\LocalTime::date($suggestion->created_at) }}</span> {{ \App\Support\LocalTime::time($suggestion->created_at) }}</div>
+                            <div class="sm:hidden mt-1">@include('livewire.feedback-results.includes.citizen-cell', ['row' => $suggestion])</div>
                         </td>
-                        <td class="px-3 py-3">
+                        <td class="px-3 py-3 max-sm:hidden">
                             @include('livewire.feedback-results.includes.citizen-cell', ['row' => $suggestion])
                         </td>
                         <td class="px-3 py-3">

@@ -46,16 +46,17 @@
 
     {{-- Table --}}
     <div class="overflow-x-auto rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-sm">
-        <table class="w-full min-w-140 table-fixed text-sm text-right">
+        {{-- على الموبايل: بلا min-w-140 ولا أعمدة ثابتة — التاريخ والمواطن سطران تحت المقر بدل عموديهما --}}
+        <table class="w-full sm:min-w-140 sm:table-fixed text-sm text-right max-sm:[&_th]:px-1.5 max-sm:[&_td]:px-1.5">
             <thead class="bg-zinc-50 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 text-xs uppercase">
                 <tr>
                     @include('livewire.feedback-results.includes.bulk-th', ['pageIds' => $pageIds])
                     <th class="px-3 py-3 font-medium w-[5%] hidden 2xl:table-cell">#</th>
                     @include('livewire.partials.sortable-th', [
-                        'column' => 'created_at', 'label' => __('home.fr_date'), 'thClass' => 'w-[12%]',
+                        'column' => 'created_at', 'label' => __('home.fr_date'), 'thClass' => 'w-[12%] max-sm:hidden',
                     ])
-                    <th class="px-3 py-3 font-medium w-[25%]">{{ __('home.fr_office') }}</th>
-                    <th class="px-3 py-3 font-medium w-[19%]">{{ __('home.fr_citizen') }}</th>
+                    <th class="px-3 py-3 font-medium sm:w-[25%]">{{ __('home.fr_office') }}</th>
+                    <th class="px-3 py-3 font-medium w-[19%] max-sm:hidden">{{ __('home.fr_citizen') }}</th>
                     <th class="px-3 py-3 font-medium w-[18%]">{{ __('home.fr_dg_path') }}</th>
                     @include('livewire.partials.sortable-th', [
                         'column' => 'q205', 'label' => __('home.fr_dg_q205'), 'thClass' => 'w-[10%]',
@@ -70,23 +71,25 @@
                         : 'hover:bg-zinc-50 dark:hover:bg-zinc-800' }}">
                         @include('livewire.feedback-results.includes.bulk-td', ['rowId' => $row->id])
                         <td class="px-3 py-3 text-zinc-500 hidden 2xl:table-cell">{{ $rows->firstItem() + $loop->index }}</td>
-                        <td class="px-3 py-3 text-zinc-600 dark:text-zinc-300 whitespace-nowrap">
+                        <td class="px-3 py-3 text-zinc-600 dark:text-zinc-300 whitespace-nowrap max-sm:hidden">
                             {{ \App\Support\LocalTime::date($row->created_at) }}
                             <span class="block text-xs text-zinc-400">{{ \App\Support\LocalTime::time($row->created_at) }}</span>
                         </td>
                         <td class="px-3 py-3">
-                            <span class="block font-medium text-zinc-800 dark:text-zinc-100 truncate" title="{{ $row->office?->name }}">
+                            <span class="block font-medium text-zinc-800 dark:text-zinc-100 sm:truncate" title="{{ $row->office?->name }}">
                                 {{ $row->office?->name ?? __('home.fr_deleted_office') }}
                             </span>
-                            <span class="block text-xs text-zinc-400 truncate">{{ $row->governorate?->name ?? '—' }}</span>
+                            <span class="block text-xs text-zinc-400 sm:truncate">{{ $row->governorate?->name ?? '—' }}</span>
+                            <div class="sm:hidden mt-1 text-xs text-zinc-500 dark:text-zinc-400"><span dir="ltr" class="inline-block">{{ \App\Support\LocalTime::date($row->created_at) }}</span> {{ \App\Support\LocalTime::time($row->created_at) }}</div>
+                            <div class="sm:hidden mt-1">@include('livewire.feedback-results.includes.citizen-cell', ['row' => $row])</div>
                         </td>
-                        <td class="px-3 py-3">
+                        <td class="px-3 py-3 max-sm:hidden">
                             @include('livewire.feedback-results.includes.citizen-cell', ['row' => $row])
                         </td>
                         {{-- المسار: الحجز ومنصته، أو بدون حجز ومعرفته بالمنصة --}}
                         <td class="px-3 py-3">
                             <span class="block text-zinc-800 dark:text-zinc-100">{{ $row->answerLabel('q201') }}</span>
-                            <span class="block text-xs text-zinc-400 truncate">
+                            <span class="block text-xs text-zinc-400 sm:truncate">
                                 @if($row->q201 === 'booked')
                                     {{ $row->answerLabel('q202') ?? '—' }}
                                 @else

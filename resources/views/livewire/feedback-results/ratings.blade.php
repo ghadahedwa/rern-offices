@@ -32,16 +32,17 @@
     <div class="overflow-x-auto rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-sm">
         {{-- table-fixed + نِسَب مئوية مجموعها ١٠٠٪: الجدول = عرض الحاوية بالضبط مهما طال المحتوى.
              min-w يمنع سحق الأعمدة على الشاشات الضيقة (يتحوّل لتمرير أفقي داخل البطاقة). --}}
-        <table class="w-full min-w-140 table-fixed text-sm text-right">
+        {{-- على الموبايل: بلا min-w-140 ولا أعمدة ثابتة — التاريخ والمواطن سطران تحت المقر بدل عموديهما --}}
+        <table class="w-full sm:min-w-140 sm:table-fixed text-sm text-right max-sm:[&_th]:px-1.5 max-sm:[&_td]:px-1.5">
             <thead class="bg-zinc-50 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 text-xs uppercase">
                 <tr>
                     @include('livewire.feedback-results.includes.bulk-th', ['pageIds' => $pageIds])
                     <th class="px-3 py-3 font-medium w-[5%] hidden 2xl:table-cell">#</th>
                     @include('livewire.partials.sortable-th', [
-                        'column' => 'created_at', 'label' => __('home.fr_date'), 'thClass' => 'w-[12%]',
+                        'column' => 'created_at', 'label' => __('home.fr_date'), 'thClass' => 'w-[12%] max-sm:hidden',
                     ])
-                    <th class="px-3 py-3 font-medium w-[26%]">{{ __('home.fr_office') }}</th>
-                    <th class="px-3 py-3 font-medium w-[20%]">{{ __('home.fr_citizen') }}</th>
+                    <th class="px-3 py-3 font-medium sm:w-[26%]">{{ __('home.fr_office') }}</th>
+                    <th class="px-3 py-3 font-medium w-[20%] max-sm:hidden">{{ __('home.fr_citizen') }}</th>
                     <th class="px-3 py-3 font-medium w-[11%] hidden xl:table-cell">{{ __('home.fr_wait_time') }}</th>
                     @include('livewire.partials.sortable-th', [
                         'column' => 'overall_rating', 'label' => __('home.fr_overall_rating'), 'thClass' => 'w-[15%]',
@@ -57,19 +58,21 @@
                         : 'hover:bg-zinc-50 dark:hover:bg-zinc-800' }}">
                         @include('livewire.feedback-results.includes.bulk-td', ['rowId' => $rating->id])
                         <td class="px-3 py-3 text-zinc-500 hidden 2xl:table-cell">{{ $ratings->firstItem() + $loop->index }}</td>
-                        <td class="px-3 py-3 text-zinc-600 dark:text-zinc-300 whitespace-nowrap">
+                        <td class="px-3 py-3 text-zinc-600 dark:text-zinc-300 whitespace-nowrap max-sm:hidden">
                             {{ \App\Support\LocalTime::date($rating->created_at) }}
                             <span class="block text-xs text-zinc-400">{{ \App\Support\LocalTime::time($rating->created_at) }}</span>
                         </td>
                         {{-- المحافظة سطر فرعي تحت المقر بدل عمود مستقل — توفير عرض بلا فقد معلومة --}}
                         <td class="px-3 py-3">
-                            <span class="block font-medium text-zinc-800 dark:text-zinc-100 truncate"
+                            <span class="block font-medium text-zinc-800 dark:text-zinc-100 sm:truncate"
                                   title="{{ $rating->office?->name }}">
                                 {{ $rating->office?->name ?? __('home.fr_deleted_office') }}
                             </span>
-                            <span class="block text-xs text-zinc-400 truncate">{{ $rating->governorate?->name ?? '—' }}</span>
+                            <span class="block text-xs text-zinc-400 sm:truncate">{{ $rating->governorate?->name ?? '—' }}</span>
+                            <div class="sm:hidden mt-1 text-xs text-zinc-500 dark:text-zinc-400"><span dir="ltr" class="inline-block">{{ \App\Support\LocalTime::date($rating->created_at) }}</span> {{ \App\Support\LocalTime::time($rating->created_at) }}</div>
+                            <div class="sm:hidden mt-1">@include('livewire.feedback-results.includes.citizen-cell', ['row' => $rating])</div>
                         </td>
-                        <td class="px-3 py-3">
+                        <td class="px-3 py-3 max-sm:hidden">
                             @include('livewire.feedback-results.includes.citizen-cell', ['row' => $rating])
                         </td>
                         <td class="px-3 py-3 text-zinc-600 dark:text-zinc-300 truncate hidden xl:table-cell"
@@ -79,7 +82,7 @@
                         {{-- التقييم العام + متوسط المحاور في خلية واحدة (رقمان مختلفان، لكن عمودان مهدرَان) --}}
                         <td class="px-3 py-3">
                             @include('livewire.feedback-results.includes.stars', ['value' => $rating->overall_rating])
-                            <span class="block text-xs text-zinc-400 mt-0.5 truncate"
+                            <span class="block text-xs text-zinc-400 mt-0.5 sm:truncate"
                                   title="{{ __('home.fr_criteria_avg') }}">
                                 {{ __('home.fr_criteria_avg_short') }}: {{ $rating->criteriaAverage() ?? '—' }}
                             </span>
