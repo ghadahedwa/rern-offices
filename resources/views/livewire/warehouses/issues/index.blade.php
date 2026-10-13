@@ -39,26 +39,32 @@
         <table class="w-full text-sm text-right">
             <thead class="bg-zinc-50 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 text-xs uppercase">
                 <tr>
-                    @include('livewire.partials.sortable-th', ['column' => 'issued_at',     'label' => __('home.wh_issue_at')])
-                    @include('livewire.partials.sortable-th', ['column' => 'warehouse',     'label' => __('home.wh_issue_warehouse')])
+                    {{-- على الموبايل: المقر (والمخزن والتاريخ ونوع المستند وعدد الأصناف تحته) والعمليات --}}
+                    @include('livewire.partials.sortable-th', ['column' => 'issued_at',     'label' => __('home.wh_issue_at'), 'thClass' => 'max-sm:hidden'])
+                    @include('livewire.partials.sortable-th', ['column' => 'warehouse',     'label' => __('home.wh_issue_warehouse'), 'thClass' => 'max-sm:hidden'])
                     @include('livewire.partials.sortable-th', ['column' => 'office',        'label' => __('home.wh_issue_office')])
-                    @include('livewire.partials.sortable-th', ['column' => 'document_type', 'label' => __('home.wh_document_type')])
-                    @include('livewire.partials.sortable-th', ['column' => 'items_count',   'label' => __('home.items_title')])
+                    @include('livewire.partials.sortable-th', ['column' => 'document_type', 'label' => __('home.wh_document_type'), 'thClass' => 'max-sm:hidden'])
+                    @include('livewire.partials.sortable-th', ['column' => 'items_count',   'label' => __('home.items_title'), 'thClass' => 'max-sm:hidden'])
                     <th class="px-4 py-3 font-medium">{{ __('home.actions') }}</th>
                 </tr>
             </thead>
             <tbody class="divide-y divide-zinc-100 dark:divide-zinc-700">
                 @forelse($issues as $issue)
                     <tr class="hover:bg-zinc-50 dark:hover:bg-zinc-800 transition">
-                        <td class="px-4 py-3 text-zinc-600 dark:text-zinc-300">{{ $issue->issued_at->format('Y-m-d') }}</td>
-                        <td class="px-4 py-3 text-zinc-700 dark:text-zinc-200">{{ $issue->warehouse?->name ?? '—' }}</td>
+                        <td class="px-4 py-3 text-zinc-600 dark:text-zinc-300 max-sm:hidden">{{ $issue->issued_at->format('Y-m-d') }}</td>
+                        <td class="px-4 py-3 text-zinc-700 dark:text-zinc-200 max-sm:hidden">{{ $issue->warehouse?->name ?? '—' }}</td>
                         {{-- المقر هو جواب «أين ذهب» — فهو العمود الأبرز --}}
-                        <td class="px-4 py-3 font-medium text-zinc-800 dark:text-zinc-100 max-w-64 truncate"
-                            title="{{ $issue->office?->name }}">{{ $issue->office?->name ?? '—' }}</td>
-                        <td class="px-4 py-3 text-zinc-600 dark:text-zinc-300">{{ $issue->document_type ?: '—' }}</td>
-                        <td class="px-4 py-3 text-zinc-600 dark:text-zinc-300">{{ $issue->items_count }}</td>
-                        <td class="px-4 py-3">
-                            <div class="flex items-center gap-2">
+                        <td class="px-4 py-3 max-sm:px-3 font-medium text-zinc-800 dark:text-zinc-100 sm:max-w-64 sm:truncate"
+                            title="{{ $issue->office?->name }}">{{ $issue->office?->name ?? '—' }}
+                            <div class="sm:hidden mt-0.5 text-xs font-normal text-zinc-500 dark:text-zinc-400">
+                                <div>{{ $issue->warehouse?->name ?? '—' }}</div>
+                                <span dir="ltr" class="inline-block">{{ $issue->issued_at->format('Y-m-d') }}</span>@if($issue->document_type) · {{ $issue->document_type }}@endif · {{ __('home.wh_mobile_items_count', ['count' => $issue->items_count]) }}
+                            </div>
+                        </td>
+                        <td class="px-4 py-3 text-zinc-600 dark:text-zinc-300 max-sm:hidden">{{ $issue->document_type ?: '—' }}</td>
+                        <td class="px-4 py-3 text-zinc-600 dark:text-zinc-300 max-sm:hidden">{{ $issue->items_count }}</td>
+                        <td class="px-4 py-3 max-sm:px-2">
+                            <div class="flex max-sm:flex-col max-sm:items-stretch items-center gap-2">
                                 <button wire:click="view({{ $issue->id }})"
                                         class="inline-flex items-center text-xs px-3 py-1.5 rounded-md border border-zinc-300 dark:border-zinc-600 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition">
                                     {{ __('home.view') }}

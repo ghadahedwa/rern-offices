@@ -1032,6 +1032,9 @@ return [
     'wh_transfer_deleted'         => 'تم حذف النقل',
     'wh_from_warehouse'           => 'المخزن المصدر',
     'wh_to_warehouse'             => 'المخزن المستلم',
+    // سطر التفاصيل تحت الاسم في قوائم المستندات على الموبايل
+    'wh_mobile_to'                => 'إلى',
+    'wh_mobile_items_count'       => 'عدد الأصناف: :count',
     'wh_transferred_at'           => 'تاريخ الصرف',
     'wh_transfer_direction'      => 'الاتجاه',
     'wh_transfer_direction_all'  => '— وارد وصادر —',

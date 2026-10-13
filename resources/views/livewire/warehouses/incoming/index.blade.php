@@ -32,22 +32,26 @@
         <table class="w-full text-sm text-right">
             <thead class="bg-zinc-50 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 text-xs uppercase">
                 <tr>
-                    @include('livewire.partials.sortable-th', ['column' => 'received_at', 'label' => __('home.wh_received_at')])
+                    {{-- على الموبايل: المخزن (والتاريخ والمورّد وعدد الأصناف تحته) والعمليات --}}
+                    @include('livewire.partials.sortable-th', ['column' => 'received_at', 'label' => __('home.wh_received_at'), 'thClass' => 'max-sm:hidden'])
                     @include('livewire.partials.sortable-th', ['column' => 'warehouse',   'label' => __('home.warehouse')])
-                    @include('livewire.partials.sortable-th', ['column' => 'supplier',    'label' => __('home.wh_supplier')])
-                    @include('livewire.partials.sortable-th', ['column' => 'items_count', 'label' => __('home.items_title')])
+                    @include('livewire.partials.sortable-th', ['column' => 'supplier',    'label' => __('home.wh_supplier'), 'thClass' => 'max-sm:hidden'])
+                    @include('livewire.partials.sortable-th', ['column' => 'items_count', 'label' => __('home.items_title'), 'thClass' => 'max-sm:hidden'])
                     <th class="px-4 py-3 font-medium">{{ __('home.actions') }}</th>
                 </tr>
             </thead>
             <tbody class="divide-y divide-zinc-100 dark:divide-zinc-700">
                 @forelse($incomings as $incoming)
                     <tr class="hover:bg-zinc-50 dark:hover:bg-zinc-800 transition">
-                        <td class="px-4 py-3 text-zinc-600 dark:text-zinc-300">{{ $incoming->received_at->format('Y-m-d') }}</td>
-                        <td class="px-4 py-3 font-medium text-zinc-800 dark:text-zinc-100">{{ $incoming->warehouse?->name ?? '—' }}</td>
-                        <td class="px-4 py-3 text-zinc-600 dark:text-zinc-300">{{ $incoming->supplier_name ?: '—' }}</td>
-                        <td class="px-4 py-3 text-zinc-600 dark:text-zinc-300">{{ $incoming->items_count }}</td>
-                        <td class="px-4 py-3">
-                            <div class="flex items-center gap-2">
+                        <td class="px-4 py-3 text-zinc-600 dark:text-zinc-300 max-sm:hidden">{{ $incoming->received_at->format('Y-m-d') }}</td>
+                        <td class="px-4 py-3 max-sm:px-3 font-medium text-zinc-800 dark:text-zinc-100">
+                            {{ $incoming->warehouse?->name ?? '—' }}
+                            <div class="sm:hidden mt-0.5 text-xs font-normal text-zinc-500 dark:text-zinc-400"><span dir="ltr" class="inline-block">{{ $incoming->received_at->format('Y-m-d') }}</span>@if($incoming->supplier_name) · {{ $incoming->supplier_name }}@endif · {{ __('home.wh_mobile_items_count', ['count' => $incoming->items_count]) }}</div>
+                        </td>
+                        <td class="px-4 py-3 text-zinc-600 dark:text-zinc-300 max-sm:hidden">{{ $incoming->supplier_name ?: '—' }}</td>
+                        <td class="px-4 py-3 text-zinc-600 dark:text-zinc-300 max-sm:hidden">{{ $incoming->items_count }}</td>
+                        <td class="px-4 py-3 max-sm:px-2">
+                            <div class="flex max-sm:flex-col max-sm:items-stretch items-center gap-2">
                                 <button wire:click="view({{ $incoming->id }})"
                                         class="inline-flex items-center text-xs px-3 py-1.5 rounded-md border border-zinc-300 dark:border-zinc-600 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition">
                                     {{ __('home.view') }}

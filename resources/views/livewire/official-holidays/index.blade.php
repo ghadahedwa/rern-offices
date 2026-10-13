@@ -59,7 +59,7 @@
                         <td class="px-4 py-3 max-sm:px-3 font-medium text-zinc-800 dark:text-zinc-100">{{ $holiday->name }}</td>
                         <td class="px-4 py-3 max-sm:px-2 text-zinc-600 dark:text-zinc-300 whitespace-nowrap">
                             {{ $holiday->starts_on->toDateString() }}
-                            <div class="sm:hidden text-xs text-zinc-400">{{ __('home.ct_holiday_to') }} <span dir="ltr">{{ $holiday->ends_on->toDateString() }}</span></div>
+                            <div class="sm:hidden text-xs text-zinc-400">{{ __('home.ct_holiday_to') }} <span dir="ltr" class="inline-block">{{ $holiday->ends_on->toDateString() }}</span></div>
                         </td>
                         <td class="px-4 py-3 text-zinc-600 dark:text-zinc-300 max-sm:hidden">{{ $holiday->ends_on->toDateString() }}</td>
                         <td class="px-4 py-3 max-sm:px-2 text-zinc-500">{{ count($holiday->dates()) }}</td>

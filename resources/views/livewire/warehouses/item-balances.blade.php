@@ -52,12 +52,13 @@
         <table class="w-full text-sm text-right">
             <thead class="bg-zinc-50 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 text-xs uppercase">
                 <tr>
-                    <th class="px-4 py-3 font-medium">#</th>
+                    {{-- على الموبايل: الصنف (والقسم تحته) والإجمالي والرئيسي — الوحدة وعدد المخازن في صفحة الصنف --}}
+                    <th class="px-4 py-3 font-medium max-sm:hidden">#</th>
                     @include('livewire.partials.sortable-th', ['column' => 'name',       'label' => __('home.item_name')])
-                    @include('livewire.partials.sortable-th', ['column' => 'category',   'label' => __('home.item_category')])
-                    @include('livewire.partials.sortable-th', ['column' => 'unit',       'label' => __('home.item_unit')])
+                    @include('livewire.partials.sortable-th', ['column' => 'category',   'label' => __('home.item_category'), 'thClass' => 'max-sm:hidden'])
+                    @include('livewire.partials.sortable-th', ['column' => 'unit',       'label' => __('home.item_unit'), 'thClass' => 'max-sm:hidden'])
                     @include('livewire.partials.sortable-th', ['column' => 'total',      'label' => __('home.wh_total_in_all_warehouses')])
-                    @include('livewire.partials.sortable-th', ['column' => 'warehouses', 'label' => __('home.wh_warehouses_with_stock')])
+                    @include('livewire.partials.sortable-th', ['column' => 'warehouses', 'label' => __('home.wh_warehouses_with_stock'), 'thClass' => 'max-sm:hidden'])
                     @include('livewire.partials.sortable-th', ['column' => 'main',       'label' => __('home.wh_main_quantity')])
                 </tr>
             </thead>
@@ -70,8 +71,8 @@
                         $belowMin = $item->min_stock !== null && $main <= $item->min_stock;
                     @endphp
                     <tr class="hover:bg-zinc-50 dark:hover:bg-zinc-800 transition">
-                        <td class="px-4 py-3 text-zinc-500">{{ $items->firstItem() + $loop->index }}</td>
-                        <td class="px-4 py-3 font-medium text-zinc-800 dark:text-zinc-100">
+                        <td class="px-4 py-3 text-zinc-500 max-sm:hidden">{{ $items->firstItem() + $loop->index }}</td>
+                        <td class="px-4 py-3 max-sm:px-3 font-medium text-zinc-800 dark:text-zinc-100">
                             <a href="{{ route('warehouses.items.show', $item) }}" wire:navigate
                                class="underline decoration-dotted decoration-zinc-300 dark:decoration-zinc-600 underline-offset-4 hover:text-[#c9a847] hover:decoration-[#c9a847] transition">{{ $item->name }}</a>
                             @if($item->code)
@@ -80,24 +81,25 @@
                             @unless($item->is_active)
                                 <span class="mr-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium text-zinc-500 bg-zinc-100 dark:text-zinc-400 dark:bg-zinc-700/40">{{ __('home.warehouse_inactive') }}</span>
                             @endunless
+                            <div class="sm:hidden mt-0.5 text-xs font-normal text-zinc-500 dark:text-zinc-400">{{ $item->category?->name ?? __('home.item_category_none') }}</div>
                         </td>
-                        <td class="px-4 py-3">
+                        <td class="px-4 py-3 max-sm:hidden">
                             @if($item->category)
                                 <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium text-[#8a7020] bg-[#c9a847]/15 dark:text-[#e0c76b] dark:bg-[#c9a847]/10">{{ $item->category->name }}</span>
                             @else
                                 <span class="text-zinc-400">{{ __('home.item_category_none') }}</span>
                             @endif
                         </td>
-                        <td class="px-4 py-3 text-zinc-500 dark:text-zinc-400">{{ $item->unit?->name ?? '—' }}</td>
-                        <td class="px-4 py-3">
+                        <td class="px-4 py-3 text-zinc-500 dark:text-zinc-400 max-sm:hidden">{{ $item->unit?->name ?? '—' }}</td>
+                        <td class="px-4 py-3 max-sm:px-2">
                             @if($total === 0)
                                 <span class="text-zinc-300 dark:text-zinc-600">—</span>
                             @else
                                 <span class="font-bold text-[#b8962e] tabular-nums">{{ number_format($total) }}</span>
                             @endif
                         </td>
-                        <td class="px-4 py-3 text-zinc-600 dark:text-zinc-300 tabular-nums">{{ number_format((int) $item->warehouses_count) }}</td>
-                        <td class="px-4 py-3">
+                        <td class="px-4 py-3 text-zinc-600 dark:text-zinc-300 tabular-nums max-sm:hidden">{{ number_format((int) $item->warehouses_count) }}</td>
+                        <td class="px-4 py-3 max-sm:px-2">
                             <span class="text-zinc-600 dark:text-zinc-300 tabular-nums">{{ number_format($main) }}</span>
                             @if($belowMin)
                                 <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium text-red-700 bg-red-100 dark:text-red-300 dark:bg-red-900/30 ms-2">

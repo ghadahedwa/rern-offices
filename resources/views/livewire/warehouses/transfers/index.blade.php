@@ -42,24 +42,31 @@
         <table class="w-full text-sm text-right">
             <thead class="bg-zinc-50 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 text-xs uppercase">
                 <tr>
-                    @include('livewire.partials.sortable-th', ['column' => 'transferred_at', 'label' => __('home.wh_transferred_at')])
+                    {{-- على الموبايل: المصدر (و«إلى» المستلم والتاريخ ونوع المستند وعدد الأصناف تحته) والعمليات --}}
+                    @include('livewire.partials.sortable-th', ['column' => 'transferred_at', 'label' => __('home.wh_transferred_at'), 'thClass' => 'max-sm:hidden'])
                     @include('livewire.partials.sortable-th', ['column' => 'from',           'label' => __('home.wh_from_warehouse')])
-                    @include('livewire.partials.sortable-th', ['column' => 'to',             'label' => __('home.wh_to_warehouse')])
-                    @include('livewire.partials.sortable-th', ['column' => 'document_type',  'label' => __('home.wh_document_type')])
-                    @include('livewire.partials.sortable-th', ['column' => 'items_count',    'label' => __('home.items_title')])
+                    @include('livewire.partials.sortable-th', ['column' => 'to',             'label' => __('home.wh_to_warehouse'), 'thClass' => 'max-sm:hidden'])
+                    @include('livewire.partials.sortable-th', ['column' => 'document_type',  'label' => __('home.wh_document_type'), 'thClass' => 'max-sm:hidden'])
+                    @include('livewire.partials.sortable-th', ['column' => 'items_count',    'label' => __('home.items_title'), 'thClass' => 'max-sm:hidden'])
                     <th class="px-4 py-3 font-medium">{{ __('home.actions') }}</th>
                 </tr>
             </thead>
             <tbody class="divide-y divide-zinc-100 dark:divide-zinc-700">
                 @forelse($transfers as $transfer)
                     <tr class="hover:bg-zinc-50 dark:hover:bg-zinc-800 transition">
-                        <td class="px-4 py-3 text-zinc-600 dark:text-zinc-300">{{ $transfer->transferred_at->format('Y-m-d') }}</td>
-                        <td class="px-4 py-3 font-medium text-zinc-800 dark:text-zinc-100">{{ $transfer->fromWarehouse?->name ?? '—' }}</td>
-                        <td class="px-4 py-3 font-medium text-zinc-800 dark:text-zinc-100">{{ $transfer->toWarehouse?->name ?? '—' }}</td>
-                        <td class="px-4 py-3 text-zinc-600 dark:text-zinc-300">{{ $transfer->document_type ?: '—' }}</td>
-                        <td class="px-4 py-3 text-zinc-600 dark:text-zinc-300">{{ $transfer->items_count }}</td>
-                        <td class="px-4 py-3">
-                            <div class="flex items-center gap-2">
+                        <td class="px-4 py-3 text-zinc-600 dark:text-zinc-300 max-sm:hidden">{{ $transfer->transferred_at->format('Y-m-d') }}</td>
+                        <td class="px-4 py-3 max-sm:px-3 font-medium text-zinc-800 dark:text-zinc-100">
+                            {{ $transfer->fromWarehouse?->name ?? '—' }}
+                            <div class="sm:hidden mt-0.5 text-xs font-normal text-zinc-500 dark:text-zinc-400">
+                                <div>{{ __('home.wh_mobile_to') }} {{ $transfer->toWarehouse?->name ?? '—' }}</div>
+                                <span dir="ltr" class="inline-block">{{ $transfer->transferred_at->format('Y-m-d') }}</span>@if($transfer->document_type) · {{ $transfer->document_type }}@endif · {{ __('home.wh_mobile_items_count', ['count' => $transfer->items_count]) }}
+                            </div>
+                        </td>
+                        <td class="px-4 py-3 font-medium text-zinc-800 dark:text-zinc-100 max-sm:hidden">{{ $transfer->toWarehouse?->name ?? '—' }}</td>
+                        <td class="px-4 py-3 text-zinc-600 dark:text-zinc-300 max-sm:hidden">{{ $transfer->document_type ?: '—' }}</td>
+                        <td class="px-4 py-3 text-zinc-600 dark:text-zinc-300 max-sm:hidden">{{ $transfer->items_count }}</td>
+                        <td class="px-4 py-3 max-sm:px-2">
+                            <div class="flex max-sm:flex-col max-sm:items-stretch items-center gap-2">
                                 <button wire:click="view({{ $transfer->id }})"
                                         class="inline-flex items-center text-xs px-3 py-1.5 rounded-md border border-zinc-300 dark:border-zinc-600 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition">
                                     {{ __('home.view') }}

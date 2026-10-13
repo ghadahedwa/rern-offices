@@ -110,21 +110,28 @@
                 <table class="w-full text-sm text-right">
                     <thead class="text-zinc-500 dark:text-zinc-400 text-xs uppercase border-b border-zinc-200 dark:border-zinc-700">
                         <tr>
-                            <th class="px-3 py-2 font-medium">{{ __('home.warehouse') }}</th>
+                            {{-- على الموبايل: الصنف (ونوع الحركة والمخزن والوقت تحته) والكمية والرصيد بعدها --}}
+                            <th class="px-3 py-2 font-medium max-sm:hidden">{{ __('home.warehouse') }}</th>
                             <th class="px-3 py-2 font-medium">{{ __('home.item') }}</th>
-                            <th class="px-3 py-2 font-medium">{{ __('home.wh_movement_type') }}</th>
+                            <th class="px-3 py-2 font-medium max-sm:hidden">{{ __('home.wh_movement_type') }}</th>
                             <th class="px-3 py-2 font-medium">{{ __('home.wh_quantity') }}</th>
-                            <th class="px-3 py-2 font-medium">{{ __('home.wh_balance_before') }}</th>
+                            <th class="px-3 py-2 font-medium max-sm:hidden">{{ __('home.wh_balance_before') }}</th>
                             <th class="px-3 py-2 font-medium">{{ __('home.wh_balance_after') }}</th>
-                            <th class="px-3 py-2 font-medium">{{ __('home.wh_movement_date') }}</th>
+                            <th class="px-3 py-2 font-medium max-sm:hidden">{{ __('home.wh_movement_date') }}</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-zinc-100 dark:divide-zinc-700">
                         @foreach($recentMovements as $movement)
                             <tr>
-                                <td class="px-3 py-2 font-medium text-zinc-800 dark:text-zinc-100">{{ $movement->warehouse?->name ?? '—' }}</td>
-                                <td class="px-3 py-2 text-zinc-600 dark:text-zinc-300">{{ $movement->item?->name ?? '—' }}</td>
-                                <td class="px-3 py-2">
+                                <td class="px-3 py-2 font-medium text-zinc-800 dark:text-zinc-100 max-sm:hidden">{{ $movement->warehouse?->name ?? '—' }}</td>
+                                <td class="px-3 py-2 text-zinc-600 dark:text-zinc-300">
+                                    {{ $movement->item?->name ?? '—' }}
+                                    <div class="sm:hidden mt-0.5 text-xs text-zinc-500 dark:text-zinc-400">
+                                        <div>{{ __('home.wh_type_'.$movement->type) }} · {{ $movement->warehouse?->name ?? '—' }}</div>
+                                        <div><span dir="ltr" class="inline-block">{{ \App\Support\LocalTime::date($movement->created_at) }}</span> {{ \App\Support\LocalTime::time($movement->created_at) }}</div>
+                                    </div>
+                                </td>
+                                <td class="px-3 py-2 max-sm:hidden">
                                     @php
                                         $badge = match($movement->type) {
                                             'opening'      => 'text-zinc-600 bg-zinc-100 dark:text-zinc-300 dark:bg-zinc-700/40',
@@ -140,9 +147,9 @@
                                     </span>
                                 </td>
                                 <td class="px-3 py-2 text-zinc-600 dark:text-zinc-300">{{ number_format($movement->quantity) }}</td>
-                                <td class="px-3 py-2 text-zinc-400 dark:text-zinc-500">{{ number_format($movement->balance_before) }}</td>
+                                <td class="px-3 py-2 text-zinc-400 dark:text-zinc-500 max-sm:hidden">{{ number_format($movement->balance_before) }}</td>
                                 <td class="px-3 py-2 text-zinc-600 dark:text-zinc-300">{{ number_format($movement->balance_after) }}</td>
-                                <td class="px-3 py-2 text-zinc-400 dark:text-zinc-500">{{ \App\Support\LocalTime::stamp($movement->created_at) }}</td>
+                                <td class="px-3 py-2 text-zinc-400 dark:text-zinc-500 max-sm:hidden">{{ \App\Support\LocalTime::stamp($movement->created_at) }}</td>
                             </tr>
                         @endforeach
                     </tbody>

@@ -67,7 +67,7 @@
                         <td class="px-4 py-3 max-sm:px-3 font-medium text-zinc-800 dark:text-zinc-100" title="{{ $meeting->subject }}">
                             <div style="max-width:280px; white-space:normal; display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; overflow:hidden;">{{ $meeting->subject }}</div>
                             <div class="sm:hidden mt-1 text-xs font-normal text-zinc-500 dark:text-zinc-400">
-                                <span dir="ltr">{{ optional($meeting->date)->format('Y-m-d') }}</span> · {{ optional($meeting->date)->locale('ar')->dayName }}@if($meeting->time) · {{ \App\Support\LocalTime::clock($meeting->time) }}@endif
+                                <span dir="ltr" class="inline-block">{{ optional($meeting->date)->format('Y-m-d') }}</span> · {{ optional($meeting->date)->locale('ar')->dayName }}@if($meeting->time) · {{ \App\Support\LocalTime::clock($meeting->time) }}@endif
                                 @if($meeting->location)<div>{{ $meeting->location }}</div>@endif
                             </div>
                         </td>

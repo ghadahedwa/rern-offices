@@ -22,10 +22,11 @@
     <table class="w-full text-sm text-right">
         <thead class="bg-zinc-50 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 text-xs uppercase">
             <tr>
-                <th class="px-4 py-3 font-medium">#</th>
+                {{-- على الموبايل: المخزن (ونوعه ومحافظته تحته) والرصيد --}}
+                <th class="px-4 py-3 font-medium max-sm:hidden">#</th>
                 @include('livewire.partials.sortable-th', ['column' => 'warehouse',   'label' => __('home.warehouse')])
-                @include('livewire.partials.sortable-th', ['column' => 'type',        'label' => __('home.warehouse_type')])
-                @include('livewire.partials.sortable-th', ['column' => 'governorate', 'label' => __('home.warehouse_governorate')])
+                @include('livewire.partials.sortable-th', ['column' => 'type',        'label' => __('home.warehouse_type'), 'thClass' => 'max-sm:hidden'])
+                @include('livewire.partials.sortable-th', ['column' => 'governorate', 'label' => __('home.warehouse_governorate'), 'thClass' => 'max-sm:hidden'])
                 @include('livewire.partials.sortable-th', ['column' => 'quantity',    'label' => __('home.wh_current_balance')])
             </tr>
         </thead>
@@ -33,8 +34,8 @@
             @forelse($balances as $warehouse)
                 @php $quantity = (int) $warehouse->stock_quantity; @endphp
                 <tr class="hover:bg-zinc-50 dark:hover:bg-zinc-800 transition">
-                    <td class="px-4 py-3 text-zinc-500">{{ $balances->firstItem() + $loop->index }}</td>
-                    <td class="px-4 py-3 font-medium text-zinc-800 dark:text-zinc-100">
+                    <td class="px-4 py-3 text-zinc-500 max-sm:hidden">{{ $balances->firstItem() + $loop->index }}</td>
+                    <td class="px-4 py-3 max-sm:px-3 font-medium text-zinc-800 dark:text-zinc-100">
                         {{-- صار البروفايل يُفتح بـ`warehouses.index` أيضاً، وصفوف هذا
                              التاب كلها داخل نطاق المستخدم — فالرابط للجميع، ويبدو رابطاً --}}
                         <a href="{{ route('warehouse-manage.show', $warehouse) }}" wire:navigate
@@ -42,9 +43,10 @@
                         @unless($warehouse->is_active)
                             <span class="mr-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium text-zinc-500 bg-zinc-100 dark:text-zinc-400 dark:bg-zinc-700/40">{{ __('home.warehouse_inactive') }}</span>
                         @endunless
+                        <div class="sm:hidden mt-0.5 text-xs font-normal text-zinc-500 dark:text-zinc-400">{{ $warehouse->type?->name ?? '—' }}@if($warehouse->governorate) · {{ $warehouse->governorate->name }}@endif</div>
                     </td>
-                    <td class="px-4 py-3 text-zinc-600 dark:text-zinc-300">{{ $warehouse->type?->name ?? '—' }}</td>
-                    <td class="px-4 py-3 text-zinc-500 dark:text-zinc-400">{{ $warehouse->governorate?->name ?? '—' }}</td>
+                    <td class="px-4 py-3 text-zinc-600 dark:text-zinc-300 max-sm:hidden">{{ $warehouse->type?->name ?? '—' }}</td>
+                    <td class="px-4 py-3 text-zinc-500 dark:text-zinc-400 max-sm:hidden">{{ $warehouse->governorate?->name ?? '—' }}</td>
                     <td class="px-4 py-3">
                         @if($quantity === 0)
                             {{-- الصفر شرطةً كما في الدفتر — والرقم وحده يلفت العين لما فيه رصيد --}}

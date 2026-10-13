@@ -17,30 +17,35 @@
         <table class="w-full text-sm text-right">
             <thead class="bg-zinc-50 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 text-xs uppercase">
                 <tr>
-                    @include('livewire.partials.sortable-th', ['column' => 'transferred_at', 'label' => __('home.wh_transferred_at')])
+                    {{-- على الموبايل: المصدر (و«إلى» المستلم والتاريخ وعدد الأصناف تحته) والعرض --}}
+                    @include('livewire.partials.sortable-th', ['column' => 'transferred_at', 'label' => __('home.wh_transferred_at'), 'thClass' => 'max-sm:hidden'])
                     @include('livewire.partials.sortable-th', ['column' => 'from',           'label' => __('home.wh_from_warehouse')])
-                    @include('livewire.partials.sortable-th', ['column' => 'to',             'label' => __('home.wh_to_warehouse')])
-                    @include('livewire.partials.sortable-th', ['column' => 'items_count',    'label' => __('home.items_title')])
+                    @include('livewire.partials.sortable-th', ['column' => 'to',             'label' => __('home.wh_to_warehouse'), 'thClass' => 'max-sm:hidden'])
+                    @include('livewire.partials.sortable-th', ['column' => 'items_count',    'label' => __('home.items_title'), 'thClass' => 'max-sm:hidden'])
                     <th class="px-4 py-3 font-medium">{{ __('home.actions') }}</th>
                 </tr>
             </thead>
             <tbody class="divide-y divide-zinc-100 dark:divide-zinc-700">
                 @forelse($transfers as $transfer)
                     <tr class="hover:bg-zinc-50 dark:hover:bg-zinc-800 transition">
-                        <td class="px-4 py-3 text-zinc-600 dark:text-zinc-300">{{ $transfer->transferred_at->format('Y-m-d') }}</td>
-                        <td class="px-4 py-3 font-medium text-zinc-800 dark:text-zinc-100">
+                        <td class="px-4 py-3 text-zinc-600 dark:text-zinc-300 max-sm:hidden">{{ $transfer->transferred_at->format('Y-m-d') }}</td>
+                        <td class="px-4 py-3 max-sm:px-3 font-medium text-zinc-800 dark:text-zinc-100">
                             {{ $transfer->fromWarehouse?->name ?? '—' }}
                             @if($transfer->from_warehouse_id === $warehouse->id)
                                 <span class="text-xs text-amber-600">({{ __('home.wh_type_transfer_out') }})</span>
                             @endif
+                            <div class="sm:hidden mt-0.5 text-xs font-normal text-zinc-500 dark:text-zinc-400">
+                                <div>{{ __('home.wh_mobile_to') }} {{ $transfer->toWarehouse?->name ?? '—' }}@if($transfer->to_warehouse_id === $warehouse->id) <span class="text-blue-600">({{ __('home.wh_type_transfer_in') }})</span>@endif</div>
+                                <span dir="ltr" class="inline-block">{{ $transfer->transferred_at->format('Y-m-d') }}</span> · {{ __('home.wh_mobile_items_count', ['count' => $transfer->items_count]) }}
+                            </div>
                         </td>
-                        <td class="px-4 py-3 font-medium text-zinc-800 dark:text-zinc-100">
+                        <td class="px-4 py-3 font-medium text-zinc-800 dark:text-zinc-100 max-sm:hidden">
                             {{ $transfer->toWarehouse?->name ?? '—' }}
                             @if($transfer->to_warehouse_id === $warehouse->id)
                                 <span class="text-xs text-blue-600">({{ __('home.wh_type_transfer_in') }})</span>
                             @endif
                         </td>
-                        <td class="px-4 py-3 text-zinc-600 dark:text-zinc-300">{{ $transfer->items_count }}</td>
+                        <td class="px-4 py-3 text-zinc-600 dark:text-zinc-300 max-sm:hidden">{{ $transfer->items_count }}</td>
                         <td class="px-4 py-3">
                             <button wire:click="viewTransfer({{ $transfer->id }})"
                                     class="inline-flex items-center text-xs px-3 py-1.5 rounded-md border border-zinc-300 dark:border-zinc-600 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition">

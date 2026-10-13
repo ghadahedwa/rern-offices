@@ -55,18 +55,19 @@
         <table class="w-full text-sm text-right">
             <thead class="bg-zinc-50 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 text-xs uppercase">
                 <tr>
-                    <th class="px-4 py-3 font-medium">#</th>
-                    @include('livewire.partials.sortable-th', ['column' => 'warehouse', 'label' => __('home.warehouse')])
+                    {{-- على الموبايل: الصنف (والمخزن والوحدة تحته) والرصيد --}}
+                    <th class="px-4 py-3 font-medium max-sm:hidden">#</th>
+                    @include('livewire.partials.sortable-th', ['column' => 'warehouse', 'label' => __('home.warehouse'), 'thClass' => 'max-sm:hidden'])
                     @include('livewire.partials.sortable-th', ['column' => 'item',      'label' => __('home.item_name')])
-                    @include('livewire.partials.sortable-th', ['column' => 'unit',      'label' => __('home.item_unit')])
+                    @include('livewire.partials.sortable-th', ['column' => 'unit',      'label' => __('home.item_unit'), 'thClass' => 'max-sm:hidden'])
                     @include('livewire.partials.sortable-th', ['column' => 'quantity',  'label' => __('home.wh_current_balance')])
                 </tr>
             </thead>
             <tbody class="divide-y divide-zinc-100 dark:divide-zinc-700">
                 @forelse($stocks as $stock)
                     <tr class="hover:bg-zinc-50 dark:hover:bg-zinc-800 transition">
-                        <td class="px-4 py-3 text-zinc-500">{{ $stocks->firstItem() + $loop->index }}</td>
-                        <td class="px-4 py-3 text-zinc-700 dark:text-zinc-200">
+                        <td class="px-4 py-3 text-zinc-500 max-sm:hidden">{{ $stocks->firstItem() + $loop->index }}</td>
+                        <td class="px-4 py-3 text-zinc-700 dark:text-zinc-200 max-sm:hidden">
                             {{-- الاسم رابطٌ يبدو رابطاً: بروفايل المخزن أقرب شاشة إلى «مخزني» --}}
                             <a href="{{ route('warehouse-manage.show', $stock->warehouse) }}" wire:navigate
                                class="underline decoration-dotted decoration-zinc-300 dark:decoration-zinc-600 underline-offset-4 hover:text-[#c9a847] hover:decoration-[#c9a847] transition">{{ $stock->warehouse->name }}</a>
@@ -74,16 +75,17 @@
                                 <span class="text-xs text-zinc-400">({{ $stock->warehouse->type->name }})</span>
                             @endif
                         </td>
-                        <td class="px-4 py-3 font-medium text-zinc-800 dark:text-zinc-100">
+                        <td class="px-4 py-3 max-sm:px-3 font-medium text-zinc-800 dark:text-zinc-100">
                             {{-- الاسم رابطٌ يبدو رابطاً (نفس نمط شاشة الأصناف) --}}
                             <a href="{{ route('warehouses.items.show', $stock->item) }}" wire:navigate
                                class="underline decoration-dotted decoration-zinc-300 dark:decoration-zinc-600 underline-offset-4 hover:text-[#c9a847] hover:decoration-[#c9a847] transition">{{ $stock->item->name }}</a>
                             @if($stock->item->code)
                                 <span class="mr-2 inline-flex items-center px-1.5 py-0.5 rounded text-[11px] font-normal text-zinc-500 bg-zinc-100 dark:text-zinc-400 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700">{{ $stock->item->code }}</span>
                             @endif
+                            <div class="sm:hidden mt-0.5 text-xs font-normal text-zinc-500 dark:text-zinc-400">{{ $stock->warehouse->name }}@if($stock->item->unit) · {{ $stock->item->unit->name }}@endif</div>
                         </td>
-                        <td class="px-4 py-3 text-zinc-500 dark:text-zinc-400">{{ $stock->item->unit?->name ?? '—' }}</td>
-                        <td class="px-4 py-3">
+                        <td class="px-4 py-3 text-zinc-500 dark:text-zinc-400 max-sm:hidden">{{ $stock->item->unit?->name ?? '—' }}</td>
+                        <td class="px-4 py-3 max-sm:px-2">
                             <span class="font-bold text-[#b8962e] tabular-nums">{{ number_format($stock->quantity) }}</span>
                             {{-- نفس قاعدة البروفايل: الشارة على الرئيسي وحده --}}
                             @if($stock->warehouse->type?->level === 1 && $stock->item->min_stock !== null && $stock->quantity <= $stock->item->min_stock)
