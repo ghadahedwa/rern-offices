@@ -53,7 +53,7 @@ class Vehicle extends Model
         'driver_name', 'driver_phone', 'notary_name', 'notary_phone', 'reviewer_name', 'reviewer_phone',
         'mobility_bag', 'laptops_count', 'fingerprints_count', 'printers_count',
         'collection_machines_count', 'mifi_count', 'generator_status', 'surveillance_cameras',
-        'avg_daily_transactions',
+        'avg_daily_transactions', 'avg_daily_support', 'avg_daily_trips',
     ];
 
     protected $casts = [

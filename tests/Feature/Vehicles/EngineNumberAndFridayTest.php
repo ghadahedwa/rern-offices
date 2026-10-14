@@ -111,3 +111,57 @@ it('does not save letters when leaving the tab by clicking another tab', functio
     $test->assertHasErrors(['engine_number' => 'regex'])->assertSet('activeTab', 1);
     expect($vehicle->fresh()->engine_number)->toBe('111');
 })->with(['goToTab', 'prevTab']);
+
+// ── التعارض مع مواقع التمركز (قرار العميل: يُرفض «لا تعمل» مع موقع يوم الجمعة) ──
+
+it('rejects "does not work" when a location includes friday', function () {
+    basicVehicleForm()
+        ->set('locations', [['days' => ['thursday', 'friday'], 'address' => 'ميدان التحرير']])
+        ->set('works_on_friday', '0')
+        ->call('nextTab')
+        ->assertHasErrors(['works_on_friday'])
+        ->assertSee(__('home.friday_location_conflict'));
+
+    expect(Vehicle::count())->toBe(0);
+});
+
+it('allows the other combinations', function (array $days, string $friday) {
+    basicVehicleForm()
+        ->set('locations', [['days' => $days, 'address' => 'ميدان التحرير']])
+        ->set('works_on_friday', $friday)
+        ->call('nextTab')
+        ->assertHasNoErrors();
+
+    expect(Vehicle::count())->toBe(1);
+})->with([
+    'works with a friday location'     => [['friday'], '1'],
+    'works without a friday location'  => [['saturday'], '1'],
+    'off without a friday location'    => [['saturday'], '0'],
+    'not set with a friday location'   => [['friday'], ''],
+]);
+
+it('ignores a friday tick on a row without an address (it is not saved)', function () {
+    basicVehicleForm()
+        ->set('locations', [['days' => ['friday'], 'address' => '  ']])
+        ->set('works_on_friday', '0')
+        ->call('nextTab')
+        ->assertHasNoErrors();
+});
+
+it('also blocks the conflict when leaving the tab by clicking another tab', function () {
+    $vehicle = Vehicle::create([
+        'governorate_id' => Governorate::factory()->create()->id, 'name' => 'سيارة',
+        'type_id' => VehicleType::create(['name' => 'نوع'])->id,
+        'work_system_id' => VehicleWorkSystem::create(['name' => 'نظام'])->id, 'works_on_friday' => true,
+    ]);
+    $vehicle->locations()->create(['day' => 'friday', 'address' => 'ميدان التحرير']);
+    $admin = tap(User::factory()->create())->assignRole(Role::findOrCreate('super-admin', 'web'));
+
+    Livewire::actingAs($admin)->test(Create::class, ['vehicle' => $vehicle])
+        ->set('works_on_friday', '0')
+        ->call('goToTab', 2)
+        ->assertHasErrors(['works_on_friday'])
+        ->assertSet('activeTab', 1);
+
+    expect($vehicle->fresh()->works_on_friday)->toBeTrue();
+});

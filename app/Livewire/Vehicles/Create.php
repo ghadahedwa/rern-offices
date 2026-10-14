@@ -16,6 +16,7 @@ use App\Support\ArabicDigits;
 use Flux\Flux;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 use Livewire\Attributes\Url;
@@ -322,6 +323,27 @@ class Create extends Component
             'work_system_id.required' => 'يرجى اختيار نظام العمل',
             'engine_number.regex'     => __('home.engine_number_digits_only'),
         ]);
+
+        // «لا تعمل» مع موقع تمركز يوم الجمعة تعارض (قرار العميل 2026-10-14) — يُرفض ولا يُصحَّح
+        // تلقائياً: حذف الجمعة من المواقع بلا علم المفتش قد يمحو موقعاً حقيقياً.
+        // و«تعمل» بلا موقع يوم الجمعة مسموح.
+        if ($this->works_on_friday === '0' && $this->hasFridayLocation()) {
+            throw ValidationException::withMessages([
+                'works_on_friday' => __('home.friday_location_conflict'),
+            ]);
+        }
+    }
+
+    /** موقع تمركز يوم الجمعة بالمعنى الذي يُحفظ: عنوانٌ غير فارغ والجمعة بين أيامه */
+    private function hasFridayLocation(): bool
+    {
+        foreach ($this->locations as $loc) {
+            if (trim((string) ($loc['address'] ?? '')) !== '' && in_array('friday', $loc['days'] ?? [], true)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private function validateWorkersTab(): void

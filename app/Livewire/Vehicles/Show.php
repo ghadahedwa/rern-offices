@@ -2,7 +2,7 @@
 
 namespace App\Livewire\Vehicles;
 
-use App\Models\StatType;
+use App\Livewire\Vehicles\StatTab\Documentation;
 use App\Models\Vehicle;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
@@ -46,27 +46,18 @@ class Show extends Component
 
     public function render()
     {
-        $labels = [
-            1 => 'vehicle_stat_transactions',
-            2 => 'vehicle_stat_form_sales',
-            3 => 'vehicle_stat_folder_sales',
-        ];
-
-        $statTypes = StatType::whereIn('group_key', ['transactions', 'forms_folders'])
-            ->orderBy('group_key')
-            ->orderBy('order')
-            ->get();
-
+        // الأقسام والتسميات والترتيب من تاب الإدخال نفسه — العرض لا يخالف ما يُدخَل
         $statistics = $this->vehicle->statistics()
             ->orderByDesc('year')
+            ->orderByRaw('month IS NULL')
             ->orderByDesc('month')
             ->get()
             ->groupBy('stat_type_id');
 
         return view('livewire.vehicles.show', [
-            'statTypes'    => $statTypes,
-            'statLabels'   => $labels,
-            'statistics'   => $statistics,
+            'statTypes'  => Documentation::orderedTypes(),
+            'statistics' => $statistics,
+            'yearTotals' => Documentation::transactionYearTotals($this->vehicle),
         ]);
     }
 }

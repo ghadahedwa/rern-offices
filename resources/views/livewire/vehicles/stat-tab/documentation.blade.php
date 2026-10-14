@@ -6,12 +6,12 @@
         $inp = 'border border-zinc-300 dark:border-zinc-600 rounded-lg px-3 py-2 text-sm w-full bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-[#c9a847]';
     @endphp
 
-    {{-- ── متوسط المعاملات اليومية للتوثيق (قيمة واحدة) ── --}}
+    {{-- ── المتوسطات اليومية (قيمة واحدة لكل منها) ── --}}
     <div class="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-5 space-y-4">
         <div class="flex items-center justify-between">
             <div class="flex items-center gap-3">
                 <div class="w-1 h-5 bg-[#c9a847] rounded-full"></div>
-                <h3 class="text-sm font-semibold text-zinc-600 dark:text-zinc-400 uppercase tracking-wide">{{ __('home.average_daily_transactions') }}</h3>
+                <h3 class="text-sm font-semibold text-zinc-600 dark:text-zinc-400 uppercase tracking-wide">{{ __('home.vstat_daily_averages') }}</h3>
             </div>
             <button type="button" wire:click="openAvg"
                     class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-[#c9a847] hover:bg-[#b8962e] text-white transition cursor-pointer">
@@ -21,14 +21,7 @@
                 تعديل
             </button>
         </div>
-        <div class="flex items-baseline gap-2 pr-4">
-            <span class="text-2xl font-bold text-zinc-800 dark:text-zinc-100">
-                {{ $vehicle->avg_daily_transactions !== null ? number_format($vehicle->avg_daily_transactions) : '—' }}
-            </span>
-            @if($vehicle->avg_daily_transactions !== null)
-            <span class="text-sm text-zinc-400">معاملة / يوم</span>
-            @endif
-        </div>
+        @include('livewire.vehicles.includes.daily-averages', ['vehicle' => $vehicle])
     </div>
 
     {{-- Stat Type Sections --}}
@@ -36,7 +29,9 @@
     @php
         $rows     = $existing[$type->id];
         $isAmount = $type->value_type === 'amount';
-        $label    = $labels[$type->id] ?? $type->name;
+        $label    = \App\Livewire\Vehicles\StatTab\Documentation::labelFor($type);
+        $isTx     = $type->id === \App\Support\VehicleTransactionPeriods::STAT_TYPE_ID;
+        $showMonthCol = $isTx || $type->period === 'monthly';
     @endphp
 
     <div class="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-5 space-y-4">
@@ -46,17 +41,34 @@
             <div class="flex items-center gap-3">
                 <div class="w-1 h-5 bg-[#c9a847] rounded-full"></div>
                 <h3 class="text-sm font-semibold text-zinc-600 dark:text-zinc-400 uppercase tracking-wide">{{ $label }}</h3>
+                @unless($isTx)
                 <span class="text-xs font-normal text-zinc-400">· {{ $type->period === 'yearly' ? 'سنوية' : 'شهرية' }}</span>
+                @endunless
             </div>
 
             <button type="button" wire:click="openAdd({{ $type->id }})"
-                    class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-[#c9a847] hover:bg-[#b8962e] text-white transition cursor-pointer">
+                    class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-[#c9a847] hover:bg-[#b8962e] text-white transition cursor-pointer shrink-0">
                 <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
                 </svg>
-                {{ $type->period === 'yearly' ? 'إضافة سنة' : 'إضافة شهر' }}
+                {{ $isTx ? __('home.vstat_add_entry') : ($type->period === 'yearly' ? 'إضافة سنة' : 'إضافة شهر') }}
             </button>
         </div>
+
+        @if($isTx)
+        {{-- قاعدة الإدخال + إجمالي كل سنة (السنة = مجموع صفوفها) --}}
+        <p class="text-xs text-zinc-500 dark:text-zinc-400 leading-relaxed">{{ __('home.vstat_tx_rule') }}</p>
+        @if($yearTotals)
+        <div class="flex flex-wrap gap-2">
+            @foreach($yearTotals as $y => $total)
+            <span class="inline-flex items-baseline gap-1.5 px-2.5 py-1 rounded-lg bg-[#c9a847]/10 text-xs">
+                <span class="text-zinc-500 dark:text-zinc-400">{{ __('home.vstat_year_total', ['year' => $y]) }}</span>
+                <span class="font-semibold text-[#b8962e] dark:text-[#c9a847]">{{ number_format($total) }}</span>
+            </span>
+            @endforeach
+        </div>
+        @endif
+        @endif
 
         {{-- Filters (year + month dropdowns) --}}
         <div class="flex items-center justify-end gap-2">
@@ -83,7 +95,7 @@
                 <thead class="bg-zinc-50 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 text-xs">
                     <tr>
                         <th class="px-4 py-2.5 font-medium">السنة</th>
-                        @if($type->period === 'monthly')<th class="px-4 py-2.5 font-medium">الشهر</th>@endif
+                        @if($showMonthCol)<th class="px-4 py-2.5 font-medium">{{ $isTx ? __('home.vstat_period') : 'الشهر' }}</th>@endif
                         <th class="px-4 py-2.5 font-medium">{{ $isAmount ? 'المبلغ (ج)' : 'العدد' }}</th>
                         <th class="px-4 py-2.5 font-medium w-24 text-center">إجراءات</th>
                     </tr>
@@ -92,8 +104,10 @@
                     @foreach($rows as $stat)
                     <tr class="hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition">
                         <td class="px-4 py-2.5 text-zinc-700 dark:text-zinc-300">{{ $stat->year }}</td>
-                        @if($type->period === 'monthly')
-                        <td class="px-4 py-2.5 text-zinc-700 dark:text-zinc-300">{{ $months[$stat->month] ?? $stat->month }}</td>
+                        @if($showMonthCol)
+                        <td class="px-4 py-2.5 text-zinc-700 dark:text-zinc-300">
+                            {{ $isTx ? \App\Support\VehicleTransactionPeriods::label($stat->year, $stat->month, $months) : ($months[$stat->month] ?? $stat->month) }}
+                        </td>
                         @endif
                         <td class="px-4 py-2.5 font-medium text-zinc-800 dark:text-zinc-100">
                             {{ $isAmount ? number_format($stat->value, 2) : number_format($stat->value) }}
@@ -166,7 +180,7 @@
 
                     <div class="flex flex-col gap-1">
                         <label class="text-sm font-medium text-zinc-700 dark:text-zinc-300">السنة <span class="text-red-500">*</span></label>
-                        <select wire:model="formYear" class="{{ $inp }}">
+                        <select wire:model.live="formYear" class="{{ $inp }}">
                             <option value="">— السنة —</option>
                             @foreach($years as $y)
                                 <option value="{{ $y }}">{{ $y }}</option>
@@ -175,17 +189,20 @@
                         @error('formYear') <p class="text-red-500 text-xs">{{ $message }}</p> @enderror
                     </div>
 
-                    @if($formPeriod === 'monthly')
+                    {{-- الشهر: للشهري دائماً، ولمعاملات التوثيق حسب السنة (لا منسدلة حتى ٢٠٢٥) --}}
+                    @if($monthOptions)
                     <div class="flex flex-col gap-1">
-                        <label class="text-sm font-medium text-zinc-700 dark:text-zinc-300">الشهر <span class="text-red-500">*</span></label>
+                        <label class="text-sm font-medium text-zinc-700 dark:text-zinc-300">{{ $formPeriod === 'transactions' ? __('home.vstat_period') : 'الشهر' }} <span class="text-red-500">*</span></label>
                         <select wire:model="formMonth" class="{{ $inp }}">
-                            <option value="">— الشهر —</option>
-                            @foreach($months as $num => $name)
+                            <option value="">— {{ $formPeriod === 'transactions' ? __('home.vstat_period') : 'الشهر' }} —</option>
+                            @foreach($monthOptions as $num => $name)
                                 <option value="{{ $num }}">{{ $name }}</option>
                             @endforeach
                         </select>
                         @error('formMonth') <p class="text-red-500 text-xs">{{ $message }}</p> @enderror
                     </div>
+                    @elseif($formPeriod === 'transactions' && $formYear !== '')
+                    <p class="text-xs text-zinc-500 dark:text-zinc-400">{{ __('home.vstat_full_year_hint') }}</p>
                     @endif
 
                     <div class="flex flex-col gap-1">
@@ -232,18 +249,20 @@
                             <path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
                         </svg>
                     </div>
-                    <h3 class="text-sm font-semibold text-white">تعديل متوسط المعاملات اليومية للتوثيق</h3>
+                    <h3 class="text-sm font-semibold text-white">{{ __('home.vstat_edit_averages') }}</h3>
                 </div>
                 <button type="button" @click="$wire.showAvg = false"
                         class="w-6 h-6 rounded-full flex items-center justify-center text-white/70 hover:text-white hover:bg-white/20 transition text-base leading-none">×</button>
             </div>
             <div class="bg-white dark:bg-zinc-900 px-5 py-6">
                 <form wire:submit="saveAvg" class="space-y-5">
+                    @foreach(['avgDaily' => 'average_daily_transactions', 'avgSupport' => 'average_daily_support', 'avgTrips' => 'average_daily_trips'] as $field => $labelKey)
                     <div class="flex flex-col gap-1">
-                        <label class="text-sm font-medium text-zinc-700 dark:text-zinc-300">المتوسط (معاملة / يوم)</label>
-                        <input type="number" wire:model="avgDaily" min="0" step="1" placeholder="0" class="{{ $inp }}" />
-                        @error('avgDaily') <p class="text-red-500 text-xs">{{ $message }}</p> @enderror
+                        <label class="text-sm font-medium text-zinc-700 dark:text-zinc-300">{{ __('home.' . $labelKey) }}</label>
+                        <input type="number" wire:model="{{ $field }}" min="0" step="1" placeholder="0" class="{{ $inp }}" />
+                        @error($field) <p class="text-red-500 text-xs">{{ $message }}</p> @enderror
                     </div>
+                    @endforeach
                     <div class="flex gap-3 pt-1">
                         <button type="submit"
                                 class="flex-1 bg-[#c9a847] hover:bg-[#b8962e] text-white text-sm font-medium py-2.5 rounded-lg transition">
