@@ -51,6 +51,10 @@
             <p class="text-sm font-medium text-zinc-800 dark:text-zinc-100" dir="ltr" style="text-align:right">{{ $vehicle->chassis_number ?: __('home.no_data') }}</p>
         </div>
         <div>
+            <p class="text-xs text-zinc-400 dark:text-zinc-500 mb-0.5">{{ __('home.engine_number') }}</p>
+            <p class="text-sm font-medium text-zinc-800 dark:text-zinc-100" dir="ltr" style="text-align:right">{{ $vehicle->engine_number ?: __('home.no_data') }}</p>
+        </div>
+        <div>
             <p class="text-xs text-zinc-400 dark:text-zinc-500 mb-0.5">{{ __('home.license_expiry_date') }}</p>
             <p class="text-sm font-medium text-zinc-800 dark:text-zinc-100">{{ $vehicle->license_expiry_date?->format('Y-m-d') ?? __('home.no_data') }}</p>
         </div>
@@ -67,6 +71,10 @@
         <div>
             <p class="text-xs text-zinc-400 dark:text-zinc-500 mb-0.5">{{ __('home.working_hours') }}</p>
             <p class="text-sm font-medium text-zinc-800 dark:text-zinc-100">{{ $vehicle->workingHour->name ?? __('home.no_data') }}</p>
+        </div>
+        <div>
+            <p class="text-xs text-zinc-400 dark:text-zinc-500 mb-0.5">{{ __('home.works_on_friday') }}</p>
+            <p class="text-sm font-medium text-zinc-800 dark:text-zinc-100">{{ $vehicle->works_on_friday === null ? __('home.no_data') : \App\Models\Vehicle::FRIDAY_WORK[(int) $vehicle->works_on_friday] }}</p>
         </div>
     </div>
 </div>

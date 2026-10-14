@@ -47,7 +47,6 @@
     @php
         $dash = '—';
         $statusLabels    = \App\Models\Vehicle::STATUSES;
-        $availabilityLabels = ['available' => 'متاح', 'not_available' => 'غير متاح'];
         $generatorLabels = ['available' => 'يعمل', 'not_available' => 'غير متوفر', 'broken' => 'معطل'];
         $cameraLabels    = ['available' => 'تعمل', 'not_available' => 'غير متوفرة', 'broken' => 'معطلة'];
         $dayLabels       = \App\Models\VehicleLocation::DAYS;
@@ -111,6 +110,8 @@
                     <div class="f"><span class="k">نظام/أوقات العمل:</span> <span class="v">{{ $vehicle->workSystem->name ?? $dash }} — {{ $vehicle->workingHour->name ?? $dash }}</span></div>
                     <div class="f"><span class="k">الماركة:</span> <span class="v">{{ $vehicle->brand->name ?? $dash }}</span></div>
                     <div class="f"><span class="k">الشاسية:</span> <span class="v">{{ $vehicle->chassis_number ?: $dash }}</span></div>
+                    <div class="f"><span class="k">رقم الموتور:</span> <span class="v">{{ $vehicle->engine_number ?: $dash }}</span></div>
+                    <div class="f"><span class="k">العمل أيام الجمع:</span> <span class="v">{{ $vehicle->works_on_friday === null ? $dash : \App\Models\Vehicle::FRIDAY_WORK[(int) $vehicle->works_on_friday] }}</span></div>
                     <div class="f"><span class="k">سنة الصنع:</span> <span class="v">{{ $vehicle->manufacture_year ?? $dash }}</span></div>
                     <div class="f"><span class="k">تاريخ التشغيل:</span> <span class="v">{{ $vehicle->operated_at?->format('Y-m-d') ?? $dash }}</span></div>
                     <div class="f"><span class="k">انتهاء الترخيص:</span> <span class="v">{{ $vehicle->license_expiry_date?->format('Y-m-d') ?? $dash }}</span></div>
@@ -136,7 +137,7 @@
 
                 {{-- التجهيزات --}}
                 <td>
-                    <div class="f"><span class="k">شنطة تنقلات:</span> <span class="v">{{ $availabilityLabels[$vehicle->mobility_bag] ?? $dash }}</span></div>
+                    <div class="f"><span class="k">شنطة تنقلات:</span> <span class="v">{{ \App\Models\Vehicle::MOBILITY_BAG[$vehicle->mobility_bag] ?? $dash }}</span></div>
                     <div class="f"><span class="k">الأجهزة التي تعمل:</span> <span class="v">{{ \App\Reports\VehicleColumns::all()['working_equipment']['value']($vehicle) }}</span></div>
                     <div class="f"><span class="k">المولد:</span> <span class="v">{{ $generatorLabels[$vehicle->generator_status] ?? $dash }}</span></div>
                     <div class="f"><span class="k">الكاميرات:</span> <span class="v">{{ $cameraLabels[$vehicle->surveillance_cameras] ?? $dash }}</span></div>

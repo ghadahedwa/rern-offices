@@ -91,6 +91,17 @@
                        dir="ltr" class="{{ $inp }} text-right" />
             </div>
 
+            {{-- رقم الموتور — أرقام فقط (الهندية تُوحَّد عند الحفظ) --}}
+            <div>
+                <label class="{{ $lbl }}">{{ __('home.engine_number') }}</label>
+                {{-- الأرقام الهندية تُحوَّل وغير الأرقام تُحذف أثناء الكتابة (لا x-data على حقل wire:model) --}}
+                <input wire:model="engine_number" type="text" inputmode="numeric" maxlength="50"
+                       oninput="this.value = this.value.replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d)).replace(/[^0-9]/g, '')"
+                       placeholder="{{ __('home.engine_number_placeholder') }}"
+                       dir="ltr" class="{{ $inp }} text-right" />
+                @error('engine_number') <p class="mt-1 text-xs text-red-500">{{ $message }}</p> @enderror
+            </div>
+
             {{-- تاريخ انتهاء الترخيص | حالة السيارة --}}
             <div>
                 <label class="{{ $lbl }}">{{ __('home.license_expiry_date') }}</label>
@@ -115,6 +126,18 @@
                         <option value="{{ $item->id }}">{{ $item->name }}</option>
                     @endforeach
                 </select>
+            </div>
+
+            {{-- العمل أيام الجمع --}}
+            <div>
+                <label class="{{ $lbl }}">{{ __('home.works_on_friday') }}</label>
+                <select wire:model="works_on_friday" class="{{ $inp }}">
+                    <option value="">{{ __('home.select_option') }}</option>
+                    @foreach(\App\Models\Vehicle::FRIDAY_WORK as $val => $label)
+                        <option value="{{ $val }}">{{ $label }}</option>
+                    @endforeach
+                </select>
+                @error('works_on_friday') <p class="mt-1 text-xs text-red-500">{{ $message }}</p> @enderror
             </div>
 
         </div>

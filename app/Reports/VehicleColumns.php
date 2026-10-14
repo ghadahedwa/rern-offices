@@ -14,7 +14,6 @@ class VehicleColumns
 {
     private const DASH = '—';
 
-    private const AVAILABILITY = ['available' => 'متاح', 'not_available' => 'غير متاح'];
     private const GENERATOR    = ['available' => 'يعمل', 'not_available' => 'غير متوفر', 'broken' => 'معطل'];
     private const CAMERA       = ['available' => 'تعمل', 'not_available' => 'غير متوفرة', 'broken' => 'معطلة'];
 
@@ -69,6 +68,11 @@ class VehicleColumns
                 'filter' => null, 'fixed' => false, 'excelOnly' => false,
                 'value' => fn (Vehicle $v) => $v->chassis_number ?: $dash,
             ],
+            'engine_number' => [
+                'label' => 'رقم الموتور', 'group' => 'البيانات الأساسية',
+                'filter' => null, 'fixed' => false, 'excelOnly' => false,
+                'value' => fn (Vehicle $v) => $v->engine_number ?: $dash,
+            ],
             'manufacture_year' => [
                 'label' => 'سنة الصنع', 'group' => 'البيانات الأساسية',
                 'filter' => ['manufactureYearFrom', 'manufactureYearTo'], 'fixed' => false, 'excelOnly' => false,
@@ -88,6 +92,11 @@ class VehicleColumns
                 'label' => 'حالة السيارة', 'group' => 'البيانات الأساسية',
                 'filter' => 'statuses', 'fixed' => false, 'excelOnly' => false,
                 'value' => fn (Vehicle $v) => Vehicle::STATUSES[$v->status] ?? $dash,
+            ],
+            'works_on_friday' => [
+                'label' => 'العمل أيام الجمع', 'group' => 'البيانات الأساسية',
+                'filter' => null, 'fixed' => false, 'excelOnly' => false,
+                'value' => fn (Vehicle $v) => $v->works_on_friday === null ? $dash : Vehicle::FRIDAY_WORK[(int) $v->works_on_friday],
             ],
 
             // ── أيام التمركز ──
@@ -156,7 +165,7 @@ class VehicleColumns
             'mobility_bag' => [
                 'label' => 'شنطة التنقلات', 'group' => 'التجهيزات',
                 'filter' => 'mobilityBag', 'fixed' => false, 'excelOnly' => false,
-                'value' => fn (Vehicle $v) => self::AVAILABILITY[$v->mobility_bag] ?? $dash,
+                'value' => fn (Vehicle $v) => Vehicle::MOBILITY_BAG[$v->mobility_bag] ?? $dash,
             ],
             'generator_status' => [
                 'label' => 'المولد الكهربائي', 'group' => 'التجهيزات',

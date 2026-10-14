@@ -33,9 +33,22 @@ class Vehicle extends Model
         'stopped'     => 'متوقفة',
     ];
 
+    // شنطة التنقلات — المصدر الواحد للخيارات وتسمياتها (الفورم · العرض · الـPDF · Excel · فلتر التقرير)
+    public const MOBILITY_BAG = [
+        'available'     => 'توجد',
+        'not_available' => 'لا توجد',
+        'broken'        => 'معطلة',
+    ];
+
+    // العمل أيام الجمع — المفتاح قيمة العمود (boolean)، وNULL = لم يُحدَّد
+    public const FRIDAY_WORK = [
+        1 => 'تعمل',
+        0 => 'لا تعمل',
+    ];
+
     protected $fillable = [
         'governorate_id', 'type_id', 'work_system_id', 'working_hours_id', 'brand_id',
-        'name', 'license_plate', 'manufacture_year', 'operated_at', 'chassis_number',
+        'name', 'license_plate', 'manufacture_year', 'operated_at', 'chassis_number', 'engine_number', 'works_on_friday',
         'license_expiry_date', 'status', 'overnight_address', 'storage_room_location', 'notes',
         'driver_name', 'driver_phone', 'notary_name', 'notary_phone', 'reviewer_name', 'reviewer_phone',
         'mobility_bag', 'laptops_count', 'fingerprints_count', 'printers_count',
@@ -46,6 +59,7 @@ class Vehicle extends Model
     protected $casts = [
         'license_expiry_date' => 'date',
         'operated_at'         => 'date',
+        'works_on_friday'     => 'boolean',
     ];
 
     public function governorate(): BelongsTo  { return $this->belongsTo(Governorate::class); }

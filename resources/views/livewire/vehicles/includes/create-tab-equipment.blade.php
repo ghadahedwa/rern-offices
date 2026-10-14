@@ -16,8 +16,9 @@
                 <label class="{{ $lbl }}">{{ __('home.mobility_bag') }}</label>
                 <select wire:model="mobility_bag" class="{{ $inp }}">
                     <option value="">{{ __('home.select_option') }}</option>
-                    <option value="available">{{ __('home.option_available') }}</option>
-                    <option value="not_available">{{ __('home.option_not_available') }}</option>
+                    @foreach(\App\Models\Vehicle::MOBILITY_BAG as $val => $label)
+                        <option value="{{ $val }}">{{ $label }}</option>
+                    @endforeach
                 </select>
                 @error('mobility_bag') <p class="mt-1 text-xs text-red-500">{{ $message }}</p> @enderror
             </div>

@@ -135,11 +135,12 @@
                             [
                                 'can'    => $canVehicleReports,
                                 'label'  => 'home.reports_vehicles',
-                                'routes' => ['reports.multi-vehicle', 'reports.vehicle-device-count', 'reports.vehicle-status', 'reports.vehicle-coverage', 'reports.vehicle-licenses'],
+                                'routes' => ['reports.multi-vehicle', 'reports.vehicle-device-count', 'reports.vehicle-status', 'reports.vehicle-friday', 'reports.vehicle-coverage', 'reports.vehicle-licenses'],
                                 'items'  => [
                                     ['reports.multi-vehicle',        'truck',               'home.report_vehicle_multi_title'],
                                     ['reports.vehicle-device-count', 'wrench-screwdriver',  'home.report_vehicle_devices_title'],
                                     ['reports.vehicle-status',       'chart-pie',           'home.report_vehicle_status_title'],
+                                    ['reports.vehicle-friday',       'calendar',            'home.report_vehicle_friday_title'],
                                     ['reports.vehicle-coverage',     'calendar-days',       'home.report_vehicle_coverage_title'],
                                     ['reports.vehicle-licenses',     'identification',      'home.report_vehicle_licenses_title'],
                                 ],
@@ -171,6 +172,8 @@
                             </button>
                             <div x-show="open" x-transition class="ml-6 mt-1 space-y-1">
                                 @foreach($group['items'] as [$routeName, $icon, $labelKey])
+                                {{-- ⚠️ حارس Route::has: route() في الـlayout مع cache راوتات قديم يُسقط كل الصفحات بـ500 --}}
+                                @continue(! Route::has($routeName))
                                 <flux:sidebar.item :icon="$icon" :href="route($routeName)" :current="request()->routeIs($routeName)" wire:navigate>
                                     {{ __($labelKey) }}
                                 </flux:sidebar.item>

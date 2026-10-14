@@ -1,8 +1,4 @@
 @php
-    $optionLabels = [
-        'available'     => __('home.option_available'),
-        'not_available' => __('home.option_not_available'),
-    ];
     $statusLabels = [
         'available'     => __('home.option_available'),
         'not_available' => __('home.option_not_available'),
@@ -19,7 +15,7 @@
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
             <p class="text-xs text-zinc-400 dark:text-zinc-500 mb-0.5">{{ __('home.mobility_bag') }}</p>
-            <p class="text-sm font-medium text-zinc-800 dark:text-zinc-100">{{ $optionLabels[$vehicle->mobility_bag] ?? __('home.no_data') }}</p>
+            <p class="text-sm font-medium text-zinc-800 dark:text-zinc-100">{{ \App\Models\Vehicle::MOBILITY_BAG[$vehicle->mobility_bag] ?? __('home.no_data') }}</p>
         </div>
         <div>
             <p class="text-xs text-zinc-400 dark:text-zinc-500 mb-0.5">{{ __('home.laptops_count') }}</p>

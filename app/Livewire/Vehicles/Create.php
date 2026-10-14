@@ -12,6 +12,7 @@ use App\Models\VehicleMedia;
 use App\Models\VehicleType;
 use App\Models\VehicleWorkingHour;
 use App\Models\VehicleWorkSystem;
+use App\Support\ArabicDigits;
 use Flux\Flux;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
@@ -46,8 +47,10 @@ class Create extends Component
     public string $manufacture_year      = '';
     public string $operated_at           = '';
     public string $chassis_number        = '';
+    public string $engine_number         = '';
     public string $license_expiry_date   = '';
     public string $status                = '';
+    public string $works_on_friday       = ''; // '' لم يُحدَّد · '1' تعمل · '0' لا تعمل
     public string $overnight_address     = '';
     public string $storage_room_location = '';
     public string $notes                 = '';
@@ -240,8 +243,11 @@ class Create extends Component
         }
     }
 
+    // ⚠️ كل خروج من التاب يحفظه، فيُفحص أولاً — «السابق» والضغط على رقم التاب كانا
+    //    يحفظان بلا فحص، فيُكتب رقم موتور بحروف وهاتف بصيغة خاطئة.
     public function prevTab(): void
     {
+        $this->validateCurrentTab();
         $this->persistCurrentTab();
         if ($this->activeTab > 1) {
             $this->activeTab--;
@@ -251,6 +257,7 @@ class Create extends Component
     public function goToTab(int $target): void
     {
         if (!$this->vehicle_id || $target === $this->activeTab || $target > $this->totalTabs) return;
+        $this->validateCurrentTab();
         $this->persistCurrentTab();
         $this->activeTab = $target;
     }
@@ -282,6 +289,9 @@ class Create extends Component
             $governorateRule[] = Rule::in($this->allowedGovernorateIds());
         }
 
+        // المفتش قد يكتب الأرقام هندية من لوحة المفاتيح العربية — تُوحَّد قبل فحص «أرقام فقط»
+        $this->engine_number = trim(ArabicDigits::toLatin($this->engine_number));
+
         $this->validate([
             'governorate_id'         => $governorateRule,
             'name'                   => ['required', 'string', 'max:255', Rule::unique('vehicles', 'name')->ignore($this->vehicle_id)],
@@ -293,8 +303,10 @@ class Create extends Component
             'manufacture_year'       => ['nullable', 'integer', 'min:1980', 'max:' . (date('Y') + 1)],
             'operated_at'            => ['nullable', 'date'],
             'chassis_number'         => ['nullable', 'string', 'max:100'],
+            'engine_number'          => ['nullable', 'regex:/^[0-9]+$/', 'max:50'],
             'license_expiry_date'    => ['nullable', 'date'],
             'status'                 => ['nullable', Rule::in(array_keys(Vehicle::STATUSES))],
+            'works_on_friday'        => ['nullable', Rule::in(['0', '1'])],
             'overnight_address'      => ['nullable', 'string', 'max:500'],
             'storage_room_location'  => ['nullable', 'string', 'max:500'],
             'notes'                  => ['nullable', 'string'],
@@ -308,6 +320,7 @@ class Create extends Component
             'name.unique'             => 'اسم السيارة مستخدم من قبل، يرجى اختيار اسم آخر',
             'type_id.required'        => 'يرجى اختيار نوع السيارة',
             'work_system_id.required' => 'يرجى اختيار نظام العمل',
+            'engine_number.regex'     => __('home.engine_number_digits_only'),
         ]);
     }
 
@@ -340,8 +353,10 @@ class Create extends Component
             'manufacture_year'      => $this->manufacture_year ?: null,
             'operated_at'           => $this->operated_at ?: null,
             'chassis_number'        => $this->chassis_number ?: null,
+            'engine_number'         => $this->engine_number !== '' ? $this->engine_number : null,
             'license_expiry_date'   => $this->license_expiry_date ?: null,
             'status'                => $this->status ?: null,
+            'works_on_friday'       => $this->works_on_friday !== '' ? (bool) $this->works_on_friday : null,
             'overnight_address'     => $this->overnight_address ?: null,
             'storage_room_location' => $this->storage_room_location ?: null,
             'notes'                 => $this->notes ?: null,
@@ -382,7 +397,7 @@ class Create extends Component
     private function validateEquipmentTab(): void
     {
         $this->validate([
-            'mobility_bag'              => ['nullable', Rule::in(['available', 'not_available'])],
+            'mobility_bag'              => ['nullable', Rule::in(array_keys(Vehicle::MOBILITY_BAG))],
             'laptops_count'             => ['nullable', 'integer', 'min:0'],
             'fingerprints_count'        => ['nullable', 'integer', 'min:0'],
             'printers_count'            => ['nullable', 'integer', 'min:0'],
@@ -432,8 +447,10 @@ class Create extends Component
         $this->manufacture_year      = (string) ($vehicle->manufacture_year ?? '');
         $this->operated_at           = $vehicle->operated_at?->format('Y-m-d') ?? '';
         $this->chassis_number        = $vehicle->chassis_number ?? '';
+        $this->engine_number         = $vehicle->engine_number ?? '';
         $this->license_expiry_date   = $vehicle->license_expiry_date?->format('Y-m-d') ?? '';
         $this->status                = $vehicle->status ?? '';
+        $this->works_on_friday       = $vehicle->works_on_friday === null ? '' : ($vehicle->works_on_friday ? '1' : '0');
         $this->overnight_address     = $vehicle->overnight_address ?? '';
         $this->storage_room_location = $vehicle->storage_room_location ?? '';
         $this->notes                 = $vehicle->notes ?? '';

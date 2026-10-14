@@ -7,7 +7,6 @@
         $selBase = 'w-full border border-zinc-300 dark:border-zinc-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-zinc-800 focus:outline-none focus:ring-2 focus:ring-[#c9a847]';
         $selText = fn ($v) => 'text-zinc-900 dark:text-zinc-100';
 
-        $availabilityOpts = ['available' => __('home.option_available'), 'not_available' => __('home.option_not_available')];
         $generatorOpts    = ['available' => __('home.option_available'), 'not_available' => __('home.option_not_available'), 'broken' => __('home.option_broken')];
         $camerasOpts      = ['available' => __('home.option_available'), 'not_available' => __('home.option_not_available'), 'broken' => __('home.option_broken')];
 
@@ -70,7 +69,7 @@
                 <label class="{{ $lbl }}">{{ __('home.mobility_bag') }}</label>
                 <select wire:model="mobilityBag" class="{{ $selBase }} {{ $selText($mobilityBag) }}">
                     <option value="">{{ __('home.report_select_hint') }}</option>
-                    @foreach ($availabilityOpts as $val => $text)<option value="{{ $val }}">{{ $text }}</option>@endforeach
+                    @foreach (\App\Models\Vehicle::MOBILITY_BAG as $val => $text)<option value="{{ $val }}">{{ $text }}</option>@endforeach
                 </select>
             </div>
         </div>

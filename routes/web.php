@@ -143,6 +143,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('reports/vehicle-devices/pdf', \App\Http\Controllers\VehicleDeviceCountPdfController::class)->name('reports.vehicle-device-count.pdf');
     Route::livewire('reports/vehicle-status', \App\Livewire\Reports\VehicleStatus::class)->name('reports.vehicle-status');
     Route::get('reports/vehicle-status/pdf', \App\Http\Controllers\VehicleStatusPdfController::class)->name('reports.vehicle-status.pdf');
+    Route::livewire('reports/vehicle-friday', \App\Livewire\Reports\VehicleFridayWork::class)->name('reports.vehicle-friday');
+    Route::get('reports/vehicle-friday/pdf', \App\Http\Controllers\VehicleFridayWorkPdfController::class)->name('reports.vehicle-friday.pdf');
     Route::livewire('reports/vehicle-coverage', \App\Livewire\Reports\VehicleCoverage::class)->name('reports.vehicle-coverage');
     Route::get('reports/vehicle-coverage/pdf', \App\Http\Controllers\VehicleCoveragePdfController::class)->name('reports.vehicle-coverage.pdf');
     Route::livewire('reports/vehicle-licenses', \App\Livewire\Reports\VehicleLicenses::class)->name('reports.vehicle-licenses');

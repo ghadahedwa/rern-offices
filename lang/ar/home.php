@@ -793,6 +793,10 @@ return [
     'license_plate_placeholder'     => 'مثال: أ ب ج 1234',
     'chassis_number'                => 'رقم الشاسية',
     'chassis_number_placeholder'    => 'رقم الشاسية',
+    'engine_number'                 => 'رقم الموتور',
+    'engine_number_placeholder'     => 'أرقام فقط',
+    'engine_number_digits_only'     => 'رقم الموتور يُكتب أرقاماً فقط',
+    'works_on_friday'               => 'السيارة تعمل أيام الجمع',
     'license_expiry_date'           => 'تاريخ انتهاء الترخيص',
     'overnight_address'             => 'عنوان المبيت',
     'overnight_address_placeholder' => 'عنوان المبيت',
@@ -910,7 +914,14 @@ return [
 
     // تقرير الحالة التشغيلية للسيارات — reports/vehicle-status
     'report_vehicle_status_title'   => 'تقرير الحالة التشغيلية للسيارات',
-    'report_vehicle_status_hint'    => 'عدد السيارات في كل حالة (تعمل / صيانة / متوقفة) لكل محافظة مع نسبة الجاهزية',
+    'report_vehicle_friday_title'   => 'السيارات العاملة أيام الجمع',
+    'report_vehicle_friday_hint'    => 'السيارات التي تعمل والتي لا تعمل يوم الجمعة في كل محافظة، مع قائمة بأسمائها',
+    'report_friday_all'             => 'الكل',
+    'report_friday_summary'         => 'الملخص حسب المحافظة',
+    'report_friday_list'            => 'قائمة السيارات',
+    'report_friday_unset_note'      => ':count سيارة لم يُحدَّد لها العمل أيام الجمع بعد — يُستكمل من فورم السيارة (البيانات الأساسية).',
+    'friday_work_unset'             => 'لم يُحدَّد',
+    'report_vehicle_status_hint'    =>'عدد السيارات في كل حالة (تعمل / صيانة / متوقفة) لكل محافظة مع نسبة الجاهزية',
     'report_readiness'              => 'نسبة الجاهزية',
 
     // تقرير التغطية الجغرافية (جدول التمركز الأسبوعي) — reports/vehicle-coverage
