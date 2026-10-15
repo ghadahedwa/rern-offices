@@ -100,7 +100,7 @@ class VehicleStatistics
             ->with('governorate:id,name,order')
             ->orderBy(Governorate::select('order')->whereColumn('governorates.id', 'vehicles.governorate_id'))
             ->orderBy('governorate_id')
-            ->orderBy('name')
+            ->tap(fn ($q) => \App\Support\NaturalSort::orderBy($q, 'vehicles.name'))
             ->get(['id', 'governorate_id', 'name', 'avg_daily_transactions', 'avg_daily_support', 'avg_daily_trips']);
 
         $sums = $this->sums($vehicles->pluck('id')->all());
@@ -152,11 +152,11 @@ class VehicleStatistics
 
             // ما لم يُسجَّل آخراً في الاتجاهين — «الأعلى» لا يبدأ بسيارات بلا أرقام
             if ($va === null || $vb === null) {
-                return (($va === null) <=> ($vb === null)) ?: strcmp($a['vehicle']->name, $b['vehicle']->name);
+                return (($va === null) <=> ($vb === null)) ?: strnatcmp($a['vehicle']->name, $b['vehicle']->name);
             }
 
-            return $sign * (is_string($va) ? strcmp($va, $vb) : $va <=> $vb)
-                ?: strcmp($a['vehicle']->name, $b['vehicle']->name);
+            return $sign * (is_string($va) ? strnatcmp($va, $vb) : $va <=> $vb)
+                ?: strnatcmp($a['vehicle']->name, $b['vehicle']->name);
         });
 
         return $rows;

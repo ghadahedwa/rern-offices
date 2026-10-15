@@ -93,7 +93,7 @@ class Index extends Component
             => \App\Support\TableSort::related($table, $column, 'vehicles', $foreignKey);
 
         return [
-            'name'        => 'vehicles.name',
+            'name'        => \App\Support\NaturalSort::columns('vehicles.name'),
             'governorate' => $related('governorates', 'order', 'governorate_id'),
             'type'        => $related('vehicle_types', 'name', 'type_id'),
             'work_system' => $related('vehicle_work_systems', 'name', 'work_system_id'),
@@ -107,7 +107,7 @@ class Index extends Component
         return $query
             ->orderBy(Governorate::select('order')->whereColumn('governorates.id', 'vehicles.governorate_id'))
             ->orderBy('vehicles.governorate_id')
-            ->orderBy('vehicles.name');
+            ->tap(fn ($q) => \App\Support\NaturalSort::orderBy($q, 'vehicles.name'));
     }
 
     public function render()

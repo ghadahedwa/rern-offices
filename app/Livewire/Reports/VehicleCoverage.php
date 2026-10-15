@@ -75,7 +75,7 @@ class VehicleCoverage extends Component
     {
         return [
             'governorate' => \App\Support\TableSort::related('governorates', 'order', 'vehicles', 'governorate_id'),
-            'name'        => 'vehicles.name',
+            'name'        => \App\Support\NaturalSort::columns('vehicles.name'),
         ];
     }
 
@@ -109,7 +109,7 @@ class VehicleCoverage extends Component
             fn ($q) => $q
                 ->orderBy(Governorate::select('order')->whereColumn('governorates.id', 'vehicles.governorate_id'))
                 ->orderBy('governorate_id')
-                ->orderBy('name'),
+                ->tap(fn ($q) => \App\Support\NaturalSort::orderBy($q, 'vehicles.name')),
             'vehicles.id', 'asc',
         )->get();
 

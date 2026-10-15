@@ -301,7 +301,7 @@ class MultiVehicle extends Component
     protected function sortableColumns(): array
     {
         return [
-            'name'        => 'vehicles.name',
+            'name'        => \App\Support\NaturalSort::columns('vehicles.name'),
             'governorate' => \App\Support\TableSort::related('governorates', 'order', 'vehicles', 'governorate_id'),
             'type'        => \App\Support\TableSort::related('vehicle_types', 'name', 'vehicles', 'type_id'),
             'status'      => 'vehicles.status',
@@ -315,7 +315,7 @@ class MultiVehicle extends Component
         return $query
             ->orderBy(Governorate::select('order')->whereColumn('governorates.id', 'vehicles.governorate_id'))
             ->orderBy('governorate_id')
-            ->orderBy('name');
+            ->tap(fn ($q) => \App\Support\NaturalSort::orderBy($q, 'vehicles.name'));
     }
 
     /** استعلام سيارات مقيّد بنطاق الصلاحيات + المحافظات المختارة حالياً (لخيارات المقارنة) */
@@ -342,7 +342,7 @@ class MultiVehicle extends Component
             : new LengthAwarePaginator([], 0, 15, 1, ['path' => Paginator::resolveCurrentPath()]);
 
         $vehicleOptions = $this->scopedVehicles($allowedGovIds)
-            ->orderBy('name')->get(['id', 'name']);
+            ->tap(fn ($q) => \App\Support\NaturalSort::orderBy($q, 'vehicles.name'))->get(['id', 'name']);
 
         $customColumnGroups = [];
         if ($this->hasSearched) {

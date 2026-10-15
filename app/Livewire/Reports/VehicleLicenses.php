@@ -99,7 +99,7 @@ class VehicleLicenses extends Component
 
         return TableSort::apply(
             $query, (string) ($filters['sort'] ?? ''), (string) ($filters['dir'] ?? 'asc'), self::sortMap(),
-            fn ($q) => $q->orderByRaw('license_expiry_date IS NULL, license_expiry_date ASC')->orderBy('name'),
+            fn ($q) => $q->orderByRaw('license_expiry_date IS NULL, license_expiry_date ASC')->tap(fn ($q) => \App\Support\NaturalSort::orderBy($q, 'vehicles.name')),
             'vehicles.id', 'asc',
         )->get(['id', 'governorate_id', 'name', 'license_plate', 'license_expiry_date']);
     }
@@ -112,7 +112,7 @@ class VehicleLicenses extends Component
     {
         return [
             'governorate' => TableSort::related('governorates', 'order', 'vehicles', 'governorate_id'),
-            'name'        => 'vehicles.name',
+            'name'        => \App\Support\NaturalSort::columns('vehicles.name'),
             'plate'       => 'vehicles.license_plate',
         ];
     }
