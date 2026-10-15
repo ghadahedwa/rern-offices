@@ -135,12 +135,13 @@
                             [
                                 'can'    => $canVehicleReports,
                                 'label'  => 'home.reports_vehicles',
-                                'routes' => ['reports.multi-vehicle', 'reports.vehicle-device-count', 'reports.vehicle-status', 'reports.vehicle-friday', 'reports.vehicle-coverage', 'reports.vehicle-licenses'],
+                                'routes' => ['reports.multi-vehicle', 'reports.vehicle-device-count', 'reports.vehicle-status', 'reports.vehicle-friday', 'reports.vehicle-statistics','reports.vehicle-coverage', 'reports.vehicle-licenses'],
                                 'items'  => [
                                     ['reports.multi-vehicle',        'truck',               'home.report_vehicle_multi_title'],
                                     ['reports.vehicle-device-count', 'wrench-screwdriver',  'home.report_vehicle_devices_title'],
                                     ['reports.vehicle-status',       'chart-pie',           'home.report_vehicle_status_title'],
                                     ['reports.vehicle-friday',       'calendar',            'home.report_vehicle_friday_title'],
+                                    ['reports.vehicle-statistics',   'chart-bar',           'home.report_vehicle_statistics_title'],
                                     ['reports.vehicle-coverage',     'calendar-days',       'home.report_vehicle_coverage_title'],
                                     ['reports.vehicle-licenses',     'identification',      'home.report_vehicle_licenses_title'],
                                 ],

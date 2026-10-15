@@ -145,6 +145,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('reports/vehicle-status/pdf', \App\Http\Controllers\VehicleStatusPdfController::class)->name('reports.vehicle-status.pdf');
     Route::livewire('reports/vehicle-friday', \App\Livewire\Reports\VehicleFridayWork::class)->name('reports.vehicle-friday');
     Route::get('reports/vehicle-friday/pdf', \App\Http\Controllers\VehicleFridayWorkPdfController::class)->name('reports.vehicle-friday.pdf');
+    Route::livewire('reports/vehicle-statistics', \App\Livewire\Reports\VehicleStatistics::class)->name('reports.vehicle-statistics');
+    Route::get('reports/vehicle-statistics/pdf', \App\Http\Controllers\VehicleStatisticsPdfController::class)->name('reports.vehicle-statistics.pdf');
     Route::livewire('reports/vehicle-coverage', \App\Livewire\Reports\VehicleCoverage::class)->name('reports.vehicle-coverage');
     Route::get('reports/vehicle-coverage/pdf', \App\Http\Controllers\VehicleCoveragePdfController::class)->name('reports.vehicle-coverage.pdf');
     Route::livewire('reports/vehicle-licenses', \App\Livewire\Reports\VehicleLicenses::class)->name('reports.vehicle-licenses');

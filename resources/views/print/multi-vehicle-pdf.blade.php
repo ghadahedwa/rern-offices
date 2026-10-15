@@ -52,12 +52,9 @@
         $dayLabels       = \App\Models\VehicleLocation::DAYS;
         $statLabels      = [1 => __('home.vehicle_stat_transactions'), 2 => __('home.vehicle_stat_form_sales'), 3 => __('home.vehicle_stat_folder_sales')];
 
-        $lastYearStat = function ($vehicle, int $typeId) {
-            $rows = $vehicle->statistics->where('stat_type_id', $typeId);
-            if ($rows->isEmpty()) return null;
-            $year = $rows->max('year');
-            return number_format((float) $rows->where('year', $year)->sum('value'), 0) . ' (' . $year . ')';
-        };
+        // حسبة «آخر سنة» من مصدر التقرير المخصص نفسه — فلا يخرج الملفّان برقمين مختلفين
+        $lastYearStat = fn ($vehicle, int $typeId) => \App\Reports\VehicleColumns::lastYearStat($vehicle, $typeId);
+        $tripsTypeId  = \App\Reports\VehicleColumns::tripsTypeId();
     @endphp
 
     {{-- ── Page Header ── --}}
@@ -154,7 +151,10 @@
 
                 {{-- الإحصائيات --}}
                 <td>
-                    <div class="f"><span class="k">متوسط يومي:</span> <span class="v">{{ $vehicle->avg_daily_transactions ?? $dash }}</span></div>
+                    <div class="f"><span class="k">متوسط المعاملات اليومي:</span> <span class="v">{{ $vehicle->avg_daily_transactions ?? $dash }}</span></div>
+                    <div class="f"><span class="k">متوسط الدعم اليومي:</span> <span class="v">{{ $vehicle->avg_daily_support ?? $dash }}</span></div>
+                    <div class="f"><span class="k">متوسط الانتقال اليومي:</span> <span class="v">{{ $vehicle->avg_daily_trips ?? $dash }}</span></div>
+                    <div class="f"><span class="k">{{ __('home.vehicle_stat_trips') }}:</span> <span class="v">{{ $tripsTypeId ? ($lastYearStat($vehicle, $tripsTypeId) ?? $dash) : $dash }}</span></div>
                     <div class="f"><span class="k">{{ $statLabels[1] }}:</span> <span class="v">{{ $lastYearStat($vehicle, 1) ?? $dash }}</span></div>
                     <div class="f"><span class="k">{{ $statLabels[2] }}:</span> <span class="v">{{ $lastYearStat($vehicle, 2) ?? $dash }}</span></div>
                     <div class="f"><span class="k">{{ $statLabels[3] }}:</span> <span class="v">{{ $lastYearStat($vehicle, 3) ?? $dash }}</span></div>

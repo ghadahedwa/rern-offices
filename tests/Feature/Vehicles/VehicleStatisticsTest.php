@@ -196,5 +196,6 @@ it('reports the 2026 total in the last-year report column', function () {
     }
 
     $value = VehicleColumns::all()['stat_transactions']['value'];
+    $this->travelTo(\Illuminate\Support\Carbon::parse('2027-03-01'));   // سنة ٢٠٢٦ مكتملة
     expect($value($this->vehicle->load('statistics')))->toBe('1,000 (2026)');
 });

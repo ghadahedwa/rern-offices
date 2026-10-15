@@ -114,14 +114,17 @@ class Dashboard extends Component
 
         // ملخص إحصائيات التوثيق للسيارات (آخر سنة فقط، مفصولة لكل نوع) — نفس نطاق السيارات الظاهرة للمستخدم
         // نفس تسميات vehicle_stat_* المستخدمة في Vehicles\StatTab\Documentation (بالـ id)
-        $vehicleStatTypeLabels = [
+        // بترتيب تاب الإحصائيات: الانتقالات ← المعاملات ← النماذج ← الحوافظ
+        $tripsTypeId = \App\Reports\VehicleColumns::tripsTypeId();
+        $vehicleStatTypeLabels = ($tripsTypeId ? [$tripsTypeId => 'vehicle_stat_trips'] : []) + [
             1 => 'vehicle_stat_transactions',
             2 => 'vehicle_stat_form_sales',
             3 => 'vehicle_stat_folder_sales',
         ];
+        $currentYear = \App\Reports\VehicleColumns::currentYear();
         $vehicleStatsSummary = collect();
         if ($canViewVehicleStats) {
-            $vehicleStatsSummary = collect($vehicleStatTypeLabels)->map(function ($langKey, $typeId) use ($isSuperAdmin, $govIds) {
+            $vehicleStatsSummary = collect($vehicleStatTypeLabels)->map(function ($langKey, $typeId) use ($isSuperAdmin, $govIds, $currentYear) {
                 $row = VehicleStat::where('stat_type_id', $typeId)
                     ->when(! $isSuperAdmin, fn ($q) => $q->whereHas('vehicle', fn ($v) => $v->whereIn('governorate_id', $govIds)))
                     ->where('value', '>', 0)
@@ -134,6 +137,8 @@ class Dashboard extends Component
                     'label'       => __('home.' . $langKey),
                     'latestYear'  => $row->year ?? null,
                     'latestTotal' => $row->total ?? 0,
+                    // السنة الجارية لم تكتمل — رقمها لا يُقارَن بسنة كاملة
+                    'partial'     => $row && (int) $row->year >= $currentYear,
                 ];
             });
         }

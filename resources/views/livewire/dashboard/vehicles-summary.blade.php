@@ -8,7 +8,7 @@
     </div>
 
     <div class="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-sm p-5">
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-4">
 
             {{-- إجمالي السيارات + توزيع الحالات (صف واحد) --}}
             <div class="flex items-start gap-2">
@@ -46,7 +46,7 @@
                 </div>
                 <div>
                     <p class="text-xs text-zinc-400 mb-0.5">
-                        {{ $stat['label'] }} @if($stat['latestYear']) ({{ $stat['latestYear'] }}) @endif
+                        {{ $stat['label'] }} @if($stat['latestYear']) ({{ $stat['latestYear'] }}@if($stat['partial']) {{ __('home.vstat_so_far') }}@endif) @endif
                     </p>
                     <p class="text-xl font-bold text-zinc-800 dark:text-zinc-100">
                         {{ $stat['latestYear'] ? number_format($stat['latestTotal']) : '—' }}

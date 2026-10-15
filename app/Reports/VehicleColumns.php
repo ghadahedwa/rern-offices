@@ -220,6 +220,21 @@ class VehicleColumns
                 'filter' => null, 'fixed' => false, 'excelOnly' => false,
                 'value' => fn (Vehicle $v) => $v->avg_daily_transactions ?? $dash,
             ],
+            'avg_daily_support' => [
+                'label' => 'متوسط الدعم اليومي', 'group' => 'الإحصائيات',
+                'filter' => null, 'fixed' => false, 'excelOnly' => false,
+                'value' => fn (Vehicle $v) => $v->avg_daily_support ?? $dash,
+            ],
+            'avg_daily_trips' => [
+                'label' => 'متوسط الانتقال اليومي', 'group' => 'الإحصائيات',
+                'filter' => null, 'fixed' => false, 'excelOnly' => false,
+                'value' => fn (Vehicle $v) => $v->avg_daily_trips ?? $dash,
+            ],
+            'stat_trips' => [
+                'label' => 'عدد الانتقالات (آخر سنة)', 'group' => 'الإحصائيات',
+                'filter' => null, 'fixed' => false, 'excelOnly' => false,
+                'value' => fn (Vehicle $v) => ($id = self::tripsTypeId()) ? (self::lastYearStat($v, $id) ?? $dash) : $dash,
+            ],
             'stat_transactions' => [
                 'label' => 'معاملات التوثيق (آخر سنة)', 'group' => 'الإحصائيات',
                 'filter' => null, 'fixed' => false, 'excelOnly' => false,
@@ -245,8 +260,14 @@ class VehicleColumns
         ];
     }
 
-    /** قيمة آخر سنة مسجّلة لنوع إحصائية معيّن — "قيمة (سنة)"، أو null إن لم توجد بيانات (يتطلب eager-load لـ statistics) */
-    private static function lastYearStat(Vehicle $v, int $statTypeId): ?string
+    /**
+     * قيمة آخر سنة مسجّلة لنوع إحصائية — «قيمة (سنة)»، أو null بلا بيانات (يتطلب eager-load لـ statistics).
+     * إجمالي السنة = مجموع صفوفها (إجمالي فترة + شهور — انظر VehicleTransactionPeriods).
+     *
+     * ⚠️ السنة الجارية تُكتب «حتى الآن»: رقم ٢٠٢٦ لتسعة أشهر بجوار سنة ٢٠٢٥ كاملة يُقرأ هبوطاً.
+     * مصدر واحد للتقرير المخصص (Excel/PDF) والـPDF الشامل معاً.
+     */
+    public static function lastYearStat(Vehicle $v, int $statTypeId): ?string
     {
         $rows = $v->statistics->where('stat_type_id', $statTypeId);
 
@@ -254,10 +275,29 @@ class VehicleColumns
             return null;
         }
 
-        $lastYear = $rows->max('year');
+        $lastYear = (int) $rows->max('year');
         $total    = $rows->where('year', $lastYear)->sum('value');
+        $suffix   = $lastYear >= self::currentYear() ? ' حتى الآن' : '';
 
-        return number_format((float) $total, 0) . ' (' . $lastYear . ')';
+        return number_format((float) $total, 0) . ' (' . $lastYear . $suffix . ')';
+    }
+
+    /** السنة الجارية بتوقيت العرض (القاهرة) — لا UTC */
+    public static function currentYear(): int
+    {
+        return (int) now(\App\Support\LocalTime::timezone())->year;
+    }
+
+    /** معرّف نوع «عدد الانتقالات» — يُضاف بهجرة فرقمه يختلف بين القواعد */
+    public static function tripsTypeId(): ?int
+    {
+        static $id = false;
+
+        if ($id === false) {
+            $id = \App\Models\StatType::where('group_key', 'vehicle_trips')->value('id');
+        }
+
+        return $id;
     }
 
     /** مفاتيح الأعمدة الثابتة (لا يمكن إلغاؤها في التقرير المخصّص) */
