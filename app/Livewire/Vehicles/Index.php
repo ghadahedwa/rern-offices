@@ -12,12 +12,14 @@ use Livewire\Attributes\Title;
 use Livewire\Attributes\Url;
 use Livewire\Component;
 use Livewire\WithPagination;
+use App\Livewire\Concerns\WithTableSorting;
+use Illuminate\Database\Eloquent\Builder;
 
 #[Layout('layouts.app')]
 #[Title('السيارات المتنقلة')]
 class Index extends Component
 {
-    use WithPagination;
+    use WithPagination, WithTableSorting;
 
     public string $search = '';
 
@@ -81,6 +83,33 @@ class Index extends Component
         }
     }
 
+    /**
+     * الأعمدة القابلة للترتيب — بنمط قائمة المقرات: أعمدة الجداول المرتبطة **استعلامات فرعية لا joins**
+     * (الـjoin يجعل `name` ملتبساً في البحث)، والمحافظة بترتيبها المعتمد (`order`) لا أبجدياً.
+     */
+    protected function sortableColumns(): array
+    {
+        $related = fn (string $table, string $column, string $foreignKey)
+            => \App\Support\TableSort::related($table, $column, 'vehicles', $foreignKey);
+
+        return [
+            'name'        => 'vehicles.name',
+            'governorate' => $related('governorates', 'order', 'governorate_id'),
+            'type'        => $related('vehicle_types', 'name', 'type_id'),
+            'work_system' => $related('vehicle_work_systems', 'name', 'work_system_id'),
+            'status'      => 'vehicles.status',
+        ];
+    }
+
+    /** المحافظة بترتيبها المعتمد ثم الاسم — ترتيب تقارير السيارات نفسه (قرار المستخدمة 2026-10-15) */
+    protected function defaultOrder(Builder $query): Builder
+    {
+        return $query
+            ->orderBy(Governorate::select('order')->whereColumn('governorates.id', 'vehicles.governorate_id'))
+            ->orderBy('vehicles.governorate_id')
+            ->orderBy('vehicles.name');
+    }
+
     public function render()
     {
         $user         = auth()->user();
@@ -92,7 +121,7 @@ class Index extends Component
 
         $allowedGovIds = $isSuperAdmin ? null : $governorates->pluck('id');
 
-        $vehicles = Vehicle::with(['governorate', 'type', 'workSystem'])
+        $query = Vehicle::with(['governorate', 'type', 'workSystem'])
             ->when($allowedGovIds, fn($q) => $q->whereIn('governorate_id', $allowedGovIds))
             ->when($this->governorate_id, fn($q) => $q->where('governorate_id', $this->governorate_id))
             ->when($this->type_id, fn($q) => $q->where('type_id', $this->type_id))
@@ -101,9 +130,9 @@ class Index extends Component
             ->when($this->search, fn($q) => $q->whereRaw(
                 \App\Support\ArabicText::sqlNormalize('name').' LIKE ?',
                 ['%'.\App\Support\ArabicText::normalize($this->search).'%']
-            ))
-            ->latest()
-            ->paginate(15);
+            ));
+
+        $vehicles = $this->applySorting($query, 'vehicles.id')->paginate(15);
 
         return view('livewire.vehicles.index', [
             'vehicles'     => $vehicles,

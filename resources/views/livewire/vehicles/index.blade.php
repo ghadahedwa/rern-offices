@@ -75,11 +75,11 @@
                 <tr>
                     {{-- على الموبايل: الاسم والمحافظة والحالة والعمليات — النوع ونظام العمل في صفحة العرض --}}
                     <th class="px-4 py-3 font-medium max-sm:hidden">#</th>
-                    <th class="px-4 py-3 font-medium">{{ __('home.vehicle_name') }}</th>
-                    <th class="px-4 py-3 font-medium">{{ __('home.governorate') }}</th>
-                    <th class="px-4 py-3 font-medium max-sm:hidden">{{ __('home.vehicle_type') }}</th>
-                    <th class="px-4 py-3 font-medium max-sm:hidden">{{ __('home.vehicle_work_system') }}</th>
-                    <th class="px-4 py-3 font-medium">{{ __('home.vehicle_status') }}</th>
+                    @include('livewire.partials.sortable-th', ['column' => 'name', 'label' => __('home.vehicle_name')])
+                    @include('livewire.partials.sortable-th', ['column' => 'governorate', 'label' => __('home.governorate')])
+                    @include('livewire.partials.sortable-th', ['column' => 'type', 'label' => __('home.vehicle_type'), 'thClass' => 'max-sm:hidden'])
+                    @include('livewire.partials.sortable-th', ['column' => 'work_system', 'label' => __('home.vehicle_work_system'), 'thClass' => 'max-sm:hidden'])
+                    @include('livewire.partials.sortable-th', ['column' => 'status', 'label' => __('home.vehicle_status')])
                     @if($canView || $canEdit || $canDelete)
                         <th class="px-4 py-3 font-medium">{{ __('home.actions') }}</th>
                     @endif

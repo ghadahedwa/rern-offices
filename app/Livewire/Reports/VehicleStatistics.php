@@ -15,6 +15,25 @@ use Maatwebsite\Excel\Facades\Excel;
 #[Title('إحصائيات السيارات')]
 class VehicleStatistics extends Component
 {
+    // دورة الضغط والرابط من الـtrait، والترتيب نفسه داخل التقرير (داخل كل محافظة، ويتبعه الـPDF والـExcel)
+    use \App\Livewire\Concerns\WithTableSorting;
+
+    protected function sortableColumns(): array
+    {
+        return array_fill_keys(Report::SORTABLE, null);
+    }
+
+    /** لا يُستدعى — الترتيب الافتراضي (المحافظة ثم الاسم) في التقرير نفسه */
+    protected function defaultOrder(\Illuminate\Database\Eloquent\Builder $query): \Illuminate\Database\Eloquent\Builder
+    {
+        return $query;
+    }
+
+    /** الفلاتر المطبَّقة + الترتيب الحالي — يُطبَّق الترتيب فوراً بلا ضغط «بحث» */
+    protected function filtersWithSort(): array
+    {
+        return $this->applied + ['sort' => $this->sortBy, 'dir' => $this->sortDir];
+    }
     // ── الفلاتر ──
     public array $governorateIds = [];
     public string $year = '';
@@ -47,7 +66,7 @@ class VehicleStatistics extends Component
 
     protected function report(): Report
     {
-        return Report::make(VehicleFridayWork::allowedGovIdsFor(auth()->user()), $this->applied);
+        return Report::make(VehicleFridayWork::allowedGovIdsFor(auth()->user()), $this->filtersWithSort());
     }
 
     public function exportExcel()
@@ -72,7 +91,7 @@ class VehicleStatistics extends Component
             return;
         }
 
-        session(['vehicle_statistics_filters' => $this->applied]);
+        session(['vehicle_statistics_filters' => $this->filtersWithSort()]);
         $this->js("window.open('" . route('reports.vehicle-statistics.pdf') . "', '_blank')");
     }
 

@@ -80,8 +80,10 @@
             <table class="w-full text-sm text-center">
                 <thead class="text-xs">
                     <tr class="bg-[#c9a847] text-white">
-                        <th class="px-3 py-2.5 font-semibold text-right sticky right-0 bg-[#c9a847]">{{ __('home.governorate_name') }}</th>
-                        <th class="px-3 py-2.5 font-semibold text-right">{{ __('home.vehicle_name') }}</th>
+                        {{-- الرأس ذهبي — اللون النشط أبيض مسطَّر لا الذهبي الافتراضي --}}
+                        @php $gold = ['activeClass' => 'text-white underline underline-offset-4', 'hoverClass' => 'hover:text-white/80']; @endphp
+                        @include('livewire.partials.sortable-th', $gold + ['column' => 'governorate', 'label' => __('home.governorate_name'), 'thClass' => 'font-semibold text-right sticky right-0 bg-[#c9a847]'])
+                        @include('livewire.partials.sortable-th', $gold + ['column' => 'name', 'label' => __('home.vehicle_name'), 'thClass' => 'font-semibold text-right'])
                         @foreach($days as $key => $label)
                             <th class="px-2 py-2.5 font-medium">{{ $label }}</th>
                         @endforeach

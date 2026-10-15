@@ -96,16 +96,16 @@
             <table class="w-full text-sm text-right sm:table-fixed max-sm:[&_th]:px-1.5 max-sm:[&_td]:px-1.5">
                 <thead class="text-xs">
                     <tr class="bg-[#c9a847] text-white">
-                        <th class="{{ $partial ? 'sm:w-[33%]' : 'sm:w-[28%]' }} px-3 py-2.5 font-semibold">{{ __('home.vehicle_name') }}</th>
-                        <th class="w-[10%] px-2 py-2.5 font-medium text-center max-sm:hidden">{{ __('home.vstat_col_avg_tx') }}</th>
-                        <th class="w-[10%] px-2 py-2.5 font-medium text-center max-sm:hidden">{{ __('home.vstat_col_avg_support') }}</th>
-                        <th class="w-[10%] px-2 py-2.5 font-medium text-center max-sm:hidden">{{ __('home.vstat_col_avg_trips') }}</th>
-                        <th class="{{ $partial ? 'sm:w-[17%]' : 'sm:w-[12%]' }} px-2 py-2.5 font-medium text-center">{{ __('home.vstat_col_trips', ['year' => $y]) }}</th>
-                        <th class="{{ $partial ? 'sm:w-[20%]' : 'sm:w-[15%]' }} px-2 py-2.5 font-medium text-center bg-[#b8962e]">
-                            {{ __('home.vstat_col_tx', ['year' => $y]) }}@if($partial) <span class="block font-normal opacity-90">({{ __('home.vstat_so_far') }})</span>@endif
-                        </th>
+                        {{-- الترتيب داخل كل محافظة — الرأس الذهبي يحتاج لوناً نشطاً أبيض مسطَّراً لا الذهبي الافتراضي --}}
+                        @php $gold = ['activeClass' => 'text-white underline underline-offset-4', 'hoverClass' => 'hover:text-white/80']; @endphp
+                        @include('livewire.partials.sortable-th', $gold + ['column' => 'name', 'label' => __('home.vehicle_name'), 'thClass' => ($partial ? 'sm:w-[33%]' : 'sm:w-[28%]') . ' font-semibold'])
+                        @include('livewire.partials.sortable-th', $gold + ['column' => 'avg_tx', 'label' => __('home.vstat_col_avg_tx'), 'thClass' => 'w-[10%] text-center max-sm:hidden'])
+                        @include('livewire.partials.sortable-th', $gold + ['column' => 'avg_support', 'label' => __('home.vstat_col_avg_support'), 'thClass' => 'w-[10%] text-center max-sm:hidden'])
+                        @include('livewire.partials.sortable-th', $gold + ['column' => 'avg_trips', 'label' => __('home.vstat_col_avg_trips'), 'thClass' => 'w-[10%] text-center max-sm:hidden'])
+                        @include('livewire.partials.sortable-th', $gold + ['column' => 'trips', 'label' => __('home.vstat_col_trips', ['year' => $y]), 'thClass' => ($partial ? 'sm:w-[17%]' : 'sm:w-[12%]') . ' text-center'])
+                        @include('livewire.partials.sortable-th', $gold + ['column' => 'tx', 'label' => __('home.vstat_col_tx', ['year' => $y]) . ($partial ? ' (' . __('home.vstat_so_far') . ')' : ''), 'thClass' => ($partial ? 'sm:w-[20%]' : 'sm:w-[15%]') . ' text-center bg-[#b8962e]'])
                         @unless($partial)
-                        <th class="sm:w-[15%] px-2 py-2.5 font-medium text-center">{{ __('home.vstat_col_tx', ['year' => $y - 1]) }}</th>
+                        @include('livewire.partials.sortable-th', $gold + ['column' => 'tx_prev', 'label' => __('home.vstat_col_tx', ['year' => $y - 1]), 'thClass' => 'sm:w-[15%] text-center'])
                         @endunless
                     </tr>
                 </thead>

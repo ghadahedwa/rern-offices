@@ -23,10 +23,18 @@ class VehicleStatistics
 {
     private ?array $rowsCache = null;
 
+    /**
+     * أعمدة الترتيب (قائمة بيضاء) — **داخل كل محافظة**: صفوف الإجمالي مقسومة بالمحافظة،
+     * فترتيبٌ عابر لها يبعثر السيارات ويُفقد الإجماليات معناها. ⚠️ «—» (null) آخراً في الاتجاهين.
+     */
+    public const SORTABLE = ['name', 'avg_tx', 'avg_support', 'avg_trips', 'trips', 'tx', 'tx_prev'];
+
     private function __construct(
         private ?array $allowedGovIds,
         private array $govIds,
         private int $year,
+        private string $sort = '',
+        private string $dir = 'asc',
     ) {}
 
     /** @param ?array $allowedGovIds null = بلا حدّ (super-admin) · [] = لا يرى شيئاً */
@@ -37,7 +45,11 @@ class VehicleStatistics
             ->map(fn ($id) => (int) $id)
             ->values()->all();
 
-        return new self($allowedGovIds, $govIds, self::sanitizeYear($filters['year'] ?? null));
+        $sort = $filters['sort'] ?? '';
+        $sort = is_string($sort) && in_array($sort, self::SORTABLE, true) ? $sort : '';
+        $dir  = ($filters['dir'] ?? 'asc') === 'desc' ? 'desc' : 'asc';
+
+        return new self($allowedGovIds, $govIds, self::sanitizeYear($filters['year'] ?? null), $sort, $dir);
     }
 
     /** سنة من الرابط/الـsession: رقمٌ داخل المدى وإلا السنة الجارية */
@@ -103,6 +115,8 @@ class VehicleStatistics
                 'txPrev'  => $sums[$v->id][Periods::STAT_TYPE_ID][$this->year - 1] ?? null,
             ])->values()->all();
 
+            $rows = $this->sortRows($rows);
+
             $groups[] = [
                 'governorate' => $govVehicles->first()->governorate,
                 'vehicles'    => $rows,
@@ -113,6 +127,39 @@ class VehicleStatistics
         $this->rowsCache = $groups;
 
         return collect($groups);
+    }
+
+    /** ترتيب سيارات محافظة واحدة بالعمود المختار — بلا عمود يبقى ترتيب الاسم من الاستعلام */
+    private function sortRows(array $rows): array
+    {
+        if ($this->sort === '') {
+            return $rows;
+        }
+
+        $value = fn (array $r) => match ($this->sort) {
+            'name'        => $r['vehicle']->name,
+            'avg_tx'      => $r['vehicle']->avg_daily_transactions,
+            'avg_support' => $r['vehicle']->avg_daily_support,
+            'avg_trips'   => $r['vehicle']->avg_daily_trips,
+            'trips'       => $r['trips'],
+            'tx'          => $r['tx'],
+            'tx_prev'     => $r['txPrev'],
+        };
+        $sign = $this->dir === 'desc' ? -1 : 1;
+
+        usort($rows, function ($a, $b) use ($value, $sign) {
+            [$va, $vb] = [$value($a), $value($b)];
+
+            // ما لم يُسجَّل آخراً في الاتجاهين — «الأعلى» لا يبدأ بسيارات بلا أرقام
+            if ($va === null || $vb === null) {
+                return (($va === null) <=> ($vb === null)) ?: strcmp($a['vehicle']->name, $b['vehicle']->name);
+            }
+
+            return $sign * (is_string($va) ? strcmp($va, $vb) : $va <=> $vb)
+                ?: strcmp($a['vehicle']->name, $b['vehicle']->name);
+        });
+
+        return $rows;
     }
 
     /** الإجمالي العام */

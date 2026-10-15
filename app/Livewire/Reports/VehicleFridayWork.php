@@ -15,6 +15,19 @@ use Maatwebsite\Excel\Facades\Excel;
 #[Title('السيارات العاملة أيام الجمع')]
 class VehicleFridayWork extends Component
 {
+    // دورة الضغط والرابط من الـtrait، والترتيب نفسه داخل التقرير (فيتبعه الـPDF والـExcel)
+    use \App\Livewire\Concerns\WithTableSorting;
+
+    protected function sortableColumns(): array
+    {
+        return Report::sortMap();
+    }
+
+    /** لا يُستدعى — التقرير يطبّق الترتيب الافتراضي بنفسه */
+    protected function defaultOrder(\Illuminate\Database\Eloquent\Builder $query): \Illuminate\Database\Eloquent\Builder
+    {
+        return $query;
+    }
     // ── الفلاتر ──
     public array $governorateIds = [];
     public string $friday = '';   // '' الكل · works · not_works · unset
@@ -52,7 +65,13 @@ class VehicleFridayWork extends Component
 
     protected function report(): Report
     {
-        return Report::make(self::allowedGovIdsFor(auth()->user()), $this->applied);
+        return Report::make(self::allowedGovIdsFor(auth()->user()), $this->filtersWithSort());
+    }
+
+    /** الفلاتر المطبَّقة + الترتيب الحالي — يُطبَّق الترتيب فوراً بلا ضغط «بحث» */
+    protected function filtersWithSort(): array
+    {
+        return $this->applied + ['sort' => $this->sortBy, 'dir' => $this->sortDir];
     }
 
     public function exportExcel()
@@ -75,7 +94,7 @@ class VehicleFridayWork extends Component
             return;
         }
 
-        session(['vehicle_friday_filters' => $this->applied]);
+        session(['vehicle_friday_filters' => $this->filtersWithSort()]);
         $this->js("window.open('" . route('reports.vehicle-friday.pdf') . "', '_blank')");
     }
 

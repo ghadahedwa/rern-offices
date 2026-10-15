@@ -22,7 +22,25 @@ class VehicleFridayWork
         private ?array $allowedGovIds,
         private array $govIds,
         private string $friday,
+        private string $sort = '',
+        private string $dir = 'asc',
     ) {}
+
+    /**
+     * أعمدة قائمة السيارات القابلة للترتيب: مفتاح الرابط ← عمود SQL (قائمة بيضاء — `TableSort`).
+     * المحافظة بترتيبها المعتمد لا أبجدياً، والجداول المرتبطة استعلامات فرعية.
+     *
+     * @return array<string, mixed>
+     */
+    public static function sortMap(): array
+    {
+        return [
+            'governorate' => \App\Support\TableSort::related('governorates', 'order', 'vehicles', 'governorate_id'),
+            'name'        => 'vehicles.name',
+            'type'        => \App\Support\TableSort::related('vehicle_types', 'name', 'vehicles', 'type_id'),
+            'friday'      => 'vehicles.works_on_friday',
+        ];
+    }
 
     /**
      * يبني التقرير من فلاترٍ قد تصل من العميل أو من الـsession — كل قيمة تُفحص:
@@ -40,7 +58,11 @@ class VehicleFridayWork
         $friday = $filters['friday'] ?? '';
         $friday = is_string($friday) && in_array($friday, self::KEYS, true) ? $friday : '';
 
-        return new self($allowedGovIds, $govIds, $friday);
+        // الترتيب يُفحص هنا أيضاً — يصل من الـsession للـPDF، و`TableSort` يُسقط المجهول للافتراضي
+        $sort = is_string($filters['sort'] ?? null) ? $filters['sort'] : '';
+        $dir  = ($filters['dir'] ?? 'asc') === 'desc' ? 'desc' : 'asc';
+
+        return new self($allowedGovIds, $govIds, $friday, $sort, $dir);
     }
 
     public static function keyOf(?bool $value): string
@@ -97,18 +119,23 @@ class VehicleFridayWork
         return $counts;
     }
 
-    /** قائمة السيارات — مفلترة بالفئة المختارة، بترتيب المحافظات ثم الاسم */
+    /** قائمة السيارات — مفلترة بالفئة المختارة، بترتيب المستخدم أو الافتراضي (المحافظات ثم الاسم) */
     public function vehicles(): Collection
     {
-        return $this->scoped()
+        $query = $this->scoped()
             ->with(['governorate:id,name', 'type:id,name'])
             ->when($this->friday === 'works', fn ($q) => $q->where('works_on_friday', true))
             ->when($this->friday === 'not_works', fn ($q) => $q->where('works_on_friday', false))
-            ->when($this->friday === 'unset', fn ($q) => $q->whereNull('works_on_friday'))
-            ->orderBy(Governorate::select('order')->whereColumn('governorates.id', 'vehicles.governorate_id'))
-            ->orderBy('governorate_id')
-            ->orderBy('name')
-            ->get();
+            ->when($this->friday === 'unset', fn ($q) => $q->whereNull('works_on_friday'));
+
+        return \App\Support\TableSort::apply(
+            $query, $this->sort, $this->dir, self::sortMap(),
+            fn ($q) => $q
+                ->orderBy(Governorate::select('order')->whereColumn('governorates.id', 'vehicles.governorate_id'))
+                ->orderBy('governorate_id')
+                ->orderBy('name'),
+            'vehicles.id', 'asc',
+        )->get();
     }
 
     private function scoped()

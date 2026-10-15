@@ -19,6 +19,22 @@ use Illuminate\Database\Eloquent\Builder;
 final class TableSort
 {
     /**
+     * عمود من جدولٍ مرتبط كاستعلام فرعي — للترتيب بالمحافظة (`order`) أو اسم النوع.
+     * ⚠️ استعلام فرعي لا join: الـjoin يجعل `name` و`created_at` ملتبسين في فلاتر الشاشة القائمة.
+     *
+     * @return array<int, \Illuminate\Contracts\Database\Query\Expression>
+     */
+    public static function related(string $table, string $column, string $baseTable, string $foreignKey): array
+    {
+        $g = \Illuminate\Support\Facades\DB::getQueryGrammar();
+
+        return [\Illuminate\Support\Facades\DB::raw(sprintf(
+            '(select %s from %s where %s = %s)',
+            $g->wrap("{$table}.{$column}"), $g->wrap($table), $g->wrap("{$table}.id"), $g->wrap("{$baseTable}.{$foreignKey}"),
+        ))];
+    }
+
+    /**
      * @param  array<string, string|array<int, string>>  $map  مفتاح الرابط ← عمود SQL أو عدة أعمدة
      * @param  Closure(Builder): Builder|null  $default  الترتيب حين لا يختار المستخدم عموداً صالحاً
      * @param  string|null  $tieBreaker  عمود مُرجِّح يثبّت ترتيب الصفوف المتساوية بين الصفحات

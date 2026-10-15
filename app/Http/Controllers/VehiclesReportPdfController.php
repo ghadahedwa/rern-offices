@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Governorate;
 use App\Models\Vehicle;
 use Illuminate\Http\Request;
 use Mpdf\Config\ConfigVariables;
@@ -36,10 +35,10 @@ class VehiclesReportPdfController extends Controller
                 'governorate', 'type', 'workSystem', 'workingHour', 'brand',
                 'locations', 'brokenDevices.deviceType', 'statistics',
             ])
-            ->orderBy(Governorate::select('order')->whereColumn('governorates.id', 'vehicles.governorate_id'))
-            ->orderBy('governorate_id')
-            ->orderBy('name')
-            ->get();
+            ->get()
+            // ترتيب الشاشة نفسه: المعرّفات أُخذت من استعلامها مرتّبةً (بما اختاره المستخدم أو الافتراضي)
+            ->sortBy(fn ($v) => array_search($v->id, $ids, true))
+            ->values();
 
         $logoPath   = public_path('images/logo3.png');
         $logoBase64 = file_exists($logoPath)

@@ -23,7 +23,7 @@ use Maatwebsite\Excel\Facades\Excel;
 #[Title('تقرير بحث السيارات')]
 class MultiVehicle extends Component
 {
-    use WithPagination;
+    use WithPagination, \App\Livewire\Concerns\WithTableSorting;
 
     /** أقصى عدد سيارات لتقرير الـ PDF الشامل (تقرير مقارنة) — الأعداد الأكبر تُصدَّر Excel */
     private const MAX_PDF_VEHICLES = 200;
@@ -287,6 +287,32 @@ class MultiVehicle extends Component
             ->when($f['mobilityBag'] ?? '', fn ($q) => $q->where('mobility_bag', $f['mobilityBag']))
             ->when($this->multiActive('generatorStatus'), fn ($q) => $q->whereIn('generator_status', $f['generatorStatus']))
             ->when($this->multiActive('cameras'), fn ($q) => $q->whereIn('surveillance_cameras', $f['cameras']))
+            ->tap(fn ($q) => \App\Support\TableSort::apply(
+                $q, $this->sortBy, $this->sortDir, $this->sortableColumns(),
+                fn ($q) => $this->defaultOrder($q),
+                'vehicles.id', 'asc',
+            ));
+    }
+
+    /**
+     * أعمدة الترتيب (قائمة بيضاء). الشاشة والـExcel من `buildQuery()`، والـPDFان يحفظان ترتيب
+     * المعرّفات المرسَلة إليهما (مأخوذة من الاستعلام نفسه) — فالترتيب واحد في الملفات الثلاثة.
+     */
+    protected function sortableColumns(): array
+    {
+        return [
+            'name'        => 'vehicles.name',
+            'governorate' => \App\Support\TableSort::related('governorates', 'order', 'vehicles', 'governorate_id'),
+            'type'        => \App\Support\TableSort::related('vehicle_types', 'name', 'vehicles', 'type_id'),
+            'status'      => 'vehicles.status',
+            // تاريخ انتهاء الترخيص ليس هنا: ترتيبه التنازلي يضع «بلا تاريخ» أولاً على MySQL، وتقرير التراخيص يرتّب به
+        ];
+    }
+
+    /** المحافظة بترتيبها المعتمد ثم الاسم */
+    protected function defaultOrder(\Illuminate\Database\Eloquent\Builder $query): \Illuminate\Database\Eloquent\Builder
+    {
+        return $query
             ->orderBy(Governorate::select('order')->whereColumn('governorates.id', 'vehicles.governorate_id'))
             ->orderBy('governorate_id')
             ->orderBy('name');

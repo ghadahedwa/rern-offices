@@ -23,36 +23,12 @@ class VehicleCoveragePdfController extends Controller
         ini_set('memory_limit', '512M');
         @set_time_limit(120);
 
-        $f = session('vehicle_coverage_filters', []);
-        $govIds = $f['governorateIds'] ?? [];
-
         $isSuperAdmin  = $user->hasRole('super-admin');
         $allowedGovIds = $isSuperAdmin ? null : $user->governorates()->pluck('governorates.id')->all();
 
-        $vehicles = Vehicle::query()
-            ->with(['governorate:id,name', 'locations:id,vehicle_id,day,address'])
-            ->when($allowedGovIds !== null, fn ($q) => $q->whereIn('governorate_id', $allowedGovIds))
-            ->when($govIds, fn ($q) => $q->whereIn('governorate_id', $govIds))
-            ->orderBy(Governorate::select('order')->whereColumn('governorates.id', 'vehicles.governorate_id'))
-            ->orderBy('governorate_id')
-            ->orderBy('name')
-            ->get();
-
+        // صفوف الشاشة نفسها (الفلاتر والترتيب) — لا نسخة ثانية تختلف عنها
         $days = VehicleLocation::DAYS;
-
-        $rows = $vehicles->map(function (Vehicle $v) use ($days) {
-            $vDays = [];
-            foreach (array_keys($days) as $day) {
-                $addresses = $v->locations->where('day', $day)->pluck('address')->filter()->implode(' | ');
-                $vDays[$day] = $addresses !== '' ? $addresses : null;
-            }
-
-            return [
-                'name'             => $v->name,
-                'governorate_name' => $v->governorate->name ?? '—',
-                'days'             => $vDays,
-            ];
-        });
+        $rows = \App\Livewire\Reports\VehicleCoverage::rowsFor($allowedGovIds, session('vehicle_coverage_filters', []));
 
         $logoPath   = public_path('images/logo3.png');
         $logoBase64 = file_exists($logoPath)

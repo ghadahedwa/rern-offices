@@ -16,6 +16,9 @@ use Maatwebsite\Excel\Facades\Excel;
 #[Title('تقرير التغطية الجغرافية للسيارات')]
 class VehicleCoverage extends Component
 {
+    // دورة الضغط والرابط من الـtrait، والترتيب نفسه في rowsFor()
+    use \App\Livewire\Concerns\WithTableSorting;
+
     // ── الفلاتر ──
     public array $governorateIds = [];
 
@@ -64,16 +67,51 @@ class VehicleCoverage extends Component
      */
     public function buildRows(?array $allowedGovIds)
     {
-        $govIds = $this->applied['governorateIds'] ?? [];
+        return self::rowsFor($allowedGovIds, $this->applied + ['sort' => $this->sortBy, 'dir' => $this->sortDir]);
+    }
 
-        $vehicles = Vehicle::query()
+    /** أعمدة الترتيب (قائمة بيضاء) — الافتراضي المحافظة بترتيبها ثم الاسم */
+    public static function sortMap(): array
+    {
+        return [
+            'governorate' => \App\Support\TableSort::related('governorates', 'order', 'vehicles', 'governorate_id'),
+            'name'        => 'vehicles.name',
+        ];
+    }
+
+    protected function sortableColumns(): array
+    {
+        return self::sortMap();
+    }
+
+    /** لا يُستدعى — الترتيب الافتراضي في rowsFor() */
+    protected function defaultOrder(\Illuminate\Database\Eloquent\Builder $query): \Illuminate\Database\Eloquent\Builder
+    {
+        return $query;
+    }
+
+    /**
+     * صفوف التقرير — **المصدر الواحد للشاشة والـExcel والـPDF** (الـPDF كان يكرّر الاستعلام بنفسه).
+     *
+     * @param ?array $allowedGovIds null = بلا حدّ · [] = لا شيء
+     */
+    public static function rowsFor(?array $allowedGovIds, array $filters)
+    {
+        $govIds = $filters['governorateIds'] ?? [];
+
+        $query = Vehicle::query()
             ->with(['governorate:id,name', 'locations:id,vehicle_id,day,address'])
             ->when($allowedGovIds !== null, fn ($q) => $q->whereIn('governorate_id', $allowedGovIds))
-            ->when($govIds, fn ($q) => $q->whereIn('governorate_id', $govIds))
-            ->orderBy(Governorate::select('order')->whereColumn('governorates.id', 'vehicles.governorate_id'))
-            ->orderBy('governorate_id')
-            ->orderBy('name')
-            ->get();
+            ->when($govIds, fn ($q) => $q->whereIn('governorate_id', $govIds));
+
+        $vehicles = \App\Support\TableSort::apply(
+            $query, (string) ($filters['sort'] ?? ''), (string) ($filters['dir'] ?? 'asc'), self::sortMap(),
+            fn ($q) => $q
+                ->orderBy(Governorate::select('order')->whereColumn('governorates.id', 'vehicles.governorate_id'))
+                ->orderBy('governorate_id')
+                ->orderBy('name'),
+            'vehicles.id', 'asc',
+        )->get();
 
         return $vehicles->map(function (Vehicle $v) {
             $days = [];
@@ -114,7 +152,7 @@ class VehicleCoverage extends Component
             return;
         }
 
-        session(['vehicle_coverage_filters' => $this->applied]);
+        session(['vehicle_coverage_filters' => $this->applied + ['sort' => $this->sortBy, 'dir' => $this->sortDir]]);
         $this->js("window.open('" . route('reports.vehicle-coverage.pdf') . "', '_blank')");
     }
 

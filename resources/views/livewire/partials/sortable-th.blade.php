@@ -4,11 +4,14 @@
     (دورة ثلاثية: تصاعدي ← تنازلي ← الترتيب الافتراضي) ومع
     App\Livewire\FeedbackResults\Concerns\WithFeedbackSorting (دورة ثنائية)،
     فكلاهما يوفّر $sortBy و$sortDir ودالة sort().
+
+    اختياري: $activeClass / $hoverClass — لرأسٍ خلفيته ذهبية (الذهبي الافتراضي يختفي عليه).
+    تُمرَّر فئات Tailwind كاملة حرفية من القالب المستدعي (البناء لا يرى فئةً مركّبة).
 --}}
 <th class="px-3 py-3 font-medium {{ $thClass ?? '' }}">
     <button type="button" wire:click="sort('{{ $column }}')"
-            class="inline-flex items-center gap-1 transition hover:text-[#c9a847]
-                {{ $sortBy === $column ? 'text-[#c9a847]' : '' }}">
+            class="inline-flex items-center gap-1 transition {{ $hoverClass ?? 'hover:text-[#c9a847]' }}
+                {{ $sortBy === $column ? ($activeClass ?? 'text-[#c9a847]') : '' }}">
         <span>{{ $label }}</span>
         @if($sortBy === $column)
             <svg class="w-3 h-3 shrink-0 transition-transform {{ $sortDir === 'asc' ? 'rotate-180' : '' }}"

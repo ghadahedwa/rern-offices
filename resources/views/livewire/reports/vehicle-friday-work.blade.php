@@ -160,10 +160,10 @@
                     <thead class="bg-zinc-50 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 text-xs">
                         <tr>
                             <th class="w-[6%] px-3 py-2.5 font-medium text-center max-sm:hidden">#</th>
-                            <th class="w-[24%] px-3 py-2.5 font-medium max-sm:hidden">{{ __('home.governorate_name') }}</th>
-                            <th class="w-[34%] px-3 py-2.5 font-medium">{{ __('home.vehicle_name') }}</th>
-                            <th class="w-[18%] px-3 py-2.5 font-medium max-sm:hidden">{{ __('home.vehicle_type') }}</th>
-                            <th class="w-[18%] px-3 py-2.5 font-medium text-center">{{ __('home.works_on_friday') }}</th>
+                            @include('livewire.partials.sortable-th', ['column' => 'governorate', 'label' => __('home.governorate_name'), 'thClass' => 'w-[24%] max-sm:hidden'])
+                            @include('livewire.partials.sortable-th', ['column' => 'name', 'label' => __('home.vehicle_name'), 'thClass' => 'w-[34%]'])
+                            @include('livewire.partials.sortable-th', ['column' => 'type', 'label' => __('home.vehicle_type'), 'thClass' => 'w-[18%] max-sm:hidden'])
+                            @include('livewire.partials.sortable-th', ['column' => 'friday', 'label' => __('home.works_on_friday'), 'thClass' => 'w-[18%] text-center'])
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-zinc-100 dark:divide-zinc-700">

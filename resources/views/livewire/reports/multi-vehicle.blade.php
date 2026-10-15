@@ -222,10 +222,10 @@
                 <thead class="bg-zinc-50 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 text-xs uppercase">
                     <tr>
                         <th class="px-4 py-3 font-medium">#</th>
-                        <th class="px-4 py-3 font-medium">{{ __('home.vehicle_name') }}</th>
-                        <th class="px-4 py-3 font-medium">{{ __('home.governorate_name') }}</th>
-                        <th class="px-4 py-3 font-medium">{{ __('home.vehicle_type') }}</th>
-                        <th class="px-4 py-3 font-medium">{{ __('home.vehicle_status') }}</th>
+                        @include('livewire.partials.sortable-th', ['column' => 'name', 'label' => __('home.vehicle_name')])
+                        @include('livewire.partials.sortable-th', ['column' => 'governorate', 'label' => __('home.governorate_name')])
+                        @include('livewire.partials.sortable-th', ['column' => 'type', 'label' => __('home.vehicle_type')])
+                        @include('livewire.partials.sortable-th', ['column' => 'status', 'label' => __('home.vehicle_status')])
                         <th class="px-4 py-3 font-medium">{{ __('home.license_expiry_date') }}</th>
                     </tr>
                 </thead>

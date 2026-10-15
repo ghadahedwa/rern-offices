@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Vehicle;
 use Illuminate\Http\Request;
 use Mpdf\Config\ConfigVariables;
 use Mpdf\Config\FontVariables;
@@ -21,25 +20,14 @@ class VehicleLicensesPdfController extends Controller
         ini_set('memory_limit', '512M');
         @set_time_limit(120);
 
-        $f          = session('vehicle_licenses_filters', []);
-        $govIds     = $f['governorateIds'] ?? [];
-        $withinDays = $f['withinDays'] ?? null;
-        $soonDays   = $withinDays ?? 30;
+        $f        = session('vehicle_licenses_filters', []);
+        $soonDays = is_numeric($f['withinDays'] ?? null) ? (int) $f['withinDays'] : 30;
 
         $isSuperAdmin  = $user->hasRole('super-admin');
         $allowedGovIds = $isSuperAdmin ? null : $user->governorates()->pluck('governorates.id')->all();
 
-        $rows = Vehicle::query()
-            ->with('governorate:id,name')
-            ->when($allowedGovIds !== null, fn ($q) => $q->whereIn('governorate_id', $allowedGovIds))
-            ->when($govIds, fn ($q) => $q->whereIn('governorate_id', $govIds))
-            ->when($withinDays !== null, fn ($q) => $q
-                ->whereNotNull('license_expiry_date')
-                ->whereDate('license_expiry_date', '<=', now()->addDays($withinDays)->toDateString())
-            )
-            ->orderByRaw('license_expiry_date IS NULL, license_expiry_date ASC')
-            ->orderBy('name')
-            ->get(['id', 'governorate_id', 'name', 'license_plate', 'license_expiry_date']);
+        // استعلام الشاشة نفسه (الفلاتر والترتيب) — لا نسخة ثانية تختلف عنه
+        $rows = \App\Livewire\Reports\VehicleLicenses::rowsFor($allowedGovIds, $f);
 
         $logoPath   = public_path('images/logo3.png');
         $logoBase64 = file_exists($logoPath)
