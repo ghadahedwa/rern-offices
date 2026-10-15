@@ -125,13 +125,18 @@ class Dashboard extends Component
         $vehicleStatsSummary = collect();
         if ($canViewVehicleStats) {
             $vehicleStatsSummary = collect($vehicleStatTypeLabels)->map(function ($langKey, $typeId) use ($isSuperAdmin, $govIds, $currentYear) {
-                $row = VehicleStat::where('stat_type_id', $typeId)
+                // آخر سنتين بهما أرقام — الثانية سطرٌ صغير للمقارنة: أول رقمٍ يُسجَّل في سنةٍ جديدة
+                // كان يحلّ وحده محلّ مجموع السنة السابقة كله فيُقرأ هبوطاً
+                [$row, $prev] = VehicleStat::where('stat_type_id', $typeId)
                     ->when(! $isSuperAdmin, fn ($q) => $q->whereHas('vehicle', fn ($v) => $v->whereIn('governorate_id', $govIds)))
                     ->where('value', '>', 0)
                     ->selectRaw('year, sum(value) as total')
                     ->groupBy('year')
                     ->orderByDesc('year')
-                    ->first();
+                    ->limit(2)
+                    ->get()
+                    ->pad(2, null)
+                    ->all();
 
                 return [
                     'label'       => __('home.' . $langKey),
@@ -139,6 +144,8 @@ class Dashboard extends Component
                     'latestTotal' => $row->total ?? 0,
                     // السنة الجارية لم تكتمل — رقمها لا يُقارَن بسنة كاملة
                     'partial'     => $row && (int) $row->year >= $currentYear,
+                    'prevYear'    => $prev->year ?? null,
+                    'prevTotal'   => $prev->total ?? 0,
                 ];
             });
         }

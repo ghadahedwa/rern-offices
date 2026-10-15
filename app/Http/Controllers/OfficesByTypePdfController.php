@@ -30,7 +30,7 @@ class OfficesByTypePdfController extends Controller
         $allowedGovIds = $isSuperAdmin ? null : $user->governorates()->pluck('governorates.id')->all();
 
         $governorates = Governorate::query()
-            ->when($allowedGovIds, fn ($q) => $q->whereIn('id', $allowedGovIds))
+            ->when($allowedGovIds !== null, fn ($q) => $q->whereIn('id', $allowedGovIds))
             ->when($f['governorateIds'] ?? [], fn ($q) => $q->whereIn('id', $f['governorateIds']))
             ->orderBy('order')->orderBy('id')
             ->get(['id', 'name']);
@@ -58,7 +58,7 @@ class OfficesByTypePdfController extends Controller
         $typeCounts = [];
         if ($types->isNotEmpty()) {
             $typeRows = Office::query()
-                ->when($allowedGovIds, fn ($q) => $q->whereIn('governorate_id', $allowedGovIds))
+                ->when($allowedGovIds !== null, fn ($q) => $q->whereIn('governorate_id', $allowedGovIds))
                 ->when($govIds, fn ($q) => $q->whereIn('governorate_id', $govIds))
                 ->when($selectedLocationIds, fn ($q) => $q->whereIn('location_description_id', $selectedLocationIds))
                 ->selectRaw('governorate_id, type_id, COUNT(*) as cnt')
@@ -71,7 +71,7 @@ class OfficesByTypePdfController extends Controller
         $locationCounts = [];
         if ($locations->isNotEmpty()) {
             $locRows = Office::query()
-                ->when($allowedGovIds, fn ($q) => $q->whereIn('governorate_id', $allowedGovIds))
+                ->when($allowedGovIds !== null, fn ($q) => $q->whereIn('governorate_id', $allowedGovIds))
                 ->when($govIds, fn ($q) => $q->whereIn('governorate_id', $govIds))
                 ->when($selectedTypeIds, fn ($q) => $q->whereIn('type_id', $selectedTypeIds))
                 ->selectRaw('governorate_id, location_description_id, COUNT(*) as cnt')

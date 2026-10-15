@@ -42,7 +42,7 @@ class VehicleDeviceCountMatrix
             : collect();
 
         $governorates = Governorate::query()
-            ->when($allowedGovIds, fn ($q) => $q->whereIn('id', $allowedGovIds))
+            ->when($allowedGovIds !== null, fn ($q) => $q->whereIn('id', $allowedGovIds))
             ->when($govIds, fn ($q) => $q->whereIn('id', $govIds))
             ->orderBy('order')->orderBy('id')
             ->get(['id', 'name']);
@@ -56,7 +56,7 @@ class VehicleDeviceCountMatrix
             }
 
             $deviceRows = Vehicle::query()
-                ->when($allowedGovIds, fn ($q) => $q->whereIn('governorate_id', $allowedGovIds))
+                ->when($allowedGovIds !== null, fn ($q) => $q->whereIn('governorate_id', $allowedGovIds))
                 ->when($govIds, fn ($q) => $q->whereIn('governorate_id', $govIds))
                 ->selectRaw(implode(', ', $selects))
                 ->groupBy('governorate_id')
@@ -74,7 +74,7 @@ class VehicleDeviceCountMatrix
         if ($brokenTypes->isNotEmpty()) {
             $brokenRows = VehicleBrokenDevice::query()
                 ->join('vehicles', 'vehicles.id', '=', 'vehicle_broken_devices.vehicle_id')
-                ->when($allowedGovIds, fn ($q) => $q->whereIn('vehicles.governorate_id', $allowedGovIds))
+                ->when($allowedGovIds !== null, fn ($q) => $q->whereIn('vehicles.governorate_id', $allowedGovIds))
                 ->when($govIds, fn ($q) => $q->whereIn('vehicles.governorate_id', $govIds))
                 ->when($brokenSel, fn ($q) => $q->whereIn('vehicle_broken_devices.device_type_id', $brokenSel))
                 ->selectRaw('vehicles.governorate_id as gid, vehicle_broken_devices.device_type_id as tid, COALESCE(SUM(vehicle_broken_devices.count),0) as cnt')

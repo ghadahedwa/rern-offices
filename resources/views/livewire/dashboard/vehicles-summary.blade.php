@@ -38,7 +38,7 @@
                 </div>
             </div>
 
-            {{-- إحصائيات التوثيق (آخر سنة فقط، كل نوع في عمود مستقل) --}}
+            {{-- إحصائيات التوثيق: آخر سنة رقماً كبيراً + السنة التي قبلها سطراً صغيراً تحته (لا يُغيّر حجم الكارت) --}}
             @foreach($vehicleStatsSummary as $stat)
             <div class="flex items-start gap-2">
                 <div class="w-8 h-8 rounded-lg bg-[#c9a847]/10 flex items-center justify-center shrink-0 mt-0.5">
@@ -51,6 +51,9 @@
                     <p class="text-xl font-bold text-zinc-800 dark:text-zinc-100">
                         {{ $stat['latestYear'] ? number_format($stat['latestTotal']) : '—' }}
                     </p>
+                    @if($stat['prevYear'])
+                    <p class="text-xs text-zinc-400 mt-0.5">{{ $stat['prevYear'] }}: <span class="font-medium text-zinc-500 dark:text-zinc-400">{{ number_format($stat['prevTotal']) }}</span></p>
+                    @endif
                 </div>
             </div>
             @endforeach

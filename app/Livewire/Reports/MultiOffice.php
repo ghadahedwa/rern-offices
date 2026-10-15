@@ -350,7 +350,7 @@ class MultiOffice extends Component
 
         return Office::query()
             ->with(['governorate', 'officeType', 'connectionType', 'structuralCondition'])
-            ->when($allowedGovIds, fn ($q) => $q->whereIn('governorate_id', $allowedGovIds))
+            ->when($allowedGovIds !== null, fn ($q) => $q->whereIn('governorate_id', $allowedGovIds))
             // ── أساسية ── (الفلاتر المتعددة: "تحديد الكل" = بلا تقييد صفوف، فتظهر القيم الفاضية بشرطة)
             ->when($this->multiActive('governorateIds'), fn ($q) => $q->whereIn('governorate_id', $f['governorateIds']))
             ->when($this->multiActive('officeIds'), fn ($q) => $q->whereIn('id', $f['officeIds']))
@@ -406,7 +406,7 @@ class MultiOffice extends Component
     protected function scopedOffices(?array $allowedGovIds)
     {
         return Office::query()
-            ->when($allowedGovIds, fn ($q) => $q->whereIn('governorate_id', $allowedGovIds))
+            ->when($allowedGovIds !== null, fn ($q) => $q->whereIn('governorate_id', $allowedGovIds))
             ->when($this->governorateIds, fn ($q) => $q->whereIn('governorate_id', $this->governorateIds));
     }
 

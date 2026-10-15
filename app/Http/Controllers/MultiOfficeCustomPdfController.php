@@ -37,7 +37,7 @@ class MultiOfficeCustomPdfController extends Controller
         $allowedGovIds = $isSuperAdmin ? null : $user->governorates()->pluck('governorates.id')->all();
 
         $offices = Office::whereIn('id', $ids)
-            ->when($allowedGovIds, fn ($q) => $q->whereIn('governorate_id', $allowedGovIds))
+            ->when($allowedGovIds !== null, fn ($q) => $q->whereIn('governorate_id', $allowedGovIds))
             ->with([
                 'governorate', 'officeType', 'locationDescription', 'workSystem', 'workingHour',
                 'connectionType', 'contractualStatus', 'structuralCondition',

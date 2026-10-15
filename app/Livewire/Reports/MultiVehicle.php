@@ -270,7 +270,7 @@ class MultiVehicle extends Component
 
         return Vehicle::query()
             ->with(['governorate', 'type', 'workSystem', 'workingHour', 'brand'])
-            ->when($allowedGovIds, fn ($q) => $q->whereIn('governorate_id', $allowedGovIds))
+            ->when($allowedGovIds !== null, fn ($q) => $q->whereIn('governorate_id', $allowedGovIds))
             ->when($this->multiActive('governorateIds'), fn ($q) => $q->whereIn('governorate_id', $f['governorateIds']))
             ->when($this->multiActive('vehicleIds'), fn ($q) => $q->whereIn('id', $f['vehicleIds']))
             ->when($this->multiActive('typeIds'), fn ($q) => $q->whereIn('type_id', $f['typeIds']))
@@ -296,7 +296,7 @@ class MultiVehicle extends Component
     protected function scopedVehicles(?array $allowedGovIds)
     {
         return Vehicle::query()
-            ->when($allowedGovIds, fn ($q) => $q->whereIn('governorate_id', $allowedGovIds))
+            ->when($allowedGovIds !== null, fn ($q) => $q->whereIn('governorate_id', $allowedGovIds))
             ->when($this->governorateIds, fn ($q) => $q->whereIn('governorate_id', $this->governorateIds));
     }
 

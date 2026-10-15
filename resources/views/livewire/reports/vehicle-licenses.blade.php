@@ -1,5 +1,7 @@
 <div class="max-w-5xl mx-auto p-6 space-y-6">
 
+    @include('livewire.partials.no-governorates-notice')
+
     @php
         $inp = 'w-full border border-zinc-300 dark:border-zinc-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-[#c9a847]';
         $lbl = 'block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1.5';

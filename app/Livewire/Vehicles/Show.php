@@ -4,6 +4,7 @@ namespace App\Livewire\Vehicles;
 
 use App\Livewire\Vehicles\StatTab\Documentation;
 use App\Models\Vehicle;
+use App\Support\GovernorateScope;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 use Livewire\Component;
@@ -23,6 +24,9 @@ class Show extends Component
             $user?->hasRole('super-admin') || $user?->can('vehicles.view') || $user?->can('vehicles.edit'),
             403
         );
+
+        // السيارة في محافظات المستخدم — قبل تسجيل العرض، فلا يُسجَّل عرضٌ مرفوض
+        abort_unless(GovernorateScope::allows($user, $vehicle->governorate_id), 403);
 
         $this->canEdit = $user?->hasRole('super-admin') || $user?->can('vehicles.edit');
 

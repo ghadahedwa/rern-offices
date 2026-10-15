@@ -3,6 +3,7 @@
 namespace App\Livewire\Offices;
 
 use App\Models\Office;
+use App\Support\GovernorateScope;
 use App\Support\OfficeVisitReports;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
@@ -23,6 +24,9 @@ class Show extends Component
             $user?->hasRole('super-admin') || $user?->can('offices.view') || $user?->can('offices.edit'),
             403
         );
+
+        // المقر في محافظات المستخدم — قبل تسجيل العرض، فلا يُسجَّل عرضٌ مرفوض
+        abort_unless(GovernorateScope::allows($user, $office->governorate_id), 403);
 
         $this->canEdit = $user?->hasRole('super-admin') || $user?->can('offices.edit');
 

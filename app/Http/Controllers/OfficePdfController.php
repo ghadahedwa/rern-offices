@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Office;
 use App\Models\OfficeStat;
+use App\Support\GovernorateScope;
 use Illuminate\Http\Request;
 use Mpdf\Mpdf;
 use Mpdf\Config\ConfigVariables;
@@ -18,6 +19,7 @@ class OfficePdfController extends Controller
             $user?->hasRole('super-admin') || $user?->can('offices.view') || $user?->can('offices.export'),
             403
         );
+        abort_unless(GovernorateScope::allows($user, $office->governorate_id), 403);
 
         $office->load([
             'governorate',

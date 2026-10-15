@@ -1,5 +1,7 @@
 <div class="max-w-4xl mx-auto p-6 space-y-6">
 
+    @include('livewire.partials.no-governorates-notice')
+
     {{-- Header --}}
     <div class="flex items-center gap-4">
         <div class="w-11 h-11 rounded-xl bg-[#c9a847]/10 flex items-center justify-center shrink-0">

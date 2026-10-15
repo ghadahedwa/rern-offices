@@ -66,13 +66,13 @@ class VehicleStatus extends Component
         $govIds = $this->applied['governorateIds'] ?? [];
 
         $governorates = Governorate::query()
-            ->when($allowedGovIds, fn ($q) => $q->whereIn('id', $allowedGovIds))
+            ->when($allowedGovIds !== null, fn ($q) => $q->whereIn('id', $allowedGovIds))
             ->when($govIds, fn ($q) => $q->whereIn('id', $govIds))
             ->orderBy('order')->orderBy('id')
             ->get(['id', 'name']);
 
         $rows = Vehicle::query()
-            ->when($allowedGovIds, fn ($q) => $q->whereIn('governorate_id', $allowedGovIds))
+            ->when($allowedGovIds !== null, fn ($q) => $q->whereIn('governorate_id', $allowedGovIds))
             ->when($govIds, fn ($q) => $q->whereIn('governorate_id', $govIds))
             ->selectRaw('governorate_id, status, COUNT(*) as cnt')
             ->groupBy('governorate_id', 'status')

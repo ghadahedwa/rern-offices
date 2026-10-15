@@ -68,7 +68,7 @@ class VehicleCoverage extends Component
 
         $vehicles = Vehicle::query()
             ->with(['governorate:id,name', 'locations:id,vehicle_id,day,address'])
-            ->when($allowedGovIds, fn ($q) => $q->whereIn('governorate_id', $allowedGovIds))
+            ->when($allowedGovIds !== null, fn ($q) => $q->whereIn('governorate_id', $allowedGovIds))
             ->when($govIds, fn ($q) => $q->whereIn('governorate_id', $govIds))
             ->orderBy(Governorate::select('order')->whereColumn('governorates.id', 'vehicles.governorate_id'))
             ->orderBy('governorate_id')

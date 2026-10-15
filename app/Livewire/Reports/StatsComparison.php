@@ -158,7 +158,7 @@ class StatsComparison extends Component
         }
 
         $governorates = Governorate::query()
-            ->when($allowedGovIds, fn ($q) => $q->whereIn('id', $allowedGovIds))
+            ->when($allowedGovIds !== null, fn ($q) => $q->whereIn('id', $allowedGovIds))
             ->when($govIds, fn ($q) => $q->whereIn('id', $govIds))
             ->orderBy('order')->orderBy('id')
             ->get(['id', 'name']);
@@ -171,7 +171,7 @@ class StatsComparison extends Component
             ->join('offices', 'office_statistics.office_id', '=', 'offices.id')
             ->whereIn('stat_types.group_key', $groupKeys)
             ->whereIn('office_statistics.year', $years)
-            ->when($allowedGovIds, fn ($q) => $q->whereIn('offices.governorate_id', $allowedGovIds))
+            ->when($allowedGovIds !== null, fn ($q) => $q->whereIn('offices.governorate_id', $allowedGovIds))
             ->when($govIds, fn ($q) => $q->whereIn('offices.governorate_id', $govIds))
             ->selectRaw('offices.governorate_id as gid, stat_types.group_key as gk, stat_types.id as stid, office_statistics.year as yr, COALESCE(SUM(office_statistics.value),0) as total')
             ->groupBy('offices.governorate_id', 'stat_types.group_key', 'stat_types.id', 'office_statistics.year')

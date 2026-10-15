@@ -1,5 +1,7 @@
 <div class="p-6 space-y-6">
 
+    @include('livewire.partials.no-governorates-notice')
+
     {{-- Header --}}
     <div class="flex items-center justify-between">
         <h1 class="text-2xl font-semibold text-zinc-800 dark:text-zinc-100">{{ __('home.vehicles_title') }}</h1>

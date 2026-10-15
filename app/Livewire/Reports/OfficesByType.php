@@ -85,7 +85,7 @@ class OfficesByType extends Component
         $govIds = $f['governorateIds'] ?? [];
 
         $governorates = Governorate::query()
-            ->when($allowedGovIds, fn ($q) => $q->whereIn('id', $allowedGovIds))
+            ->when($allowedGovIds !== null, fn ($q) => $q->whereIn('id', $allowedGovIds))
             ->when($govIds, fn ($q) => $q->whereIn('id', $govIds))
             ->orderBy('order')->orderBy('id')
             ->get(['id', 'name']);
@@ -116,7 +116,7 @@ class OfficesByType extends Component
         $typeCounts = [];
         if ($types->isNotEmpty()) {
             $typeRows = Office::query()
-                ->when($allowedGovIds, fn ($q) => $q->whereIn('governorate_id', $allowedGovIds))
+                ->when($allowedGovIds !== null, fn ($q) => $q->whereIn('governorate_id', $allowedGovIds))
                 ->when($govIds, fn ($q) => $q->whereIn('governorate_id', $govIds))
                 ->when($selectedLocationIds, fn ($q) => $q->whereIn('location_description_id', $selectedLocationIds))
                 ->selectRaw('governorate_id, type_id, COUNT(*) as cnt')
@@ -131,7 +131,7 @@ class OfficesByType extends Component
         $locationCounts = [];
         if ($locations->isNotEmpty()) {
             $locRows = Office::query()
-                ->when($allowedGovIds, fn ($q) => $q->whereIn('governorate_id', $allowedGovIds))
+                ->when($allowedGovIds !== null, fn ($q) => $q->whereIn('governorate_id', $allowedGovIds))
                 ->when($govIds, fn ($q) => $q->whereIn('governorate_id', $govIds))
                 ->when($selectedTypeIds, fn ($q) => $q->whereIn('type_id', $selectedTypeIds))
                 ->selectRaw('governorate_id, location_description_id, COUNT(*) as cnt')

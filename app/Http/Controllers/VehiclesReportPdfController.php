@@ -31,7 +31,7 @@ class VehiclesReportPdfController extends Controller
         $allowedGovIds = $isSuperAdmin ? null : $user->governorates()->pluck('governorates.id')->all();
 
         $vehicles = Vehicle::whereIn('id', $ids)
-            ->when($allowedGovIds, fn ($q) => $q->whereIn('governorate_id', $allowedGovIds))
+            ->when($allowedGovIds !== null, fn ($q) => $q->whereIn('governorate_id', $allowedGovIds))
             ->with([
                 'governorate', 'type', 'workSystem', 'workingHour', 'brand',
                 'locations', 'brokenDevices.deviceType', 'statistics',

@@ -72,5 +72,14 @@ it('shows trips on the dashboard and flags the current year', function () {
     expect($summary->keys()->all())->toBe([$this->tripsId, 1, 2, 3])
         ->and($summary[1])->toMatchArray(['latestYear' => 2026, 'partial' => true])
         ->and((float) $summary[1]['latestTotal'])->toBe(1000.0)
-        ->and($summary[$this->tripsId])->toMatchArray(['latestYear' => 2025, 'partial' => false]);
+        ->and($summary[1]['prevYear'])->toBe(2025)
+        ->and((float) $summary[1]['prevTotal'])->toBe(4000.0)
+        ->and($summary[$this->tripsId])->toMatchArray(['latestYear' => 2025, 'partial' => false, 'prevYear' => null]);
+});
+
+it('prints the previous year under the latest one on the dashboard card', function () {
+    $admin = tap(User::factory()->create())->assignRole(Role::findOrCreate('super-admin', 'web'));
+
+    Livewire::actingAs($admin)->test(Dashboard::class)
+        ->assertSeeHtml('2025: <span class="font-medium text-zinc-500 dark:text-zinc-400">4,000</span>');
 });

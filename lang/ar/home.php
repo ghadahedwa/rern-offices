@@ -933,7 +933,9 @@ return [
 
     // تقرير الحالة التشغيلية للسيارات — reports/vehicle-status
     'report_vehicle_status_title'   => 'تقرير الحالة التشغيلية للسيارات',
-    'report_vehicle_statistics_title' => 'إحصائيات السيارات',
+    'no_governorates_title'         => 'حسابك غير مربوط بأي محافظة',
+    'no_governorates_body'          => 'لذلك لا تظهر لك مقرات ولا سيارات ولا بيانات في التقارير. تواصل مع مدير النظام لتحديد محافظاتك.',
+    'report_vehicle_statistics_title' =>'إحصائيات السيارات',
     'report_vehicle_statistics_hint'  => 'المتوسطات اليومية والانتقالات ومعاملات التوثيق لكل سيارة في سنة، مع إجمالي لكل محافظة',
     'vstat_report_year'             => 'السنة',
     'vstat_col_avg_tx'              => 'متوسط المعاملات اليومي',

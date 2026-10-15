@@ -45,7 +45,7 @@ class DeviceCountMatrix
             : collect();
 
         $governorates = Governorate::query()
-            ->when($allowedGovIds, fn ($q) => $q->whereIn('id', $allowedGovIds))
+            ->when($allowedGovIds !== null, fn ($q) => $q->whereIn('id', $allowedGovIds))
             ->when($govIds, fn ($q) => $q->whereIn('id', $govIds))
             ->orderBy('order')->orderBy('id')
             ->get(['id', 'name']);
@@ -59,7 +59,7 @@ class DeviceCountMatrix
             }
 
             $deviceRows = Office::query()
-                ->when($allowedGovIds, fn ($q) => $q->whereIn('governorate_id', $allowedGovIds))
+                ->when($allowedGovIds !== null, fn ($q) => $q->whereIn('governorate_id', $allowedGovIds))
                 ->when($govIds, fn ($q) => $q->whereIn('governorate_id', $govIds))
                 ->selectRaw(implode(', ', $selects))
                 ->groupBy('governorate_id')
@@ -77,7 +77,7 @@ class DeviceCountMatrix
         if ($brokenTypes->isNotEmpty()) {
             $brokenRows = OfficeBrokenDevice::query()
                 ->join('offices', 'offices.id', '=', 'office_broken_devices.office_id')
-                ->when($allowedGovIds, fn ($q) => $q->whereIn('offices.governorate_id', $allowedGovIds))
+                ->when($allowedGovIds !== null, fn ($q) => $q->whereIn('offices.governorate_id', $allowedGovIds))
                 ->when($govIds, fn ($q) => $q->whereIn('offices.governorate_id', $govIds))
                 ->when($brokenSel, fn ($q) => $q->whereIn('office_broken_devices.device_type_id', $brokenSel))
                 ->selectRaw('offices.governorate_id as gid, office_broken_devices.device_type_id as tid, COALESCE(SUM(office_broken_devices.count),0) as cnt')

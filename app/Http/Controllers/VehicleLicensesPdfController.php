@@ -31,7 +31,7 @@ class VehicleLicensesPdfController extends Controller
 
         $rows = Vehicle::query()
             ->with('governorate:id,name')
-            ->when($allowedGovIds, fn ($q) => $q->whereIn('governorate_id', $allowedGovIds))
+            ->when($allowedGovIds !== null, fn ($q) => $q->whereIn('governorate_id', $allowedGovIds))
             ->when($govIds, fn ($q) => $q->whereIn('governorate_id', $govIds))
             ->when($withinDays !== null, fn ($q) => $q
                 ->whereNotNull('license_expiry_date')

@@ -1,5 +1,7 @@
 <div class="max-w-5xl mx-auto p-6 space-y-6">
 
+    @include('livewire.partials.no-governorates-notice')
+
     @php
         $rateClasses = function ($rate) {
             if ($rate === null) return 'text-zinc-400';

@@ -3,6 +3,7 @@
 namespace App\Livewire\Offices;
 
 use App\Models\Office;
+use App\Support\GovernorateScope;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 use Livewire\Component;
@@ -67,9 +68,11 @@ class Statistics extends Component
             $user?->hasRole('super-admin') || $user?->can('offices.view') || $user?->can('offices.edit'),
             403
         );
+        // صفحة إدخال — بلا هذا الحارس يعدّل صاحبُ `offices.edit` إحصائيات مقرٍّ في محافظة أخرى برقمه
+        abort_unless(GovernorateScope::allows($user, $office->governorate_id), 403);
 
         $this->canEdit = $user?->hasRole('super-admin') || $user?->can('offices.edit');
-        $this->canView = $user?->hasRole('super-admin') || $user?->can('offices.view');
+        $this->canView =$user?->hasRole('super-admin') || $user?->can('offices.view');
         $this->office  = $office;
     }
 
