@@ -98,21 +98,23 @@
                     <tr class="bg-[#c9a847] text-white">
                         {{-- الترتيب داخل كل محافظة — الرأس الذهبي يحتاج لوناً نشطاً أبيض مسطَّراً لا الذهبي الافتراضي --}}
                         @php $gold = ['activeClass' => 'text-white underline underline-offset-4', 'hoverClass' => 'hover:text-white/80']; @endphp
-                        @include('livewire.partials.sortable-th', $gold + ['column' => 'name', 'label' => __('home.vehicle_name'), 'thClass' => ($partial ? 'sm:w-[33%]' : 'sm:w-[28%]') . ' font-semibold'])
+                        {{-- النِّسَب مجموعها ١٠٠٪ في الحالتين: ٢٨+٣٠+١٣+١٣+١٦ · ٢٢+٣٠+١١+١١+١٣+١٣ --}}
+                        @include('livewire.partials.sortable-th', $gold + ['column' => 'name', 'label' => __('home.vehicle_name'), 'thClass' => ($partial ? 'sm:w-[28%]' : 'sm:w-[22%]') . ' font-semibold'])
                         @include('livewire.partials.sortable-th', $gold + ['column' => 'avg_tx', 'label' => __('home.vstat_col_avg_tx'), 'thClass' => 'w-[10%] text-center max-sm:hidden'])
                         @include('livewire.partials.sortable-th', $gold + ['column' => 'avg_support', 'label' => __('home.vstat_col_avg_support'), 'thClass' => 'w-[10%] text-center max-sm:hidden'])
                         @include('livewire.partials.sortable-th', $gold + ['column' => 'avg_trips', 'label' => __('home.vstat_col_avg_trips'), 'thClass' => 'w-[10%] text-center max-sm:hidden'])
-                        @include('livewire.partials.sortable-th', $gold + ['column' => 'trips', 'label' => __('home.vstat_col_trips', ['year' => $y]), 'thClass' => ($partial ? 'sm:w-[17%]' : 'sm:w-[12%]') . ' text-center'])
-                        @include('livewire.partials.sortable-th', $gold + ['column' => 'tx', 'label' => __('home.vstat_col_tx', ['year' => $y]) . ($partial ? ' (' . __('home.vstat_so_far') . ')' : ''), 'thClass' => ($partial ? 'sm:w-[20%]' : 'sm:w-[15%]') . ' text-center bg-[#b8962e]'])
+                        @include('livewire.partials.sortable-th', $gold + ['column' => 'trips', 'label' => __('home.vstat_col_trips', ['year' => $y]), 'thClass' => ($partial ? 'sm:w-[13%]' : 'sm:w-[11%]') . ' text-center'])
+                        @include('livewire.partials.sortable-th', $gold + ['column' => 'instant', 'label' => __('home.vstat_col_instant_trips', ['year' => $y]), 'thClass' => ($partial ? 'sm:w-[13%]' : 'sm:w-[11%]') . ' text-center'])
+                        @include('livewire.partials.sortable-th', $gold + ['column' => 'tx', 'label' => __('home.vstat_col_tx', ['year' => $y]) . ($partial ? ' (' . __('home.vstat_so_far') . ')' : ''), 'thClass' => ($partial ? 'sm:w-[16%]' : 'sm:w-[13%]') . ' text-center bg-[#b8962e]'])
                         @unless($partial)
-                        @include('livewire.partials.sortable-th', $gold + ['column' => 'tx_prev', 'label' => __('home.vstat_col_tx', ['year' => $y - 1]), 'thClass' => 'sm:w-[15%] text-center'])
+                        @include('livewire.partials.sortable-th', $gold + ['column' => 'tx_prev', 'label' => __('home.vstat_col_tx', ['year' => $y - 1]), 'thClass' => 'sm:w-[13%] text-center'])
                         @endunless
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-zinc-100 dark:divide-zinc-700">
                     @foreach($groups as $group)
                         <tr class="bg-zinc-50 dark:bg-zinc-800/70">
-                            <td colspan="{{ $partial ? 6 : 7 }}" class="px-3 py-2 text-xs font-semibold text-zinc-600 dark:text-zinc-300">{{ $group['governorate']->name ?? '—' }}</td>
+                            <td colspan="{{ $partial ? 7 : 8 }}" class="px-3 py-2 text-xs font-semibold text-zinc-600 dark:text-zinc-300">{{ $group['governorate']->name ?? '—' }}</td>
                         </tr>
                         @foreach($group['vehicles'] as $row)
                             @php $v = $row['vehicle']; @endphp
@@ -126,6 +128,7 @@
                                 <td class="{{ $num }} text-zinc-600 dark:text-zinc-300 max-sm:hidden">{{ $fmt($v->avg_daily_support) }}</td>
                                 <td class="{{ $num }} text-zinc-600 dark:text-zinc-300 max-sm:hidden">{{ $fmt($v->avg_daily_trips) }}</td>
                                 <td class="{{ $num }} font-medium text-zinc-800 dark:text-zinc-100">{{ $fmt($row['trips']) }}</td>
+                                <td class="{{ $num }} font-medium text-zinc-800 dark:text-zinc-100">{{ $fmt($row['instant']) }}</td>
                                 <td class="{{ $num }} font-semibold text-zinc-800 dark:text-zinc-100 bg-[#c9a847]/5">{{ $fmt($row['tx']) }}</td>
                                 @unless($partial)
                                 <td class="{{ $num }} text-zinc-500 dark:text-zinc-400">{{ $fmt($row['txPrev']) }}</td>
@@ -137,6 +140,7 @@
                             <td class="px-3 py-2">{{ __('home.vstat_gov_total', ['name' => $group['governorate']->name ?? '']) }}</td>
                             <td class="max-sm:hidden"></td><td class="max-sm:hidden"></td><td class="max-sm:hidden"></td>
                             <td class="{{ $num }}">{{ $fmt($group['totals']['trips']) }}</td>
+                            <td class="{{ $num }}">{{ $fmt($group['totals']['instant']) }}</td>
                             <td class="{{ $num }}">{{ $fmt($group['totals']['tx']) }}</td>
                             @unless($partial)<td class="{{ $num }}">{{ $fmt($group['totals']['txPrev']) }}</td>@endunless
                         </tr>
@@ -147,6 +151,7 @@
                         <td class="px-3 py-3">{{ __('home.report_total') }}</td>
                         <td class="max-sm:hidden"></td><td class="max-sm:hidden"></td><td class="max-sm:hidden"></td>
                         <td class="{{ $num }}">{{ $fmt($grand['trips']) }}</td>
+                        <td class="{{ $num }}">{{ $fmt($grand['instant']) }}</td>
                         <td class="{{ $num }} text-[#b8962e] dark:text-[#c9a847]">{{ $fmt($grand['tx']) }}</td>
                         @unless($partial)<td class="{{ $num }}">{{ $fmt($grand['txPrev']) }}</td>@endunless
                     </tr>

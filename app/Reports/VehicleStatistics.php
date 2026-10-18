@@ -11,7 +11,7 @@ use Illuminate\Support\Collection;
 /**
  * تقرير «إحصائيات السيارات» — المصدر الواحد للأرقام: الشاشة والـPDF والـExcel يقرؤون منه.
  *
- * صفٌّ لكل سيارة تحت محافظتها: المتوسطات اليومية الثلاثة + الانتقالات ومعاملات التوثيق في السنة
+ * صفٌّ لكل سيارة تحت محافظتها: المتوسطات اليومية الثلاثة + الانتقالات (العادية والفورية) ومعاملات التوثيق في السنة
  * + معاملات السنة السابقة، وإجمالي لكل محافظة وإجمالي عام.
  *
  * ⚠️ إجمالي السنة = مجموع صفوفها (إجمالي فترة + شهور) — نفس قاعدة VehicleTransactionPeriods.
@@ -27,7 +27,7 @@ class VehicleStatistics
      * أعمدة الترتيب (قائمة بيضاء) — **داخل كل محافظة**: صفوف الإجمالي مقسومة بالمحافظة،
      * فترتيبٌ عابر لها يبعثر السيارات ويُفقد الإجماليات معناها. ⚠️ «—» (null) آخراً في الاتجاهين.
      */
-    public const SORTABLE = ['name', 'avg_tx', 'avg_support', 'avg_trips', 'trips', 'tx', 'tx_prev'];
+    public const SORTABLE = ['name', 'avg_tx', 'avg_support', 'avg_trips', 'trips', 'instant', 'tx', 'tx_prev'];
 
     private function __construct(
         private ?array $allowedGovIds,
@@ -86,7 +86,8 @@ class VehicleStatistics
 
     /**
      * @return Collection<int, array{governorate: Governorate, vehicles: array, totals: array}>
-     *         vehicles[] = ['vehicle' => Vehicle, 'trips' => ?float, 'tx' => ?float, 'txPrev' => ?float]
+     *         vehicles[] = ['vehicle' => Vehicle, 'trips' => ?float, 'instant' => ?float, 'tx' => ?float, 'txPrev' => ?float]
+     *         (trips = الانتقالات العادية · instant = الفورية)
      */
     public function groups(): Collection
     {
@@ -104,13 +105,15 @@ class VehicleStatistics
             ->get(['id', 'governorate_id', 'name', 'avg_daily_transactions', 'avg_daily_support', 'avg_daily_trips']);
 
         $sums = $this->sums($vehicles->pluck('id')->all());
-        $trips = VehicleColumns::tripsTypeId();
+        $trips   = VehicleColumns::tripsTypeId();
+        $instant = VehicleColumns::instantTripsTypeId();
 
         $groups = [];
         foreach ($vehicles->groupBy('governorate_id') as $govVehicles) {
             $rows = $govVehicles->map(fn (Vehicle $v) => [
                 'vehicle' => $v,
                 'trips'   => $trips ? ($sums[$v->id][$trips][$this->year] ?? null) : null,
+                'instant' => $instant ? ($sums[$v->id][$instant][$this->year] ?? null) : null,
                 'tx'      => $sums[$v->id][Periods::STAT_TYPE_ID][$this->year] ?? null,
                 'txPrev'  => $sums[$v->id][Periods::STAT_TYPE_ID][$this->year - 1] ?? null,
             ])->values()->all();
@@ -142,7 +145,8 @@ class VehicleStatistics
             'avg_support' => $r['vehicle']->avg_daily_support,
             'avg_trips'   => $r['vehicle']->avg_daily_trips,
             'trips'       => $r['trips'],
-            'tx'          => $r['tx'],
+            'instant'     => $r['instant'],
+            'tx'        => $r['tx'],
             'tx_prev'     => $r['txPrev'],
         };
         $sign = $this->dir === 'desc' ? -1 : 1;
@@ -177,7 +181,7 @@ class VehicleStatistics
             return $values ? array_sum($values) : null;
         };
 
-        return ['trips' => $sum('trips'), 'tx' => $sum('tx'), 'txPrev' => $sum('txPrev')];
+        return ['trips' => $sum('trips'), 'instant' => $sum('instant'), 'tx' => $sum('tx'), 'txPrev' => $sum('txPrev')];
     }
 
     /**
@@ -191,7 +195,7 @@ class VehicleStatistics
             return [];
         }
 
-        $types = array_filter([Periods::STAT_TYPE_ID, VehicleColumns::tripsTypeId()]);
+        $types = array_filter([Periods::STAT_TYPE_ID, VehicleColumns::tripsTypeId(), VehicleColumns::instantTripsTypeId()]);
 
         $rows = VehicleStat::query()
             ->whereIn('vehicle_id', $vehicleIds)

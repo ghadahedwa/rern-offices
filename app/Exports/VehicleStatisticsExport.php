@@ -39,7 +39,8 @@ class VehicleStatisticsExport implements FromArray, WithHeadings, WithEvents, Wi
         $headings = [
             'المحافظة', 'السيارة',
             'متوسط المعاملات اليومي', 'متوسط الدعم اليومي', 'متوسط الانتقال اليومي',
-            "الانتقالات {$y}",
+            __('home.vstat_col_trips', ['year' => $y]),
+            __('home.vstat_col_instant_trips', ['year' => $y]),
             "معاملات التوثيق {$y}" . ($this->report->isPartial() ? ' (حتى الآن)' : ''),
         ];
 
@@ -67,17 +68,17 @@ class VehicleStatisticsExport implements FromArray, WithHeadings, WithEvents, Wi
                 $rows[] = $line([
                     $gov, $v->name,
                     $v->avg_daily_transactions, $v->avg_daily_support, $v->avg_daily_trips,
-                    $r['trips'], $r['tx'],
+                    $r['trips'], $r['instant'], $r['tx'],
                 ], [$r['txPrev']]);
             }
 
             $t = $group['totals'];
-            $rows[] = $line(["إجمالي {$gov}", null, null, null, null, $t['trips'], $t['tx']], [$t['txPrev']]);
+            $rows[] = $line(["إجمالي {$gov}", null, null, null, null, $t['trips'], $t['instant'], $t['tx']], [$t['txPrev']]);
             $this->totalRows[] = count($rows) + 1;   // +1 لصفّ الرؤوس
         }
 
         $g = $this->report->grandTotals();
-        $rows[] = $line(['الإجمالي العام', null, null, null, null, $g['trips'], $g['tx']], [$g['txPrev']]);
+        $rows[] = $line(['الإجمالي العام', null, null, null, null, $g['trips'], $g['instant'], $g['tx']], [$g['txPrev']]);
         $this->totalRows[] = count($rows) + 1;
 
         return $rows;

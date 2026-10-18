@@ -16,11 +16,13 @@ beforeEach(function () {
         'governorate_id' => Governorate::factory()->create()->id, 'name' => 'سيارة التقارير',
         'avg_daily_transactions' => 40, 'avg_daily_support' => 7, 'avg_daily_trips' => 3,
     ]);
-    $this->tripsId = VehicleColumns::tripsTypeId();
+    $this->tripsId   = VehicleColumns::tripsTypeId();
+    $this->instantId = VehicleColumns::instantTripsTypeId();
 
     foreach ([
         [1, 2025, null, 4000], [1, 2026, null, 900], [1, 2026, 10, 100],
         [$this->tripsId, 2025, 6, 30], [$this->tripsId, 2025, 7, 12],
+        [$this->instantId, 2026, 9, 6], [$this->instantId, 2026, 10, 4],
     ] as [$type, $y, $m, $v]) {
         VehicleStat::create(['vehicle_id' => $this->vehicle->id, 'stat_type_id' => $type, 'year' => $y, 'month' => $m, 'value' => $v]);
     }
@@ -33,6 +35,7 @@ it('adds the new averages and trips to the custom report columns', function () {
     expect($c['avg_daily_support']['value']($this->vehicle))->toBe(7)
         ->and($c['avg_daily_trips']['value']($this->vehicle))->toBe(3)
         ->and($c['stat_trips']['value']($this->vehicle))->toBe('42 (2025)')
+        ->and($c['stat_instant_trips']['value']($this->vehicle))->toBe('10 (2026 حتى الآن)')
         ->and($c['avg_daily_trips']['value'](new Vehicle()))->toBe('—');
 });
 
@@ -60,7 +63,8 @@ it('prints the same figures in the comprehensive pdf', function () {
     expect($html)
         ->toContain('متوسط الدعم اليومي:</span> <span class="v">7')
         ->toContain('متوسط الانتقال اليومي:</span> <span class="v">3')
-        ->toContain('عدد الانتقالات:</span> <span class="v">42 (2025)')
+        ->toContain('عدد الانتقالات العادية:</span> <span class="v">42 (2025)')
+        ->toContain('عدد الانتقالات الفورية:</span> <span class="v">10 (2026 حتى الآن)')
         ->toContain('1,000 (2026 حتى الآن)');
 });
 
@@ -69,7 +73,9 @@ it('shows trips on the dashboard and flags the current year', function () {
 
     $summary = Livewire::actingAs($admin)->test(Dashboard::class)->viewData('vehicleStatsSummary');
 
-    expect($summary->keys()->all())->toBe([$this->tripsId, 1, 2, 3])
+    expect($summary->keys()->all())->toBe([$this->tripsId, $this->instantId, 1, 2, 3])
+        ->and($summary[$this->instantId])->toMatchArray(['label' => 'عدد الانتقالات الفورية', 'latestYear' => 2026, 'partial' => true])
+        ->and((float) $summary[$this->instantId]['latestTotal'])->toBe(10.0)
         ->and($summary[1])->toMatchArray(['latestYear' => 2026, 'partial' => true])
         ->and((float) $summary[1]['latestTotal'])->toBe(1000.0)
         ->and($summary[1]['prevYear'])->toBe(2025)

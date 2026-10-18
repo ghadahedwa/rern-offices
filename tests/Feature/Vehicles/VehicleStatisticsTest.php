@@ -165,11 +165,32 @@ it('saves monthly trips', function () {
         ->toBe(['year' => 2026, 'month' => 3]);
 });
 
+it('saves monthly instant trips separately from regular trips', function () {
+    $instantId = StatType::where('group_key', 'vehicle_instant_trips')->value('id');
+
+    statTab()->call('openAdd', $instantId)
+        ->assertSet('formPeriod', 'monthly')
+        ->set('formYear', '2026')->set('formMonth', '3')->set('formValue', '9')
+        ->call('save')->assertHasNoErrors();
+
+    // الشهر نفسه في العادية ليس تكراراً
+    statTab()->call('openAdd', $this->tripsId)
+        ->set('formYear', '2026')->set('formMonth', '3')->set('formValue', '22')
+        ->call('save')->assertHasNoErrors();
+
+    expect(VehicleStat::where('stat_type_id', $instantId)->sum('value'))->toEqual(9)
+        ->and(VehicleStat::where('stat_type_id', $this->tripsId)->sum('value'))->toEqual(22);
+});
+
 // ── العرض ──
 
-it('lists the sections in order: trips, transactions, forms, folders', function () {
-    expect(Documentation::orderedTypes()->pluck('group_key')->all())
-        ->toBe(['vehicle_trips', 'transactions', 'forms_folders', 'forms_folders']);
+it('lists the sections in order: regular trips, instant trips, transactions, forms, folders', function () {
+    $types = Documentation::orderedTypes();
+
+    expect($types->pluck('group_key')->all())
+        ->toBe(['vehicle_trips', 'vehicle_instant_trips', 'transactions', 'forms_folders', 'forms_folders'])
+        ->and(Documentation::labelFor($types[0]))->toBe('عدد الانتقالات العادية')
+        ->and(Documentation::labelFor($types[1]))->toBe('عدد الانتقالات الفورية');
 });
 
 it('shows the averages, the period labels and the year total on the vehicle page', function () {
@@ -186,6 +207,7 @@ it('shows the averages, the period labels and the year total on the vehicle page
         ->assertSee(__('home.vstat_full_year'))
         ->assertSee('أكتوبر')
         ->assertSee(__('home.vehicle_stat_trips'))
+        ->assertSee(__('home.vehicle_stat_instant_trips'))
         ->assertSee(__('home.vstat_year_total', ['year' => 2026]))
         ->assertSee('1,000');   // ٩٠٠ (يناير–سبتمبر) + ١٠٠ (أكتوبر)
 });

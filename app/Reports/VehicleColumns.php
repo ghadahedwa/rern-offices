@@ -231,9 +231,14 @@ class VehicleColumns
                 'value' => fn (Vehicle $v) => $v->avg_daily_trips ?? $dash,
             ],
             'stat_trips' => [
-                'label' => 'عدد الانتقالات (آخر سنة)', 'group' => 'الإحصائيات',
+                'label' => 'عدد الانتقالات العادية (آخر سنة)', 'group' => 'الإحصائيات',
                 'filter' => null, 'fixed' => false, 'excelOnly' => false,
                 'value' => fn (Vehicle $v) => ($id = self::tripsTypeId()) ? (self::lastYearStat($v, $id) ?? $dash) : $dash,
+            ],
+            'stat_instant_trips' => [
+                'label' => 'عدد الانتقالات الفورية (آخر سنة)', 'group' => 'الإحصائيات',
+                'filter' => null, 'fixed' => false, 'excelOnly' => false,
+                'value' => fn (Vehicle $v) => ($id = self::instantTripsTypeId()) ? (self::lastYearStat($v, $id) ?? $dash) : $dash,
             ],
             'stat_transactions' => [
                 'label' => 'معاملات التوثيق (آخر سنة)', 'group' => 'الإحصائيات',
@@ -288,16 +293,23 @@ class VehicleColumns
         return (int) now(\App\Support\LocalTime::timezone())->year;
     }
 
-    /** معرّف نوع «عدد الانتقالات» — يُضاف بهجرة فرقمه يختلف بين القواعد */
+    /** معرّف نوع «عدد الانتقالات العادية» — يُضاف بهجرة فرقمه يختلف بين القواعد */
     public static function tripsTypeId(): ?int
     {
-        static $id = false;
+        return self::groupTypeId('vehicle_trips');
+    }
 
-        if ($id === false) {
-            $id = \App\Models\StatType::where('group_key', 'vehicle_trips')->value('id');
-        }
+    /** معرّف نوع «عدد الانتقالات الفورية» — يُضاف بهجرة فرقمه يختلف بين القواعد */
+    public static function instantTripsTypeId(): ?int
+    {
+        return self::groupTypeId('vehicle_instant_trips');
+    }
 
-        return $id;
+    private static function groupTypeId(string $groupKey): ?int
+    {
+        static $ids = [];
+
+        return $ids[$groupKey] ??= \App\Models\StatType::where('group_key', $groupKey)->value('id');
     }
 
     /** مفاتيح الأعمدة الثابتة (لا يمكن إلغاؤها في التقرير المخصّص) */

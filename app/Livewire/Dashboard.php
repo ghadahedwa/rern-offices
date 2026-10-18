@@ -114,9 +114,11 @@ class Dashboard extends Component
 
         // ملخص إحصائيات التوثيق للسيارات (آخر سنة فقط، مفصولة لكل نوع) — نفس نطاق السيارات الظاهرة للمستخدم
         // نفس تسميات vehicle_stat_* المستخدمة في Vehicles\StatTab\Documentation (بالـ id)
-        // بترتيب تاب الإحصائيات: الانتقالات ← المعاملات ← النماذج ← الحوافظ
-        $tripsTypeId = \App\Reports\VehicleColumns::tripsTypeId();
-        $vehicleStatTypeLabels = ($tripsTypeId ? [$tripsTypeId => 'vehicle_stat_trips'] : []) + [
+        // بترتيب تاب الإحصائيات: الانتقالات العادية ← الفورية ← المعاملات ← النماذج ← الحوافظ
+        $tripsTypeId   = \App\Reports\VehicleColumns::tripsTypeId();
+        $instantTypeId = \App\Reports\VehicleColumns::instantTripsTypeId();
+        $vehicleStatTypeLabels = ($tripsTypeId ? [$tripsTypeId => 'vehicle_stat_trips'] : [])
+            + ($instantTypeId ? [$instantTypeId => 'vehicle_stat_instant_trips'] : []) + [
             1 => 'vehicle_stat_transactions',
             2 => 'vehicle_stat_form_sales',
             3 => 'vehicle_stat_folder_sales',

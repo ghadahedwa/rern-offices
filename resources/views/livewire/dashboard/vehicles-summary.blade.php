@@ -8,7 +8,8 @@
     </div>
 
     <div class="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-sm p-5">
-        <div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-4">
+        {{-- ٦ عناصر: الإجمالي + الانتقالات العادية والفورية + المعاملات + النماذج + الحوافظ --}}
+        <div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4">
 
             {{-- إجمالي السيارات + توزيع الحالات (صف واحد) --}}
             <div class="flex items-start gap-2">

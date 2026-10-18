@@ -44,8 +44,8 @@ class Documentation extends Component
     public ?int $deletingId = null;
     public string $deletingLabel = '';
 
-    /** ترتيب الأقسام في التاب: الانتقالات ← معاملات التوثيق ← النماذج والحوافظ */
-    public const GROUP_KEYS = ['vehicle_trips', 'transactions', 'forms_folders'];
+    /** ترتيب الأقسام في التاب: الانتقالات العادية ← الفورية ← معاملات التوثيق ← النماذج والحوافظ */
+    public const GROUP_KEYS = ['vehicle_trips', 'vehicle_instant_trips', 'transactions', 'forms_folders'];
 
     // تسميات مخصّصة لصفحة السيارة (بدل $type->name المشترك مع المقرات)
     private const LABELS = [
@@ -54,7 +54,8 @@ class Documentation extends Component
         3 => 'vehicle_stat_folder_sales',
     ];
     private const GROUP_LABELS = [
-        'vehicle_trips' => 'vehicle_stat_trips',
+        'vehicle_trips'         => 'vehicle_stat_trips',
+        'vehicle_instant_trips' => 'vehicle_stat_instant_trips',
     ];
 
     public const MONTHS = [

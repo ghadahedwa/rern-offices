@@ -55,6 +55,7 @@
         // حسبة «آخر سنة» من مصدر التقرير المخصص نفسه — فلا يخرج الملفّان برقمين مختلفين
         $lastYearStat = fn ($vehicle, int $typeId) => \App\Reports\VehicleColumns::lastYearStat($vehicle, $typeId);
         $tripsTypeId  = \App\Reports\VehicleColumns::tripsTypeId();
+        $instantTypeId = \App\Reports\VehicleColumns::instantTripsTypeId();
     @endphp
 
     {{-- ── Page Header ── --}}
@@ -155,6 +156,7 @@
                     <div class="f"><span class="k">متوسط الدعم اليومي:</span> <span class="v">{{ $vehicle->avg_daily_support ?? $dash }}</span></div>
                     <div class="f"><span class="k">متوسط الانتقال اليومي:</span> <span class="v">{{ $vehicle->avg_daily_trips ?? $dash }}</span></div>
                     <div class="f"><span class="k">{{ __('home.vehicle_stat_trips') }}:</span> <span class="v">{{ $tripsTypeId ? ($lastYearStat($vehicle, $tripsTypeId) ?? $dash) : $dash }}</span></div>
+                    <div class="f"><span class="k">{{ __('home.vehicle_stat_instant_trips') }}:</span> <span class="v">{{ $instantTypeId ? ($lastYearStat($vehicle, $instantTypeId) ?? $dash) : $dash }}</span></div>
                     <div class="f"><span class="k">{{ $statLabels[1] }}:</span> <span class="v">{{ $lastYearStat($vehicle, 1) ?? $dash }}</span></div>
                     <div class="f"><span class="k">{{ $statLabels[2] }}:</span> <span class="v">{{ $lastYearStat($vehicle, 2) ?? $dash }}</span></div>
                     <div class="f"><span class="k">{{ $statLabels[3] }}:</span> <span class="v">{{ $lastYearStat($vehicle, 3) ?? $dash }}</span></div>

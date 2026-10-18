@@ -38,11 +38,11 @@
         $y       = $report->year();
         $partial = $report->isPartial();
         $fmt     = fn ($v) => $v === null ? '—' : number_format($v);
-        $cols    = $partial ? 6 : 7;
-        // مجموع النِّسَب ١٠٠٪ في الحالتين — الناقص يوزّعه mpdf عشوائياً
+        $cols    = $partial ? 7 : 8;
+        // مجموع النِّسَب ١٠٠٪ في الحالتين (trips لكلٍّ من العادية والفورية) — الناقص يوزّعه mpdf عشوائياً
         $w = $partial
-            ? ['name' => 33, 'avg' => 10, 'trips' => 17, 'tx' => 20, 'prev' => 0]
-            : ['name' => 28, 'avg' => 10, 'trips' => 12, 'tx' => 15, 'prev' => 15];
+            ? ['name' => 28, 'avg' => 10, 'trips' => 13, 'tx' => 16, 'prev' => 0]
+            : ['name' => 22, 'avg' => 10, 'trips' => 11, 'tx' => 13, 'prev' => 13];
     @endphp
 
     <table class="header-table">
@@ -69,7 +69,8 @@
                 <th style="width:{{ $w['avg'] }}%">متوسط المعاملات اليومي</th>
                 <th style="width:{{ $w['avg'] }}%">متوسط الدعم اليومي</th>
                 <th style="width:{{ $w['avg'] }}%">متوسط الانتقال اليومي</th>
-                <th style="width:{{ $w['trips'] }}%">الانتقالات {{ $y }}</th>
+                <th style="width:{{ $w['trips'] }}%">{{ __('home.vstat_col_trips', ['year' => $y]) }}</th>
+                <th style="width:{{ $w['trips'] }}%">{{ __('home.vstat_col_instant_trips', ['year' => $y]) }}</th>
                 <th style="width:{{ $w['tx'] }}%">معاملات التوثيق {{ $y }}{{ $partial ? ' (حتى الآن)' : '' }}</th>
                 @unless($partial)<th style="width:{{ $w['prev'] }}%">معاملات التوثيق {{ $y - 1 }}</th>@endunless
             </tr>
@@ -85,6 +86,7 @@
                         <td>{{ $fmt($v->avg_daily_support) }}</td>
                         <td>{{ $fmt($v->avg_daily_trips) }}</td>
                         <td>{{ $fmt($row['trips']) }}</td>
+                        <td>{{ $fmt($row['instant']) }}</td>
                         <td style="font-weight:bold;">{{ $fmt($row['tx']) }}</td>
                         @unless($partial)<td style="color:#666;">{{ $fmt($row['txPrev']) }}</td>@endunless
                     </tr>
@@ -93,6 +95,7 @@
                     <td class="sub name">إجمالي {{ $group['governorate']->name ?? '' }}</td>
                     <td class="sub"></td><td class="sub"></td><td class="sub"></td>
                     <td class="sub">{{ $fmt($group['totals']['trips']) }}</td>
+                    <td class="sub">{{ $fmt($group['totals']['instant']) }}</td>
                     <td class="sub">{{ $fmt($group['totals']['tx']) }}</td>
                     @unless($partial)<td class="sub">{{ $fmt($group['totals']['txPrev']) }}</td>@endunless
                 </tr>
@@ -106,6 +109,7 @@
                 <td style="text-align:right;">الإجمالي العام</td>
                 <td></td><td></td><td></td>
                 <td>{{ $fmt($grand['trips']) }}</td>
+                <td>{{ $fmt($grand['instant']) }}</td>
                 <td>{{ $fmt($grand['tx']) }}</td>
                 @unless($partial)<td>{{ $fmt($grand['txPrev']) }}</td>@endunless
             </tr>
