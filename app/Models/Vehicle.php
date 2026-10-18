@@ -65,7 +65,8 @@ class Vehicle extends Model
     public function governorate(): BelongsTo  { return $this->belongsTo(Governorate::class); }
     public function type(): BelongsTo         { return $this->belongsTo(VehicleType::class); }
     public function workSystem(): BelongsTo   { return $this->belongsTo(VehicleWorkSystem::class); }
-    public function workingHour(): BelongsTo  { return $this->belongsTo(VehicleWorkingHour::class); }
+    // العمود working_hours_id (جمع) — بلا المفتاح يُستنتج working_hour_id من اسم الدالة فتعود العلاقة فارغة دائماً
+    public function workingHour(): BelongsTo  { return $this->belongsTo(VehicleWorkingHour::class, 'working_hours_id'); }
     public function brand(): BelongsTo        { return $this->belongsTo(VehicleBrand::class); }
     public function locations(): HasMany      { return $this->hasMany(VehicleLocation::class); }
     public function brokenDevices(): HasMany  { return $this->hasMany(VehicleBrokenDevice::class); }
