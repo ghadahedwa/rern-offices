@@ -9,6 +9,8 @@
     - $allText · $pickText · $pickedKey · $searchText · $emptyText   نصوص الزرّ والبحث والقائمة الفارغة
     - $layout                 'grid' (قصيرة: أعمدةٌ بلا سكرول) · 'list' (طويلة: صفٌّ كامل وأعمدةٌ بسكرول، والمختار شاراتٌ تحت الزرّ)
     - $compact                شريط اللوحة: خطٌّ أصغر بلا عنوانٍ فوقه
+    - $selectAll              زرّ «تحديد الكل» داخل المنسدلة (اختياري، مطفأ افتراضياً) — يحدّد الظاهر بعد البحث
+                              ويُبقي المختار من قبل
 
     ⚠️ **الخانات `.live` دائماً** — الزرّ يعرض المختار من حالة السيرفر، فبلا تحديثٍ فوري يتأخّر عن الخانات.
     ⚠️ **البحث يُمسح عند إغلاق المنسدلة** — وإلا فُتحت المرة التالية على قائمةٍ ناقصة بلا سببٍ ظاهر.
@@ -71,6 +73,22 @@
                        placeholder="{{ $searchText }}"
                        class="{{ $box }} w-full px-3 pr-8 py-1.5 text-xs">
             </div>
+
+            @if(($selectAll ?? false) && count($choices))
+                @php
+                    $allIds = collect($selected)->map(fn ($id) => (string) $id)
+                        ->merge(collect($choices)->map(fn ($c) => (string) $c['id']))
+                        ->unique()->values()->all();
+                @endphp
+                <div class="flex items-center gap-3 px-2">
+                    <button type="button" wire:click="$set('{{ $model }}', {{ \Illuminate\Support\Js::from($allIds) }})"
+                            class="text-xs font-medium text-[#b8962e] hover:underline">{{ __('home.ct_rep_select_all') }}</button>
+                    @if($picked)
+                        <button type="button" wire:click="$set('{{ $model }}', [])"
+                                class="text-xs text-zinc-500 dark:text-zinc-400 hover:text-[#c9a847] hover:underline">{{ __('home.ct_rep_clear_governorates') }}</button>
+                    @endif
+                </div>
+            @endif
 
             {{-- ⚠️ القصيرة **أعمدةٌ لا عمودٌ بسكرول** (قرار المستخدمة في شبكة المحافظات): السكرول الداخليّ
                  يُخفي أغلب الخيارات فلا يرى المستخدم ما اختاره. والطويلة (مئات المقارّ) لا تسعها بلا سكرول،

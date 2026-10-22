@@ -11,7 +11,7 @@ use Illuminate\Support\Collection;
 /**
  * تقرير «إحصائيات السيارات» — المصدر الواحد للأرقام: الشاشة والـPDF والـExcel يقرؤون منه.
  *
- * صفٌّ لكل سيارة تحت محافظتها: المتوسطات اليومية الثلاثة + الانتقالات (العادية والفورية) ومعاملات التوثيق في السنة
+ * صفٌّ لكل سيارة تحت محافظتها: المتوسطات اليومية الثلاثة + الانتقالات (العادية والفورية وإجماليهما) ومعاملات التوثيق في السنة
  * + معاملات السنة السابقة، وإجمالي لكل محافظة وإجمالي عام.
  *
  * ⚠️ إجمالي السنة = مجموع صفوفها (إجمالي فترة + شهور) — نفس قاعدة VehicleTransactionPeriods.
@@ -27,7 +27,7 @@ class VehicleStatistics
      * أعمدة الترتيب (قائمة بيضاء) — **داخل كل محافظة**: صفوف الإجمالي مقسومة بالمحافظة،
      * فترتيبٌ عابر لها يبعثر السيارات ويُفقد الإجماليات معناها. ⚠️ «—» (null) آخراً في الاتجاهين.
      */
-    public const SORTABLE = ['name', 'avg_tx', 'avg_support', 'avg_trips', 'trips', 'instant', 'tx', 'tx_prev'];
+    public const SORTABLE = ['name', 'avg_tx', 'avg_support', 'avg_trips', 'trips', 'instant', 'trips_all', 'tx', 'tx_prev'];
 
     private function __construct(
         private ?array $allowedGovIds,
@@ -86,8 +86,8 @@ class VehicleStatistics
 
     /**
      * @return Collection<int, array{governorate: Governorate, vehicles: array, totals: array}>
-     *         vehicles[] = ['vehicle' => Vehicle, 'trips' => ?float, 'instant' => ?float, 'tx' => ?float, 'txPrev' => ?float]
-     *         (trips = الانتقالات العادية · instant = الفورية)
+     *         vehicles[] = ['vehicle' => Vehicle, 'trips' => ?float, 'instant' => ?float, 'tripsAll' => ?float, 'tx' => ?float, 'txPrev' => ?float]
+     *         (trips = الانتقالات العادية · instant = الفورية · tripsAll = مجموعهما)
      */
     public function groups(): Collection
     {
@@ -110,13 +110,19 @@ class VehicleStatistics
 
         $groups = [];
         foreach ($vehicles->groupBy('governorate_id') as $govVehicles) {
-            $rows = $govVehicles->map(fn (Vehicle $v) => [
-                'vehicle' => $v,
-                'trips'   => $trips ? ($sums[$v->id][$trips][$this->year] ?? null) : null,
-                'instant' => $instant ? ($sums[$v->id][$instant][$this->year] ?? null) : null,
-                'tx'      => $sums[$v->id][Periods::STAT_TYPE_ID][$this->year] ?? null,
-                'txPrev'  => $sums[$v->id][Periods::STAT_TYPE_ID][$this->year - 1] ?? null,
-            ])->values()->all();
+            $rows = $govVehicles->map(function (Vehicle $v) use ($sums, $trips, $instant) {
+                $regular = $trips ? ($sums[$v->id][$trips][$this->year] ?? null) : null;
+                $fast    = $instant ? ($sums[$v->id][$instant][$this->year] ?? null) : null;
+
+                return [
+                    'vehicle'  => $v,
+                    'trips'    => $regular,
+                    'instant'  => $fast,
+                    'tripsAll' => self::sumOrNull([$regular, $fast]),
+                    'tx'       => $sums[$v->id][Periods::STAT_TYPE_ID][$this->year] ?? null,
+                    'txPrev'   => $sums[$v->id][Periods::STAT_TYPE_ID][$this->year - 1] ?? null,
+                ];
+            })->values()->all();
 
             $rows = $this->sortRows($rows);
 
@@ -146,7 +152,8 @@ class VehicleStatistics
             'avg_trips'   => $r['vehicle']->avg_daily_trips,
             'trips'       => $r['trips'],
             'instant'     => $r['instant'],
-            'tx'        => $r['tx'],
+            'trips_all'   => $r['tripsAll'],
+            'tx'          => $r['tx'],
             'tx_prev'     => $r['txPrev'],
         };
         $sign = $this->dir === 'desc' ? -1 : 1;
@@ -175,13 +182,20 @@ class VehicleStatistics
     /** مجموع عمود — null إن لم يكن في العمود رقمٌ واحد (فيظهر «—» لا 0) */
     private static function totals(array $rows): array
     {
-        $sum = function (string $key) use ($rows) {
-            $values = array_filter(array_column($rows, $key), fn ($v) => $v !== null);
+        $sum = fn (string $key) => self::sumOrNull(array_column($rows, $key));
 
-            return $values ? array_sum($values) : null;
-        };
+        return [
+            'trips' => $sum('trips'), 'instant' => $sum('instant'), 'tripsAll' => $sum('tripsAll'),
+            'tx'    => $sum('tx'),    'txPrev'  => $sum('txPrev'),
+        ];
+    }
 
-        return ['trips' => $sum('trips'), 'instant' => $sum('instant'), 'tx' => $sum('tx'), 'txPrev' => $sum('txPrev')];
+    /** مجموع ما سُجِّل وحده — null إن لم يُسجَّل شيء («—» غير 0) */
+    public static function sumOrNull(array $values): ?float
+    {
+        $values = array_filter($values, fn ($v) => $v !== null);
+
+        return $values ? (float) array_sum($values) : null;
     }
 
     /**

@@ -33,11 +33,11 @@ function vsStat(Vehicle $v, int $type, int $year, ?int $month, float $value): vo
     VehicleStat::create(['vehicle_id' => $v->id, 'stat_type_id' => $type, 'year' => $year, 'month' => $month, 'value' => $value]);
 }
 
-/** صفوف السيارات مسطّحة: اسم => [trips, instant, tx, txPrev] */
+/** صفوف السيارات مسطّحة: اسم => [trips, instant, tripsAll, tx, txPrev] */
 function vsRows(Report $r): array
 {
     return $r->groups()->flatMap(fn ($g) => $g['vehicles'])
-        ->mapWithKeys(fn ($row) => [$row['vehicle']->name => [$row['trips'], $row['instant'], $row['tx'], $row['txPrev']]])
+        ->mapWithKeys(fn ($row) => [$row['vehicle']->name => [$row['trips'], $row['instant'], $row['tripsAll'], $row['tx'], $row['txPrev']]])
         ->all();
 }
 
@@ -70,20 +70,20 @@ it('sums the current year so far, with dashes for nothing recorded and 0 for a r
 
     expect($r->isPartial())->toBeTrue()
         ->and(vsRows($r))->toBe([
-            'أ' => [20.0, 7.0, 1000.0, 4000.0],
-            'ب' => [0.0, null, null, null],
-            'ج' => [null, 4.0, null, 500.0],
+            'أ' => [20.0, 7.0, 27.0, 1000.0, 4000.0],
+            'ب' => [0.0, null, 0.0, null, null],   // الصفر المسجَّل يبقى صفراً في الإجمالي
+            'ج' => [null, 4.0, 4.0, null, 500.0],
         ])
-        ->and($r->groups()->first()['totals'])->toBe(['trips' => 20.0, 'instant' => 7.0, 'tx' => 1000.0, 'txPrev' => 4000.0])
-        ->and($r->grandTotals())->toBe(['trips' => 20.0, 'instant' => 11.0, 'tx' => 1000.0, 'txPrev' => 4500.0]);
+        ->and($r->groups()->first()['totals'])->toBe(['trips' => 20.0, 'instant' => 7.0, 'tripsAll' => 27.0, 'tx' => 1000.0, 'txPrev' => 4000.0])
+        ->and($r->grandTotals())->toBe(['trips' => 20.0, 'instant' => 11.0, 'tripsAll' => 31.0, 'tx' => 1000.0, 'txPrev' => 4500.0]);
 });
 
 it('compares a finished year with the one before', function () {
     $r = Report::make(null, ['year' => '2025']);
 
     expect($r->isPartial())->toBeFalse()
-        ->and(vsRows($r)['ج'])->toBe([null, null, 500.0, 300.0])
-        ->and(vsRows($r)['أ'])->toBe([null, null, 4000.0, null]);
+        ->and(vsRows($r)['ج'])->toBe([null, null, null, 500.0, 300.0])
+        ->and(vsRows($r)['أ'])->toBe([null, null, null, 4000.0, null]);
 });
 
 it('hides the previous-year column for the current year only', function () {
@@ -123,7 +123,7 @@ it('shows nothing to a user with the permission but no governorates', function (
     $r = Livewire::actingAs(vsScopedUser([]))->test(VehicleStatistics::class)->call('search')->viewData('report');
 
     expect($r->groups())->toHaveCount(0)
-        ->and($r->grandTotals())->toBe(['trips' => null, 'instant' => null, 'tx' => null, 'txPrev' => null]);
+        ->and($r->grandTotals())->toBe(['trips' => null, 'instant' => null, 'tripsAll' => null, 'tx' => null, 'txPrev' => null]);
 });
 
 it('forbids the screen and the pdf without vehicles.export', function () {
@@ -138,14 +138,14 @@ it('exports numbers only, with subtotal rows and no previous year for the curren
 
     expect($export->headings())->toBe([
         'المحافظة', 'السيارة', 'متوسط المعاملات اليومي', 'متوسط الدعم اليومي', 'متوسط الانتقال اليومي',
-        'الانتقالات العادية 2026', 'الانتقالات الفورية 2026', 'معاملات التوثيق 2026 (حتى الآن)',
+        'الانتقالات العادية 2026', 'الانتقالات الفورية 2026', 'إجمالي الانتقالات 2026', 'معاملات التوثيق 2026 (حتى الآن)',
     ])->and($export->array())->toBe([
-        ['القاهرة', 'أ', 40, 7, 3, 20.0, 7.0, 1000.0],
-        ['القاهرة', 'ب', 20, null, null, 0.0, null, null],
-        ['إجمالي القاهرة', null, null, null, null, 20.0, 7.0, 1000.0],
-        ['الجيزة', 'ج', null, null, null, null, 4.0, null],
-        ['إجمالي الجيزة', null, null, null, null, null, 4.0, null],
-        ['الإجمالي العام', null, null, null, null, 20.0, 11.0, 1000.0],
+        ['القاهرة', 'أ', 40, 7, 3, 20.0, 7.0, 27.0, 1000.0],
+        ['القاهرة', 'ب', 20, null, null, 0.0, null, 0.0, null],
+        ['إجمالي القاهرة', null, null, null, null, 20.0, 7.0, 27.0, 1000.0],
+        ['الجيزة', 'ج', null, null, null, null, 4.0, 4.0, null],
+        ['إجمالي الجيزة', null, null, null, null, null, 4.0, 4.0, null],
+        ['الإجمالي العام', null, null, null, null, 20.0, 11.0, 31.0, 1000.0],
     ]);
 });
 
@@ -154,7 +154,7 @@ it('adds the previous-year column to the export for a finished year', function (
     $rows   = $export->array();
 
     expect($export->headings())->toContain('معاملات التوثيق 2024')
-        ->and(end($rows))->toBe(['الإجمالي العام', null, null, null, null, null, null, 4500.0, 300.0]);
+        ->and(end($rows))->toBe(['الإجمالي العام', null, null, null, null, null, null, null, 4500.0, 300.0]);
 });
 
 it('builds the pdf from the same filters', function () {
@@ -181,7 +181,8 @@ it('writes a recorded zero as 0 and nothing recorded as an empty cell in the fil
 
     expect($sheet->getCell('F3')->getValue())->not->toBeNull()->toEqual(0)   // ب · الانتقالات: صفر مسجَّل
         ->and($sheet->getCell('G3')->getValue())->toBeNull()   // ب · الفورية: لم يُسجَّل
-        ->and($sheet->getCell('H3')->getValue())->toBeNull()   // ب · المعاملات: لم يُسجَّل
+        ->and($sheet->getCell('H3')->getValue())->toEqual(0)     // ب · إجمالي الانتقالات: صفر + لا شيء = صفر
+        ->and($sheet->getCell('I3')->getValue())->toBeNull()   // ب · المعاملات: لم يُسجَّل
         ->and($sheet->getCell('G2')->getValue())->toEqual(7);  // أ · الفورية: سبتمبر + أكتوبر
     @unlink($file);
 });
@@ -210,5 +211,24 @@ it('shows the instant trips column with its totals on the screen and in the pdf'
     ])->render();
 
     expect($html)->toContain('الانتقالات الفورية 2026')
-        ->and(preg_replace('/\s+/', '', $html))->toContain('<td>20</td><td>11</td><td>1,000</td>');
+        ->and(preg_replace('/\s+/', '', $html))->toContain('<td>20</td><td>11</td><td>31</td><td>1,000</td>');
+});
+
+it('adds regular and instant trips into one total, sortable and shown on the screen', function () {
+    $d = Vehicle::create(['governorate_id' => $this->cairo->id, 'name' => 'د']);
+    vsStat($d, $this->trips, 2026, 10, 25);   // عادية أكثر من «أ» (٢٠)، وإجماليها أقل (٢٥ < ٢٧)
+
+    $names = fn (string $dir) => array_map(
+        fn ($x) => $x['vehicle']->name,
+        Report::make(null, ['year' => '2026', 'sort' => 'trips_all', 'dir' => $dir])->groups()->first()['vehicles']
+    );
+
+    // بالعادية وحدها «د» أولاً تنازلياً، وبالإجمالي «أ» (٢٧) قبله (٢٥)
+    expect($names('desc'))->toBe(['أ', 'د', 'ب'])
+        ->and($names('asc'))->toBe(['ب', 'د', 'أ']);
+
+    Livewire::actingAs(vsAdmin())->test(VehicleStatistics::class)
+        ->set('year', '2026')->call('search')
+        ->assertSee(__('home.vstat_col_trips_all', ['year' => 2026]))
+        ->assertSeeHtml('>56</td>');   // الإجمالي العام: ٤٥ عادية + ١١ فورية
 });
