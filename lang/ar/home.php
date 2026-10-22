@@ -952,8 +952,6 @@ return [
     'vstat_col_trips_all'           => 'إجمالي الانتقالات :year',
     'vstat_col_tx'                  => 'معاملات التوثيق :year',
     'vstat_gov_total'               => 'إجمالي :name',
-    'vstat_mobile_trips'            => 'الانتقالات: عادية :trips · فورية :instant',
-    'vstat_mobile_avgs'             => 'المتوسطات اليومية: معاملات :tx · دعم :support · انتقال :trips',
     'vstat_report_partial_note'     => 'سنة :year لم تنتهِ بعد — أرقامها حتى الآن، ولذلك لا تُقارَن بالسنة السابقة.',
     'vstat_report_footnote'         => 'المتوسطات اليومية لا تُجمع في صفوف الإجمالي · إجمالي الانتقالات = العادية + الفورية · «—» = لم يُسجَّل رقم.',
     'report_vehicle_breakdown_title' => 'إحصائيات السيارات التفصيلية',

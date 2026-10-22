@@ -68,7 +68,7 @@
         $y       = $report->year();
         $partial = $report->isPartial();
         $fmt     = fn ($v) => $v === null ? '—' : number_format($v);
-        $num     = 'px-2 py-2.5 text-center';
+        $num     = 'px-2 py-2.5 text-center whitespace-nowrap';
     @endphp
     <div class="space-y-3">
         @if($groups->isNotEmpty())
@@ -92,22 +92,22 @@
             </div>
         </div>
 
-        {{-- overflow-x-auto لا hidden: الجدول يدخل عرض الموبايل (العادية والفورية سطرٌ تحت الاسم)، وإن زاد يوماً
-             (اسمٌ طويل · عمودٌ جديد) يتمرّر بدل أن يُقصّ بلا تمرير — بلاغ المستخدمة 2026-10-22 بعد عمود الإجمالي --}}
+        {{-- على الموبايل **كل الأعمدة ظاهرة** والجدول يتمرّر أفقياً داخل الإطار والاسم ثابت يميناً — بلاغ المستخدمة
+             2026-10-22: إخفاء الأعمدة ترك «إجمالي الانتقالات» و«المعاملات» وحدهما ولا شيء يُتمرَّر إليه --}}
         <div class="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-sm overflow-x-auto">
-            <table class="w-full text-sm text-right sm:table-fixed max-sm:[&_th]:px-1 max-sm:[&_td]:px-1">
+            <table class="w-full text-sm text-right sm:table-fixed max-sm:[&_th]:px-1.5 max-sm:[&_td]:px-1.5">
                 <thead class="text-xs">
                     <tr class="bg-[#c9a847] text-white">
                         {{-- الترتيب داخل كل محافظة — الرأس الذهبي يحتاج لوناً نشطاً أبيض مسطَّراً لا الذهبي الافتراضي --}}
                         @php $gold = ['activeClass' => 'text-white underline underline-offset-4', 'hoverClass' => 'hover:text-white/80']; @endphp
                         {{-- النِّسَب مجموعها ١٠٠٪ في الحالتين: ٢٢+٣٠+١١+١١+١٢+١٤ · ١٨+٢٧+١٠+١٠+١١+١٢+١٢ --}}
                         @php $avgW = $partial ? 'w-[10%]' : 'w-[9%]'; @endphp
-                        @include('livewire.partials.sortable-th', $gold + ['column' => 'name', 'label' => __('home.vehicle_name'), 'thClass' => ($partial ? 'sm:w-[22%]' : 'sm:w-[18%]') . ' font-semibold'])
-                        @include('livewire.partials.sortable-th', $gold + ['column' => 'avg_tx', 'label' => __('home.vstat_col_avg_tx'), 'thClass' => $avgW . ' text-center max-sm:hidden'])
-                        @include('livewire.partials.sortable-th', $gold + ['column' => 'avg_support', 'label' => __('home.vstat_col_avg_support'), 'thClass' => $avgW . ' text-center max-sm:hidden'])
-                        @include('livewire.partials.sortable-th', $gold + ['column' => 'avg_trips', 'label' => __('home.vstat_col_avg_trips'), 'thClass' => $avgW . ' text-center max-sm:hidden'])
-                        @include('livewire.partials.sortable-th', $gold + ['column' => 'trips', 'label' => __('home.vstat_col_trips', ['year' => $y]), 'thClass' => ($partial ? 'sm:w-[11%]' : 'sm:w-[10%]') . ' text-center max-sm:hidden'])
-                        @include('livewire.partials.sortable-th', $gold + ['column' => 'instant', 'label' => __('home.vstat_col_instant_trips', ['year' => $y]), 'thClass' => ($partial ? 'sm:w-[11%]' : 'sm:w-[10%]') . ' text-center max-sm:hidden'])
+                        @include('livewire.partials.sortable-th', $gold + ['column' => 'name', 'label' => __('home.vehicle_name'), 'thClass' => ($partial ? 'sm:w-[22%]' : 'sm:w-[18%]') . ' font-semibold max-sm:sticky max-sm:right-0 max-sm:z-10 max-sm:bg-[#c9a847] max-sm:min-w-32'])
+                        @include('livewire.partials.sortable-th', $gold + ['column' => 'avg_tx', 'label' => __('home.vstat_col_avg_tx'), 'thClass' => $avgW . ' text-center'])
+                        @include('livewire.partials.sortable-th', $gold + ['column' => 'avg_support', 'label' => __('home.vstat_col_avg_support'), 'thClass' => $avgW . ' text-center'])
+                        @include('livewire.partials.sortable-th', $gold + ['column' => 'avg_trips', 'label' => __('home.vstat_col_avg_trips'), 'thClass' => $avgW . ' text-center'])
+                        @include('livewire.partials.sortable-th', $gold + ['column' => 'trips', 'label' => __('home.vstat_col_trips', ['year' => $y]), 'thClass' => ($partial ? 'sm:w-[11%]' : 'sm:w-[10%]') . ' text-center'])
+                        @include('livewire.partials.sortable-th', $gold + ['column' => 'instant', 'label' => __('home.vstat_col_instant_trips', ['year' => $y]), 'thClass' => ($partial ? 'sm:w-[11%]' : 'sm:w-[10%]') . ' text-center'])
                         @include('livewire.partials.sortable-th', $gold + ['column' => 'trips_all', 'label' => __('home.vstat_col_trips_all', ['year' => $y]), 'thClass' => ($partial ? 'sm:w-[12%]' : 'sm:w-[11%]') . ' text-center'])
                         @include('livewire.partials.sortable-th', $gold + ['column' => 'tx', 'label' => __('home.vstat_col_tx', ['year' => $y]) . ($partial ? ' (' . __('home.vstat_so_far') . ')' : ''), 'thClass' => ($partial ? 'sm:w-[14%]' : 'sm:w-[12%]') . ' text-center bg-[#b8962e]'])
                         @unless($partial)
@@ -118,22 +118,20 @@
                 <tbody class="divide-y divide-zinc-100 dark:divide-zinc-700">
                     @foreach($groups as $group)
                         <tr class="bg-zinc-50 dark:bg-zinc-800/70">
-                            <td colspan="{{ $partial ? 8 : 9 }}" class="px-3 py-2 text-xs font-semibold text-zinc-600 dark:text-zinc-300">{{ $group['governorate']->name ?? '—' }}</td>
+                            <td colspan="{{ $partial ? 8 : 9 }}" class="px-3 py-2 text-xs font-semibold text-zinc-600 dark:text-zinc-300"><span class="sticky right-3">{{ $group['governorate']->name ?? '—' }}</span></td>
                         </tr>
                         @foreach($group['vehicles'] as $row)
                             @php $v = $row['vehicle']; @endphp
                             <tr class="hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition">
-                                <td class="px-3 py-2.5">
+                                <td class="px-3 py-2.5 max-sm:sticky max-sm:right-0 max-sm:z-10 max-sm:bg-white dark:max-sm:bg-zinc-900">
                                     <a href="{{ route('vehicles.show', $v) }}" wire:navigate
                                        class="block font-medium text-zinc-800 dark:text-zinc-100 hover:text-[#b8962e] sm:truncate" title="{{ $v->name }}">{{ $v->name }}</a>
-                                    <span class="sm:hidden block text-xs text-zinc-400 mt-0.5">{{ __('home.vstat_mobile_avgs', ['tx' => $fmt($v->avg_daily_transactions), 'support' => $fmt($v->avg_daily_support), 'trips' => $fmt($v->avg_daily_trips)]) }}</span>
-                                    <span class="sm:hidden block text-xs font-normal text-zinc-500 dark:text-zinc-400 mt-0.5">{{ __('home.vstat_mobile_trips', ['trips' => $fmt($row['trips']), 'instant' => $fmt($row['instant'])]) }}</span>
                                 </td>
-                                <td class="{{ $num }} text-zinc-600 dark:text-zinc-300 max-sm:hidden">{{ $fmt($v->avg_daily_transactions) }}</td>
-                                <td class="{{ $num }} text-zinc-600 dark:text-zinc-300 max-sm:hidden">{{ $fmt($v->avg_daily_support) }}</td>
-                                <td class="{{ $num }} text-zinc-600 dark:text-zinc-300 max-sm:hidden">{{ $fmt($v->avg_daily_trips) }}</td>
-                                <td class="{{ $num }} font-medium text-zinc-800 dark:text-zinc-100 max-sm:hidden">{{ $fmt($row['trips']) }}</td>
-                                <td class="{{ $num }} font-medium text-zinc-800 dark:text-zinc-100 max-sm:hidden">{{ $fmt($row['instant']) }}</td>
+                                <td class="{{ $num }} text-zinc-600 dark:text-zinc-300">{{ $fmt($v->avg_daily_transactions) }}</td>
+                                <td class="{{ $num }} text-zinc-600 dark:text-zinc-300">{{ $fmt($v->avg_daily_support) }}</td>
+                                <td class="{{ $num }} text-zinc-600 dark:text-zinc-300">{{ $fmt($v->avg_daily_trips) }}</td>
+                                <td class="{{ $num }} font-medium text-zinc-800 dark:text-zinc-100">{{ $fmt($row['trips']) }}</td>
+                                <td class="{{ $num }} font-medium text-zinc-800 dark:text-zinc-100">{{ $fmt($row['instant']) }}</td>
                                 <td class="{{ $num }} font-semibold text-zinc-800 dark:text-zinc-100 bg-zinc-50 dark:bg-zinc-800/60">{{ $fmt($row['tripsAll']) }}</td>
                                 <td class="{{ $num }} font-semibold text-zinc-800 dark:text-zinc-100 bg-[#c9a847]/5">{{ $fmt($row['tx']) }}</td>
                                 @unless($partial)
@@ -143,10 +141,10 @@
                         @endforeach
                         {{-- إجمالي المحافظة — المتوسطات لا تُجمع --}}
                         <tr class="bg-[#c9a847]/10 font-semibold text-zinc-700 dark:text-zinc-200 text-xs">
-                            <td class="px-3 py-2">{{ __('home.vstat_gov_total', ['name' => $group['governorate']->name ?? '']) }}<span class="sm:hidden block text-xs font-normal text-zinc-500 dark:text-zinc-400 mt-0.5">{{ __('home.vstat_mobile_trips', ['trips' => $fmt($group['totals']['trips']), 'instant' => $fmt($group['totals']['instant'])]) }}</span></td>
-                            <td class="max-sm:hidden"></td><td class="max-sm:hidden"></td><td class="max-sm:hidden"></td>
-                            <td class="{{ $num }} max-sm:hidden">{{ $fmt($group['totals']['trips']) }}</td>
-                            <td class="{{ $num }} max-sm:hidden">{{ $fmt($group['totals']['instant']) }}</td>
+                            <td class="px-3 py-2 max-sm:sticky max-sm:right-0 max-sm:z-10 max-sm:bg-[#faf6ed] dark:max-sm:bg-zinc-800">{{ __('home.vstat_gov_total', ['name' => $group['governorate']->name ?? '']) }}</td>
+                            <td></td><td></td><td></td>
+                            <td class="{{ $num }}">{{ $fmt($group['totals']['trips']) }}</td>
+                            <td class="{{ $num }}">{{ $fmt($group['totals']['instant']) }}</td>
                             <td class="{{ $num }}">{{ $fmt($group['totals']['tripsAll']) }}</td>
                             <td class="{{ $num }}">{{ $fmt($group['totals']['tx']) }}</td>
                             @unless($partial)<td class="{{ $num }}">{{ $fmt($group['totals']['txPrev']) }}</td>@endunless
@@ -155,10 +153,10 @@
                 </tbody>
                 <tfoot>
                     <tr class="bg-[#c9a847]/25 font-bold text-zinc-800 dark:text-zinc-100">
-                        <td class="px-3 py-3">{{ __('home.report_total') }}<span class="sm:hidden block text-xs font-normal text-zinc-500 dark:text-zinc-400 mt-0.5">{{ __('home.vstat_mobile_trips', ['trips' => $fmt($grand['trips']), 'instant' => $fmt($grand['instant'])]) }}</span></td>
-                        <td class="max-sm:hidden"></td><td class="max-sm:hidden"></td><td class="max-sm:hidden"></td>
-                        <td class="{{ $num }} max-sm:hidden">{{ $fmt($grand['trips']) }}</td>
-                        <td class="{{ $num }} max-sm:hidden">{{ $fmt($grand['instant']) }}</td>
+                        <td class="px-3 py-3 max-sm:sticky max-sm:right-0 max-sm:z-10 max-sm:bg-[#f2e9d1] dark:max-sm:bg-zinc-800">{{ __('home.report_total') }}</td>
+                        <td></td><td></td><td></td>
+                        <td class="{{ $num }}">{{ $fmt($grand['trips']) }}</td>
+                        <td class="{{ $num }}">{{ $fmt($grand['instant']) }}</td>
                         <td class="{{ $num }}">{{ $fmt($grand['tripsAll']) }}</td>
                         <td class="{{ $num }} text-[#b8962e] dark:text-[#c9a847]">{{ $fmt($grand['tx']) }}</td>
                         @unless($partial)<td class="{{ $num }}">{{ $fmt($grand['txPrev']) }}</td>@endunless

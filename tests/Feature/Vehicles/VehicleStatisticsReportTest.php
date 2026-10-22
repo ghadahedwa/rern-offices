@@ -233,11 +233,16 @@ it('adds regular and instant trips into one total, sortable and shown on the scr
         ->assertSeeHtml('>56</td>');   // الإجمالي العام: ٤٥ عادية + ١١ فورية
 });
 
-it('keeps regular and instant trips in a mobile line under the name, since their columns hide on phones', function () {
-    // بلاغ المستخدمة 2026-10-22: الجدول تجاوز عرض الموبايل بعد عمود الإجمالي ولم يتمرّر (overflow-hidden)
-    Livewire::actingAs(vsAdmin())->test(VehicleStatistics::class)
-        ->set('year', '2026')->call('search')
-        ->assertSee(__('home.vstat_mobile_trips', ['trips' => '20', 'instant' => '7']))       // أ
-        ->assertSee(__('home.vstat_mobile_trips', ['trips' => '20', 'instant' => '11']))      // الإجمالي العام
-        ->assertSeeHtml('shadow-sm overflow-x-auto');
+it('shows every column on phones in a sideways-scrolling frame with the name pinned', function () {
+    // بلاغ المستخدمة 2026-10-22: على التطبيق ظهر «إجمالي الانتقالات» و«المعاملات» وحدهما (الباقي max-sm:hidden)
+    // ولا شيء يُتمرَّر إليه — فالأعمدة كلها ظاهرة، والإطار يتمرّر، والاسم ثابت يميناً
+    $html = Livewire::actingAs(vsAdmin())->test(VehicleStatistics::class)
+        ->set('year', '2026')->call('search')->html();
+
+    $table = substr($html, strpos($html, '<table'), strpos($html, '</table>') - strpos($html, '<table'));
+
+    expect($table)->not->toContain('max-sm:hidden')
+        ->and($table)->not->toContain('sm:hidden block')
+        ->and($table)->toContain('max-sm:sticky max-sm:right-0')
+        ->and($html)->toContain('shadow-sm overflow-x-auto');
 });
