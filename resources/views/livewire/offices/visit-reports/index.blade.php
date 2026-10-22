@@ -18,9 +18,16 @@
         </select>
         <select wire:model.live="visit" class="{{ $filterCls }}">
             <option value="">— {{ __('home.vr_visit_filter') }} —</option>
-            @foreach(array_keys(\App\Livewire\Offices\VisitReportsIndex::VISIT_FILTERS) as $key)
-                <option value="{{ $key }}">{{ __('home.vr_filter_'.$key) }}</option>
-            @endforeach
+            <optgroup label="{{ __('home.vr_filter_group_visited') }}">
+                @foreach(array_keys(\App\Livewire\Offices\VisitReportsIndex::VISITED_FILTERS) as $key)
+                    <option value="{{ $key }}">{{ __('home.vr_filter_'.$key) }}</option>
+                @endforeach
+            </optgroup>
+            <optgroup label="{{ __('home.vr_filter_group_overdue') }}">
+                @foreach(array_keys(\App\Livewire\Offices\VisitReportsIndex::VISIT_FILTERS) as $key)
+                    <option value="{{ $key }}">{{ __('home.vr_filter_'.$key) }}</option>
+                @endforeach
+            </optgroup>
         </select>
         {{-- عدد الصفوف في خانة السطر الرابعة لا في سطرٍ تحته — فلا ينزل الجدول --}}
         <div class="flex items-center gap-2">

@@ -40,6 +40,16 @@ class VisitReportsIndex extends Component
         'never' => null,
     ];
 
+    /**
+     * عكس فلتر المدة: زيارةٌ وقعت خلال آخر N شهور. الحدّ الفاصل هو نفسه، فـ«خلال ٣ شهور»
+     * و«لم يُزر منذ ٣ شهور» يقسمان المقرات بلا تداخل ولا فجوة. وما لم يُزر أبداً خارجه.
+     */
+    public const VISITED_FILTERS = [
+        'in3'  => 3,
+        'in6'  => 6,
+        'in12' => 12,
+    ];
+
     #[Locked]
     public string $type;
 
@@ -102,7 +112,9 @@ class VisitReportsIndex extends Component
 
     private function visitFilter(): ?string
     {
-        return array_key_exists($this->visit, self::VISIT_FILTERS) ? $this->visit : null;
+        return array_key_exists($this->visit, self::VISIT_FILTERS) || array_key_exists($this->visit, self::VISITED_FILTERS)
+            ? $this->visit
+            : null;
     }
 
     public function render()
@@ -120,15 +132,20 @@ class VisitReportsIndex extends Component
             ))
             ->when($this->governorateId(), fn ($q, $id) => $q->where('offices.governorate_id', $id))
             ->when($this->visitFilter(), function ($q, $key) use ($visited) {
-                $months = self::VISIT_FILTERS[$key];
+                $within = array_key_exists($key, self::VISITED_FILTERS);
+                $months = $within ? self::VISITED_FILTERS[$key] : self::VISIT_FILTERS[$key];
                 if ($months === null) {
                     return $q->whereNull($visited);
                 }
                 // تاريخ الزيارة يومٌ كتبه المستخدم (لا يُحوَّل)، و«اليوم» بتوقيت القاهرة —
                 // `now()` بـUTC يعطي الأمس بين ١٢ و٣ فجراً
-                $cutoff = LocalTime::at(now())->startOfDay()->subMonths($months)->toDateString();
+                // الحدّ بالساعة لا باليوم وحده: sqlite يخزّن العمود 'Y-m-d 00:00:00' ويقارن نصاً،
+                // فمع 'Y-m-d' يصير `>` و`>=` سواءً ولا يُختبر يوم الحدّ
+                $cutoff = LocalTime::at(now())->startOfDay()->subMonths($months)->format('Y-m-d 00:00:00');
 
-                return $q->where(fn ($q) => $q->whereNull($visited)->orWhere($visited, '<', $cutoff));
+                return $within
+                    ? $q->where($visited, '>=', $cutoff)
+                    : $q->where(fn ($q) => $q->whereNull($visited)->orWhere($visited, '<', $cutoff));
             });
 
         $governorates = $user?->hasRole('super-admin')

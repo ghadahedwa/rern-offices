@@ -345,6 +345,11 @@ return [
     'vr_no_match'              => 'لا توجد مقرات تطابق الفلتر',
     'vr_saved'                 => 'تم حفظ التقرير',
     'vr_read_only'             => 'للاطلاع فقط — لا تملك صلاحية تعديل هذا التقرير',
+    'vr_filter_group_visited'  => 'تمت الزيارة',
+    'vr_filter_group_overdue'  => 'متأخرة',
+    'vr_filter_in3'            => 'خلال آخر ٣ شهور',
+    'vr_filter_in6'            => 'خلال آخر ٦ شهور',
+    'vr_filter_in12'           => 'خلال آخر سنة',
     'vr_save'                  => 'حفظ التقرير',
 
     // Office create — section headers

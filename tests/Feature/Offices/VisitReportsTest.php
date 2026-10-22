@@ -206,6 +206,24 @@ it('filters by how long since the report own last visit, counting never-visited 
         ->and($seen($component->set('visit', 'm6')))->toBe(['مقر الثمانية', 'مقر السنتين', 'مقر المفتش وحده'])
         ->and($seen($component->set('visit', 'm12')))->toBe(['مقر السنتين', 'مقر المفتش وحده'])
         ->and($seen($component->set('visit', 'never')))->toBe(['مقر المفتش وحده']);
+
+    // العكس: زيارة خلال المدة — ولا يدخلها ما لم يُزر أبداً
+    expect($seen($component->set('visit', 'in3')))->toBe(['مقر الشهرين'])
+        ->and($seen($component->set('visit', 'in6')))->toBe(['مقر الشهرين', 'مقر الأربعة'])
+        ->and($seen($component->set('visit', 'in12')))->toBe(['مقر الشهرين', 'مقر الأربعة', 'مقر الثمانية']);
+});
+
+it('splits offices exactly between visited-within and overdue on the boundary day', function () {
+    $gov = Governorate::factory()->create();
+    $cutoff = \App\Support\LocalTime::at(now())->startOfDay()->subMonths(3);
+    vrOffice(['governorate_id' => $gov->id, 'name' => 'مقر يوم الحد', 'counselor_visited_at' => $cutoff->toDateString()]);
+    vrOffice(['governorate_id' => $gov->id, 'name' => 'مقر قبل الحد', 'counselor_visited_at' => $cutoff->subDay()->toDateString()]);
+    $user = vrUser($gov, ['offices.counselor-report.view']);
+
+    $component = Livewire::actingAs($user)->test(VisitReportsIndex::class, ['type' => 'counselor']);
+
+    $component->set('visit', 'in3')->assertSee('مقر يوم الحد')->assertDontSee('مقر قبل الحد');
+    $component->set('visit', 'm3')->assertSee('مقر قبل الحد')->assertDontSee('مقر يوم الحد');
 });
 
 it('searches Arabic office names normalized', function () {
