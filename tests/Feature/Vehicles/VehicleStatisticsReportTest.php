@@ -232,3 +232,12 @@ it('adds regular and instant trips into one total, sortable and shown on the scr
         ->assertSee(__('home.vstat_col_trips_all', ['year' => 2026]))
         ->assertSeeHtml('>56</td>');   // الإجمالي العام: ٤٥ عادية + ١١ فورية
 });
+
+it('keeps regular and instant trips in a mobile line under the name, since their columns hide on phones', function () {
+    // بلاغ المستخدمة 2026-10-22: الجدول تجاوز عرض الموبايل بعد عمود الإجمالي ولم يتمرّر (overflow-hidden)
+    Livewire::actingAs(vsAdmin())->test(VehicleStatistics::class)
+        ->set('year', '2026')->call('search')
+        ->assertSee(__('home.vstat_mobile_trips', ['trips' => '20', 'instant' => '7']))       // أ
+        ->assertSee(__('home.vstat_mobile_trips', ['trips' => '20', 'instant' => '11']))      // الإجمالي العام
+        ->assertSeeHtml('shadow-sm overflow-x-auto');
+});
