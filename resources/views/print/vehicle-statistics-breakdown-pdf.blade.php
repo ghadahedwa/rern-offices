@@ -56,6 +56,8 @@
 
     @if($report->isUnavailable())
         <div class="note">{{ __('home.vbd_tx_monthly_unavailable') }}</div>
+    @elseif(! $columns)
+        <div class="note">{{ __('home.vbd_no_months_yet') }}</div>
     @elseif($report->isVertical())
     @php $vt = $report->vertical(); $series = $report->series(); $w = round(70 / count($series), 2); @endphp
     <table class="rt">

@@ -57,6 +57,10 @@ class VehicleStatisticsBreakdown
         private string $period,
         private int $year,
         private ?int $vehicleId = null,
+        private ?int $yearFrom = null,
+        private ?int $yearTo = null,
+        private ?int $monthFrom = null,
+        private ?int $monthTo = null,
     ) {}
 
     /** @param ?array $allowedGovIds null = بلا حدّ (super-admin) · [] = لا يرى شيئاً */
@@ -78,7 +82,65 @@ class VehicleStatisticsBreakdown
             $pick('period', self::PERIODS),
             VehicleStatistics::sanitizeYear($filters['year'] ?? null),
             is_scalar($filters['vehicleId'] ?? null) && ctype_digit((string) $filters['vehicleId']) ? (int) $filters['vehicleId'] : null,
+            ...self::sanitizeYearRange($filters['yearFrom'] ?? null, $filters['yearTo'] ?? null),
+            ...self::sanitizeMonthRange($filters['monthFrom'] ?? null, $filters['monthTo'] ?? null),
         );
+    }
+
+    /**
+     * مدى الشهور في الشهري «من شهر … إلى شهر» (طلب المستخدمة 2026-10-22) — الشهر نفسه في الاثنين = شهرٌ واحد.
+     * الفارغ أو التالف يُهمَل (كل الشهور)، والمقلوب يُعدَل.
+     *
+     * @return array{0: ?int, 1: ?int}
+     */
+    private static function sanitizeMonthRange(mixed $from, mixed $to): array
+    {
+        $clean = fn ($m) => is_scalar($m) && ctype_digit((string) $m) && (int) $m >= 1 && (int) $m <= 12 ? (int) $m : null;
+
+        [$from, $to] = [$clean($from), $clean($to)];
+
+        return $from !== null && $to !== null && $from > $to ? [$to, $from] : [$from, $to];
+    }
+
+    /** @return array{0: int, 1: int} مدى الشهور المختار (بلا اختيار: السنة كلها) */
+    public function monthRange(): array
+    {
+        return [$this->monthFrom ?? 1, $this->monthTo ?? 12];
+    }
+
+    /** المدى يمسّ «يناير–سبتمبر» المجمَّع لمعاملات ٢٠٢٦ — عموده لا يُقسَم شهوراً فيظهر كاملاً باسمه */
+    private function includesPartialColumn(): bool
+    {
+        return $this->metric === 'tx' && Periods::isTransition($this->year)
+            && $this->monthRange()[0] < Periods::MONTHLY_FROM_MONTH;
+    }
+
+    /**
+     * مدى المقارنة السنوية «من سنة … إلى سنة» (طلب المستخدمة 2026-10-22). الفارغ أو التالف أو خارج
+     * المدى المسموح يُهمَل (فيعود التلقائي: من أول سنة فيها رقم · إلى السنة الجارية)، والمقلوب يُعدَل.
+     *
+     * @return array{0: ?int, 1: ?int}
+     */
+    private static function sanitizeYearRange(mixed $from, mixed $to): array
+    {
+        $current = VehicleColumns::currentYear();
+        $clean   = fn ($y) => is_scalar($y) && ctype_digit((string) $y) && (int) $y >= Periods::FIRST_YEAR && (int) $y <= $current
+            ? (int) $y : null;
+
+        [$from, $to] = [$clean($from), $clean($to)];
+
+        return $from !== null && $to !== null && $from > $to ? [$to, $from] : [$from, $to];
+    }
+
+    /** @return array{0: int, 1: int} مدى السنوات المعروض في السنوي — المختار أو التلقائي */
+    public function yearRange(): array
+    {
+        $current = VehicleColumns::currentYear();
+        $from    = $this->yearFrom ?? ($this->load()['firstYear'] ?? $current);
+        $to      = $this->yearTo ?? $current;
+
+        // «إلى» وحدها قبل أول سنةٍ فيها رقم: يبدأ المدى منها لا بعدها
+        return [min($from, $to), $to];
     }
 
     public function metric(): string { return $this->metric; }
@@ -101,7 +163,11 @@ class VehicleStatisticsBreakdown
     public function periodLabel(): string
     {
         if ($this->period === 'monthly') {
-            return __('home.vbd_period_year', ['year' => $this->year])
+            [$from, $to] = $this->monthRange();
+            $months = [$from, $to] === [1, 12] ? ''
+                : ' — ' . ($from === $to ? Documentation::MONTHS[$from] : Documentation::MONTHS[$from] . ' – ' . Documentation::MONTHS[$to]);
+
+            return __('home.vbd_period_year', ['year' => $this->year]) . $months
                 . ($this->year >= VehicleColumns::currentYear() ? ' (' . __('home.vstat_so_far') . ')' : '');
         }
 
@@ -187,10 +253,10 @@ class VehicleStatisticsBreakdown
         $current = VehicleColumns::currentYear();
 
         if ($this->period === 'yearly') {
-            $first = $this->load()['firstYear'] ?? $current;
+            [$from, $to] = $this->yearRange();
 
             $cols = [];
-            foreach (range($first, $current) as $y) {
+            foreach (range($from, $to) as $y) {
                 $cols[$y] = $y >= $current ? $y . ' (' . __('home.vstat_so_far') . ')' : (string) $y;
             }
 
@@ -202,11 +268,14 @@ class VehicleStatisticsBreakdown
         }
 
         $lastMonth = $this->year >= $current ? (int) now(\App\Support\LocalTime::timezone())->month : 12;
-        $months    = range(1, $lastMonth);
+        [$fromMonth, $toMonth] = $this->monthRange();
+        $months    = array_filter(range(1, $lastMonth), fn ($m) => $m >= $fromMonth && $m <= $toMonth);
         $cols      = [];
 
         if ($this->metric === 'tx' && Periods::isTransition($this->year)) {
-            $cols[self::PARTIAL_COLUMN] = __('home.vstat_partial_2026');
+            if ($this->includesPartialColumn()) {
+                $cols[self::PARTIAL_COLUMN] = __('home.vstat_partial_2026');
+            }
             $months = array_filter($months, fn ($m) => $m >= Periods::MONTHLY_FROM_MONTH);
         }
 
@@ -324,7 +393,7 @@ class VehicleStatisticsBreakdown
         $ids      = $vehicles->pluck('id')->all();
 
         // أول سنة فيها رقمٌ للمؤشر — قبل `columns()` لأنها تقرؤها
-        $firstYear = $ids && $this->period === 'yearly'
+        $firstYear = $ids && $this->period === 'yearly' && $this->yearFrom === null
             ? VehicleStat::whereIn('vehicle_id', $ids)->whereIn('stat_type_id', $this->typeIds())->min('year')
             : null;
         $this->cache = ['groups' => [], 'raw' => [], 'firstYear' => $firstYear !== null ? max((int) $firstYear, Periods::FIRST_YEAR) : null];
@@ -413,7 +482,12 @@ class VehicleStatisticsBreakdown
         return VehicleStat::query()
             ->whereIn('vehicle_id', $vehicleIds ?: [0])
             ->whereIn('stat_type_id', $this->typeIds() ?: [0])
-            ->when($this->period === 'monthly', fn ($q) => $q->where('year', $this->year));
+            ->when($this->period === 'monthly', fn ($q) => $q->where('year', $this->year)
+                // داخل مدى الشهور (والمجمَّع «يناير–سبتمبر» إن مسّه المدى) — يقرؤه ملف البيانات الطويل أيضاً
+                ->where(fn ($w) => $w->whereBetween('month', $this->monthRange())
+                    ->when($this->includesPartialColumn(), fn ($w) => $w->orWhereNull('month'))))
+            // السنوي: داخل المدى المعروض وحده (يقرؤه ملف البيانات الطويل أيضاً)
+            ->when($this->period === 'yearly', fn ($q) => $q->whereBetween('year', $this->yearRange()));
     }
 
     /** cells[vehicle][عمود] لمؤشر — مجموع أنواعه (عادية + فورية لإجمالي الانتقالات) */

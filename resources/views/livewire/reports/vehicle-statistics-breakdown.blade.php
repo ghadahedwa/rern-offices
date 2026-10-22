@@ -33,7 +33,7 @@
             <h3 class="text-sm font-semibold text-zinc-600 dark:text-zinc-400 uppercase tracking-wide">{{ __('home.report_basic_filters') }}</h3>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
             <div>
                 <label class="{{ $lbl }}">{{ __('home.vbd_metric') }}</label>
                 <select wire:model="metric" class="{{ $sel }}">
@@ -42,24 +42,45 @@
                     @endforeach
                 </select>
             </div>
-            <div>
-                <label class="{{ $lbl }}">{{ __('home.vbd_level') }}</label>
-                {{-- سيارةٌ مختارة تُغني عن التجميع: التقرير لها وحدها --}}
-                <select wire:model="level" class="{{ $sel }} disabled:opacity-50" @disabled($vehicleId !== '')>
-                    @foreach(\App\Reports\VehicleStatisticsBreakdown::LEVELS as $l)
-                        <option value="{{ $l }}">{{ __('home.vbd_level_' . $l) }}</option>
-                    @endforeach
-                </select>
+            {{-- التجميع والفترة خياران لكلٍّ منهما: ظاهران معاً بدل منسدلة تُخفيهما (طلب المستخدمة 2026-10-22).
+                 وسيارةٌ مختارة تُغني عن التجميع: التقرير لها وحدها، فيبقى ظاهراً مقفولاً --}}
+            @include('livewire.reports.includes.segmented-radio', [
+                'model'    => 'level',
+                'label'    => __('home.vbd_level'),
+                'selected' => $level,
+                'disabled' => $vehicleId !== '',
+                'options'  => collect(\App\Reports\VehicleStatisticsBreakdown::LEVELS)->mapWithKeys(fn ($l) => [$l => __('home.vbd_level_' . $l)])->all(),
+            ])
+            @include('livewire.reports.includes.segmented-radio', [
+                'model'    => 'period',
+                'label'    => __('home.vbd_period'),
+                'selected' => $period,
+                'options'  => collect(\App\Reports\VehicleStatisticsBreakdown::PERIODS)->mapWithKeys(fn ($p) => [$p => __('home.vbd_period_' . $p)])->all(),
+            ])
+            {{-- السنوي: مدى المقارنة «من … إلى»، والفارغ تلقائي (من أول سنة فيها رقم · إلى السنة الجارية) --}}
+            @if($period === 'yearly')
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="{{ $lbl }}">{{ __('home.vbd_year_from') }}</label>
+                    <select wire:model="yearFrom" class="{{ $sel }}">
+                        <option value="">{{ __('home.vbd_year_from_auto') }}</option>
+                        @foreach(array_reverse($years) as $y)
+                            <option value="{{ $y }}">{{ $y }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div>
+                    <label class="{{ $lbl }}">{{ __('home.vbd_year_to') }}</label>
+                    <select wire:model="yearTo" class="{{ $sel }}">
+                        <option value="">{{ __('home.vbd_year_to_auto') }}</option>
+                        @foreach($years as $y)
+                            <option value="{{ $y }}">{{ $y }}</option>
+                        @endforeach
+                    </select>
+                </div>
             </div>
-            <div>
-                <label class="{{ $lbl }}">{{ __('home.vbd_period') }}</label>
-                <select wire:model.live="period" class="{{ $sel }}">
-                    @foreach(\App\Reports\VehicleStatisticsBreakdown::PERIODS as $p)
-                        <option value="{{ $p }}">{{ __('home.vbd_period_' . $p) }}</option>
-                    @endforeach
-                </select>
-            </div>
-            {{-- السنة للشهري وحده: السنوي يعرض السنين كلها --}}
+            @endif
+            {{-- الشهري: السنة، ومدى الشهور «من … إلى» (الشهر نفسه في الاثنين = شهرٌ واحد) --}}
             @if($period === 'monthly')
             <div>
                 <label class="{{ $lbl }}">{{ __('home.vstat_report_year') }}</label>
@@ -68,6 +89,26 @@
                         <option value="{{ $y }}">{{ $y }}</option>
                     @endforeach
                 </select>
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="{{ $lbl }}">{{ __('home.vbd_month_from') }}</label>
+                    <select wire:model="monthFrom" class="{{ $sel }}">
+                        <option value="">{{ __('home.vbd_month_from_auto') }}</option>
+                        @foreach(\App\Livewire\Vehicles\StatTab\Documentation::MONTHS as $m => $name)
+                            <option value="{{ $m }}">{{ $name }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div>
+                    <label class="{{ $lbl }}">{{ __('home.vbd_month_to') }}</label>
+                    <select wire:model="monthTo" class="{{ $sel }}">
+                        <option value="">{{ __('home.vbd_month_to_auto') }}</option>
+                        @foreach(\App\Livewire\Vehicles\StatTab\Documentation::MONTHS as $m => $name)
+                            <option value="{{ $m }}">{{ $name }}</option>
+                        @endforeach
+                    </select>
+                </div>
             </div>
             @endif
         </div>
@@ -124,6 +165,10 @@
     @if($report && $report->isUnavailable())
     <div class="rounded-xl border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/20 p-6 text-center">
         <p class="text-sm text-amber-800 dark:text-amber-300">{{ __('home.vbd_tx_monthly_unavailable') }}</p>
+    </div>
+    @elseif($report && ! $report->columns())
+    <div class="rounded-xl border border-dashed border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-900 p-8 text-center">
+        <p class="text-sm text-zinc-500 dark:text-zinc-400">{{ __('home.vbd_no_months_yet') }}</p>
     </div>
     @elseif($report)
     @php

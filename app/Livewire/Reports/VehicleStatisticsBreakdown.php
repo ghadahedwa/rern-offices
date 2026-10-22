@@ -23,6 +23,12 @@ class VehicleStatisticsBreakdown extends Component
     public string $level = 'governorate';
     public string $period = 'yearly';
     public string $year = '';
+    /** مدى المقارنة السنوية — الفارغ تلقائي (من أول سنة فيها رقم · إلى السنة الجارية) */
+    public string $yearFrom = '';
+    public string $yearTo = '';
+    /** مدى الشهور في الشهري — الفارغ كل الشهور، والشهر نفسه في الاثنين شهرٌ واحد */
+    public string $monthFrom = '';
+    public string $monthTo = '';
     /** سيارةٌ واحدة → الشكل الرأسي (الفترات صفوف) */
     public string $vehicleId = '';
     /** بحثٌ داخل منسدلة المحافظات (المنسدلة نفسها التي في لوحة العاملين بالتعاقد) */
@@ -48,13 +54,17 @@ class VehicleStatisticsBreakdown extends Component
             'period'         => $this->period,
             'year'           => $this->year,
             'vehicleId'      => $this->vehicleId,
+            'yearFrom'       => $this->yearFrom,
+            'yearTo'         => $this->yearTo,
+            'monthFrom'      => $this->monthFrom,
+            'monthTo'        => $this->monthTo,
         ];
         $this->hasSearched = true;
     }
 
     public function resetFilters(): void
     {
-        $this->reset(['governorateIds', 'metric', 'level', 'period', 'vehicleId', 'governorateSearch']);
+        $this->reset(['governorateIds', 'metric', 'level', 'period', 'vehicleId', 'governorateSearch', 'yearFrom', 'yearTo', 'monthFrom', 'monthTo']);
         $this->year        = (string) YearReport::sanitizeYear(null);
         $this->applied     = [];
         $this->hasSearched = false;

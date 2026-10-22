@@ -409,3 +409,123 @@ it('shows the three sub columns on the screen and in the pdf', function () {
         ->get(route('reports.vehicle-statistics-breakdown.pdf'))
         ->assertOk();
 });
+
+// ── مدى المقارنة السنوية «من سنة … إلى سنة» ──
+
+it('compares only the chosen years, in the table and in the long data', function () {
+    $r = Report::make(null, ['metric' => 'tx', 'level' => 'governorate', 'period' => 'yearly', 'yearFrom' => '2025', 'yearTo' => '2026']);
+
+    [$cairo, $giza] = $r->groups()->map(fn ($g) => $g['total'])->all();
+
+    expect($r->yearRange())->toBe([2025, 2026])
+        ->and(array_keys($r->columns()))->toBe([2025, 2026])
+        ->and($giza['cells'])->toBe([2025 => 500.0, 2026 => null])
+        ->and($giza['total'])->toBe(500.0)                 // ٢٠٢٤ (٣٠٠) خارج المدى
+        ->and($r->grandTotal()['total'])->toBe(5500.0)
+        ->and(array_unique(array_column($r->dataRows(), 3)))->toEqualCanonicalizing([2025, 2026]);
+});
+
+it('shows empty years when the range starts before the first number', function () {
+    $r = Report::make(null, ['metric' => 'tx', 'period' => 'yearly', 'yearFrom' => '2021', 'yearTo' => '2024']);
+
+    expect(array_keys($r->columns()))->toBe([2021, 2022, 2023, 2024])
+        ->and($r->grandTotal()['cells'])->toBe([2021 => null, 2022 => null, 2023 => null, 2024 => 300.0]);
+});
+
+it('fixes a reversed range and ignores bad years', function () {
+    expect(Report::make(null, ['period' => 'yearly', 'yearFrom' => '2026', 'yearTo' => '2024'])->yearRange())->toBe([2024, 2026])
+        // التالف وخارج المدى يُهمَلان فيعود التلقائي: من أول سنة فيها رقم إلى الجارية
+        ->and(Report::make(null, ['period' => 'yearly', 'yearFrom' => 'abc', 'yearTo' => '2050'])->yearRange())->toBe([2024, 2026])
+        ->and(Report::make(null, ['period' => 'yearly', 'yearFrom' => '2019', 'yearTo' => ['2025']])->yearRange())->toBe([2024, 2026]);
+});
+
+it('starts from the end year when only an end before the first number is chosen', function () {
+    expect(Report::make(null, ['metric' => 'tx', 'period' => 'yearly', 'yearTo' => '2025'])->yearRange())->toBe([2024, 2025])
+        ->and(Report::make(null, ['metric' => 'tx', 'period' => 'yearly', 'yearTo' => '2022'])->yearRange())->toBe([2022, 2022]);
+});
+
+it('applies the range to the vertical layout and from the screen', function () {
+    $vt = Report::make(null, ['metric' => 'tx', 'period' => 'yearly', 'yearFrom' => '2026', 'vehicleId' => (string) $this->a->id])->vertical();
+    expect(array_keys($vt['rows']))->toBe([2026])->and($vt['total'])->toBe(['tx' => 1000.0]);
+
+    $r = Livewire::actingAs(vbAdmin())->test(VehicleStatisticsBreakdown::class)
+        ->set('period', 'yearly')
+        ->assertSee(__('home.vbd_year_from'))
+        ->set('yearFrom', '2025')->set('yearTo', '2026')->call('search')   // التلقائي يبدأ ٢٠٢٤، فالاختيار ظاهر
+        ->viewData('report');
+
+    expect(array_keys($r->columns()))->toBe([2025, 2026]);
+});
+
+it('shows grouping and period as visible radio choices, locking grouping when a vehicle is chosen', function () {
+    $test = Livewire::actingAs(vbAdmin())->test(VehicleStatisticsBreakdown::class)
+        ->assertSeeHtml('type="radio" wire:model.live="level" value="governorate"')
+        ->assertSeeHtml('type="radio" wire:model.live="level" value="vehicle"')
+        ->assertSeeHtml('type="radio" wire:model.live="period" value="yearly"')
+        ->assertSeeHtml('type="radio" wire:model.live="period" value="monthly"')
+        ->assertDontSeeHtml('<select wire:model="level"');
+
+    // اختيار «شهري» يُظهر السنة ويُخفي «من/إلى»
+    $test->set('period', 'monthly')->assertSee(__('home.vstat_report_year'))->assertDontSee(__('home.vbd_year_from'));
+
+    // سيارةٌ مختارة: التجميع مقفول
+    $html = $test->set('vehicleId', (string) $this->a->id)->html();
+    expect(preg_match('/wire:model\.live="level" value="vehicle"\s+disabled/', $html))->toBe(1);
+});
+
+// ── مدى الشهور في الشهري «من شهر … إلى شهر» ──
+
+it('shows a single month when the same month is chosen twice', function () {
+    $r = Report::make(null, ['metric' => 'trips_all', 'level' => 'vehicle', 'period' => 'monthly', 'year' => '2026', 'monthFrom' => '10', 'monthTo' => '10']);
+    $a = $r->groups()->first()['vehicleRows'][0];
+
+    expect($r->columns())->toBe([10 => 'أكتوبر'])
+        ->and(array_map(fn ($x) => $x['total'], $a['split']))->toBe(['trips' => 20.0, 'instant' => 5.0, 'trips_all' => 25.0])  // سبتمبر (٢ فورية) خارج المدى
+        ->and(array_unique(array_column($r->dataRows(), 4)))->toBe(['أكتوبر'])
+        ->and($r->periodLabel())->toContain('أكتوبر');
+});
+
+it('limits the months to a range and fixes a reversed one', function () {
+    $r = Report::make(null, ['metric' => 'trips_all', 'period' => 'monthly', 'year' => '2026', 'monthFrom' => '10', 'monthTo' => '9']);
+
+    expect(array_keys($r->columns()))->toBe([9, 10])
+        ->and($r->periodLabel())->toContain('سبتمبر – أكتوبر')
+        ->and(Report::make(null, ['period' => 'monthly', 'monthFrom' => '13', 'monthTo' => 'x'])->monthRange())->toBe([1, 12]);
+});
+
+it('keeps the January–September column for 2026 transactions only when the range touches it', function () {
+    $early = Report::make(null, ['metric' => 'tx', 'level' => 'vehicle', 'period' => 'monthly', 'year' => '2026', 'monthFrom' => '3', 'monthTo' => '5']);
+    $late  = Report::make(null, ['metric' => 'tx', 'level' => 'vehicle', 'period' => 'monthly', 'year' => '2026', 'monthFrom' => '10', 'monthTo' => '12']);
+
+    expect($early->columns())->toBe([0 => 'يناير – سبتمبر'])          // لا يُقسَم شهوراً فيظهر كاملاً باسمه
+        ->and($early->grandTotal()['total'])->toBe(900.0)
+        ->and($late->columns())->toBe([10 => 'أكتوبر'])
+        ->and($late->grandTotal()['total'])->toBe(100.0)
+        ->and(array_column($late->dataRows(), 4))->toBe(['أكتوبر']);
+});
+
+it('says the chosen months have not come yet instead of an empty table', function () {
+    // اليوم ١٥ أكتوبر ٢٠٢٦: نوفمبر وديسمبر لم يأتيا
+    $r = Report::make(null, ['metric' => 'trips', 'period' => 'monthly', 'year' => '2026', 'monthFrom' => '11', 'monthTo' => '12']);
+    expect($r->columns())->toBe([]);
+
+    Livewire::actingAs(vbAdmin())->test(VehicleStatisticsBreakdown::class)
+        ->set('metric', 'trips')->set('period', 'monthly')->set('year', '2026')
+        ->assertSee(__('home.vbd_month_from'))
+        ->set('monthFrom', '11')->set('monthTo', '12')->call('search')
+        ->assertSee(__('home.vbd_no_months_yet'));
+
+    $this->actingAs(vbAdmin())
+        ->withSession(['vehicle_statistics_breakdown_filters' => ['metric' => 'trips', 'period' => 'monthly', 'year' => '2026', 'monthFrom' => '11', 'monthTo' => '12']])
+        ->get(route('reports.vehicle-statistics-breakdown.pdf'))->assertOk();
+});
+
+it('applies the month range from the screen and to the vertical layout', function () {
+    $r = Livewire::actingAs(vbAdmin())->test(VehicleStatisticsBreakdown::class)
+        ->set('metric', 'trips')->set('period', 'monthly')->set('year', '2026')
+        ->set('monthFrom', '9')->set('monthTo', '9')->set('vehicleId', (string) $this->a->id)->call('search')
+        ->viewData('report');
+
+    expect(array_keys($r->vertical()['rows']))->toBe([9])
+        ->and($r->vertical()['total'])->toBe(['trips' => null, 'instant' => 2.0, 'trips_all' => 2.0]);
+});
