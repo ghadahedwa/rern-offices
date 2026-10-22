@@ -126,6 +126,23 @@ class VehicleStatisticsBreakdown
         return $this->isVertical() ? self::FAMILIES[$this->metric] : [$this->metric];
     }
 
+    /**
+     * العرضي لإجمالي الانتقالات: تحت كل فترة **ثلاثة أعمدة** (عادية · فورية · إجمالي) — قرار المستخدمة
+     * 2026-10-22. الجدول يعرض بها (١٠ شهور = ٣٠ عموداً) فيتمرّر داخل إطاره كأي جدولٍ متقاطع.
+     *
+     * @return string[] فارغة = عمودٌ واحد للفترة
+     */
+    public function splitSeries(): array
+    {
+        return ! $this->isVertical() && $this->metric === 'trips_all' ? self::FAMILIES['trips_all'] : [];
+    }
+
+    /** اسمٌ قصير لعمودٍ فرعي تحت الفترة */
+    public static function subLabel(string $metric): string
+    {
+        return __('home.vbd_sub_' . $metric);
+    }
+
     public static function seriesLabel(string $metric): string
     {
         return __($metric === 'trips_all' ? 'home.vbd_series_trips_all' : 'home.vbd_metric_' . $metric);
@@ -316,15 +333,25 @@ class VehicleStatisticsBreakdown
         $this->cache['raw'] = $cols ? $this->cells($ids) : [];
         $cells = $this->cellsFor(self::typesFor($this->metric));
 
+        // الأعمدة الفرعية (عادية · فورية · إجمالي) لكل مؤشرٍ منها
+        $splitCells = [];
+        foreach ($this->splitSeries() as $m) {
+            $splitCells[$m] = $this->cellsFor(self::typesFor($m));
+        }
+
         $groups = [];
         foreach ($vehicles->groupBy('governorate_id') as $govVehicles) {
-            $vehicleRows = $govVehicles->map(function (Vehicle $v) use ($cells, $cols) {
-                $row = [];
-                foreach ($cols as $c) {
-                    $row[$c] = $cells[$v->id][$c] ?? null;
-                }
+            $vehicleRows = $govVehicles->map(function (Vehicle $v) use ($cells, $cols, $splitCells) {
+                $pick = function (array $source) use ($v, $cols) {
+                    $row = [];
+                    foreach ($cols as $c) {
+                        $row[$c] = $source[$v->id][$c] ?? null;
+                    }
 
-                return ['vehicle' => $v, 'cells' => $row, 'total' => VehicleStatistics::sumOrNull($row)];
+                    return ['cells' => $row, 'total' => VehicleStatistics::sumOrNull($row)];
+                };
+
+                return ['vehicle' => $v, ...$pick($cells), 'split' => array_map($pick, $splitCells)];
             })->values()->all();
 
             $groups[] = [
@@ -347,8 +374,19 @@ class VehicleStatisticsBreakdown
             $sums[$c] = VehicleStatistics::sumOrNull(array_map(fn ($r) => $r['cells'][$c], $vehicleRows));
         }
 
+        // الأعمدة الفرعية: مجموع كل عمودٍ فرعي عبر الصفوف
+        $split = [];
+        foreach (array_keys($vehicleRows[0]['split'] ?? []) as $m) {
+            $cells = [];
+            foreach ($cols as $c) {
+                $cells[$c] = VehicleStatistics::sumOrNull(array_map(fn ($r) => $r['split'][$m]['cells'][$c], $vehicleRows));
+            }
+            $split[$m] = ['cells' => $cells, 'total' => VehicleStatistics::sumOrNull($cells)];
+        }
+
         return [
             'cells'     => $sums,
+            'split'     => $split,
             'total'     => VehicleStatistics::sumOrNull($sums),
             'vehicles'  => count($vehicleRows),
             'reporting' => count(array_filter($vehicleRows, fn ($r) => $r['total'] !== null)),

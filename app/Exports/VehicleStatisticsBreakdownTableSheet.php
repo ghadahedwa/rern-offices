@@ -52,7 +52,15 @@ class VehicleStatisticsBreakdownTableSheet implements FromArray, WithHeadings, W
             ? [__('home.vbd_level_governorate'), __('home.vbd_level_vehicle')]
             : [__('home.vbd_level_governorate'), __('home.vbd_col_vehicles'), __('home.vbd_col_reporting')];
 
-        return [...$lead, ...array_values($this->report->columns()), __('home.vbd_col_total')];
+        $periods = [...array_values($this->report->columns()), __('home.vbd_col_total')];
+        $sub     = $this->report->splitSeries();
+
+        // إجمالي الانتقالات: ثلاثة أعمدة لكل فترة في صفّ رأسٍ واحد («سبتمبر — عادية») — يبقى صالحاً للفلترة
+        $periods = $sub
+            ? array_merge(...array_map(fn ($p) => array_map(fn ($m) => $p . ' — ' . VehicleStatisticsBreakdown::subLabel($m), $sub), $periods))
+            : $periods;
+
+        return [...$lead, ...$periods];
     }
 
     public function array(): array
@@ -68,28 +76,34 @@ class VehicleStatisticsBreakdownTableSheet implements FromArray, WithHeadings, W
 
         $cols = array_keys($this->report->columns());
         $rows = [];
-        $line = fn (array $cells, ?float $total) => [...array_map(fn ($c) => $cells[$c], $cols), $total];
+        $sub  = $this->report->splitSeries();
+        $line = fn (array $row) => $sub
+            ? [
+                ...array_merge(...array_map(fn ($c) => array_map(fn ($m) => $row['split'][$m]['cells'][$c] ?? null, $sub), $cols)),
+                ...array_map(fn ($m) => $row['split'][$m]['total'] ?? null, $sub),
+            ]
+            : [...array_map(fn ($c) => $row['cells'][$c], $cols), $row['total']];
 
         foreach ($this->report->groups() as $group) {
             $gov = $group['governorate']->name ?? '';
             $t   = $group['total'];
 
             if (! $this->byVehicle()) {
-                $rows[] = [$gov, $t['vehicles'], $t['reporting'], ...$line($t['cells'], $t['total'])];
+                $rows[] = [$gov, $t['vehicles'], $t['reporting'], ...$line($t)];
                 continue;
             }
 
             foreach ($group['vehicleRows'] as $r) {
-                $rows[] = [$gov, $r['vehicle']->name, ...$line($r['cells'], $r['total'])];
+                $rows[] = [$gov, $r['vehicle']->name, ...$line($r)];
             }
-            $rows[] = [__('home.vstat_gov_total', ['name' => $gov]), __('home.vbd_reporting_of', ['n' => $t['reporting'], 'm' => $t['vehicles']]), ...$line($t['cells'], $t['total'])];
+            $rows[] = [__('home.vstat_gov_total', ['name' => $gov]), __('home.vbd_reporting_of', ['n' => $t['reporting'], 'm' => $t['vehicles']]), ...$line($t)];
             $this->totalRows[] = count($rows) + 1;
         }
 
         $g = $this->report->grandTotal();
         $rows[] = $this->byVehicle()
-            ? [__('home.vbd_grand_total'), __('home.vbd_reporting_of', ['n' => $g['reporting'], 'm' => $g['vehicles']]), ...$line($g['cells'], $g['total'])]
-            : [__('home.vbd_grand_total'), $g['vehicles'], $g['reporting'], ...$line($g['cells'], $g['total'])];
+            ? [__('home.vbd_grand_total'), __('home.vbd_reporting_of', ['n' => $g['reporting'], 'm' => $g['vehicles']]), ...$line($g)]
+            : [__('home.vbd_grand_total'), $g['vehicles'], $g['reporting'], ...$line($g)];
         $this->totalRows[] = count($rows) + 1;
 
         return $rows;

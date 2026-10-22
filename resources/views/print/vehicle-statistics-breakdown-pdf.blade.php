@@ -85,18 +85,35 @@
 
     <div class="footnote">{{ __('home.vbd_footnote') }}</div>
     @else
-    @php $groups = $report->groups(); $grand = $report->grandTotal(); @endphp
+    @php
+        $groups = $report->groups();
+        $grand  = $report->grandTotal();
+        // إجمالي الانتقالات: تحت كل فترة ثلاثة أعمدة (عادية · فورية · إجمالي)
+        $sub    = $report->splitSeries();
+        $per    = max(count($sub), 1);
+        $vals   = fn ($row, $key) => $sub ? array_map(fn ($m) => $row['split'][$m]['cells'][$key] ?? null, $sub) : [$row['cells'][$key] ?? null];
+        $tots   = fn ($row) => $sub ? array_map(fn ($m) => $row['split'][$m]['total'] ?? null, $sub) : [$row['total']];
+        $bold   = fn ($i) => $sub && $i === $per - 1 ? ' style="font-weight:bold;"' : '';
+        $span   = (count($columns) + 1) * $per + ($byVehicle ? 1 : 3);
+    @endphp
     <table class="rt">
         <thead>
             <tr>
-                <th style="text-align:right;">{{ $byVehicle ? __('home.vbd_level_vehicle') : __('home.vbd_level_governorate') }}</th>
+                <th @if($sub) rowspan="2" @endif style="text-align:right;">{{ $byVehicle ? __('home.vbd_level_vehicle') : __('home.vbd_level_governorate') }}</th>
                 @unless($byVehicle)
-                <th>{{ __('home.vbd_col_vehicles') }}</th>
-                <th>{{ __('home.vbd_col_reporting') }}</th>
+                <th @if($sub) rowspan="2" @endif>{{ __('home.vbd_col_vehicles') }}</th>
+                <th @if($sub) rowspan="2" @endif>{{ __('home.vbd_col_reporting') }}</th>
                 @endunless
-                @foreach($columns as $label)<th>{{ $label }}</th>@endforeach
-                <th style="background-color:#b8962e;">{{ __('home.vbd_col_total') }}</th>
+                @foreach($columns as $label)<th colspan="{{ $per }}">{{ $label }}</th>@endforeach
+                <th colspan="{{ $per }}" style="background-color:#b8962e;">{{ __('home.vbd_col_total') }}</th>
             </tr>
+            @if($sub)
+            <tr>
+                @foreach(array_keys($columns + ['total' => '']) as $key)
+                    @foreach($sub as $m)<th style="font-weight:normal;{{ $key === 'total' ? ' background-color:#b8962e;' : '' }}">{{ \App\Reports\VehicleStatisticsBreakdown::subLabel($m) }}</th>@endforeach
+                @endforeach
+            </tr>
+            @endif
         </thead>
         <tbody>
             @forelse($groups as $group)
@@ -106,22 +123,22 @@
                     @foreach($group['vehicleRows'] as $row)
                         <tr>
                             <td class="name">{{ $row['vehicle']->name }}</td>
-                            @foreach($columns as $key => $label)<td>{{ $fmt($row['cells'][$key]) }}</td>@endforeach
-                            <td class="tot">{{ $fmt($row['total']) }}</td>
+                            @foreach($columns as $key => $label)@foreach($vals($row, $key) as $i => $val)<td{!! $bold($i) !!}>{{ $fmt($val) }}</td>@endforeach @endforeach
+                            @foreach($tots($row) as $val)<td class="tot">{{ $fmt($val) }}</td>@endforeach
                         </tr>
                     @endforeach
                     <tr>
                         <td class="sub name">{{ __('home.vstat_gov_total', ['name' => $govName]) }} <span class="muted">({{ __('home.vbd_reporting_of', ['n' => $t['reporting'], 'm' => $t['vehicles']]) }})</span></td>
-                        @foreach($columns as $key => $label)<td class="sub">{{ $fmt($t['cells'][$key]) }}</td>@endforeach
-                        <td class="sub">{{ $fmt($t['total']) }}</td>
+                        @foreach($columns as $key => $label)@foreach($vals($t, $key) as $val)<td class="sub">{{ $fmt($val) }}</td>@endforeach @endforeach
+                        @foreach($tots($t) as $val)<td class="sub">{{ $fmt($val) }}</td>@endforeach
                     </tr>
                 @else
                     <tr>
                         <td class="name">{{ $govName }}</td>
                         <td>{{ $t['vehicles'] }}</td>
                         <td style="{{ $t['reporting'] < $t['vehicles'] ? 'color:#b45309;font-weight:bold;' : '' }}">{{ $t['reporting'] }}</td>
-                        @foreach($columns as $key => $label)<td>{{ $fmt($t['cells'][$key]) }}</td>@endforeach
-                        <td class="tot">{{ $fmt($t['total']) }}</td>
+                        @foreach($columns as $key => $label)@foreach($vals($t, $key) as $i => $val)<td{!! $bold($i) !!}>{{ $fmt($val) }}</td>@endforeach @endforeach
+                        @foreach($tots($t) as $val)<td class="tot">{{ $fmt($val) }}</td>@endforeach
                     </tr>
                 @endif
             @empty
@@ -136,14 +153,14 @@
                 <td>{{ $grand['vehicles'] }}</td>
                 <td>{{ $grand['reporting'] }}</td>
                 @endunless
-                @foreach($columns as $key => $label)<td>{{ $fmt($grand['cells'][$key]) }}</td>@endforeach
-                <td>{{ $fmt($grand['total']) }}</td>
+                @foreach($columns as $key => $label)@foreach($vals($grand, $key) as $val)<td>{{ $fmt($val) }}</td>@endforeach @endforeach
+                @foreach($tots($grand) as $val)<td>{{ $fmt($val) }}</td>@endforeach
             </tr>
         </tfoot>
         @endif
     </table>
 
-    <div class="footnote">{{ __('home.vbd_footnote') }}</div>
+<div class="footnote">{{ __('home.vbd_footnote') }}</div>
     @endif
 
     <div class="page-footer">

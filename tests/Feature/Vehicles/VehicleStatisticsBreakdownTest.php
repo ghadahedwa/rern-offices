@@ -74,9 +74,9 @@ it('compares years per governorate, starting from the first year with a number',
 
     [$cairo, $giza] = $r->groups()->map(fn ($g) => $g['total'])->all();
 
-    expect($cairo)->toBe(['cells' => [2024 => null, 2025 => 4000.0, 2026 => 1000.0], 'total' => 5000.0, 'vehicles' => 2, 'reporting' => 1])
-        ->and($giza)->toBe(['cells' => [2024 => 300.0, 2025 => 500.0, 2026 => null], 'total' => 800.0, 'vehicles' => 1, 'reporting' => 1])
-        ->and($r->grandTotal())->toBe(['cells' => [2024 => 300.0, 2025 => 4500.0, 2026 => 1000.0], 'total' => 5800.0, 'vehicles' => 3, 'reporting' => 2]);
+    expect($cairo)->toBe(['cells' => [2024 => null, 2025 => 4000.0, 2026 => 1000.0], 'split' => [], 'total' => 5000.0, 'vehicles' => 2, 'reporting' => 1])
+        ->and($giza)->toBe(['cells' => [2024 => 300.0, 2025 => 500.0, 2026 => null], 'split' => [], 'total' => 800.0, 'vehicles' => 1, 'reporting' => 1])
+        ->and($r->grandTotal())->toBe(['cells' => [2024 => 300.0, 2025 => 4500.0, 2026 => 1000.0], 'split' => [], 'total' => 5800.0, 'vehicles' => 3, 'reporting' => 2]);
 });
 
 it('shows 2026 transactions as January–September and then each month', function () {
@@ -171,9 +171,14 @@ it('exports the table as on the screen and the data long, one row per recorded n
     $table = new VehicleStatisticsBreakdownTableSheet($r);
     $rows  = $table->array();
 
-    expect($table->headings())->toBe(['المحافظة', 'عدد السيارات', 'سُجِّل لها', 'يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'الإجمالي'])
-        ->and($rows[0])->toBe(['القاهرة', 2, 2, null, null, null, null, null, null, null, null, 2.0, 25.0, 27.0])
-        ->and(end($rows))->toBe(['الإجمالي العام', 3, 3, null, null, null, null, null, null, null, null, 2.0, 29.0, 31.0]);
+    // ثلاثة أعمدة لكل شهر وللإجمالي، في صفّ رأسٍ واحد
+    $months  = ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'الإجمالي'];
+    $heading = array_merge(...array_map(fn ($p) => ["$p — عادية", "$p — فورية", "$p — إجمالي"], $months));
+    $empty8  = array_fill(0, 24, null);   // يناير … أغسطس
+
+    expect($table->headings())->toBe(['المحافظة', 'عدد السيارات', 'سُجِّل لها', ...$heading])
+        ->and($rows[0])->toBe(['القاهرة', 2, 2, ...$empty8, null, 2.0, 2.0, 20.0, 5.0, 25.0, 20.0, 7.0, 27.0])
+        ->and(end($rows))->toBe(['الإجمالي العام', 3, 3, ...$empty8, null, 2.0, 2.0, 20.0, 9.0, 29.0, 20.0, 11.0, 31.0]);
 
     // إجمالي الانتقالات يخرج نوعين منفصلين، فيجمعهما الجدول المحوري
     expect((new VehicleStatisticsBreakdownDataSheet($r))->array())->toBe([
@@ -357,4 +362,50 @@ it('lists only the scoped governorates in the picker', function () {
     $test = Livewire::actingAs(vbScopedUser([$this->giza->id]))->test(VehicleStatisticsBreakdown::class);
 
     expect(array_column($test->viewData('governorateChoices'), 'label'))->toBe(['الجيزة']);
+});
+
+// ── إجمالي الانتقالات في العرضي: ثلاثة أعمدة تحت كل فترة ──
+
+it('splits each period into regular, instant and total for total trips in the wide table', function () {
+    $r = Report::make(null, ['metric' => 'trips_all', 'level' => 'vehicle', 'period' => 'monthly', 'year' => '2026']);
+    $a = vbVehicleRows($r)['أ'];   // [cells, total]
+    $row = $r->groups()->first()['vehicleRows'][0];
+
+    expect($r->splitSeries())->toBe(['trips', 'instant', 'trips_all'])
+        ->and($row['split']['trips']['cells'][10])->toBe(20.0)
+        ->and($row['split']['instant']['cells'][9])->toBe(2.0)
+        ->and($row['split']['instant']['cells'][10])->toBe(5.0)
+        ->and($row['split']['trips_all']['cells'][10])->toBe(25.0)
+        ->and(array_map(fn ($x) => $x['total'], $row['split']))->toBe(['trips' => 20.0, 'instant' => 7.0, 'trips_all' => 27.0])
+        ->and($a[1])->toBe(27.0)
+        // ب: صفرٌ عادي مسجَّل وفورية لا شيء
+        ->and(array_map(fn ($x) => $x['cells'][10], $r->groups()->first()['vehicleRows'][1]['split']))->toBe(['trips' => 0.0, 'instant' => null, 'trips_all' => 0.0])
+        // إجمالي المحافظة والعام لكل عمودٍ فرعي
+        ->and(array_map(fn ($x) => $x['total'], $r->groups()->first()['total']['split']))->toBe(['trips' => 20.0, 'instant' => 7.0, 'trips_all' => 27.0])
+        ->and(array_map(fn ($x) => $x['cells'][10], $r->grandTotal()['split']))->toBe(['trips' => 20.0, 'instant' => 9.0, 'trips_all' => 29.0]);
+});
+
+it('keeps one column per period for the other metrics and for the vertical layout', function () {
+    expect(Report::make(null, ['metric' => 'trips', 'level' => 'vehicle'])->splitSeries())->toBe([])
+        ->and(Report::make(null, ['metric' => 'tx'])->splitSeries())->toBe([])
+        ->and(Report::make(null, ['metric' => 'trips_all', 'vehicleId' => (string) $this->a->id])->splitSeries())->toBe([]);
+});
+
+it('shows the three sub columns on the screen and in the pdf', function () {
+    Livewire::actingAs(vbAdmin())->test(VehicleStatisticsBreakdown::class)
+        ->set('metric', 'trips_all')->set('level', 'vehicle')->set('period', 'monthly')->set('year', '2026')->call('search')
+        ->assertSeeHtml('colspan="3"')
+        ->assertSee(__('home.vbd_sub_instant'));
+
+    $r    = Report::make(null, ['metric' => 'trips_all', 'level' => 'vehicle', 'period' => 'monthly', 'year' => '2026']);
+    $html = preg_replace('/\s+/', '', view('print.vehicle-statistics-breakdown-pdf', ['report' => $r, 'logoBase64' => null])->render());
+
+    // أ في أكتوبر: ٢٠ عادية · ٥ فورية · ٢٥ إجمالي، ثم إجمالي السنة ٢٠ · ٧ · ٢٧
+    expect($html)->toContain('<td>20</td><td>5</td><tdstyle="font-weight:bold;">25</td><tdclass="tot">20</td><tdclass="tot">7</td><tdclass="tot">27</td>')
+        ->and($html)->toContain('<thcolspan="3">أكتوبر</th>');
+
+    $this->actingAs(vbAdmin())
+        ->withSession(['vehicle_statistics_breakdown_filters' => ['metric' => 'trips_all', 'level' => 'vehicle', 'period' => 'monthly', 'year' => '2026']])
+        ->get(route('reports.vehicle-statistics-breakdown.pdf'))
+        ->assertOk();
 });

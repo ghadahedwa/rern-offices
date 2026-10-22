@@ -194,28 +194,47 @@
             </table>
         </div>
         @else
-        {{-- جدول متقاطع (عمود لكل شهر/سنة): الاستثناء المقصود من «يدخل عرض الشاشة» — يتمرّر داخل إطاره والاسم ثابت --}}
+        {{-- جدول متقاطع (عمود لكل شهر/سنة): الاستثناء المقصود من «يدخل عرض الشاشة» — يتمرّر داخل إطاره والاسم ثابت.
+             ولإجمالي الانتقالات تحت كل فترة ثلاثة أعمدة (عادية · فورية · إجمالي) — `splitSeries()`. --}}
+        @php
+            $sub   = $report->splitSeries();
+            $span  = max(count($sub), 1);
+            $vals  = fn ($row, $key) => $sub ? array_map(fn ($m) => $row['split'][$m]['cells'][$key] ?? null, $sub) : [$row['cells'][$key] ?? null];
+            $tots  = fn ($row) => $sub ? array_map(fn ($m) => $row['split'][$m]['total'] ?? null, $sub) : [$row['total']];
+            // بداية كل فترة بحدٍّ فاصل، والإجمالي الفرعي (آخر الثلاثة) عريض
+            $edge  = fn ($i) => ($sub && $i === 0 ? ' border-r border-zinc-200 dark:border-zinc-700' : '') . ($sub && $i === $span - 1 ? ' font-semibold' : '');
+            $width = (count($columns) + 1) * $span + ($byVehicle ? 1 : 3);
+        @endphp
         <div class="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-sm overflow-x-auto">
             <table class="w-full text-sm text-right">
                 <thead class="text-xs">
                     <tr class="bg-[#c9a847] text-white">
-                        <th class="{{ $sticky }} bg-[#c9a847] px-3 py-3 font-semibold min-w-40">{{ $byVehicle ? __('home.vbd_level_vehicle') : __('home.vbd_level_governorate') }}</th>
+                        <th @if($sub) rowspan="2" @endif class="{{ $sticky }} bg-[#c9a847] px-3 py-3 font-semibold min-w-40">{{ $byVehicle ? __('home.vbd_level_vehicle') : __('home.vbd_level_governorate') }}</th>
                         @unless($byVehicle)
-                        <th class="px-2 py-3 text-center whitespace-nowrap">{{ __('home.vbd_col_vehicles') }}</th>
-                        <th class="px-2 py-3 text-center whitespace-nowrap">{{ __('home.vbd_col_reporting') }}</th>
+                        <th @if($sub) rowspan="2" @endif class="px-2 py-3 text-center whitespace-nowrap">{{ __('home.vbd_col_vehicles') }}</th>
+                        <th @if($sub) rowspan="2" @endif class="px-2 py-3 text-center whitespace-nowrap">{{ __('home.vbd_col_reporting') }}</th>
                         @endunless
                         @foreach($columns as $label)
-                        <th class="px-2 py-3 text-center whitespace-nowrap">{{ $label }}</th>
+                        <th colspan="{{ $span }}" class="px-2 {{ $sub ? 'py-2 border-r border-white/40' : 'py-3' }} text-center whitespace-nowrap">{{ $label }}</th>
                         @endforeach
-                        <th class="px-3 py-3 text-center whitespace-nowrap bg-[#b8962e]">{{ __('home.vbd_col_total') }}</th>
+                        <th colspan="{{ $span }}" class="px-3 {{ $sub ? 'py-2 border-r border-white/40' : 'py-3' }} text-center whitespace-nowrap bg-[#b8962e]">{{ __('home.vbd_col_total') }}</th>
                     </tr>
+                    @if($sub)
+                    <tr class="bg-[#c9a847] text-white">
+                        @foreach(array_keys($columns + ['total' => '']) as $key)
+                            @foreach($sub as $i => $m)
+                            <th class="px-2 py-1.5 text-center font-normal whitespace-nowrap {{ $key === 'total' ? 'bg-[#b8962e]' : '' }} {{ $i === 0 ? 'border-r border-white/40' : '' }} {{ $i === $span - 1 ? 'font-semibold' : '' }}">{{ \App\Reports\VehicleStatisticsBreakdown::subLabel($m) }}</th>
+                            @endforeach
+                        @endforeach
+                    </tr>
+                    @endif
                 </thead>
                 <tbody class="divide-y divide-zinc-100 dark:divide-zinc-700">
                     @foreach($groups as $group)
                         @php $t = $group['total']; $govName = $group['governorate']->name ?? '—'; @endphp
                         @if($byVehicle)
                             <tr class="bg-zinc-50 dark:bg-zinc-800">
-                                <td colspan="{{ count($columns) + 2 }}" class="px-3 py-2 text-xs font-semibold text-zinc-600 dark:text-zinc-300">
+                                <td colspan="{{ $width }}" class="px-3 py-2 text-xs font-semibold text-zinc-600 dark:text-zinc-300">
                                     <span class="sticky right-3">{{ $govName }}</span>
                                 </td>
                             </tr>
@@ -227,9 +246,13 @@
                                            class="font-medium text-zinc-800 dark:text-zinc-100 hover:text-[#b8962e]">{{ $v->name }}</a>
                                     </td>
                                     @foreach($columns as $key => $label)
-                                    <td class="{{ $num }} text-zinc-700 dark:text-zinc-200">{{ $fmt($row['cells'][$key]) }}</td>
+                                        @foreach($vals($row, $key) as $i => $val)
+                                        <td class="{{ $num }} text-zinc-700 dark:text-zinc-200{{ $edge($i) }}">{{ $fmt($val) }}</td>
+                                        @endforeach
                                     @endforeach
-                                    <td class="{{ $num }} font-semibold text-zinc-800 dark:text-zinc-100 bg-[#c9a847]/5">{{ $fmt($row['total']) }}</td>
+                                    @foreach($tots($row) as $i => $val)
+                                    <td class="{{ $num }} font-semibold text-zinc-800 dark:text-zinc-100 bg-[#c9a847]/5{{ $edge($i) }}">{{ $fmt($val) }}</td>
+                                    @endforeach
                                 </tr>
                             @endforeach
                             <tr class="bg-[#f5efdc] dark:bg-zinc-800 font-semibold text-zinc-700 dark:text-zinc-200 text-xs">
@@ -238,9 +261,13 @@
                                     <span class="block font-normal text-zinc-500 dark:text-zinc-400">{{ __('home.vbd_reporting_of', ['n' => $t['reporting'], 'm' => $t['vehicles']]) }}</span>
                                 </td>
                                 @foreach($columns as $key => $label)
-                                <td class="{{ $num }}">{{ $fmt($t['cells'][$key]) }}</td>
+                                    @foreach($vals($t, $key) as $i => $val)
+                                    <td class="{{ $num }}{{ $edge($i) }}">{{ $fmt($val) }}</td>
+                                    @endforeach
                                 @endforeach
-                                <td class="{{ $num }}">{{ $fmt($t['total']) }}</td>
+                                @foreach($tots($t) as $i => $val)
+                                <td class="{{ $num }}{{ $edge($i) }}">{{ $fmt($val) }}</td>
+                                @endforeach
                             </tr>
                         @else
                             <tr class="hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition">
@@ -248,9 +275,13 @@
                                 <td class="{{ $num }} text-zinc-500 dark:text-zinc-400">{{ $t['vehicles'] }}</td>
                                 <td class="{{ $num }} {{ $t['reporting'] < $t['vehicles'] ? 'text-amber-600 dark:text-amber-400 font-medium' : 'text-zinc-500 dark:text-zinc-400' }}">{{ $t['reporting'] }}</td>
                                 @foreach($columns as $key => $label)
-                                <td class="{{ $num }} text-zinc-700 dark:text-zinc-200">{{ $fmt($t['cells'][$key]) }}</td>
+                                    @foreach($vals($t, $key) as $i => $val)
+                                    <td class="{{ $num }} text-zinc-700 dark:text-zinc-200{{ $edge($i) }}">{{ $fmt($val) }}</td>
+                                    @endforeach
                                 @endforeach
-                                <td class="{{ $num }} font-semibold text-zinc-800 dark:text-zinc-100 bg-[#c9a847]/5">{{ $fmt($t['total']) }}</td>
+                                @foreach($tots($t) as $i => $val)
+                                <td class="{{ $num }} font-semibold text-zinc-800 dark:text-zinc-100 bg-[#c9a847]/5{{ $edge($i) }}">{{ $fmt($val) }}</td>
+                                @endforeach
                             </tr>
                         @endif
                     @endforeach
@@ -268,9 +299,13 @@
                         <td class="{{ $num }}">{{ $grand['reporting'] }}</td>
                         @endunless
                         @foreach($columns as $key => $label)
-                        <td class="{{ $num }}">{{ $fmt($grand['cells'][$key]) }}</td>
+                            @foreach($vals($grand, $key) as $i => $val)
+                            <td class="{{ $num }}{{ $edge($i) }}">{{ $fmt($val) }}</td>
+                            @endforeach
                         @endforeach
-                        <td class="{{ $num }} text-[#b8962e] dark:text-[#c9a847]">{{ $fmt($grand['total']) }}</td>
+                        @foreach($tots($grand) as $i => $val)
+                        <td class="{{ $num }} text-[#b8962e] dark:text-[#c9a847]{{ $edge($i) }}">{{ $fmt($val) }}</td>
+                        @endforeach
                     </tr>
                 </tfoot>
             </table>
