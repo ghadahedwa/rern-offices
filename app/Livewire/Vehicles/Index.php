@@ -12,6 +12,7 @@ use Livewire\Attributes\Title;
 use Livewire\Attributes\Url;
 use Livewire\Component;
 use Livewire\WithPagination;
+use App\Livewire\Concerns\RemembersListUrl;
 use App\Livewire\Concerns\WithTableSorting;
 use Illuminate\Database\Eloquent\Builder;
 
@@ -19,8 +20,9 @@ use Illuminate\Database\Eloquent\Builder;
 #[Title('السيارات المتنقلة')]
 class Index extends Component
 {
-    use WithPagination, WithTableSorting;
+    use WithPagination, WithTableSorting, RemembersListUrl;
 
+    #[Url(as: 'q', except: '')]
     public string $search = '';
 
     #[Url]
@@ -56,6 +58,15 @@ class Index extends Component
             auth()->user()?->hasRole('super-admin') || auth()->user()?->can('vehicles.index'),
             403
         );
+
+        // رجوعٌ برابطٍ فيه فلتر الحالة (لوحة البحث المتقدم): اللوحة تُفتح عليه — لا فلتر مُطبَّق في لوحةٍ مقفولة
+        $this->showAdvanced = $this->status !== '';
+    }
+
+    /** رابط الرجوع من صفحات السيارة (`RemembersListUrl`) */
+    protected function listReturnRoute(): string
+    {
+        return 'vehicles.index';
     }
 
     public function updatingSearch(): void        { $this->resetPage(); }

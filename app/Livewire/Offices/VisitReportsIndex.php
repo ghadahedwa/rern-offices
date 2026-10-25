@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Offices;
 
+use App\Livewire\Concerns\RemembersListUrl;
 use App\Livewire\Concerns\WithPerPage;
 use App\Livewire\Concerns\WithTableSorting;
 use App\Models\Governorate;
@@ -26,7 +27,7 @@ use Livewire\WithPagination;
 #[Title('تقارير الزيارة')]
 class VisitReportsIndex extends Component
 {
-    use WithPagination, WithPerPage, WithTableSorting;
+    use WithPagination, WithPerPage, WithTableSorting, RemembersListUrl;
 
     /**
      * فلتر الزيارة: المفتاح => عدد الشهور (null = لم يُزر أبداً).
@@ -68,6 +69,17 @@ class VisitReportsIndex extends Component
         abort_unless(OfficeVisitReports::canView(auth()->user(), $type), 403);
 
         $this->type = $type;
+    }
+
+    /** رابط الرجوع من صفحة التقرير (`RemembersListUrl`) — لكل تقريرٍ قائمته */
+    protected function listReturnRoute(): string
+    {
+        return 'offices.visit-reports';
+    }
+
+    protected function listReturnParams(): array
+    {
+        return ['type' => $this->type];
     }
 
     public function updating($name): void

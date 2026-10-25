@@ -3,7 +3,7 @@
     {{-- Header --}}
     <div class="flex items-center justify-between gap-4">
         <div class="flex items-center gap-4">
-            <a href="{{ route('vehicles.index') }}" wire:navigate
+            <a href="{{ \App\Support\ListReturnUrl::back('vehicles.index') }}" wire:navigate
                class="w-8 h-8 rounded-lg border border-zinc-300 dark:border-zinc-600 flex items-center justify-center text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 hover:border-zinc-400 transition">
                 <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>

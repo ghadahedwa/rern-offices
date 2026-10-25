@@ -232,7 +232,7 @@ class Create extends Component
         $this->validateCurrentTab();
         $this->persistCurrentTab();
         Flux::toast(variant: 'success', text: $this->isEditing ? __('home.vehicle_updated') : __('home.vehicle_created'));
-        $this->redirect(route('vehicles.index'), navigate: true);
+        $this->redirect(\App\Support\ListReturnUrl::back('vehicles.index'), navigate: true);
     }
 
     public function nextTab(): void

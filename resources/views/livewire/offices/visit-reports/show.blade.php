@@ -3,7 +3,7 @@
     {{-- Header — على الموبايل زرّ «عرض المقر» ينزل سطراً فيظهر اسم المقر كاملاً --}}
     <div class="flex max-sm:flex-wrap items-center justify-between gap-4">
         <div class="flex items-center gap-4 min-w-0">
-            <a href="{{ route('offices.visit-reports', $type) }}" wire:navigate
+            <a href="{{ \App\Support\ListReturnUrl::back('offices.visit-reports', ['type' => $type]) }}" wire:navigate
                class="inline-flex items-center justify-center w-8 h-8 rounded-lg border border-zinc-300 dark:border-zinc-600 text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition shrink-0">
                 <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>

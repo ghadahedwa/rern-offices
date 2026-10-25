@@ -7,7 +7,7 @@ use App\Models\Office;
 use App\Models\OfficeType;
 use App\Models\User;
 use App\Models\WorkSystem;
-use App\Support\OfficeListUrl;
+use App\Support\ListReturnUrl;
 use Livewire\Livewire;
 use Spatie\Permission\Models\Role;
 
@@ -50,10 +50,10 @@ it('يحفظ كل فلاتر القائمة ويرجع إليها كما هي', 
 
     Livewire::withQueryParams($query)->test(Index::class);
 
-    expect(session(OfficeListUrl::SESSION_KEY))->toEqual($query);
+    expect(ListReturnUrl::query('offices.index'))->toEqual($query);
 
     // رحلة الذهاب والعودة: الرابط المحفوظ يفتح القائمة على الفلاتر نفسها (يمسك اختلاف مفتاحٍ بين `#[Url]` والمحفوظ)
-    Livewire::withQueryParams(session(OfficeListUrl::SESSION_KEY))->test(Index::class)
+    Livewire::withQueryParams(ListReturnUrl::query('offices.index'))->test(Index::class)
         ->assertSet('search', 'توثيق')
         ->assertSet('governorate_id', $this->gov->id)
         ->assertSet('type_id', $this->type->id)
@@ -73,7 +73,7 @@ it('يحفظ رقم الصفحة', function () {
 
     Livewire::withQueryParams(['page' => 2])->test(Index::class);
 
-    expect(session(OfficeListUrl::SESSION_KEY))->toEqual(['page' => 2]);
+    expect(ListReturnUrl::query('offices.index'))->toEqual(['page' => 2]);
 });
 
 it('يحدّث الرابط المحفوظ مع كل تغيير فلتر', function () {
@@ -81,7 +81,7 @@ it('يحدّث الرابط المحفوظ مع كل تغيير فلتر', funct
         ->set('search', 'شهر')
         ->set('work_system_id', $this->ws->id);
 
-    expect(session(OfficeListUrl::SESSION_KEY))->toEqual(['q' => 'شهر', 'ws' => $this->ws->id]);
+    expect(ListReturnUrl::query('offices.index'))->toEqual(['q' => 'شهر', 'ws' => $this->ws->id]);
 });
 
 it('يفتح لوحة البحث المتقدم حين يصل فلترٌ متقدم في الرابط', function () {
@@ -92,14 +92,14 @@ it('يفتح لوحة البحث المتقدم حين يصل فلترٌ متق�
 it('زرّا الرجوع في صفحات المقر يحملان الفلاتر', function (string $route) {
     Livewire::withQueryParams(['q' => 'توثيق', 'governorate_id' => $this->gov->id])->test(Index::class);
 
-    $back = e(OfficeListUrl::back());
+    $back = e(ListReturnUrl::back('offices.index'));
     expect($back)->toContain('governorate_id='.$this->gov->id);
 
     $this->get(route($route, $this->office))->assertOk()->assertSee('href="'.$back.'"', false);
 })->with(['offices.show', 'offices.edit', 'offices.statistics']);
 
 it('بلا قائمةٍ سابقة يرجع للقائمة بلا فلاتر', function () {
-    expect(OfficeListUrl::back())->toBe(route('offices.index'));
+    expect(ListReturnUrl::back('offices.index'))->toBe(route('offices.index'));
 });
 
 it('الحفظ والخروج من فورم المقر يرجع للقائمة بفلاترها', function () {
