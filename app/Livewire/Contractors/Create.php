@@ -96,7 +96,7 @@ class Create extends Component
 
             $this->contractor->update($data);
             Flux::toast(variant: 'success', text: __('home.ct_worker_updated'));
-            $this->redirect(route('contractors.index'), navigate: true);
+            $this->redirect(\App\Support\ListReturnUrl::back('contractors.index'), navigate: true);
 
             return;
         }
@@ -118,7 +118,7 @@ class Create extends Component
         });
 
         Flux::toast(variant: 'success', text: __('home.ct_worker_created'));
-        $this->redirect(route('contractors.index'), navigate: true);
+        $this->redirect(\App\Support\ListReturnUrl::back('contractors.index'), navigate: true);
     }
 
     public function render()

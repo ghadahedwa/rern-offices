@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Warehouses;
 
+use App\Livewire\Concerns\RemembersListUrl;
 use App\Livewire\Concerns\WithPerPage;
 use App\Livewire\Concerns\WithTableSorting;
 use App\Models\Item;
@@ -27,6 +28,7 @@ class Stock extends Component
     use WithPagination;
     use WithPerPage;
     use WithTableSorting;
+    use RemembersListUrl;
 
     #[Url(as: 'q', except: '')]
     public string $search = '';
@@ -54,6 +56,12 @@ class Stock extends Component
      */
     #[Url(as: 'low', except: false)]
     public bool $lowOnly = false;
+
+    /** رابط الرجوع من صفحتي الصنف والمخزن لمن دخلهما من الأرصدة (`RemembersListUrl`) */
+    protected function listReturnRoute(): string
+    {
+        return 'warehouses.stock';
+    }
 
     public function mount(): void
     {

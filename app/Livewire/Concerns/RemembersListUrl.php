@@ -46,11 +46,14 @@ trait RemembersListUrl
             $value   = $property->getValue($this);
             $default = $property->hasDefaultValue() ? $property->getDefaultValue() : null;
 
-            if ($value === null || $value === '' || $value === false || $value === [] || $value === $default) {
+            // يُهمَل ما يساوي الافتراضي وحده — فلترٌ افتراضيه غير فارغ (حالة العاملين «على رأس العمل»)
+            // ثم فُرِّغ يُحفظ فارغاً، وإلا رجع الرجوعُ إلى الافتراضي لا إلى اختيار المستخدم
+            $empty = fn ($v) => $v === null || $v === '' || $v === false || $v === [];
+            if ($value === $default || ($empty($value) && $empty($default))) {
                 continue;
             }
 
-            $query[$url->newInstance()->as ?? $property->getName()] = $value === true ? 1 : $value;
+            $query[$url->newInstance()->as ?? $property->getName()] = is_bool($value) ? (int) $value : ($value ?? '');
         }
 
         if (method_exists($this, 'getPage') && $this->getPage() > 1) {

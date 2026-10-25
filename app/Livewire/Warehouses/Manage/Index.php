@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Warehouses\Manage;
 
+use App\Livewire\Concerns\RemembersListUrl;
 use App\Livewire\Concerns\WithPerPage;
 use App\Livewire\Concerns\WithTableSorting;
 use App\Models\Warehouse;
@@ -26,6 +27,7 @@ class Index extends Component
     use WithPagination;
     use WithPerPage;
     use WithTableSorting;
+    use RemembersListUrl;
 
     #[Url(as: 'q', except: '')]
     public string $search = '';
@@ -47,6 +49,12 @@ class Index extends Component
      *    و٢٩ مخزناً فارغة تنتظر أرصدتها الافتتاحية — أي أن المدخل يغيب عمّن
      *    يحتاجه اليوم بالضبط.
      */
+    /** رابط الرجوع من صفحتي المخزن (`RemembersListUrl`) */
+    protected function listReturnRoute(): string
+    {
+        return 'warehouse-manage.index';
+    }
+
     public function mount(): void
     {
         abort_unless(Auth::user()?->can('warehouses.index') || Auth::user()?->can('warehouses.settings'), 403);

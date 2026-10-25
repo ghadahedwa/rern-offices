@@ -101,8 +101,8 @@ class Show extends Component
     public function backRoute(): string
     {
         return Auth::user()?->can('warehouses.index')
-            ? route('warehouses.stock')
-            : route('items.index');
+            ? \App\Support\ListReturnUrl::back('warehouses.stock')
+            : \App\Support\ListReturnUrl::back('items.index');
     }
 
     public function setTab(string $tab): void

@@ -10,6 +10,21 @@ use App\Models\Vehicle;
 use App\Models\VehicleType;
 use App\Models\VehicleWorkSystem;
 use App\Support\ListReturnUrl;
+use App\Livewire\Contractors\Create as ContractorCreate;
+use App\Livewire\Contractors\Index as ContractorsIndex;
+use App\Livewire\Warehouses\Items\Create as ItemCreate;
+use App\Livewire\Warehouses\Items\Index as ItemsIndex;
+use App\Livewire\Warehouses\Items\Show as ItemShow;
+use App\Livewire\Warehouses\Manage\Create as ManageCreate;
+use App\Livewire\Warehouses\Manage\Index as ManageIndex;
+use App\Livewire\Warehouses\Manage\Show as ManageShow;
+use App\Livewire\Warehouses\Stock;
+use App\Models\ContractorAssignment;
+use App\Models\Item;
+use App\Models\ItemCategory;
+use App\Models\ItemUnit;
+use App\Models\Warehouse;
+use App\Models\WarehouseType;
 use Livewire\Livewire;
 use Spatie\Permission\Models\Role;
 
@@ -63,14 +78,14 @@ it('السيارات: يحفظ رقم الصفحة', function () {
     expect(ListReturnUrl::query('vehicles.index'))->toEqual(['page' => 2]);
 });
 
-it('السيارات: زرّا الرجوع في العرض والتعديل يحملان الفلاتر', function (string $route) {
+it('السيارات: زرّا الرجوع في العرض والتعديل يحملان الفلاتر', function (string $route, int $links) {
     Livewire::withQueryParams(['q' => 'سيارة', 'governorate_id' => $this->gov->id])->test(VehiclesIndex::class);
 
     $back = e(ListReturnUrl::back('vehicles.index'));
     expect($back)->toContain('governorate_id='.$this->gov->id);
 
-    $this->get(route($route, $this->vehicle))->assertOk()->assertSee('href="'.$back.'"', false);
-})->with(['vehicles.show', 'vehicles.edit']);
+    expect(substr_count($this->get(route($route, $this->vehicle))->assertOk()->getContent(), 'href="'.$back.'"'))->toBe($links);
+})->with([['vehicles.show', 1], ['vehicles.edit', 1]]);
 
 it('السيارات: الحفظ والخروج يرجع للقائمة بفلاترها', function () {
     Livewire::withQueryParams(['governorate_id' => $this->gov->id])->test(VehiclesIndex::class);
@@ -106,10 +121,111 @@ it('تقارير الزيارة: زرّ الرجوع في صفحة التقري�
 
     $this->get(route('offices.visit-report', [$this->office->id, 'counselor']))
         ->assertOk()
-        ->assertSee('href="'.$back.'"', false);
+        ->assertSee('href="'.$back.'"', false)
+        ->assertOk();
 });
 
 it('بلا قائمةٍ سابقة يرجع زرّ الرجوع للقائمة بلا فلاتر', function () {
     expect(ListReturnUrl::back('vehicles.index'))->toBe(route('vehicles.index'))
         ->and(ListReturnUrl::back('offices.visit-reports', ['type' => 'inspector']))->toBe(route('offices.visit-reports', 'inspector'));
+});
+
+// ── العاملون بالتعاقد ──
+
+it('العاملون: يحفظ الفلاتر ويرجع إليها كما هي — و«الكل» في الحالة', function () {
+    $query = ['q' => 'عامل', 'gov' => (string) $this->gov->id, 'status' => 'all', 'sort' => 'name'];
+
+    Livewire::withQueryParams($query)->test(ContractorsIndex::class);
+
+    expect(ListReturnUrl::query('contractors.index'))->toEqual($query);
+
+    Livewire::withQueryParams(ListReturnUrl::query('contractors.index'))->test(ContractorsIndex::class)
+        ->assertSet('search', 'عامل')
+        ->assertSet('governorate', (string) $this->gov->id)
+        ->assertSet('status', 'all');
+});
+
+it('فلترٌ افتراضيه غير فارغ ثم فُرِّغ يُحفظ فارغاً لا يسقط إلى الافتراضي', function () {
+    Livewire::withQueryParams([])->test(ContractorsIndex::class)->set('status', '');
+
+    expect(ListReturnUrl::query('contractors.index'))->toEqual(['status' => '']);
+});
+
+it('العاملون: زرّا الرجوع في التعديل وحفظه يحملان الفلاتر', function () {
+    $contractor = ContractorAssignment::factory()->create(['office_id' => $this->office->id])->contractor;
+
+    Livewire::withQueryParams(['status' => 'ended'])->test(ContractorsIndex::class);
+    $back = route('contractors.index', ['status' => 'ended']);
+
+    expect(substr_count($this->get(route('contractors.edit', $contractor))->assertOk()->getContent(), 'href="'.e($back).'"'))->toBe(2);
+
+    Livewire::test(ContractorCreate::class, ['contractor' => $contractor])
+        ->call('save')
+        ->assertHasNoErrors()
+        ->assertRedirect($back);
+});
+
+// ── المخازن: الأصناف · إدارة المخازن · الأرصدة ──
+
+function lrItem(): Item
+{
+    return Item::create([
+        'name'             => 'كمبيوتر',
+        'item_unit_id'     => ItemUnit::firstOrCreate(['name' => 'قطعة'])->id,
+        'item_category_id' => ItemCategory::firstOrCreate(['name' => 'الكمبيوتر'], ['order' => 1])->id,
+    ]);
+}
+
+function lrWarehouse(Governorate $gov): Warehouse
+{
+    return Warehouse::create([
+        'name'              => 'مخزن بنها',
+        'warehouse_type_id' => WarehouseType::firstOrCreate(['name' => 'رئيسي'], ['level' => 1, 'order' => 1])->id,
+        'governorate_id'    => $gov->id,
+        'is_active'         => true,
+    ]);
+}
+
+it('الأصناف: زرّا الرجوع في التعديل وحفظه يحملان الفلاتر', function () {
+    $item = lrItem();
+
+    Livewire::withQueryParams(['q' => 'كمب', 'category' => (string) $item->item_category_id])->test(ItemsIndex::class);
+    $back = route('items.index', ['q' => 'كمب', 'category' => (string) $item->item_category_id]);
+    expect(ListReturnUrl::back('items.index'))->toBe($back);
+
+    expect(substr_count($this->get(route('items.edit', $item))->assertOk()->getContent(), 'href="'.e($back).'"'))->toBe(2);
+
+    Livewire::test(ItemCreate::class, ['item' => $item])->call('save')->assertHasNoErrors()->assertRedirect($back);
+});
+
+it('إدارة المخازن: زرّا الرجوع في التعديل وحفظه وبروفايل المخزن يحملون الفلاتر', function () {
+    $warehouse = lrWarehouse($this->gov);
+
+    Livewire::withQueryParams(['q' => 'بنها'])->test(ManageIndex::class);
+    $back = route('warehouse-manage.index', ['q' => 'بنها']);
+
+    expect(substr_count($this->get(route('warehouse-manage.edit', $warehouse))->assertOk()->getContent(), 'href="'.e($back).'"'))->toBe(2);
+    Livewire::test(ManageCreate::class, ['warehouse' => $warehouse])->call('save')->assertHasNoErrors()->assertRedirect($back);
+
+    // صاحب إدارة المخازن يرجع من البروفايل إليها
+    expect(Livewire::test(ManageShow::class, ['warehouse' => $warehouse])->instance()->backRoute())->toBe($back);
+});
+
+it('الأرصدة: بروفايلا الصنف والمخزن يرجعان إليها بفلاترها لمن مدخله الأرصدة', function () {
+    $item      = lrItem();
+    $warehouse = lrWarehouse($this->gov);
+
+    foreach (['warehouses.index'] as $p) {
+        Spatie\Permission\Models\Permission::findOrCreate($p, 'web');
+    }
+    $operator = User::factory()->create();
+    $operator->givePermissionTo('warehouses.index');
+    $operator->warehouses()->sync([$warehouse->id]);
+    $this->actingAs($operator->fresh());
+
+    Livewire::withQueryParams(['q' => 'كمب', 'low' => '1'])->test(Stock::class);
+    $back = route('warehouses.stock', ['q' => 'كمب', 'low' => 1]);
+
+    expect(Livewire::test(ItemShow::class, ['item' => $item])->instance()->backRoute())->toBe($back)
+        ->and(Livewire::test(ManageShow::class, ['warehouse' => $warehouse])->instance()->backRoute())->toBe($back);
 });

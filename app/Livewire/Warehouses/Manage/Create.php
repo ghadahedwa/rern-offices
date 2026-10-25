@@ -61,7 +61,7 @@ class Create extends Component
             Flux::toast(variant: 'success', text: __('home.warehouse_created'));
         }
 
-        $this->redirect(route('warehouse-manage.index'), navigate: true);
+        $this->redirect(\App\Support\ListReturnUrl::back('warehouse-manage.index'), navigate: true);
     }
 
     public function render()

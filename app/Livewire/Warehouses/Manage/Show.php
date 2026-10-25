@@ -111,8 +111,8 @@ class Show extends Component
     public function backRoute(): string
     {
         return Auth::user()?->can('warehouses.settings')
-            ? route('warehouse-manage.index')
-            : route('warehouses.stock');
+            ? \App\Support\ListReturnUrl::back('warehouse-manage.index')
+            : \App\Support\ListReturnUrl::back('warehouses.stock');
     }
 
     /** @return array<int, string> */

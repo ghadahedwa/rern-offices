@@ -148,7 +148,7 @@ class Create extends Component
             Flux::toast(variant: 'success', text: __('home.item_created'));
         }
 
-        $this->redirect(route('items.index'), navigate: true);
+        $this->redirect(\App\Support\ListReturnUrl::back('items.index'), navigate: true);
     }
 
     public function render()

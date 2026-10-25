@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Warehouses\Items;
 
+use App\Livewire\Concerns\RemembersListUrl;
 use App\Livewire\Concerns\WithPerPage;
 use App\Livewire\Concerns\WithTableSorting;
 use App\Models\Item;
@@ -27,6 +28,7 @@ class Index extends Component
     use WithPagination;
     use WithPerPage;
     use WithTableSorting;
+    use RemembersListUrl;
 
     #[Url(as: 'q', except: '')]
     public string $search = '';
@@ -47,6 +49,12 @@ class Index extends Component
     public ?int $deletingId = null;
     public string $deletingLabel = '';
     public string $deletingWarning = '';
+
+    /** رابط الرجوع من صفحتي الصنف (`RemembersListUrl`) */
+    protected function listReturnRoute(): string
+    {
+        return 'items.index';
+    }
 
     public function mount(): void
     {

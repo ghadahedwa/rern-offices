@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Contractors;
 
+use App\Livewire\Concerns\RemembersListUrl;
 use App\Livewire\Concerns\WithPerPage;
 use App\Livewire\Concerns\WithTableSorting;
 use App\Models\AttendanceDay;
@@ -39,6 +40,7 @@ class Index extends Component
     use WithPagination;
     use WithPerPage;
     use WithTableSorting;
+    use RemembersListUrl;
 
     #[Url(as: 'q', except: '')]
     public string $search = '';
@@ -86,6 +88,12 @@ class Index extends Component
     public ?int $deletingId = null;
     public string $deletingLabel = '';
     public string $deletingWarning = '';
+
+    /** رابط الرجوع من صفحة تعديل العامل (`RemembersListUrl`) */
+    protected function listReturnRoute(): string
+    {
+        return 'contractors.index';
+    }
 
     public function mount(): void
     {

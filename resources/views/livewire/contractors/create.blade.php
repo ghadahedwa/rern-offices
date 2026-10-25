@@ -4,7 +4,7 @@
         <h1 class="text-2xl font-semibold text-zinc-800 dark:text-zinc-100">
             {{ $contractor?->exists ? __('home.ct_worker_edit') : __('home.ct_worker_add') }}
         </h1>
-        <a href="{{ route('contractors.index') }}" wire:navigate
+        <a href="{{ \App\Support\ListReturnUrl::back('contractors.index') }}" wire:navigate
            class="text-sm text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 transition">
             ← {{ __('home.back') }}
         </a>
@@ -115,7 +115,7 @@
                         class="bg-[#c9a847] hover:bg-[#b8962e] text-white text-sm font-medium px-5 py-2 rounded-lg transition">
                     {{ __('home.save') }}
                 </button>
-                <a href="{{ route('contractors.index') }}" wire:navigate
+                <a href="{{ \App\Support\ListReturnUrl::back('contractors.index') }}" wire:navigate
                    class="text-sm text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 transition">
                     {{ __('home.cancel') }}
                 </a>
