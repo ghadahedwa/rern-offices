@@ -241,6 +241,9 @@ return [
     'role_office_scope_descriptions' => 'أوصاف المقرات',
     'role_office_scope_all'          => 'الكل',
     'role_office_scope_selected'     => 'المحدَّد: :count',
+    'role_office_scope_summary_all'  => 'كل مقرات محافظاته — بلا قصر على نوع أو وصف',
+    'role_office_scope_summary_types' => 'الأنواع: :names',
+    'role_office_scope_summary_descriptions' => 'الأوصاف: :names',
     'office_scope_out_of_role'       => 'نوع المقر أو وصفه خارج ما يسمح به دورك',
     'office_scope_in_use_by_role'    => 'لا يمكن الحذف: الدور «:roles» مقصور عليه. أزِله من الدور أولاً.',
     // الاسم والشرح مفصولان: الشرطة كانت تخلط الدرجة بمعناها في سطر واحد
@@ -359,11 +362,6 @@ return [
     'vr_no_match'              => 'لا توجد مقرات تطابق الفلتر',
     'vr_saved'                 => 'تم حفظ التقرير',
     'vr_read_only'             => 'للاطلاع فقط — لا تملك صلاحية تعديل هذا التقرير',
-    'vr_filter_group_visited'  => 'تمت الزيارة',
-    'vr_filter_group_overdue'  => 'متأخرة',
-    'vr_filter_in3'            => 'خلال آخر ٣ شهور',
-    'vr_filter_in6'            => 'خلال آخر ٦ شهور',
-    'vr_filter_in12'           => 'خلال آخر سنة',
     'vr_save'                  => 'حفظ التقرير',
 
     // Office create — section headers

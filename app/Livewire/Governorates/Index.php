@@ -4,6 +4,7 @@ namespace App\Livewire\Governorates;
 
 use App\Models\Governorate;
 use App\Support\ArabicText;
+use App\Support\OfficeScope;
 use Flux\Flux;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Layout;
@@ -74,7 +75,10 @@ class Index extends Component
         // البحث المطبَّع (الألف/الياء/التاء المربوطة) في اسم المحافظة والمستشار المشرف — كباقي الشاشات
         $term = ArabicText::normalize($this->search);
 
-        $governorates = $query->withCount('offices')
+        // عدد المقرات بقيد النوع/الوصف على أدوار المستخدم — رقمٌ أكبر مما يفتحه يُقرأ عطلاً.
+        // (تحذير الحذف في askDelete يبقى بالعدد الكامل عمداً: حذف المحافظة يمسّ مقراتها كلها.)
+        $officeRules  = OfficeScope::restrictionsFor(Auth::user());
+        $governorates = $query->withCount(['offices' => fn ($q) => OfficeScope::applyRestrictions($q, $officeRules)])
             ->when($term !== '', fn ($q) => $q->where(fn ($w) => $w
                 ->whereRaw(ArabicText::sqlNormalize('governorates.name').' LIKE ?', ['%'.$term.'%'])
                 ->orWhereRaw(ArabicText::sqlNormalize('governorates.supervising_counselor').' LIKE ?', ['%'.$term.'%'])

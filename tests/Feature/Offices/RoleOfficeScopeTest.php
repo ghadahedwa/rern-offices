@@ -238,3 +238,16 @@ it('refuses deleting a description or type a role is restricted to', function ()
         ->and(OfficeType::find($type->id))->not->toBeNull()
         ->and(LocationDescription::find($free->id))->toBeNull();
 });
+
+it('folds the scope section for an unrestricted role and opens it with a summary for a restricted one', function () {
+    $plain = rosRole('inspector', ['offices.index']);
+    $karima = rosRole('karima', ['offices.index'], descriptions: [$this->karima->id]);
+
+    Livewire::actingAs(rosSuperAdmin())->test(RoleEdit::class, ['role' => $plain])
+        ->assertSee(__('home.role_office_scope_summary_all'))
+        ->assertSeeHtml('x-data="{ open: false }"');
+
+    Livewire::actingAs(rosSuperAdmin())->test(RoleEdit::class, ['role' => $karima])
+        ->assertSee(__('home.role_office_scope_summary_descriptions', ['names' => 'حياة كريمة']))
+        ->assertSeeHtml('x-data="{ open: true }"');
+});

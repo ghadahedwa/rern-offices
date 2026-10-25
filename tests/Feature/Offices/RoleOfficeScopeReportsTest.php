@@ -144,3 +144,11 @@ it('limits the single-office PDF picker', function () {
         ->set('selectedGovernorateId', $this->gov->id)
         ->assertViewHas('offices', fn ($o) => $o->count() === 2 && ! $o->pluck('name')->contains('مقر عادي'));
 });
+
+it('counts only allowed offices on the governorates screen', function () {
+    Permission::findOrCreate('governorates.index', 'web');
+    $this->user->roles->first()->givePermissionTo('governorates.index');
+
+    Livewire::actingAs($this->user->fresh())->test(\App\Livewire\Governorates\Index::class)
+        ->assertViewHas('governorates', fn ($p) => collect($p->items())->firstWhere('id', $this->gov->id)->offices_count === 2);
+});
