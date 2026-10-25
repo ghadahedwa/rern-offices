@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Roles;
 
+use App\Livewire\Roles\Concerns\HandlesOfficeScope;
 use Flux\Flux;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
@@ -13,6 +14,8 @@ use Spatie\Permission\Models\Role;
 #[Title('إضافة دور')]
 class Create extends Component
 {
+    use HandlesOfficeScope;
+
     public string $name = '';
     public int $level = 1;
     public array $selectedPermissions = [];
@@ -28,12 +31,15 @@ class Create extends Component
             'name'                => ['required', 'string', 'max:255', 'unique:roles,name'],
             'level'               => ['required', 'integer', 'between:1,3'],
             'selectedPermissions' => ['array'],
+            ...$this->officeScopeRules(),
         ]);
+        $this->validateOfficeScope();
 
         $role = Role::create(['name' => $this->name, 'guard_name' => 'web']);
         $role->level = $this->level;
         $role->save();
         $role->syncPermissions($this->selectedPermissions);
+        $this->syncOfficeScope($role);
 
         activity()
             ->causedBy(auth()->user())
@@ -50,7 +56,10 @@ class Create extends Component
     {
         $this->ensurePermissions();
         $permissions = Permission::all();
-        return view('livewire.roles.create', compact('permissions'));
+        return view('livewire.roles.create', [
+            'permissions' => $permissions,
+            ...$this->officeScopeOptions(),
+        ]);
     }
 
     private function ensurePermissions(): void

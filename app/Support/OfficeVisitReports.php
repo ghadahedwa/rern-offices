@@ -85,16 +85,12 @@ class OfficeVisitReports
     }
 
     /**
-     * يقصر استعلام المقرات على محافظات المستخدم (super-admin بلا قيد).
+     * يقصر استعلام المقرات على نطاق المستخدم (المحافظات + قيد النوع/الوصف على الدور).
      * ⚠️ بلا محافظات = لا مقرات، لا كل المقرات.
      */
     public static function scopeOffices(Builder $query, ?User $user): Builder
     {
-        if ($user?->hasRole('super-admin')) {
-            return $query;
-        }
-
-        return $query->whereIn('offices.governorate_id', $user?->governorates()->pluck('governorates.id')->all() ?? []);
+        return OfficeScope::apply($query, $user);
     }
 
     public static function inScope(?User $user, Office $office): bool

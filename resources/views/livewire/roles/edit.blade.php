@@ -27,6 +27,9 @@
             {{-- Level --}}
             @include('livewire.roles.partials.level-select')
 
+            {{-- قصر الدور على أنواع/أوصاف مقرات --}}
+            @include('livewire.roles.partials.office-scope-select')
+
             {{-- Permissions --}}
             <div class="flex flex-col gap-3">
                 <label class="text-sm font-medium text-zinc-700 dark:text-zinc-300">

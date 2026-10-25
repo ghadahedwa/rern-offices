@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Roles;
 
+use App\Livewire\Roles\Concerns\HandlesOfficeScope;
 use App\Models\Warehouse;
 use App\Support\PermissionGroups;
 use App\Support\WarehouseScope;
@@ -16,6 +17,8 @@ use Spatie\Permission\Models\Role;
 #[Title('تعديل الدور')]
 class Edit extends Component
 {
+    use HandlesOfficeScope;
+
     public Role $role;
     public string $name = '';
     public int $level = 1;
@@ -29,6 +32,7 @@ class Edit extends Component
         $this->name                = $role->name;
         $this->level               = $role->level ?? 1;
         $this->selectedPermissions = $role->permissions->pluck('name')->toArray();
+        $this->loadOfficeScope($role);
     }
 
     /** مودال تأكيد الربط التلقائي — يظهر قبل الحفظ لا بعده. */
@@ -79,7 +83,9 @@ class Edit extends Component
             'name'                => ['required', 'string', 'max:255', "unique:roles,name,{$this->role->id}"],
             'level'               => ['required', 'integer', 'between:1,3'],
             'selectedPermissions' => ['array'],
+            ...$this->officeScopeRules(),
         ]);
+        $this->validateOfficeScope();
 
         if ($this->linkCandidates() !== []) {
             $this->showLinkConfirm = true;
@@ -106,7 +112,9 @@ class Edit extends Component
             'name'                => ['required', 'string', 'max:255', "unique:roles,name,{$this->role->id}"],
             'level'               => ['required', 'integer', 'between:1,3'],
             'selectedPermissions' => ['array'],
+            ...$this->officeScopeRules(),
         ]);
+        $this->validateOfficeScope();
 
         // ⚠️ المرشّحون يُحسبوا **قبل** المزامنة: بعدها تصير الصلاحيات هي
         //    المعروضة على أي حال، لكن الحساب المبكر يبقي القائمة هي التي
@@ -121,6 +129,12 @@ class Edit extends Component
         $this->role->save();
 
         $this->role->syncPermissions($this->selectedPermissions);
+
+        // super-admin فوق كل نطاق — لا يُخزَّن عليه قيد يوحي بغير ذلك
+        if ($this->role->name === 'super-admin') {
+            $this->officeTypeIds = $this->locationDescriptionIds = [];
+        }
+        $this->syncOfficeScope($this->role);
 
         $linked = 0;
 
@@ -165,6 +179,7 @@ class Edit extends Component
             'permissions'     => $permissions,
             // تُحسب عند العرض ليطابق المودالُ ما سيقع فعلاً عند التأكيد
             'linkCandidates'  => $this->showLinkConfirm ? $this->linkCandidates() : [],
+            ...$this->officeScopeOptions(),
         ]);
     }
 

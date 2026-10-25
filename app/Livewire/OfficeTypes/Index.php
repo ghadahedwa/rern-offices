@@ -3,6 +3,7 @@
 namespace App\Livewire\OfficeTypes;
 
 use App\Models\OfficeType;
+use App\Support\OfficeScope;
 use Flux\Flux;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Layout;
@@ -56,6 +57,13 @@ class Index extends Component
     {
         abort_unless(Auth::user()?->can('offices.settings'), 403);
         if ($this->deletingId) {
+            // ⚠️ نوعٌ يُقصَر عليه دور لا يُحذف: لو حُذف آخر نوعٍ على الدور لصار بلا قيد فيرى المقرات كلها
+            if ($roles = OfficeScope::rolesRestrictedTo('office_type_role', 'office_type_id', $this->deletingId)) {
+                $this->reset('deletingId', 'deletingLabel', 'showDelete');
+                Flux::toast(variant: 'danger', text: __('home.office_scope_in_use_by_role', ['roles' => $roles]));
+
+                return;
+            }
             OfficeType::findOrFail($this->deletingId)->delete();
             $this->reset('deletingId', 'deletingLabel', 'showDelete');
             Flux::toast(variant: 'success', text: __('home.office_type_deleted'));

@@ -21,6 +21,7 @@ use App\Models\OfficeType;
 use App\Models\WorkingHour;
 use App\Models\WorkSystem;
 use App\Support\ListReturnUrl;
+use App\Support\OfficeScope;
 use Flux\Flux;
 use Illuminate\Validation\Rule;
 use Livewire\Attributes\Layout;
@@ -124,6 +125,15 @@ class Create extends Component
      public array $newVideos    = [];
     public array $newDocuments = [];
 
+    /**
+     * ⚠️ `office_id` في الرابط (لاستئناف الإنشاء) فهو خاصية عامة، لكن لا عنصر في الواجهة يغيّره —
+     *    تغييرُه من العميل بعد `mount()` (الذي فحص النطاق) هو كتابةٌ على مقرٍّ آخر برقمه، بياناتٍ ووسائط.
+     */
+    public function updatingOfficeId(): void
+    {
+        abort(403);
+    }
+
     public function mount(?Office $office = null): void
     {
         /** @var \App\Models\User|null $user */
@@ -182,14 +192,8 @@ class Create extends Component
      */
     private function assertOfficeInScope(Office $office): void
     {
-        $user = auth()->user();
-        if ($user?->hasRole('super-admin')) {
-            return;
-        }
-        abort_unless(
-            in_array($office->governorate_id, $this->allowedGovernorateIds(), true),
-            403
-        );
+        // المحافظة + قيد النوع/الوصف على الدور
+        abort_unless(OfficeScope::allows(auth()->user(), $office), 403);
     }
 
     /** معرّفات محافظات المستخدم الحالي (فارغة لـ super-admin = بلا قيد). */
@@ -297,6 +301,14 @@ class Create extends Component
             'type_id.required'          => 'يرجى اختيار نوع المقر',
             'location_description_id.required' => 'يرجى اختيار وصف المقر',
         ]);
+
+        // الدور المقيَّد بنوع/وصف لا يحفظ مقراً خارجهما — وإلا خرج المقر من رؤيته بعد الحفظ
+        // (والمنسدلتان مضيّقتان، لكن القيمة تصل من العميل)
+        if (! OfficeScope::allowsAttributes(auth()->user(), $this->type_id, $this->location_description_id)) {
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                'location_description_id' => __('home.office_scope_out_of_role'),
+            ]);
+        }
     }
 
     public function clearPhotos(): void    { $this->newPhotos   = []; }
@@ -464,7 +476,12 @@ $existing = OfficeMedia::where('office_id', $this->office_id)->where('type', 'do
     private function persistStep1(): void
     {
         if ($this->office_id) {
-            Office::find($this->office_id)?->update($this->step1Data());
+            // `office_id` خاصية في الرابط تصل من العميل — يُفحص المقر الحالي قبل الكتابة عليه
+            $office = Office::find($this->office_id);
+            if ($office) {
+                $this->assertOfficeInScope($office);
+                $office->update($this->step1Data());
+            }
         } else {
             $office = Office::create($this->step1Data());
             $this->office_id = $office->id;
@@ -496,9 +513,13 @@ $existing = OfficeMedia::where('office_id', $this->office_id)->where('type', 'do
 
     private function persistStep2(): void
     {
+        $office = Office::find($this->office_id);
+        if (! $office) {
+            return;
+        }
         $this->step2Validation();
-
-        Office::find($this->office_id)?->update($this->step2Data());
+        $this->assertOfficeInScope($office);
+        $office->update($this->step2Data());
 
         OfficeBrokenDevice::where('office_id', $this->office_id)->delete();
         foreach ($this->brokenDevices as $row) {
@@ -623,6 +644,9 @@ $existing = OfficeMedia::where('office_id', $this->office_id)->where('type', 'do
     public function render()
     {
         $user = auth()->user();
+        $allowedTypeIds = OfficeScope::allowedTypeIds($user);
+        $allowedDescIds = OfficeScope::allowedDescriptionIds($user);
+
         return view('livewire.offices.create', [
             'canView'             => $user?->hasRole('super-admin') || $user?->can('offices.view'),
             'steps'               => $this->steps(),
@@ -633,8 +657,9 @@ $existing = OfficeMedia::where('office_id', $this->office_id)->where('type', 'do
                 ? Governorate::orderBy('order')->orderBy('id')->get()
                 : auth()->user()->governorates()->orderBy('order')->orderBy('id')->get(),
             'mainOffices'         => Office::with('officeType')->whereNotNull('type_id')->orderBy('name')->get(),
-            'types'               => OfficeType::orderBy('id')->get(),
-            'locations'           => LocationDescription::orderBy('id')->get(),
+            // الدور المقيَّد يرى ما يحقّ له حفظه وحده (والحارس الحقيقي في step1Validation)
+            'types'               => OfficeType::when($allowedTypeIds !== null, fn ($q) => $q->whereIn('id', $allowedTypeIds))->orderBy('id')->get(),
+            'locations'           => LocationDescription::when($allowedDescIds !== null, fn ($q) => $q->whereIn('id', $allowedDescIds))->orderBy('id')->get(),
             'workSystems'         => WorkSystem::orderBy('id')->get(),
             'connections'         => ConnectionType::orderBy('id')->get(),
             'workingHoursOptions' => WorkingHour::orderBy('id')->get(),

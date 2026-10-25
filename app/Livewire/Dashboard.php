@@ -9,6 +9,7 @@ use App\Models\Vehicle;
 use App\Models\VehicleStat;
 use App\Support\ArabicText;
 use App\Support\Branch;
+use App\Support\OfficeScope;
 use Illuminate\Support\Facades\DB;
 use Livewire\Component;
 use Livewire\WithoutUrlPagination;
@@ -62,10 +63,15 @@ class Dashboard extends Component
             ? null
             : $user->governorates()->pluck('governorates.id');
 
+        // قيد النوع/الوصف على أدوار المستخدم (null = بلا قيد) — يُحسب مرةً ويُمرَّر لكل استعلام مقرات هنا.
+        // ⚠️ كل رقمٍ عن المقرات في هذه الصفحة يمرّ به، وإلا رأى دور «حياة كريمة» أعداد المقرات كلها
+        $officeRules = OfficeScope::restrictionsFor($user);
+
         $officesQuery = Office::query();
         if (! $isSuperAdmin) {
             $officesQuery->whereIn('governorate_id', $govIds);
         }
+        OfficeScope::applyRestrictions($officesQuery, $officeRules);
 
         $totalOffices      = $officesQuery->count();
         $totalGovernorates = $isSuperAdmin
@@ -200,6 +206,7 @@ class Dashboard extends Component
                     ->where('stat_types.group_key', $groupKey)
                     ->where('office_statistics.year', $year)
                     ->when(! $isSuperAdmin, fn ($q) => $q->whereIn('offices.governorate_id', $govIds))
+                    ->tap(fn ($q) => OfficeScope::applyRestrictions($q, $officeRules))
                     ->selectRaw('offices.governorate_id, sum(office_statistics.value) as total')
                     ->groupBy('offices.governorate_id')
                     ->get()
@@ -274,13 +281,13 @@ class Dashboard extends Component
         // ملخص الإحصائيات السنوية — محجوب عمّن لا يملك offices.index
         $statsSummary = collect();
         if ($canViewOfficeStats) {
-        $statsSummary = collect($statGroups)->map(function ($langKey, $groupKey) use ($isSuperAdmin, $govIds, $statGroupMinYear, $statGroupBreakdown) {
+        $statsSummary = collect($statGroups)->map(function ($langKey, $groupKey) use ($isSuperAdmin, $govIds, $officeRules, $statGroupMinYear, $statGroupBreakdown) {
             $minYear = $statGroupMinYear[$groupKey] ?? null;
 
             // بطاقة مفصّلة: عرض كل نوع على حدة، مع مقارنة آخر سنتين لكل نوع
             if (in_array($groupKey, $statGroupBreakdown)) {
                 $rows = \App\Models\OfficeStat::whereHas('statType', fn ($q) => $q->where('group_key', $groupKey))
-                    ->when(! $isSuperAdmin, fn ($q) => $q->whereHas('office', fn ($o) => $o->whereIn('governorate_id', $govIds)))
+                    ->when(! $isSuperAdmin, fn ($q) => $q->whereHas('office', fn ($o) => OfficeScope::applyRestrictions($o->whereIn('governorate_id', $govIds), $officeRules)))
                     ->when($minYear, fn ($q) => $q->where('year', '>=', $minYear))
                     ->where('value', '>', 0)
                     ->with('statType:id,name')
@@ -318,7 +325,7 @@ class Dashboard extends Component
             }
 
             $years = \App\Models\OfficeStat::whereHas('statType', fn ($q) => $q->where('group_key', $groupKey))
-                ->when(! $isSuperAdmin, fn ($q) => $q->whereHas('office', fn ($o) => $o->whereIn('governorate_id', $govIds)))
+                ->when(! $isSuperAdmin, fn ($q) => $q->whereHas('office', fn ($o) => OfficeScope::applyRestrictions($o->whereIn('governorate_id', $govIds), $officeRules)))
                 ->when($minYear, fn ($q) => $q->where('year', '>=', $minYear))
                 ->where('value', '>', 0)
                 ->selectRaw('year, sum(value) as total')
@@ -389,7 +396,7 @@ class Dashboard extends Component
                     ->whereHas('roles', fn ($r) => $r->where('level', '>', $myLevel))
                     ->orWhereHas('roles', fn ($r) => $r->where('name', 'super-admin')))
                 ->pluck('id');
-            $myOfficeIds  = Office::whereIn('governorate_id', $govIds)->pluck('id');
+            $myOfficeIds  = OfficeScope::applyRestrictions(Office::whereIn('governorate_id', $govIds), $officeRules)->pluck('id');
             $myVehicleIds = Vehicle::whereIn('governorate_id', $govIds)->pluck('id');
         }
 

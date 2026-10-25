@@ -16,6 +16,7 @@ use App\Models\StructuralCondition;
 use App\Models\WorkingHour;
 use App\Models\WorkSystem;
 use App\Livewire\Concerns\RemembersListUrl;
+use App\Support\OfficeScope;
 use Flux\Flux;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
@@ -148,6 +149,8 @@ class Index extends Component
     {
         abort_unless($this->canDeleteOffices(), 403);
         $office = Office::findOrFail($id);
+        // المعرّف يصل من العميل — مقرٌّ خارج النطاق لا يُحذف بكتابة رقمه
+        abort_unless(OfficeScope::allows(auth()->user(), $office), 403);
         $this->deletingId    = $office->id;
         $this->deletingLabel = $office->name;
         $this->showDelete    = true;
@@ -157,7 +160,9 @@ class Index extends Component
     {
         abort_unless($this->canDeleteOffices(), 403);
         if ($this->deletingId) {
-            Office::findOrFail($this->deletingId)->delete();
+            $office = Office::findOrFail($this->deletingId);
+            abort_unless(OfficeScope::allows(auth()->user(), $office), 403);
+            $office->delete();
             $this->reset('deletingId', 'deletingLabel', 'showDelete');
             Flux::toast(variant: 'success', text: __('home.office_deleted'));
         }
@@ -222,10 +227,11 @@ class Index extends Component
             ? Governorate::orderBy('order')->orderBy('id')->get()
             : $user->governorates()->orderBy('order')->orderBy('id')->get();
 
-        $allowedGovIds = $isSuperAdmin ? null : $governorates->pluck('id');
-
-        $query = Office::with(['governorate', 'officeType', 'locationDescription', 'connectionType'])
-            ->when($allowedGovIds, fn($q) => $q->whereIn('governorate_id', $allowedGovIds))
+        // النطاق كله (المحافظات + قيد النوع/الوصف على الدور) من مصدره الواحد
+        $query = OfficeScope::apply(
+            Office::with(['governorate', 'officeType', 'locationDescription', 'connectionType']),
+            $user,
+        )
             ->when($this->governorate_id, fn($q) => $q->where('governorate_id', $this->governorate_id))
             ->when($this->type_id, fn($q) => $q->where('type_id', $this->type_id))
             ->when($this->location_description_id, fn($q) => $q->where('location_description_id', $this->location_description_id))
@@ -255,6 +261,9 @@ class Index extends Component
 
         $query = $this->applySorting($query, 'offices.id', 'desc');
 
+        $allowedTypeIds = OfficeScope::allowedTypeIds($user);
+        $allowedDescIds = OfficeScope::allowedDescriptionIds($user);
+
         // خيارات البحث المتقدم تُحمَّل فقط عند فتح اللوحة (إبقاء التحميل الأولي خفيفاً)
         $advancedOptions = $this->showAdvanced ? [
             'workSystems'         => WorkSystem::orderBy('name')->get(),
@@ -271,8 +280,9 @@ class Index extends Component
         return view('livewire.offices.index', [
             'offices'               => $query->paginate($this->perPage()),
             'governorates'          => $governorates,
-            'officeTypes'           => OfficeType::orderBy('name')->get(),
-            'locationDescriptions'  => LocationDescription::orderBy('name')->get(),
+            // منسدلتا الفلتر بما يقع في نطاقه وحده — خيارٌ لا مقرات خلفه يُوهم بشاشة معطّلة
+            'officeTypes'           => OfficeType::when($allowedTypeIds !== null, fn ($q) => $q->whereIn('id', $allowedTypeIds))->orderBy('name')->get(),
+            'locationDescriptions'  => LocationDescription::when($allowedDescIds !== null, fn ($q) => $q->whereIn('id', $allowedDescIds))->orderBy('name')->get(),
             ...$advancedOptions,
             'isSuperAdmin' => $isSuperAdmin,
             'canCreate'    => $isSuperAdmin || $user?->can('offices.create'),
