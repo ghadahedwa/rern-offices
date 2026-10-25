@@ -85,7 +85,6 @@ class Edit extends Component
             'selectedPermissions' => ['array'],
             ...$this->officeScopeRules(),
         ]);
-        $this->validateOfficeScope();
 
         if ($this->linkCandidates() !== []) {
             $this->showLinkConfirm = true;
@@ -114,7 +113,6 @@ class Edit extends Component
             'selectedPermissions' => ['array'],
             ...$this->officeScopeRules(),
         ]);
-        $this->validateOfficeScope();
 
         // ⚠️ المرشّحون يُحسبوا **قبل** المزامنة: بعدها تصير الصلاحيات هي
         //    المعروضة على أي حال، لكن الحساب المبكر يبقي القائمة هي التي

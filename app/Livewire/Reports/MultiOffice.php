@@ -19,6 +19,7 @@ use App\Models\WorkingHour;
 use App\Models\WorkSystem;
 use App\Exports\OfficesExport;
 use App\Reports\OfficeColumns;
+use App\Support\OfficeScope;
 use Flux\Flux;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Pagination\Paginator;
@@ -301,8 +302,9 @@ class MultiOffice extends Component
         return $this->optionTotalsCache = [
             'governorateIds'         => $allowed === null ? Governorate::count() : count($allowed),
             'officeIds'              => $this->scopedOffices($allowed)->count(),
-            'typeIds'                => OfficeType::count(),
-            'locationIds'            => LocationDescription::count(),
+            // بعدد المعروض في المنسدلة (المقيَّد بالدور) — وإلا لا يُعرف «تحديد الكل» عنده
+            'typeIds'                => $this->typeOptions()->count(),
+            'locationIds'            => $this->locationOptions()->count(),
             'workSystemIds'          => WorkSystem::count(),
             'workingHoursIds'        => WorkingHour::count(),
             'contractualStatusIds'   => ContractualStatus::count(),
@@ -351,6 +353,8 @@ class MultiOffice extends Component
         return Office::query()
             ->with(['governorate', 'officeType', 'connectionType', 'structuralCondition'])
             ->when($allowedGovIds !== null, fn ($q) => $q->whereIn('governorate_id', $allowedGovIds))
+            // قيد النوع/الوصف على أدوار المستخدم — الشاشة والـExcel والـPDF كلها تخرج من هذا الاستعلام
+            ->tap(fn ($q) => OfficeScope::applyRestrictions($q, OfficeScope::restrictionsFor(auth()->user())))
             // ── أساسية ── (الفلاتر المتعددة: "تحديد الكل" = بلا تقييد صفوف، فتظهر القيم الفاضية بشرطة)
             ->when($this->multiActive('governorateIds'), fn ($q) => $q->whereIn('governorate_id', $f['governorateIds']))
             ->when($this->multiActive('officeIds'), fn ($q) => $q->whereIn('id', $f['officeIds']))
@@ -402,11 +406,28 @@ class MultiOffice extends Component
             ->orderBy('name');
     }
 
+    /** أنواع المقرات في المنسدلة — ما يسمح به دور المستخدم وحده */
+    protected function typeOptions()
+    {
+        $ids = OfficeScope::allowedTypeIds(auth()->user());
+
+        return OfficeType::when($ids !== null, fn ($q) => $q->whereIn('id', $ids))->orderBy('name')->get();
+    }
+
+    /** أوصاف المقرات في المنسدلة — ما يسمح به دور المستخدم وحده */
+    protected function locationOptions()
+    {
+        $ids = OfficeScope::allowedDescriptionIds(auth()->user());
+
+        return LocationDescription::when($ids !== null, fn ($q) => $q->whereIn('id', $ids))->orderBy('name')->get();
+    }
+
     /** استعلام مقرات مقيّد بنطاق الصلاحيات + المحافظات المختارة حالياً (لخيارات المقر) */
     protected function scopedOffices(?array $allowedGovIds)
     {
         return Office::query()
             ->when($allowedGovIds !== null, fn ($q) => $q->whereIn('governorate_id', $allowedGovIds))
+            ->tap(fn ($q) => OfficeScope::applyRestrictions($q, OfficeScope::restrictionsFor(auth()->user())))
             ->when($this->governorateIds, fn ($q) => $q->whereIn('governorate_id', $this->governorateIds));
     }
 
@@ -471,8 +492,8 @@ class MultiOffice extends Component
             'offices'              => $offices,
             'officeOptions'        => $officeOptions,
             'governorates'         => $governorates,
-            'officeTypes'          => OfficeType::orderBy('name')->get(),
-            'locations'            => LocationDescription::orderBy('name')->get(),
+            'officeTypes'          => $this->typeOptions(),
+            'locations'            => $this->locationOptions(),
             'workSystems'          => WorkSystem::orderBy('name')->get(),
             'workingHoursOptions'  => WorkingHour::orderBy('name')->get(),
             'contractualStatuses'  => ContractualStatus::orderBy('name')->get(),

@@ -196,16 +196,16 @@ it('stores the descriptions chosen on a new role', function () {
         ->toBe([$this->karima->id]);
 });
 
-it('refuses export permissions on a restricted role', function (string $permission) {
+it('accepts report permissions on a restricted role (reports apply the restriction)', function (string $permission) {
     Livewire::actingAs(rosSuperAdmin())->test(RoleCreate::class)
         ->set('name', 'حياة كريمة')
         ->set('selectedPermissions', ['offices.index', $permission])
         ->set('locationDescriptionIds', [(string) $this->karima->id])
         ->call('save')
-        ->assertHasErrors('officeScope');
+        ->assertHasNoErrors();
 
-    expect(Role::where('name', 'حياة كريمة')->exists())->toBeFalse();
-})->with(OfficeScope::UNSCOPED_PERMISSIONS);
+    expect(Role::findByName('حياة كريمة', 'web')->hasPermissionTo($permission))->toBeTrue();
+})->with(['offices.export', 'offices.phone-directory']);
 
 it('loads and clears the restriction when editing a role', function () {
     $role = rosRole('karima', ['offices.index'], descriptions: [$this->karima->id]);

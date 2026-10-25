@@ -20,9 +20,8 @@ use Illuminate\Support\Facades\DB;
  *
  * ⚠️ لا يدخل الحساب إلا دورٌ يفتح المقرات (`OFFICE_PERMISSIONS`): دور «السيارات» بلا قيد
  *    لأن القيد لا معنى له عليه، فلو احتُسب لرفع قيد «حياة كريمة» عمّن جمع الدورين.
- * ⚠️ الشاشات التي لم يُطبَّق عليها القيد بعد (التقارير · دليل الهاتف) محميّة بأن صلاحياتها
- *    (`UNSCOPED_PERMISSIONS`) ممنوعة على الدور المقيَّد من شاشة الأدوار — لا تُرفع هذه المنعة
- *    قبل تمرير استعلامات تلك الشاشات من هنا.
+ * ⚠️ أي شاشة أو تقرير أو تصدير جديد يقرأ المقرات يمرّ من هنا (`apply()` أو `applyRestrictions()`)
+ *    — وإلا أخرج للدور المقيَّد مقرات كل الأنواع بلا أثرٍ ظاهر.
  */
 class OfficeScope
 {
@@ -39,12 +38,6 @@ class OfficeScope
         'offices.inspector-report.edit',
         'offices.counselor-report.view',
         'offices.counselor-report.edit',
-    ];
-
-    /** صلاحيات شاشاتٍ تقرأ المقرات بلا هذا القيد — ممنوعة على الدور المقيَّد */
-    public const UNSCOPED_PERMISSIONS = [
-        'offices.export',
-        'offices.phone-directory',
     ];
 
     /**

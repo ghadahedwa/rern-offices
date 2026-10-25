@@ -6,6 +6,7 @@ use App\Models\Governorate;
 use App\Models\LocationDescription;
 use App\Models\Office;
 use App\Models\OfficeType;
+use App\Support\OfficeScope;
 use Illuminate\Http\Request;
 use Mpdf\Config\ConfigVariables;
 use Mpdf\Config\FontVariables;
@@ -29,6 +30,11 @@ class OfficesByTypePdfController extends Controller
         $isSuperAdmin  = $user->hasRole('super-admin');
         $allowedGovIds = $isSuperAdmin ? null : $user->governorates()->pluck('governorates.id')->all();
 
+        // قيد النوع/الوصف على أدوار المستخدم — كما في الشاشة (Reports\OfficesByType::buildMatrix)
+        $officeRules    = OfficeScope::restrictionsFor($user);
+        $allowedTypeIds = OfficeScope::allowedTypeIds($user);
+        $allowedDescIds = OfficeScope::allowedDescriptionIds($user);
+
         $governorates = Governorate::query()
             ->when($allowedGovIds !== null, fn ($q) => $q->whereIn('id', $allowedGovIds))
             ->when($f['governorateIds'] ?? [], fn ($q) => $q->whereIn('id', $f['governorateIds']))
@@ -41,12 +47,14 @@ class OfficesByTypePdfController extends Controller
 
         $types = $showTypes
             ? OfficeType::query()
+                ->when($allowedTypeIds !== null, fn ($q) => $q->whereIn('id', $allowedTypeIds))
                 ->when($f['typeIds'] ?? [], fn ($q) => $q->whereIn('id', $f['typeIds']))
                 ->orderBy('name')->get(['id', 'name'])
             : collect();
 
         $locations = $showLocations
             ? LocationDescription::query()
+                ->when($allowedDescIds !== null, fn ($q) => $q->whereIn('id', $allowedDescIds))
                 ->when($f['locationIds'] ?? [], fn ($q) => $q->whereIn('id', $f['locationIds']))
                 ->orderBy('name')->get(['id', 'name'])
             : collect();
@@ -59,6 +67,7 @@ class OfficesByTypePdfController extends Controller
         if ($types->isNotEmpty()) {
             $typeRows = Office::query()
                 ->when($allowedGovIds !== null, fn ($q) => $q->whereIn('governorate_id', $allowedGovIds))
+                ->tap(fn ($q) => OfficeScope::applyRestrictions($q, $officeRules))
                 ->when($govIds, fn ($q) => $q->whereIn('governorate_id', $govIds))
                 ->when($selectedLocationIds, fn ($q) => $q->whereIn('location_description_id', $selectedLocationIds))
                 ->selectRaw('governorate_id, type_id, COUNT(*) as cnt')
@@ -72,6 +81,7 @@ class OfficesByTypePdfController extends Controller
         if ($locations->isNotEmpty()) {
             $locRows = Office::query()
                 ->when($allowedGovIds !== null, fn ($q) => $q->whereIn('governorate_id', $allowedGovIds))
+                ->tap(fn ($q) => OfficeScope::applyRestrictions($q, $officeRules))
                 ->when($govIds, fn ($q) => $q->whereIn('governorate_id', $govIds))
                 ->when($selectedTypeIds, fn ($q) => $q->whereIn('type_id', $selectedTypeIds))
                 ->selectRaw('governorate_id, location_description_id, COUNT(*) as cnt')

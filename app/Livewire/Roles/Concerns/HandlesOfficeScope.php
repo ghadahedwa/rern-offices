@@ -4,9 +4,7 @@ namespace App\Livewire\Roles\Concerns;
 
 use App\Models\LocationDescription;
 use App\Models\OfficeType;
-use App\Support\OfficeScope;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Validation\ValidationException;
 use Spatie\Permission\Models\Role;
 
 /**
@@ -37,23 +35,6 @@ trait HandlesOfficeScope
             'locationDescriptionIds'   => ['array'],
             'locationDescriptionIds.*' => ['integer', 'exists:location_descriptions,id'],
         ];
-    }
-
-    /**
-     * ⚠️ الدور المقيَّد لا يأخذ صلاحيات شاشاتٍ تقرأ المقرات بلا هذا القيد (التقارير · دليل الهاتف) —
-     *    وإلا أخرجت له التقارير مقرات كل الأنواع بلا أثرٍ ظاهر. الحارس هنا في الحفظ لا في القالب.
-     */
-    protected function validateOfficeScope(): void
-    {
-        if ($this->officeTypeIds === [] && $this->locationDescriptionIds === []) {
-            return;
-        }
-
-        if (array_intersect($this->selectedPermissions, OfficeScope::UNSCOPED_PERMISSIONS) !== []) {
-            throw ValidationException::withMessages([
-                'officeScope' => __('home.role_office_scope_blocked_permissions'),
-            ]);
-        }
     }
 
     protected function syncOfficeScope(Role $role): void

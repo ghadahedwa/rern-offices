@@ -7,6 +7,7 @@ use App\Models\DeviceType;
 use App\Models\Governorate;
 use App\Models\Office;
 use App\Models\OfficeBrokenDevice;
+use App\Support\OfficeScope;
 
 /**
  * باني المصفوفة لبيان الأجهزة العددي — مشترك بين المكوّن وكنترولر الـ PDF.
@@ -21,7 +22,7 @@ class DeviceCountMatrix
      * @param  array  $f  الفلاتر: governorateIds, workingDevices (مفاتيح), brokenTypeIds
      * @return array{governorates:\Illuminate\Support\Collection, workingCols:array, brokenTypes:\Illuminate\Support\Collection, sums:array, brokenSums:array}
      */
-    public static function build(?array $allowedGovIds, array $f): array
+    public static function build(?array $allowedGovIds, array $f, ?array $officeRules = null): array
     {
         $govIds      = $f['governorateIds'] ?? [];
         $workingSel  = $f['workingDevices'] ?? [];
@@ -60,6 +61,7 @@ class DeviceCountMatrix
 
             $deviceRows = Office::query()
                 ->when($allowedGovIds !== null, fn ($q) => $q->whereIn('governorate_id', $allowedGovIds))
+                ->tap(fn ($q) => OfficeScope::applyRestrictions($q, $officeRules))
                 ->when($govIds, fn ($q) => $q->whereIn('governorate_id', $govIds))
                 ->selectRaw(implode(', ', $selects))
                 ->groupBy('governorate_id')
@@ -78,6 +80,7 @@ class DeviceCountMatrix
             $brokenRows = OfficeBrokenDevice::query()
                 ->join('offices', 'offices.id', '=', 'office_broken_devices.office_id')
                 ->when($allowedGovIds !== null, fn ($q) => $q->whereIn('offices.governorate_id', $allowedGovIds))
+                ->tap(fn ($q) => OfficeScope::applyRestrictions($q, $officeRules))
                 ->when($govIds, fn ($q) => $q->whereIn('offices.governorate_id', $govIds))
                 ->when($brokenSel, fn ($q) => $q->whereIn('office_broken_devices.device_type_id', $brokenSel))
                 ->selectRaw('offices.governorate_id as gid, office_broken_devices.device_type_id as tid, COALESCE(SUM(office_broken_devices.count),0) as cnt')

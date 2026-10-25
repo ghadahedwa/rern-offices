@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Reports\DeviceCountMatrix;
+use App\Support\OfficeScope;
 use Illuminate\Http\Request;
 use Mpdf\Config\ConfigVariables;
 use Mpdf\Config\FontVariables;
@@ -26,7 +27,7 @@ class DeviceCountPdfController extends Controller
         $isSuperAdmin  = $user->hasRole('super-admin');
         $allowedGovIds = $isSuperAdmin ? null : $user->governorates()->pluck('governorates.id')->all();
 
-        $m = DeviceCountMatrix::build($allowedGovIds, $f);
+        $m = DeviceCountMatrix::build($allowedGovIds, $f, OfficeScope::restrictionsFor($user));
 
         $governorates = $m['governorates'];
         $workingCols  = $m['workingCols'];

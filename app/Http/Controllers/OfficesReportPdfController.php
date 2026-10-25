@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Governorate;
 use App\Models\Office;
+use App\Support\OfficeScope;
 use Illuminate\Http\Request;
 use Mpdf\Config\ConfigVariables;
 use Mpdf\Config\FontVariables;
@@ -31,8 +32,10 @@ class OfficesReportPdfController extends Controller
         $isSuperAdmin  = $user->hasRole('super-admin');
         $allowedGovIds = $isSuperAdmin ? null : $user->governorates()->pluck('governorates.id')->all();
 
+        // المعرّفات من الـsession — يُعاد فحص النطاق كله (المحافظة + قيد النوع/الوصف) لا الاعتماد عليها
         $offices = Office::whereIn('id', $ids)
             ->when($allowedGovIds !== null, fn ($q) => $q->whereIn('governorate_id', $allowedGovIds))
+            ->tap(fn ($q) => OfficeScope::applyRestrictions($q, OfficeScope::restrictionsFor($user)))
             ->with([
                 'governorate', 'officeType', 'locationDescription', 'workSystem', 'workingHour',
                 'connectionType', 'contractualStatus', 'structuralCondition',

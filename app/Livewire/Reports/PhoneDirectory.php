@@ -4,6 +4,7 @@ namespace App\Livewire\Reports;
 
 use App\Models\Governorate;
 use App\Models\Office;
+use App\Support\OfficeScope;
 use Flux\Flux;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
@@ -72,16 +73,18 @@ class PhoneDirectory extends Component
         // خيارات المقرات — مقيّدة بالمحافظة المختارة حالياً + نطاق المستخدم
         $offices = collect();
         if ($this->selectedGovernorateId && ($allowedGovIds === null || in_array($this->selectedGovernorateId, $allowedGovIds))) {
-            $offices = Office::where('governorate_id', $this->selectedGovernorateId)
+            // قيد النوع/الوصف على أدوار المستخدم فوق المحافظة
+            $offices = OfficeScope::apply(Office::query(), auth()->user())
+                ->where('governorate_id', $this->selectedGovernorateId)
                 ->orderBy('name')
                 ->get(['id', 'name']);
         }
 
         $results = collect();
         if ($this->hasSearched && $this->appliedOfficeId) {
-            $results = Office::query()
+            // المقر المختار يصل من العميل — النطاق كله يُفحص عند العرض
+            $results = OfficeScope::apply(Office::query(), auth()->user())
                 ->where('id', $this->appliedOfficeId)
-                ->when($allowedGovIds !== null, fn ($q) => $q->whereIn('governorate_id', $allowedGovIds))
                 ->get(['id', 'name', 'head_name', 'head_mobile']);
         }
 

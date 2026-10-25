@@ -4,6 +4,7 @@ namespace App\Livewire\Reports;
 
 use App\Models\Governorate;
 use App\Models\Office;
+use App\Support\OfficeScope;
 use Flux\Flux;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
@@ -52,7 +53,9 @@ class OfficePdf extends Component
 
         $offices = collect();
         if ($this->selectedGovernorateId) {
-            $offices = Office::where('governorate_id', $this->selectedGovernorateId)
+            // نطاق المستخدم كله — المحافظة المختارة تصل من العميل، وقيد النوع/الوصف على الدور
+            $offices = OfficeScope::apply(Office::query(), $user)
+                ->where('governorate_id', $this->selectedGovernorateId)
                 ->orderBy('name')
                 ->get(['id', 'name']);
         }

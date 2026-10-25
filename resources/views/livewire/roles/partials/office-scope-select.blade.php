@@ -29,7 +29,6 @@
             </div>
         @endforeach
 
-        @error('officeScope') <p class="text-red-500 text-xs">{{ $message }}</p> @enderror
         @error('officeTypeIds.*') <p class="text-red-500 text-xs">{{ $message }}</p> @enderror
         @error('locationDescriptionIds.*') <p class="text-red-500 text-xs">{{ $message }}</p> @enderror
     </div>

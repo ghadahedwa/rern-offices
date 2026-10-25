@@ -172,6 +172,8 @@ class StatsComparison extends Component
             ->whereIn('stat_types.group_key', $groupKeys)
             ->whereIn('office_statistics.year', $years)
             ->when($allowedGovIds !== null, fn ($q) => $q->whereIn('offices.governorate_id', $allowedGovIds))
+            // قيد النوع/الوصف على أدوار المستخدم — إحصائيات مقراته وحدها
+            ->tap(fn ($q) => \App\Support\OfficeScope::applyRestrictions($q, \App\Support\OfficeScope::restrictionsFor(auth()->user())))
             ->when($govIds, fn ($q) => $q->whereIn('offices.governorate_id', $govIds))
             ->selectRaw('offices.governorate_id as gid, stat_types.group_key as gk, stat_types.id as stid, office_statistics.year as yr, COALESCE(SUM(office_statistics.value),0) as total')
             ->groupBy('offices.governorate_id', 'stat_types.group_key', 'stat_types.id', 'office_statistics.year')

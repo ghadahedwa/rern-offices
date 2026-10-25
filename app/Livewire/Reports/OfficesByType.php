@@ -7,6 +7,7 @@ use App\Models\Governorate;
 use App\Models\LocationDescription;
 use App\Models\Office;
 use App\Models\OfficeType;
+use App\Support\OfficeScope;
 use Flux\Flux;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
@@ -84,6 +85,12 @@ class OfficesByType extends Component
         $f      = $this->applied;
         $govIds = $f['governorateIds'] ?? [];
 
+        // قيد النوع/الوصف على أدوار المستخدم — الأعداد والأعمدة معاً (عمودٌ صفريّ دائماً ضجيج)
+        $user        = auth()->user();
+        $officeRules = OfficeScope::restrictionsFor($user);
+        $allowedTypeIds = OfficeScope::allowedTypeIds($user);
+        $allowedDescIds = OfficeScope::allowedDescriptionIds($user);
+
         $governorates = Governorate::query()
             ->when($allowedGovIds !== null, fn ($q) => $q->whereIn('id', $allowedGovIds))
             ->when($govIds, fn ($q) => $q->whereIn('id', $govIds))
@@ -96,6 +103,7 @@ class OfficesByType extends Component
         // أعمدة النوع (المختارة أو الكل) — فقط لو مفعّل عرض النوع
         $types = $showTypes
             ? OfficeType::query()
+                ->when($allowedTypeIds !== null, fn ($q) => $q->whereIn('id', $allowedTypeIds))
                 ->when($f['typeIds'] ?? [], fn ($q) => $q->whereIn('id', $f['typeIds']))
                 ->orderBy('name')->get(['id', 'name'])
             : collect();
@@ -103,6 +111,7 @@ class OfficesByType extends Component
         // أعمدة وصف الموقع (المختارة أو الكل) — فقط لو مفعّل عرض الوصف
         $locations = $showLocations
             ? LocationDescription::query()
+                ->when($allowedDescIds !== null, fn ($q) => $q->whereIn('id', $allowedDescIds))
                 ->when($f['locationIds'] ?? [], fn ($q) => $q->whereIn('id', $f['locationIds']))
                 ->orderBy('name')->get(['id', 'name'])
             : collect();
@@ -117,6 +126,7 @@ class OfficesByType extends Component
         if ($types->isNotEmpty()) {
             $typeRows = Office::query()
                 ->when($allowedGovIds !== null, fn ($q) => $q->whereIn('governorate_id', $allowedGovIds))
+                ->tap(fn ($q) => OfficeScope::applyRestrictions($q, $officeRules))
                 ->when($govIds, fn ($q) => $q->whereIn('governorate_id', $govIds))
                 ->when($selectedLocationIds, fn ($q) => $q->whereIn('location_description_id', $selectedLocationIds))
                 ->selectRaw('governorate_id, type_id, COUNT(*) as cnt')
@@ -132,6 +142,7 @@ class OfficesByType extends Component
         if ($locations->isNotEmpty()) {
             $locRows = Office::query()
                 ->when($allowedGovIds !== null, fn ($q) => $q->whereIn('governorate_id', $allowedGovIds))
+                ->tap(fn ($q) => OfficeScope::applyRestrictions($q, $officeRules))
                 ->when($govIds, fn ($q) => $q->whereIn('governorate_id', $govIds))
                 ->when($selectedTypeIds, fn ($q) => $q->whereIn('type_id', $selectedTypeIds))
                 ->selectRaw('governorate_id, location_description_id, COUNT(*) as cnt')
@@ -189,8 +200,8 @@ class OfficesByType extends Component
         return view('livewire.reports.offices-by-type', [
             'matrix'       => $matrix,
             'governorates' => $governorates,
-            'officeTypes'  => OfficeType::orderBy('name')->get(),
-            'locations'    => LocationDescription::orderBy('name')->get(),
+            'officeTypes'  => OfficeType::when(($ids = OfficeScope::allowedTypeIds($user)) !== null, fn ($q) => $q->whereIn('id', $ids))->orderBy('name')->get(),
+            'locations'    => LocationDescription::when(($ids = OfficeScope::allowedDescriptionIds($user)) !== null, fn ($q) => $q->whereIn('id', $ids))->orderBy('name')->get(),
         ]);
     }
 }

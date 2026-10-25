@@ -6,6 +6,7 @@ use App\Exports\DeviceCountExport;
 use App\Models\DeviceType;
 use App\Models\Governorate;
 use App\Reports\DeviceCountMatrix;
+use App\Support\OfficeScope;
 use Flux\Flux;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
@@ -89,7 +90,7 @@ class DeviceCount extends Component
             return;
         }
 
-        $m = DeviceCountMatrix::build($this->allowedGovIds(), $this->applied);
+        $m = DeviceCountMatrix::build($this->allowedGovIds(), $this->applied, OfficeScope::restrictionsFor(auth()->user()));
 
         return Excel::download(
             new DeviceCountExport($m['governorates'], $m['workingCols'], $m['brokenTypes'], $m['sums'], $m['brokenSums']),
@@ -120,7 +121,7 @@ class DeviceCount extends Component
         $allowedGovIds = $isSuperAdmin ? null : $governorates->pluck('id')->all();
 
         $matrix = $this->hasSearched
-            ? DeviceCountMatrix::build($allowedGovIds, $this->applied)
+            ? DeviceCountMatrix::build($allowedGovIds, $this->applied, OfficeScope::restrictionsFor($user))
             : ['governorates' => collect(), 'workingCols' => [], 'brokenTypes' => collect(), 'sums' => [], 'brokenSums' => []];
 
         return view('livewire.reports.device-count', [

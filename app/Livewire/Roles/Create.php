@@ -33,7 +33,6 @@ class Create extends Component
             'selectedPermissions' => ['array'],
             ...$this->officeScopeRules(),
         ]);
-        $this->validateOfficeScope();
 
         $role = Role::create(['name' => $this->name, 'guard_name' => 'web']);
         $role->level = $this->level;
