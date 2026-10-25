@@ -73,10 +73,10 @@
         <table class="w-full text-sm text-right max-sm:[&_th]:px-2 max-sm:[&_td]:px-2">
             <thead class="bg-zinc-50 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 text-xs uppercase">
                 <tr>
-                    {{-- على الموبايل: الاسم والمحافظة والحالة والعمليات — النوع ونظام العمل في صفحة العرض --}}
+                    {{-- على الموبايل: الاسم (والمحافظة سطرٌ تحته) والحالة والعمليات — النوع ونظام العمل في صفحة العرض --}}
                     <th class="px-4 py-3 font-medium max-sm:hidden">#</th>
                     @include('livewire.partials.sortable-th', ['column' => 'name', 'label' => __('home.vehicle_name')])
-                    @include('livewire.partials.sortable-th', ['column' => 'governorate', 'label' => __('home.governorate')])
+                    @include('livewire.partials.sortable-th', ['column' => 'governorate', 'label' => __('home.governorate'), 'thClass' => 'max-sm:hidden'])
                     @include('livewire.partials.sortable-th', ['column' => 'type', 'label' => __('home.vehicle_type'), 'thClass' => 'max-sm:hidden'])
                     @include('livewire.partials.sortable-th', ['column' => 'work_system', 'label' => __('home.vehicle_work_system'), 'thClass' => 'max-sm:hidden'])
                     @include('livewire.partials.sortable-th', ['column' => 'status', 'label' => __('home.vehicle_status')])
@@ -89,8 +89,11 @@
                 @forelse($vehicles as $vehicle)
                     <tr class="hover:bg-zinc-50 dark:hover:bg-zinc-800 transition">
                         <td class="px-4 py-3 text-zinc-500 max-sm:hidden">{{ $vehicles->firstItem() + $loop->index }}</td>
-                        <td class="px-4 py-3 max-sm:px-3 font-medium text-zinc-800 dark:text-zinc-100">{{ $vehicle->name }}</td>
-                        <td class="px-4 py-3 max-sm:px-2 text-zinc-600 dark:text-zinc-300">{{ $vehicle->governorate->name }}</td>
+                        <td class="px-4 py-3 max-sm:px-3 font-medium text-zinc-800 dark:text-zinc-100">
+                            {{ $vehicle->name }}
+                            <p class="sm:hidden mt-0.5 text-xs font-normal text-zinc-500 dark:text-zinc-400">{{ $vehicle->governorate->name }}</p>
+                        </td>
+                        <td class="px-4 py-3 max-sm:hidden text-zinc-600 dark:text-zinc-300">{{ $vehicle->governorate->name }}</td>
                         <td class="px-4 py-3 max-sm:hidden">
                             <span class="inline-block px-2 py-0.5 rounded-full text-xs font-medium bg-[#c9a847]/15 text-[#b8962e] dark:text-[#c9a847]">
                                 {{ $vehicle->type->name ?? '—' }}
