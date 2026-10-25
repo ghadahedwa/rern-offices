@@ -22,6 +22,7 @@ use App\Models\WorkingHour;
 use App\Models\WorkSystem;
 use App\Support\ListReturnUrl;
 use Flux\Flux;
+use Illuminate\Validation\Rule;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 use Livewire\Attributes\Url;
@@ -40,6 +41,10 @@ class Create extends Component
     public const STEP_BASIC     = 1;
     public const STEP_SERVICES  = 2;
     public const STEP_MEDIA     = 3;
+
+    /** خيارات منسدلتي أيام العمل ونوع العدّاد — يتحقق الحفظ منها (`step1Validation`/`step2Validation`) */
+    public const WORKING_DAYS = ['full_week', 'one_day', 'two_days', 'three_days', 'four_days', 'five_days'];
+    public const METER_TYPES  = ['prepaid', 'invoice', 'entity_meter'];
 
     #[Url]
     public int $step = 1;
@@ -277,6 +282,13 @@ class Create extends Component
             'type_id'         => 'required|exists:office_types,id',
             'location_description_id' => 'required|exists:location_descriptions,id',
             'working_hours_id' => 'nullable|exists:working_hours,id',
+            // ⚠️ قيم المنسدلات تصل من العميل — قيمةٌ ليست من خياراتها كانت تُسقط الحفظ كله بخطأ قاعدة بيانات
+            //    (`work_system_id = not_working` على السيرفر 2026-10-17 و10-25)
+            'parent_office_id'      => ['nullable', Rule::exists(Office::class, 'id')],
+            'work_system_id'        => ['nullable', Rule::exists(WorkSystem::class, 'id')],
+            'connection_type_id'    => ['nullable', Rule::exists(ConnectionType::class, 'id')],
+            'contractual_status_id' => ['nullable', Rule::exists(ContractualStatus::class, 'id')],
+            'working_days'          => ['nullable', Rule::in(self::WORKING_DAYS)],
         ], [
             'governorate_id.required'   => 'يرجى اختيار المحافظة',
             'governorate_id.in'         => 'لا يمكنك حفظ مقر في محافظة خارج نطاقك',
@@ -411,7 +423,8 @@ $existing = OfficeMedia::where('office_id', $this->office_id)->where('type', 'do
             'google_maps_link'       => $this->google_maps_link ?: null,
             'floors_description'     => $this->floors_description ?: null,
             'connection_type_id'     => $this->connection_type_id ?: null,
-            'working_hours_id'       => $this->working_hours_id,
+            // «اختر» في المنسدلة = '' — يُحفظ NULL، وإلا رفضه MySQL فسقط الحفظ كله (السيرفر 2026-10-21)
+            'working_hours_id'       => $this->working_hours_id ?: null,
             'working_days'           => $this->working_days ?: null,
             'avg_daily_transactions' => $this->avg_daily_transactions !== '' ? (int) $this->avg_daily_transactions : null,
             'contractual_status_id'  => $this->contractual_status_id ?: null,
@@ -458,8 +471,33 @@ $existing = OfficeMedia::where('office_id', $this->office_id)->where('type', 'do
         }
     }
 
+    /**
+     * قيم منسدلات الخطوة الثانية من خياراتها وحدها. أعمدة الحالات نصّية فقيمةٌ غريبة
+     * كانت تُحفظ **صامتةً** (لا خطأ قاعدة بيانات يكشفها كما في المعرّفات).
+     */
+    private function step2Validation(): void
+    {
+        $this->validate([
+            'microfilm_option_id'              => ['nullable', Rule::exists(MicrofilmOption::class, 'id')],
+            'disabilities_access_id'           => ['nullable', Rule::exists(DisabilitieAccess::class, 'id')],
+            'fire_safety_id'                   => ['nullable', Rule::exists(FireSafety::class, 'id')],
+            'document_photocopying_service_id' => ['nullable', Rule::exists(DocumentPhotocopyingService::class, 'id')],
+            'buffet_service_id'                => ['nullable', Rule::exists(BuffetService::class, 'id')],
+            'cleanliness_contract_id'          => ['nullable', Rule::exists(CleanlinessContract::class, 'id')],
+            'Braille_sign_device'              => ['nullable', Rule::in(['available', 'not_available'])],
+            'queue_management_system'          => ['nullable', Rule::in(['working', 'not_working', 'not_available'])],
+            'surveillance_cameras'             => ['nullable', Rule::in(['available', 'not_available', 'broken'])],
+            'electricity_meter_type'           => ['nullable', Rule::in(self::METER_TYPES)],
+            'electricity_meter_debt'           => ['nullable', Rule::in(['yes', 'no'])],
+            'water_meter_type'                 => ['nullable', Rule::in(self::METER_TYPES)],
+            'water_meter_debt'                 => ['nullable', Rule::in(['yes', 'no'])],
+        ]);
+    }
+
     private function persistStep2(): void
     {
+        $this->step2Validation();
+
         Office::find($this->office_id)?->update($this->step2Data());
 
         OfficeBrokenDevice::where('office_id', $this->office_id)->delete();

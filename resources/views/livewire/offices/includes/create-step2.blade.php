@@ -1,4 +1,13 @@
 
+            {{-- أخطاء التحقق — منسدلات الخطوة بلا رسالة تحت كلٍّ منها، فتُجمع هنا --}}
+            @if ($errors->any())
+                <div class="mb-5 rounded-lg border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20 px-4 py-3 text-sm text-red-500 space-y-1">
+                    @foreach ($errors->all() as $message)
+                        <p>{{ $message }}</p>
+                    @endforeach
+                </div>
+            @endif
+
             {{-- ── Section 1: الخدمات والتجهيزات ── --}}
             <div class="mb-1">
                 <div class="flex items-center gap-3 mb-5">

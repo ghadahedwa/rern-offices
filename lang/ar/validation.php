@@ -167,6 +167,26 @@ return [
         'engine_number'                          => 'رقم الموتور',
         'works_on_friday'                        => 'العمل أيام الجمع',
 
+        // المقرات — منسدلات فورم المقر (تتحقق من خياراتها)
+        'parent_office_id'                 => 'المقر الرئيسي',
+        'work_system_id'                   => 'نظام العمل',
+        'connection_type_id'               => 'نوع خط الربط',
+        'contractual_status_id'            => 'الوضع التعاقدي',
+        'working_days'                     => 'أيام العمل',
+        'working_hours_id'                 => 'ساعات العمل',
+        'microfilm_option_id'              => 'الميكروفيلم',
+        'disabilities_access_id'           => 'تجهيزات ذوى الهمم',
+        'fire_safety_id'                   => 'الحماية المدنية',
+        'document_photocopying_service_id' => 'خدمة تصوير المستندات',
+        'buffet_service_id'                => 'البوفيه',
+        'cleanliness_contract_id'          => 'عقد النظافة',
+        'Braille_sign_device'              => 'جهاز برايل لغة الإشارة',
+        'queue_management_system'          => 'منظم الدور كيوسيستم',
+        'electricity_meter_type'           => 'عداد الكهرباء',
+        'electricity_meter_debt'           => 'مديونية عداد الكهرباء',
+        'water_meter_type'                 => 'عداد المياه',
+        'water_meter_debt'                 => 'مديونية عداد المياه',
+
         // المقرات — تقريرا الزيارة (المفتش بلا بادئة · المستشار ببادئة counselor_)
         'visited_at'                             => 'تاريخ الزيارة',
         'structural_condition_id'                => 'الحالة الإنشائية',

@@ -102,12 +102,20 @@
             $err = 'text-red-500 text-xs mt-1';
         @endphp
 
+        {{-- ⚠️ مفتاحٌ لكل خطوة: بدونه يُعيد Livewire استعمال منسدلات الخطوة السابقة في مواضعها
+             فتحمل قيمتها إلى حقلٍ آخر («نظام العمل» = قيمة «منظم الدور» على السيرفر 2026-10-25) --}}
         @if ($step === 1)
-            @include('livewire.offices.includes.create-step1')
+            <div wire:key="office-step-1">
+                @include('livewire.offices.includes.create-step1')
+            </div>
         @elseif ($step === 2)
-            @include('livewire.offices.includes.create-step2')
+            <div wire:key="office-step-2">
+                @include('livewire.offices.includes.create-step2')
+            </div>
         @elseif ($step === \App\Livewire\Offices\Create::STEP_MEDIA)
-            @include('livewire.offices.includes.create-step4')
+            <div wire:key="office-step-media">
+                @include('livewire.offices.includes.create-step4')
+            </div>
         @endif
     </div>
 

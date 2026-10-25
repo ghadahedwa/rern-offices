@@ -92,6 +92,7 @@
                                 <option value="{{ $item->id }}">{{ $item->name }}</option>
                             @endforeach
                         </select>
+                        @error('parent_office_id') <p class="mt-1 text-xs text-red-500">{{ $message }}</p> @enderror
                     </div>
                     --}}
                     <div>
@@ -128,6 +129,7 @@
                                 <option value="{{ $item->id }}">{{ $item->name }}</option>
                             @endforeach
                         </select>
+                        @error('work_system_id') <p class="mt-1 text-xs text-red-500">{{ $message }}</p> @enderror
                     </div>
                     <div>
                         <label class="{{ $lbl }}">{{ __('home.working_hours') }}</label>
@@ -150,6 +152,7 @@
                             <option value="four_days">{{ __('home.working_days_four_days') }}</option>
                             <option value="five_days">{{ __('home.working_days_five_days') }}</option>
                         </select>
+                        @error('working_days') <p class="mt-1 text-xs text-red-500">{{ $message }}</p> @enderror
                     </div>
                     @if($locations->firstWhere('id', $location_description_id)?->shows_windows_count)
                     <div>
@@ -186,6 +189,7 @@
                                 <option value="{{ $item->id }}">{{ $item->name }}</option>
                             @endforeach
                         </select>
+                        @error('contractual_status_id') <p class="mt-1 text-xs text-red-500">{{ $message }}</p> @enderror
                     </div>
                     <div>
                         <label class="{{ $lbl }}">{{ __('home.google_maps_link') }}</label>
@@ -222,6 +226,7 @@
                                 <option value="{{ $item->id }}">{{ $item->name }}</option>
                             @endforeach
                         </select>
+                        @error('connection_type_id') <p class="mt-1 text-xs text-red-500">{{ $message }}</p> @enderror
                     </div>
                     {{-- نُقل إلى صفحة الإحصائيات (تاب المعاملات والمبيعات). محفوظ هنا للاسترجاع السهل لو عُدل القرار.
                     <div>
