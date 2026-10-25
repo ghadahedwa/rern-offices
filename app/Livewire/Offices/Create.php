@@ -20,6 +20,7 @@ use App\Models\Office;
 use App\Models\OfficeType;
 use App\Models\WorkingHour;
 use App\Models\WorkSystem;
+use App\Support\OfficeListUrl;
 use Flux\Flux;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
@@ -528,7 +529,7 @@ $existing = OfficeMedia::where('office_id', $this->office_id)->where('type', 'do
         $this->step1Validation();
         $this->persistStep1();
         Flux::toast(variant: 'success', text: __('home.office_created'));
-        $this->redirect(route('offices.index'), navigate: true);
+        $this->redirect(OfficeListUrl::back(), navigate: true);
     }
 
     public function nextStep(): void
@@ -578,7 +579,7 @@ $existing = OfficeMedia::where('office_id', $this->office_id)->where('type', 'do
     public function save(): void
     {
         Flux::toast(variant: 'success', text: __('home.office_created'));
-        $this->redirect(route('offices.index'), navigate: true);
+        $this->redirect(OfficeListUrl::back(), navigate: true);
     }
 
     public function render()

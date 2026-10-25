@@ -145,6 +145,7 @@ feedback-results/digital/summary     → FeedbackResults\DigitalSummary    (feed
 ### Offices\Index
 - جدول مقرات مع بحث + فلتر (محافظة، نوع، وصف موقع)
 - أزرار: عرض، تعديل، حذف
+- **الرجوع بالفلاتر** (طلب العميل 2026-10-25، لم يُنشر): **كل** الفلاتر في الرابط (البحث `q` والمتقدمة بمفاتيح قصيرة `ADVANCED_URL_KEYS`)، والقائمة تحفظ معاملات رابطها في الجلسة مع كل عرض (`App\Support\OfficeListUrl`)، وأزرار الرجوع في العرض والتعديل والإحصائيات وتحويلة حفظ الفورم تقرأ `OfficeListUrl::back()` لا `route('offices.index')`. رابطٌ فيه فلترٌ متقدم يفتح لوحته. ⚠️ **مفتاحٌ جديد في `#[Url(as:)]` يُضاف لـ`ADVANCED_URL_KEYS` أيضاً** — حارسه اختبار الذهاب والعودة. الحارس `tests/Feature/Offices/ListFiltersReturnTest.php` (١٠) — 📌 كُسِرت حراساته الثمانية وسقطت.
 
 ### Offices\Create
 - **Wizard 4 steps** (step في URL):

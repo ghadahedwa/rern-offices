@@ -15,6 +15,7 @@ use App\Models\OfficeType;
 use App\Models\StructuralCondition;
 use App\Models\WorkingHour;
 use App\Models\WorkSystem;
+use App\Support\OfficeListUrl;
 use Flux\Flux;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
@@ -32,6 +33,7 @@ class Index extends Component
 {
     use WithPagination, WithPerPage, WithTableSorting;
 
+    #[Url(as: 'q', except: '')]
     public string $search = '';
 
     #[Url]
@@ -56,28 +58,67 @@ class Index extends Component
     /** لوحة البحث المتقدم — مقفولة افتراضياً، خياراتها لا تُحمَّل إلا عند فتحها */
     public bool $showAdvanced = false;
 
-    // ── فلاتر البحث المتقدم (كلها single select) ──
+    // ── فلاتر البحث المتقدم (كلها single select) — في الرابط حتى يرجع إليها زرّ الرجوع ──
+    #[Url(as: 'ws')]
     public ?int $work_system_id = null;
+    #[Url(as: 'wh')]
     public ?int $working_hours_id = null;
+    #[Url(as: 'wd')]
     public ?string $working_days = null;
+    #[Url(as: 'cs')]
     public ?int $contractual_status_id = null;
+    #[Url(as: 'sc')]
     public ?int $structural_condition_id = null;
+    #[Url(as: 'ct')]
     public ?int $connection_type_id = null;
+    #[Url(as: 'mf')]
     public ?int $microfilm_option_id = null;
+    #[Url(as: 'da')]
     public ?int $disabilities_access_id = null;
+    #[Url(as: 'dp')]
     public ?int $document_photocopying_service_id = null;
+    #[Url(as: 'bs')]
     public ?int $buffet_service_id = null;
+    #[Url(as: 'cam')]
     public ?string $surveillance_cameras = null;
+    #[Url(as: 'qms')]
     public ?string $queue_management_system = null;
 
-    /** أسماء فلاتر البحث المتقدم — للتصفير عند إغلاق اللوحة */
-    protected array $advancedKeys = [
-        'work_system_id', 'working_hours_id', 'working_days',
-        'contractual_status_id', 'structural_condition_id', 'connection_type_id',
-        'microfilm_option_id', 'disabilities_access_id',
-        'document_photocopying_service_id', 'buffet_service_id',
-        'surveillance_cameras', 'queue_management_system',
+    /**
+     * فلاتر البحث المتقدم: الخاصية => مفتاحها في الرابط.
+     * ⚠️ المفاتيح نفسها التي في `#[Url(as:)]` أعلاه — منها يُبنى رابط الرجوع (`rememberListUrl`).
+     */
+    protected const ADVANCED_URL_KEYS = [
+        'work_system_id'                   => 'ws',
+        'working_hours_id'                 => 'wh',
+        'working_days'                     => 'wd',
+        'contractual_status_id'            => 'cs',
+        'structural_condition_id'          => 'sc',
+        'connection_type_id'               => 'ct',
+        'microfilm_option_id'              => 'mf',
+        'disabilities_access_id'           => 'da',
+        'document_photocopying_service_id' => 'dp',
+        'buffet_service_id'                => 'bs',
+        'surveillance_cameras'             => 'cam',
+        'queue_management_system'          => 'qms',
     ];
+
+    /** أسماء فلاتر البحث المتقدم — للتصفير عند إغلاق اللوحة */
+    protected function advancedKeys(): array
+    {
+        return array_keys(self::ADVANCED_URL_KEYS);
+    }
+
+    protected function hasAdvancedFilters(): bool
+    {
+        foreach ($this->advancedKeys() as $key) {
+            if ($this->{$key} !== null && $this->{$key} !== '') {
+                return true;
+            }
+        }
+
+        return false;
+    }
 
     /** فتح/إغلاق لوحة البحث المتقدم — الإغلاق يصفّر فلاتره حتى لا تبقى فلاتر خفية مُطبَّقة */
     public function toggleAdvanced(): void
@@ -85,7 +126,7 @@ class Index extends Component
         $this->showAdvanced = ! $this->showAdvanced;
 
         if (! $this->showAdvanced) {
-            $this->reset($this->advancedKeys);
+            $this->reset($this->advancedKeys());
             $this->resetPage();
         }
     }
@@ -96,6 +137,37 @@ class Index extends Component
             auth()->user()?->hasRole('super-admin') || auth()->user()?->can('offices.index'),
             403
         );
+
+        // رجوعٌ برابطٍ فيه فلاتر متقدمة: اللوحة تُفتح عليها — فلترٌ مُطبَّق في لوحةٍ مقفولة لا يراه المستخدم
+        $this->showAdvanced = $this->hasAdvancedFilters();
+    }
+
+    /**
+     * يحفظ معاملات رابط القائمة كما هي معروضة الآن، ليرجع إليها زرّ الرجوع
+     * في صفحات المقر (`OfficeListUrl::back()`). يُستدعى مع كل عرض.
+     */
+    protected function rememberListUrl(): void
+    {
+        $query = [
+            'q'                       => $this->search,
+            'governorate_id'          => $this->governorate_id,
+            'type_id'                 => $this->type_id,
+            'location_description_id' => $this->location_description_id,
+            'public_only'             => $this->public_only ? 1 : null,
+            'needs_visit'             => $this->needs_visit ? 1 : null,
+            'is_vip'                  => $this->is_vip ? 1 : null,
+        ];
+
+        foreach (self::ADVANCED_URL_KEYS as $property => $key) {
+            $query[$key] = $this->{$property};
+        }
+
+        $query['sort'] = $this->sortBy;
+        $query['dir']  = $this->sortBy !== '' && $this->sortDir === 'desc' ? 'desc' : null;
+        $query['per']  = $this->perPage !== (string) self::PER_PAGE_DEFAULT ? $this->perPage : null;
+        $query['page'] = $this->getPage() > 1 ? $this->getPage() : null;
+
+        OfficeListUrl::remember(array_filter($query, fn ($v) => $v !== null && $v !== ''));
     }
 
     public bool $showDelete = false;
@@ -217,6 +289,8 @@ class Index extends Component
             ->when($this->queue_management_system, fn($q) => $q->where('queue_management_system', $this->queue_management_system));
 
         $query = $this->applySorting($query, 'offices.id', 'desc');
+
+        $this->rememberListUrl();
 
         // خيارات البحث المتقدم تُحمَّل فقط عند فتح اللوحة (إبقاء التحميل الأولي خفيفاً)
         $advancedOptions = $this->showAdvanced ? [
