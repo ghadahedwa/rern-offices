@@ -8,6 +8,8 @@
     'required'    => $required ?? false,
     'compact'     => $compact ?? false,
     'layout'      => 'grid',
+    // في التقريرين الحقل في العمود الثالث من أربعة (يسار الشبكة) على الشاشة الكبيرة
+    'alignEnd'    => true,
     'label'       => __('home.ct_rep_governorate'),
     'allText'     => __('home.ct_rep_all_governorates'),
     'pickText'    => __('home.ct_rep_pick_governorates'),

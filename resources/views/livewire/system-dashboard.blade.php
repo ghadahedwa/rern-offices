@@ -65,7 +65,7 @@
         @include('livewire.dashboard.online-users')
 
         {{-- سجل نشاط إدارة النظام --}}
-        <div wire:poll.300s class="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-sm p-5">
+        <div wire:poll.300s class="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-sm p-5 max-sm:p-3">
 
             <div class="flex items-center gap-3 mb-5">
                 <div class="w-1 h-5 bg-[#c9a847] rounded-full"></div>
@@ -126,8 +126,8 @@
                     <table class="w-full text-sm max-sm:[&_th]:px-1.5 max-sm:[&_td]:px-1.5">
                         <thead>
                             <tr class="border-b border-zinc-200 dark:border-zinc-700">
-                                <th class="text-right py-2 px-3 text-xs font-semibold text-zinc-500 dark:text-zinc-400 whitespace-nowrap">{{ __('home.activity_col_time') }}</th>
-                                <th class="text-right py-2 px-3 text-xs font-semibold text-zinc-500 dark:text-zinc-400 whitespace-nowrap">{{ __('home.activity_col_user') }}</th>
+                                <th class="text-right py-2 px-3 text-xs font-semibold text-zinc-500 dark:text-zinc-400 whitespace-nowrap max-sm:hidden">{{ __('home.activity_col_time') }}</th>
+                                <th class="text-right py-2 px-3 text-xs font-semibold text-zinc-500 dark:text-zinc-400 whitespace-nowrap max-sm:hidden">{{ __('home.activity_col_user') }}</th>
                                 <th class="text-right py-2 px-3 text-xs font-semibold text-zinc-500 dark:text-zinc-400 whitespace-nowrap">{{ __('home.activity_col_action') }}</th>
                                 <th class="text-right py-2 px-3 text-xs font-semibold text-zinc-500 dark:text-zinc-400 whitespace-nowrap">{{ __('home.activity_col_subject') }}</th>
                             </tr>
@@ -135,12 +135,12 @@
                         <tbody class="divide-y divide-zinc-100 dark:divide-zinc-800">
                             @foreach($activities as $activity)
                             <tr class="hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition">
-                                <td class="py-2.5 px-3 whitespace-nowrap">
+                                {{-- على الموبايل: الوقت والمستخدم سطرٌ تحت الإجراء بدل عمودين يمدّان الجدول --}}
+                                <td class="py-2.5 px-3 whitespace-nowrap max-sm:hidden">
                                     <p class="text-xs text-zinc-400 dark:text-zinc-500">{{ $activity->created_at->diffForHumans() }}</p>
-                                    {{-- التاريخ الكامل يمدّ الجدول على الموبايل — يكفيه «منذ…» --}}
-                                    <p class="text-xs text-zinc-300 dark:text-zinc-600 max-sm:hidden">{{ \App\Support\LocalTime::stamp($activity->created_at) }}</p>
+                                    <p class="text-xs text-zinc-300 dark:text-zinc-600">{{ \App\Support\LocalTime::stamp($activity->created_at) }}</p>
                                 </td>
-                                <td class="py-2.5 px-3 font-medium text-zinc-700 dark:text-zinc-300 whitespace-nowrap text-xs">
+                                <td class="py-2.5 px-3 font-medium text-zinc-700 dark:text-zinc-300 whitespace-nowrap text-xs max-sm:hidden">
                                     {{ optional($activity->causer)->name ?? '—' }}
                                 </td>
                                 <td class="py-2.5 px-3">
@@ -157,6 +157,10 @@
                                     <span class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium {{ $badgeClass }}">
                                         {{ $activity->description }}
                                     </span>
+                                    <p class="sm:hidden mt-1 text-[11px] leading-snug text-zinc-400 dark:text-zinc-500">
+                                        <span class="font-medium text-zinc-600 dark:text-zinc-300">{{ optional($activity->causer)->name ?? '—' }}</span>
+                                        · {{ $activity->created_at->diffForHumans() }}
+                                    </p>
                                 </td>
                                 <td class="py-2.5 px-3 text-zinc-600 dark:text-zinc-400">
                                     @if($activity->subject_type === \App\Models\User::class)

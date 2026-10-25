@@ -15,7 +15,8 @@
     $picked = count($governorateIds);
 @endphp
 
-<div class="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-sm px-4 py-3">
+{{-- `relative`: منسدلة المحافظات (`compact`) تُقاس على البطاقة لا على زرّها --}}
+<div class="relative rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-sm px-4 py-3">
     <div class="flex flex-wrap items-center gap-2">
 
         {{-- المدى --}}

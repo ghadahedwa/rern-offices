@@ -9,6 +9,8 @@
     - $allText · $pickText · $pickedKey · $searchText · $emptyText   نصوص الزرّ والبحث والقائمة الفارغة
     - $layout                 'grid' (قصيرة: أعمدةٌ بلا سكرول) · 'list' (طويلة: صفٌّ كامل وأعمدةٌ بسكرول، والمختار شاراتٌ تحت الزرّ)
     - $compact                شريط اللوحة: خطٌّ أصغر بلا عنوانٍ فوقه
+    - $alignEnd               القائمة القصيرة تفتح من **نهاية** الحقل على الشاشة الكبيرة (اختياري) — لحقلٍ في عمودٍ
+                              يسار الشبكة، وإلا خرجت القائمة (30rem) عن يسار الشاشة فتمدّدت الصفحة
     - $selectAll              زرّ «تحديد الكل» داخل المنسدلة (اختياري، مطفأ افتراضياً) — يحدّد الظاهر بعد البحث
                               ويُبقي المختار من قبل
 
@@ -52,7 +54,7 @@
 
     <div x-data="{ open: false }"
          @click.outside="if (open) { open = false; if ($wire.{{ $searchModel }}) $wire.set('{{ $searchModel }}', '') }"
-         class="relative {{ $compact ? 'inline-block' : '' }}">
+         class="{{ $compact ? 'inline-block' : 'relative' }}">
         <button type="button" @click="open = ! open; if (open) $nextTick(() => $refs.search.focus())"
                 class="{{ $box }} {{ $size }} inline-flex items-center justify-between gap-1.5 {{ $picked ? 'border-[#c9a847] text-[#b8962e]' : '' }}">
             <span class="truncate">{{ $caption }}</span>
@@ -61,9 +63,12 @@
             </svg>
         </button>
 
-        {{-- `style="display:none"` بدل `x-cloak`: لا يحتاج قاعدة CSS في البناء --}}
+        {{-- `style="display:none"` بدل `x-cloak`: لا يحتاج قاعدة CSS في البناء.
+             ⚠️ في شريط اللوحة (`compact`) القائمة **بعرض بطاقة الفلاتر** لا من طرف الزرّ (البطاقة `relative`
+             والغلاف بلا `relative`): الزرّ يقع على يسار السطر على التابلت فكانت القائمة بعرض 30rem تخرج عن
+             يسار الشاشة فتتمدّد الصفحة كلها (بلاغ المستخدمة 2026-10-25 — مقيسٌ بعرض ٧٦٨ و١٠٢٤). --}}
         <div x-show="open" style="display: none"
-             class="absolute z-20 mt-1 {{ $layout === 'list' ? 'inset-x-0' : 'w-72 sm:w-[30rem] max-w-[90vw]' }} rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-lg p-2 space-y-1.5">
+             class="absolute z-20 mt-1 {{ $compact ? 'inset-x-3' : ($layout === 'list' ? 'inset-x-0' : 'w-72 sm:w-[30rem] max-w-[90vw]'.(($alignEnd ?? false) ? ' lg:end-0' : '')) }} rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-lg p-2 space-y-1.5">
             <div class="relative">
                 <svg class="w-3.5 h-3.5 absolute top-1/2 -translate-y-1/2 right-2.5 text-zinc-400 pointer-events-none"
                      fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
