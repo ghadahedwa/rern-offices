@@ -31,10 +31,15 @@ class MeetingsDayPrintController extends Controller
         $fontDirs = (new ConfigVariables())->getDefaults()['fontDir'];
         $fontData = (new FontVariables())->getDefaults()['fontdata'];
 
+        // خط التقرير بطلب العميل. للخط وزنٌ واحد (اسمه «Khalid Art bold» وستايله Regular)،
+        // فلا ملف B — والقالب بلا font-weight: bold فيظهر بوزنه المتوسط.
+        // ⚠️ بلا useOTL: الخط بلا جدول GDEF فيرمي mpdf استثناءً، والتوصيل يتمّ بالأشكال الجاهزة فيه.
+        $fontData['khalidart'] = ['R' => 'Khalid-Art-bold.ttf'];
+
         $mpdf = new Mpdf([
             'mode'          => 'utf-8',
             'format'        => 'A4-L',
-            'default_font'  => 'dejavusans',
+            'default_font'  => 'khalidart',
             'margin_top'    => 10,
             'margin_bottom' => 10,
             'margin_left'   => 10,

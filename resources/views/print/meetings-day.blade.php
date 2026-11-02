@@ -7,19 +7,19 @@
     @endphp
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: dejavusans, sans-serif; direction: rtl; font-size: 10pt; color: #1a1a1a; }
+        body { font-family: khalidart, dejavusans, sans-serif; direction: rtl; font-size: 10pt; color: #1a1a1a; }
 
         .header-table { width: 100%; border-collapse: collapse; border-bottom: 2px solid #c9a847; padding-bottom: 4px; margin-bottom: 8px; }
         .header-table td { vertical-align: middle; padding: 2px; }
         .logo-img { width: 42px; height: 42px; }
-        .app-title { font-size: 13pt; font-weight: bold; color: #c9a847; }
+        .app-title { font-size: 13pt; color: #c9a847; }
         .app-subtitle { font-size: 10pt; color: #555; margin-top: 1px; }
         .meta-cell { text-align: left; font-size: 9pt; color: #666; line-height: 1.6; }
 
         {{-- الجدول بعرض الصفحة كاملاً وحشو أقل: يفسح للأعمدة الضيقة (الساعة) --}}
         .agenda-wrap { width: 100%; margin: 0 auto; }
         .agenda { width: 100%; border-collapse: collapse; }
-        .agenda th, .agenda td { border: 1px solid #333; padding: 5px 3px; font-size: 14pt; font-weight: bold; text-align: center; vertical-align: top; }
+        .agenda th, .agenda td { border: 1px solid #333; padding: 5px 3px; font-size: 14pt; text-align: center; vertical-align: top; }
         .agenda th { background-color: #c9a847; color: #fff; white-space: nowrap; }
         .agenda td.no { color: #666; background-color: #faf6ea; }
         .agenda td.time { white-space: nowrap; }
