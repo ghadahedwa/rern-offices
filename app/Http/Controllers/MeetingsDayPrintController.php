@@ -33,8 +33,10 @@ class MeetingsDayPrintController extends Controller
 
         // خط التقرير بطلب العميل. للخط وزنٌ واحد (اسمه «Khalid Art bold» وستايله Regular)،
         // فلا ملف B — والقالب بلا font-weight: bold فيظهر بوزنه المتوسط.
-        // ⚠️ بلا useOTL: الخط بلا جدول GDEF فيرمي mpdf استثناءً، والتوصيل يتمّ بالأشكال الجاهزة فيه.
-        $fontData['khalidart'] = ['R' => 'Khalid-Art-bold.ttf'];
+        // ⚠️ mpdf لا يوصّل الحروف العربية إلا بـuseOTL، والملف الأصلي لا يحتمله (لا GDEF، وligatures
+        // بلا Unicode تُسقطه، وmset تكسر الحروف). فهذه نسخة معدّلة: GDEF كل حروفه أساسية + حذف
+        // liga وmset من قائمة الخط — ويبقى init/medi/fina. مُطابَقة بالعين مع رسم Chrome للخط الأصلي.
+        $fontData['khalidart'] = ['R' => 'khalid-art-mpdf.ttf', 'useOTL' => 0xFF];
 
         $mpdf = new Mpdf([
             'mode'          => 'utf-8',
