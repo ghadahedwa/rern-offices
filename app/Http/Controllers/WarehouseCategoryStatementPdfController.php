@@ -8,8 +8,6 @@ use App\Reports\CategoryStatement;
 use App\Support\WarehouseScope;
 use App\Reports\StatementLayout;
 use Illuminate\Http\Request;
-use Mpdf\Config\ConfigVariables;
-use Mpdf\Config\FontVariables;
 use Mpdf\Mpdf;
 
 /**
@@ -68,19 +66,13 @@ class WarehouseCategoryStatementPdfController extends Controller
     {
         $html = view('print.warehouse-category-statement-pdf', compact('statement', 'layout'))->render();
 
-        $fontDirs = (new ConfigVariables())->getDefaults()['fontDir'];
-        $fontData = (new FontVariables())->getDefaults()['fontdata'];
-
-        $mpdf = new Mpdf([
+        $mpdf = new Mpdf(\App\Support\PdfFonts::config() + [
             'mode'          => 'utf-8',
             'format'        => 'A4',
-            'default_font'  => 'dejavusans',
             'margin_top'    => 15,
             'margin_bottom' => 15,
             'margin_left'   => 15,
             'margin_right'  => 15,
-            'fontDir'       => array_merge($fontDirs, [storage_path('fonts')]),
-            'fontdata'      => $fontData,
             'tempDir'       => storage_path('mpdf'),
         ]);
         $mpdf->SetDirectionality('rtl');

@@ -5,8 +5,6 @@ namespace App\Http\Controllers;
 use App\Models\Governorate;
 use App\Reports\ClaimsStatement;
 use Illuminate\Http\Request;
-use Mpdf\Config\ConfigVariables;
-use Mpdf\Config\FontVariables;
 use Mpdf\Mpdf;
 
 class ClaimsStatementPdfController extends Controller
@@ -43,19 +41,13 @@ class ClaimsStatementPdfController extends Controller
             'statement', 'months', 'gov', 'fromLabel', 'toLabel', 'logoBase64'
         ))->render();
 
-        $fontDirs = (new ConfigVariables())->getDefaults()['fontDir'];
-        $fontData = (new FontVariables())->getDefaults()['fontdata'];
-
-        $mpdf = new Mpdf([
+        $mpdf = new Mpdf(\App\Support\PdfFonts::config() + [
             'mode'          => 'utf-8',
             'format'        => 'A4',
-            'default_font'  => 'dejavusans',
             'margin_top'    => 10,
             'margin_bottom' => 10,
             'margin_left'   => 10,
             'margin_right'  => 10,
-            'fontDir'       => array_merge($fontDirs, [storage_path('fonts')]),
-            'fontdata'      => $fontData,
             'tempDir'       => storage_path('mpdf'),
         ]);
         $mpdf->SetDirectionality('rtl');

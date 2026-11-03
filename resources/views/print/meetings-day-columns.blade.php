@@ -9,7 +9,7 @@
     @endphp
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: dejavusans, sans-serif; direction: rtl; font-size: 10pt; color: #1a1a1a; }
+        body { font-family: khalidart, dejavusans, sans-serif; direction: rtl; font-size: 10pt; color: #1a1a1a; }
 
         .header-table { width: 100%; border-collapse: collapse; border-bottom: 2px solid #c9a847; padding-bottom: 4px; margin-bottom: 8px; }
         .header-table td { vertical-align: middle; padding: 2px; }

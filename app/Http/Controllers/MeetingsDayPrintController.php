@@ -4,8 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Models\Meeting;
 use Illuminate\Http\Request;
-use Mpdf\Config\ConfigVariables;
-use Mpdf\Config\FontVariables;
 use Mpdf\Mpdf;
 
 class MeetingsDayPrintController extends Controller
@@ -28,26 +26,14 @@ class MeetingsDayPrintController extends Controller
 
         $html = view('print.meetings-day', compact('date', 'meetings', 'logoBase64'))->render();
 
-        $fontDirs = (new ConfigVariables())->getDefaults()['fontDir'];
-        $fontData = (new FontVariables())->getDefaults()['fontdata'];
-
-        // خط التقرير بطلب العميل. للخط وزنٌ واحد (اسمه «Khalid Art bold» وستايله Regular)،
-        // فلا ملف B — والقالب بلا font-weight: bold فيظهر بوزنه المتوسط.
-        // ⚠️ mpdf لا يوصّل الحروف العربية إلا بـuseOTL، والملف الأصلي لا يحتمله (لا GDEF، وligatures
-        // بلا Unicode تُسقطه، وmset تكسر الحروف). فهذه نسخة معدّلة: GDEF كل حروفه أساسية + حذف
-        // liga وmset من قائمة الخط — ويبقى init/medi/fina. مُطابَقة بالعين مع رسم Chrome للخط الأصلي.
-        $fontData['khalidart'] = ['R' => 'khalid-art-mpdf.ttf', 'useOTL' => 0xFF];
-
-        $mpdf = new Mpdf([
+        // القالب بلا font-weight: bold — طلب العميل الوزن المتوسط لهذا التقرير
+        $mpdf = new Mpdf(\App\Support\PdfFonts::config() + [
             'mode'          => 'utf-8',
             'format'        => 'A4-L',
-            'default_font'  => 'khalidart',
             'margin_top'    => 10,
             'margin_bottom' => 10,
             'margin_left'   => 10,
             'margin_right'  => 10,
-            'fontDir'       => array_merge($fontDirs, [storage_path('fonts')]),
-            'fontdata'      => $fontData,
             'tempDir'       => storage_path('mpdf'),
         ]);
         $mpdf->SetDirectionality('rtl');

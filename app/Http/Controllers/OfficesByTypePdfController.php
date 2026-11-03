@@ -8,8 +8,6 @@ use App\Models\Office;
 use App\Models\OfficeType;
 use App\Support\OfficeScope;
 use Illuminate\Http\Request;
-use Mpdf\Config\ConfigVariables;
-use Mpdf\Config\FontVariables;
 use Mpdf\Mpdf;
 
 class OfficesByTypePdfController extends Controller
@@ -105,20 +103,14 @@ class OfficesByTypePdfController extends Controller
             'governorates', 'types', 'locations', 'typeCounts', 'locationCounts', 'logoBase64'
         ))->render();
 
-        $fontDirs = (new ConfigVariables())->getDefaults()['fontDir'];
-        $fontData = (new FontVariables())->getDefaults()['fontdata'];
-
-        $mpdf = new Mpdf([
+        $mpdf = new Mpdf(\App\Support\PdfFonts::config() + [
             'mode'          => 'utf-8',
             'format'        => $format,
             'orientation'   => $orientation,
-            'default_font'  => 'dejavusans',
             'margin_top'    => 10,
             'margin_bottom' => 10,
             'margin_left'   => 8,
             'margin_right'  => 8,
-            'fontDir'       => array_merge($fontDirs, [storage_path('fonts')]),
-            'fontdata'      => $fontData,
             'tempDir'       => storage_path('mpdf'),
         ]);
         $mpdf->SetDirectionality('rtl');

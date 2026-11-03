@@ -33,7 +33,7 @@
     <title>{{ __('home.wh_statement_title', ['category' => $statement['category']->name]) }}</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: dejavusans, sans-serif; direction: rtl; font-size: 10pt; color: #000; }
+        body { font-family: khalidart, dejavusans, sans-serif; direction: rtl; font-size: 10pt; color: #000; }
 
         /* ⚠️ جدول لا div: القاعدة التي تضع الـblock يميناً في RTL تعتمد على
            هامشٍ يُعدَّل تلقائياً، وmpdf لا يطبّقها كالمتصفح — فكان النصّ يقع

@@ -5,8 +5,6 @@ namespace App\Http\Controllers;
 use App\Models\Vehicle;
 use App\Reports\VehicleColumns;
 use Illuminate\Http\Request;
-use Mpdf\Config\ConfigVariables;
-use Mpdf\Config\FontVariables;
 use Mpdf\Mpdf;
 
 class MultiVehicleCustomPdfController extends Controller
@@ -61,21 +59,15 @@ class MultiVehicleCustomPdfController extends Controller
 
         $html = view('print.multi-vehicle-custom-pdf', compact('vehicles', 'columns', 'logoBase64'))->render();
 
-        $fontDirs = (new ConfigVariables())->getDefaults()['fontDir'];
-        $fontData = (new FontVariables())->getDefaults()['fontdata'];
-
-        $mpdf = new Mpdf([
+        $mpdf = new Mpdf(\App\Support\PdfFonts::config() + [
             'mode'               => 'utf-8',
             'format'             => $format,
             'orientation'        => $orientation,
-            'default_font'       => 'dejavusans',
             'default_font_size'  => 10,
             'margin_top'         => 8,
             'margin_bottom'      => 8,
             'margin_left'        => 4,
             'margin_right'       => 4,
-            'fontDir'            => array_merge($fontDirs, [storage_path('fonts')]),
-            'fontdata'           => $fontData,
             'tempDir'            => storage_path('mpdf'),
             'shrink_tables_to_fit' => 0,
         ]);

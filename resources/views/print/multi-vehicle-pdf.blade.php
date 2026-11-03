@@ -5,7 +5,7 @@
     <title>تقرير مقارنة السيارات</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: dejavusans, sans-serif; direction: rtl; font-size: 9px; color: #1a1a1a; }
+        body { font-family: khalidart, dejavusans, sans-serif; direction: rtl; font-size: 9px; color: #1a1a1a; }
 
         /* ── Page Header ── */
         .header-table { width: 100%; border-collapse: collapse; border-bottom: 2px solid #c9a847; padding-bottom: 5px; margin-bottom: 8px; }

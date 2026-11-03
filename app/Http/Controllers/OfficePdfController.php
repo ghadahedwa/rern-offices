@@ -7,8 +7,6 @@ use App\Models\OfficeStat;
 use App\Support\OfficeScope;
 use Illuminate\Http\Request;
 use Mpdf\Mpdf;
-use Mpdf\Config\ConfigVariables;
-use Mpdf\Config\FontVariables;
 
 class OfficePdfController extends Controller
 {
@@ -59,23 +57,14 @@ class OfficePdfController extends Controller
 
         $html = view('print.office-pdf', compact('office', 'statGroups', 'logoBase64', 'reports'))->render();
 
-        $defaultConfig = (new ConfigVariables())->getDefaults();
-        $fontDirs = $defaultConfig['fontDir'];
-
-        $defaultFontConfig = (new FontVariables())->getDefaults();
-        $fontData = $defaultFontConfig['fontdata'];
-
-        $mpdf = new Mpdf([
+        $mpdf = new Mpdf(\App\Support\PdfFonts::config() + [
             'mode'              => 'utf-8',
             'format'            => 'A4',
             'default_font_size' => 11,
-            'default_font'      => 'dejavusans',
             'margin_top'        => 15,
             'margin_bottom'     => 15,
             'margin_left'       => 15,
             'margin_right'      => 15,
-            'fontDir'           => array_merge($fontDirs, [storage_path('fonts')]),
-            'fontdata'          => $fontData,
             'tempDir'           => storage_path('mpdf'),
         ]);
 
