@@ -747,6 +747,9 @@ return [
     'claims_select_gov_required' => 'يجب اختيار محافظة',
     'claims_select_placeholder'  => 'اختر',
     'claims_summary_title'       => 'كشف حساب إجمالي المطالبات',
+    // في القائمة الجانبية تحت «تقارير المطالبات» — مختصران، والعنوان الكامل في رأس التقرير
+    'claims_statement_menu'      => 'كشف الحساب',
+    'claims_summary_menu'        => 'كشف الحساب الإجمالي',
     'claims_net_demands'         => 'صافي المطالبات',
     'claims_summary_note'        => 'الأرقام تراكمية لكل محافظة. صافي المطالبات = المطالبات − الملغاة، والمديونية = صافي المطالبات − المحصل، ونسبة التحصيل = المحصل ÷ صافي المطالبات.',
     'claims_select_governorate'  => 'اختر المحافظة',
@@ -907,6 +910,13 @@ return [
     'vehicle_stat_folder_sales'     => 'بيع الحوافظ',
     'vehicle_stat_trips'            => 'عدد الانتقالات العادية',
     'vehicle_stat_instant_trips'    => 'عدد الانتقالات الفورية',
+    // سطر الترقيم تحت كل الجداول (vendor/livewire/tailwind): «عرض 1 – 10 من 8,511»
+    'pagination_showing' => 'عرض',
+    'pagination_of'      => 'من',
+
+    // في كارت السيارات بالداشبورد — الرقم تحتها عددٌ أصلاً
+    'dash_vehicle_stat_trips'         => 'الانتقالات العادية',
+    'dash_vehicle_stat_instant_trips' => 'الانتقالات الفورية',
     'average_daily_support'         => 'متوسط عدد الدعم اليومي',
     'average_daily_trips'           => 'متوسط عدد الانتقال اليومي',
     'vstat_daily_averages'          => 'المتوسطات اليومية',
@@ -1026,6 +1036,17 @@ return [
 
     // تقرير تراخيص السيارات — reports/vehicle-licenses
     'report_vehicle_licenses_title' => 'تقرير تراخيص السيارات',
+
+    // أسماء تقارير السيارات في القائمة الجانبية — مختصرة لأنها تحت «تقارير السيارات»
+    // (العناوين الكاملة تبقى في رأس كل تقرير وفي الـPDF)
+    'report_vehicle_multi_menu'      => 'البحث المتقدم',
+    'report_vehicle_devices_menu'    => 'بيان التجهيزات',
+    'report_vehicle_status_menu'     => 'الحالة التشغيلية',
+    'report_vehicle_friday_menu'     => 'العمل أيام الجمع',
+    'report_vehicle_statistics_menu' => 'الإحصائيات',
+    'report_vehicle_breakdown_menu'  => 'الإحصائيات التفصيلية',
+    'report_vehicle_coverage_menu'   => 'التغطية الجغرافية',
+    'report_vehicle_licenses_menu'   => 'التراخيص',
     'report_vehicle_licenses_hint'  => 'السيارات مرتّبة حسب قرب انتهاء الترخيص — لمتابعة الرخص المنتهية والقريبة الانتهاء',
     'report_licenses_within_days'   => 'تنتهي خلال (يوم)',
     'report_licenses_within_hint'   => 'اتركه فارغاً لعرض كل السيارات — أو حدّد عدد الأيام لعرض المنتهية والقريبة فقط',

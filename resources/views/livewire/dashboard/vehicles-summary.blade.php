@@ -9,53 +9,55 @@
 
     <div class="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-sm p-5">
         {{-- ٦ عناصر: الإجمالي + الانتقالات العادية والفورية + المعاملات + النماذج + الحوافظ --}}
-        <div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4">
+        {{-- ستة أعمدة من 2xl وحده: على شاشة ١٢٨٠ يبقى للكارت نحو ٩٠٠px فيصير العمود ~١٣٠px
+             ويركب عنوان «إجمالي السيارات» على جاره — فهناك صفّان من ثلاثة. --}}
+        <div class="grid grid-cols-2 md:grid-cols-3 2xl:grid-cols-6 gap-4">
 
             {{-- إجمالي السيارات + توزيع الحالات (صف واحد) --}}
-            <div class="flex items-start gap-2">
+            <div class="flex items-start gap-2 min-w-0">
                 <div class="w-8 h-8 rounded-lg bg-[#c9a847]/10 flex items-center justify-center shrink-0 mt-0.5">
                     <flux:icon.truck variant="outline" class="w-4 h-4 text-[#b8962e] dark:text-[#c9a847]" />
                 </div>
-                <div>
+                <div class="min-w-0 flex-1">
                     <p class="text-xs text-zinc-400 mb-0.5">{{ __('home.kpi_total_vehicles') }}</p>
                     <p class="text-xl font-bold text-zinc-800 dark:text-zinc-100 mb-1.5">{{ number_format($totalVehicles) }}</p>
                     <div class="space-y-1">
                         <div class="flex items-center gap-1.5 text-xs">
                             <span class="w-1.5 h-1.5 rounded-full bg-green-500 shrink-0"></span>
-                            <span class="text-zinc-500 dark:text-zinc-400 truncate">{{ \App\Models\Vehicle::STATUSES['working'] }}</span>
+                            <span class="text-zinc-500 dark:text-zinc-400">{{ \App\Models\Vehicle::STATUSES['working'] }}</span>
                             <span class="font-semibold text-zinc-700 dark:text-zinc-200 ms-auto">{{ number_format($vehiclesWorking) }}</span>
                         </div>
                         <div class="flex items-center gap-1.5 text-xs">
                             <span class="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0"></span>
-                            <span class="text-zinc-500 dark:text-zinc-400 truncate">{{ \App\Models\Vehicle::STATUSES['maintenance'] }}</span>
+                            <span class="text-zinc-500 dark:text-zinc-400">{{ \App\Models\Vehicle::STATUSES['maintenance'] }}</span>
                             <span class="font-semibold text-zinc-700 dark:text-zinc-200 ms-auto">{{ number_format($vehiclesMaintenance) }}</span>
                         </div>
                         <div class="flex items-center gap-1.5 text-xs">
                             <span class="w-1.5 h-1.5 rounded-full bg-red-500 shrink-0"></span>
-                            <span class="text-zinc-500 dark:text-zinc-400 truncate">{{ \App\Models\Vehicle::STATUSES['stopped'] }}</span>
+                            <span class="text-zinc-500 dark:text-zinc-400">{{ \App\Models\Vehicle::STATUSES['stopped'] }}</span>
                             <span class="font-semibold text-zinc-700 dark:text-zinc-200 ms-auto">{{ number_format($vehiclesStopped) }}</span>
                         </div>
                     </div>
                 </div>
             </div>
 
-            {{-- إحصائيات التوثيق: آخر سنة رقماً كبيراً + السنة التي قبلها سطراً صغيراً تحته (لا يُغيّر حجم الكارت) --}}
+            {{-- إحصائيات التوثيق: العنوان وحده فوق، والرقم، ثم سطر صغير بالسنة («2026 حتى الآن») والسنة التي قبلها.
+                 السنة كانت داخل العنوان وأمام كل عنصر أيقونة متكررة، فينكسر العنوان ٣–٤ أسطر في عمودٍ سُدس الكارت. --}}
             @foreach($vehicleStatsSummary as $stat)
-            <div class="flex items-start gap-2">
-                <div class="w-8 h-8 rounded-lg bg-[#c9a847]/10 flex items-center justify-center shrink-0 mt-0.5">
-                    <flux:icon.document-text variant="outline" class="w-4 h-4 text-[#b8962e] dark:text-[#c9a847]" />
-                </div>
-                <div>
-                    <p class="text-xs text-zinc-400 mb-0.5">
-                        {{ $stat['label'] }} @if($stat['latestYear']) ({{ $stat['latestYear'] }}@if($stat['partial']) {{ __('home.vstat_so_far') }}@endif) @endif
-                    </p>
-                    <p class="text-xl font-bold text-zinc-800 dark:text-zinc-100">
-                        {{ $stat['latestYear'] ? number_format($stat['latestTotal']) : '—' }}
-                    </p>
+            <div class="min-w-0 tabular-nums">
+                <p class="text-xs text-zinc-400 mb-0.5">{{ $stat['label'] }}</p>
+                <p class="text-xl font-bold text-zinc-800 dark:text-zinc-100">
+                    {{ $stat['latestYear'] ? number_format($stat['latestTotal']) : '—' }}
+                </p>
+                @if($stat['latestYear'])
+                <p class="text-xs text-zinc-400 mt-0.5">
+                    {{ $stat['latestYear'] }}@if($stat['partial']) {{ __('home.vstat_so_far') }}@endif
                     @if($stat['prevYear'])
-                    <p class="text-xs text-zinc-400 mt-0.5">{{ $stat['prevYear'] }}: <span class="font-medium text-zinc-500 dark:text-zinc-400">{{ number_format($stat['prevTotal']) }}</span></p>
+                        <span class="text-zinc-300 dark:text-zinc-600">·</span>
+                        {{ $stat['prevYear'] }}: <span class="font-medium text-zinc-500 dark:text-zinc-400">{{ number_format($stat['prevTotal']) }}</span>
                     @endif
-                </div>
+                </p>
+                @endif
             </div>
             @endforeach
 

@@ -137,14 +137,14 @@
                                 'label'  => 'home.reports_vehicles',
                                 'routes' => ['reports.multi-vehicle', 'reports.vehicle-device-count', 'reports.vehicle-status', 'reports.vehicle-friday', 'reports.vehicle-statistics', 'reports.vehicle-statistics-breakdown', 'reports.vehicle-coverage', 'reports.vehicle-licenses'],
                                 'items'  => [
-                                    ['reports.multi-vehicle',        'truck',               'home.report_vehicle_multi_title'],
-                                    ['reports.vehicle-device-count', 'wrench-screwdriver',  'home.report_vehicle_devices_title'],
-                                    ['reports.vehicle-status',       'chart-pie',           'home.report_vehicle_status_title'],
-                                    ['reports.vehicle-friday',       'calendar',            'home.report_vehicle_friday_title'],
-                                    ['reports.vehicle-statistics',   'chart-bar',           'home.report_vehicle_statistics_title'],
-                                    ['reports.vehicle-statistics-breakdown', 'table-cells', 'home.report_vehicle_breakdown_title'],
-                                    ['reports.vehicle-coverage',     'calendar-days',       'home.report_vehicle_coverage_title'],
-                                    ['reports.vehicle-licenses',     'identification',      'home.report_vehicle_licenses_title'],
+                                    ['reports.multi-vehicle',        'truck',               'home.report_vehicle_multi_menu'],
+                                    ['reports.vehicle-device-count', 'wrench-screwdriver',  'home.report_vehicle_devices_menu'],
+                                    ['reports.vehicle-status',       'chart-pie',           'home.report_vehicle_status_menu'],
+                                    ['reports.vehicle-friday',       'calendar',            'home.report_vehicle_friday_menu'],
+                                    ['reports.vehicle-statistics',   'chart-bar',           'home.report_vehicle_statistics_menu'],
+                                    ['reports.vehicle-statistics-breakdown', 'table-cells', 'home.report_vehicle_breakdown_menu'],
+                                    ['reports.vehicle-coverage',     'calendar-days',       'home.report_vehicle_coverage_menu'],
+                                    ['reports.vehicle-licenses',     'identification',      'home.report_vehicle_licenses_menu'],
                                 ],
                             ],
                             [
@@ -152,8 +152,8 @@
                                 'label'  => 'home.reports_claims',
                                 'routes' => ['reports.claims-statement', 'reports.claims-summary'],
                                 'items'  => [
-                                    ['reports.claims-statement', 'banknotes', 'home.claims_statement_title'],
-                                    ['reports.claims-summary',   'scale',     'home.claims_summary_title'],
+                                    ['reports.claims-statement', 'banknotes', 'home.claims_statement_menu'],
+                                    ['reports.claims-summary',   'scale',     'home.claims_summary_menu'],
                                 ],
                             ],
                         ];

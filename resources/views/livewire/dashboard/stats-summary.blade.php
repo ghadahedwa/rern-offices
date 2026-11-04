@@ -93,51 +93,36 @@
                     <p class="text-sm text-zinc-400 py-2">{{ __('home.stats_no_data') }}</p>
                 @endif
             @elseif($stat['latestYear'])
-            <div class="grid grid-cols-3 gap-3">
+            {{-- رأسياً لا ثلاثة أعمدة: الرقم ذو الثماني خانات (13,045,898) بخط كبير كان أعرض من ثلث البطاقة
+                 فيركب على العمود المجاور. الآن السنة الأحدث رقماً كبيراً بعرض البطاقة، وتحته سطر
+                 السنة السابقة والمقارنة يلتفّ إن ضاق. --}}
+            <div class="space-y-3 tabular-nums">
 
                 {{-- السنة الأحدث --}}
-                <div class="flex items-start gap-2">
-                    <div class="w-8 h-8 rounded-lg bg-[#c9a847]/10 flex items-center justify-center shrink-0 mt-0.5">
-                        <flux:icon.document-text variant="outline" class="w-4 h-4 text-[#b8962e] dark:text-[#c9a847]" />
-                    </div>
-                    <div>
-                        <p class="text-xs text-zinc-400 mb-0.5">{{ __('home.stats_year') }} {{ $stat['latestYear'] }}</p>
-                        <p class="text-xl font-bold text-zinc-800 dark:text-zinc-100">{{ number_format($stat['latestTotal']) }}</p>
-                    </div>
+                <div>
+                    <p class="text-xs text-zinc-400 mb-0.5">{{ __('home.stats_year') }} {{ $stat['latestYear'] }}</p>
+                    <p class="text-2xl font-bold text-zinc-800 dark:text-zinc-100">{{ number_format($stat['latestTotal']) }}</p>
                 </div>
 
-                {{-- السنة السابقة --}}
-                <div class="flex items-start gap-2">
-                    <div class="w-8 h-8 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center shrink-0 mt-0.5">
-                        <flux:icon.clock variant="outline" class="w-4 h-4 text-zinc-400" />
-                    </div>
-                    <div>
-                        <p class="text-xs text-zinc-400 mb-0.5">{{ __('home.stats_year') }} {{ $stat['latestYear'] - 1 }}</p>
-                        <p class="text-xl font-bold text-zinc-500 dark:text-zinc-400">{{ number_format($stat['prevTotal']) }}</p>
-                    </div>
-                </div>
-
-                {{-- المقارنة --}}
-                <div class="flex items-start gap-2">
-                    <div class="{{ $stat['change'] === null ? 'bg-zinc-100 dark:bg-zinc-800' : ($stat['change'] >= 0 ? 'bg-emerald-50 dark:bg-emerald-900/20' : 'bg-red-50 dark:bg-red-900/20') }} w-8 h-8 rounded-lg flex items-center justify-center shrink-0 mt-0.5">
-                        @if($stat['change'] === null)
-                            <flux:icon.minus variant="outline" class="w-4 h-4 text-zinc-400" />
-                        @elseif($stat['change'] >= 0)
-                            <flux:icon.arrow-trending-up variant="outline" class="w-4 h-4 text-emerald-500" />
-                        @else
-                            <flux:icon.arrow-trending-down variant="outline" class="w-4 h-4 text-red-500" />
-                        @endif
-                    </div>
-                    <div>
-                        <p class="text-xs text-zinc-400 mb-0.5">{{ __('home.stats_vs_prev_year') }}</p>
-                        @if($stat['change'] !== null)
-                            <p class="text-xl font-bold {{ $stat['change'] >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400' }}">
-                                {{ $stat['change'] >= 0 ? '+' : '' }}{{ $stat['change'] }}%
-                            </p>
-                        @else
-                            <p class="text-xl font-bold text-zinc-400">—</p>
-                        @endif
-                    </div>
+                {{-- السنة السابقة + المقارنة --}}
+                <div class="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 pt-3 border-t border-zinc-100 dark:border-zinc-800">
+                    <p class="text-xs text-zinc-400">
+                        {{ __('home.stats_year') }} {{ $stat['latestYear'] - 1 }}:
+                        <span class="text-sm font-semibold text-zinc-600 dark:text-zinc-300">{{ number_format($stat['prevTotal']) }}</span>
+                    </p>
+                    @if($stat['change'] !== null)
+                        <span class="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-bold {{ $stat['change'] >= 0 ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-400' : 'bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-400' }}"
+                              title="{{ __('home.stats_vs_prev_year') }}">
+                            @if($stat['change'] >= 0)
+                                <flux:icon.arrow-trending-up class="w-3.5 h-3.5" />
+                            @else
+                                <flux:icon.arrow-trending-down class="w-3.5 h-3.5" />
+                            @endif
+                            <span dir="ltr">{{ $stat['change'] >= 0 ? '+' : '' }}{{ $stat['change'] }}%</span>
+                        </span>
+                    @else
+                        <span class="text-xs font-bold text-zinc-400">—</span>
+                    @endif
                 </div>
 
             </div>

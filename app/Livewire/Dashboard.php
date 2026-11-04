@@ -147,7 +147,8 @@ class Dashboard extends Component
                     ->all();
 
                 return [
-                    'label'       => __('home.' . $langKey),
+                    // اسمٌ أقصر للكارت حيث يوجد (الكارت سُدس العرض) — والطويل في تاب الإحصائيات والتقارير
+                    'label'       => __(\Illuminate\Support\Facades\Lang::has('home.dash_' . $langKey) ? 'home.dash_' . $langKey : 'home.' . $langKey),
                     'latestYear'  => $row->year ?? null,
                     'latestTotal' => $row->total ?? 0,
                     // السنة الجارية لم تكتمل — رقمها لا يُقارَن بسنة كاملة

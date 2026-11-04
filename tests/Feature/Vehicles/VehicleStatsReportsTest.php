@@ -74,7 +74,7 @@ it('shows trips on the dashboard and flags the current year', function () {
     $summary = Livewire::actingAs($admin)->test(Dashboard::class)->viewData('vehicleStatsSummary');
 
     expect($summary->keys()->all())->toBe([$this->tripsId, $this->instantId, 1, 2, 3])
-        ->and($summary[$this->instantId])->toMatchArray(['label' => 'عدد الانتقالات الفورية', 'latestYear' => 2026, 'partial' => true])
+        ->and($summary[$this->instantId])->toMatchArray(['label' => 'الانتقالات الفورية', 'latestYear' => 2026, 'partial' => true])
         ->and((float) $summary[$this->instantId]['latestTotal'])->toBe(10.0)
         ->and($summary[1])->toMatchArray(['latestYear' => 2026, 'partial' => true])
         ->and((float) $summary[1]['latestTotal'])->toBe(1000.0)

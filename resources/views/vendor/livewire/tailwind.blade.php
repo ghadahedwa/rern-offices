@@ -42,13 +42,12 @@ $scrollIntoViewJsSnippet = ($scrollTo !== false)
             <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
                 <div>
                     <p class="text-sm text-gray-700 leading-5 dark:text-gray-400">
-                        <span>{!! __('Showing') !!}</span>
-                        <span class="font-medium">{{ $paginator->firstItem() }}</span>
-                        <span>{!! __('to') !!}</span>
-                        <span class="font-medium">{{ $paginator->lastItem() }}</span>
-                        <span>{!! __('of') !!}</span>
-                        <span class="font-medium">{{ $paginator->total() }}</span>
-                        <span>{!! __('results') !!}</span>
+                        {{-- «عرض 1 – 10 من 8,511» — كان Showing/to/of/results بلا ترجمة فيخرج إنجليزياً.
+                             المدى بـdir="ltr" وإلا قلبه السطر العربي («10 – 1»). --}}
+                        <span>{{ __('home.pagination_showing') }}</span>
+                        <span class="font-medium" dir="ltr">{{ number_format($paginator->firstItem()) }} – {{ number_format($paginator->lastItem()) }}</span>
+                        <span>{{ __('home.pagination_of') }}</span>
+                        <span class="font-medium">{{ number_format($paginator->total()) }}</span>
                     </p>
                 </div>
 
