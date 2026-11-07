@@ -27,22 +27,20 @@
         @endif
     </div>
 
-    <div class="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-700 shadow-sm p-6 max-sm:p-4 space-y-5">
-        @php
-            $inp = 'w-full border border-zinc-300 dark:border-zinc-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-[#c9a847] disabled:bg-zinc-50 dark:disabled:bg-zinc-800/60 disabled:cursor-default';
-            $lbl = 'block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1';
-            $err = 'text-red-500 text-xs mt-1';
-        @endphp
+    @php
+        $inp = 'w-full border border-zinc-300 dark:border-zinc-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-[#c9a847] disabled:bg-zinc-50 dark:disabled:bg-zinc-800/60 disabled:cursor-default';
+        $lbl = 'block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1';
+        $err = 'text-red-500 text-xs mt-1';
+    @endphp
 
-        @unless($canEditReport)
-            <p class="text-xs text-zinc-500 dark:text-zinc-400 rounded-lg bg-zinc-50 dark:bg-zinc-800 px-3 py-2">{{ __('home.vr_read_only') }}</p>
-        @endunless
+    @unless($canEditReport)
+        <p class="text-xs text-zinc-500 dark:text-zinc-400 rounded-lg bg-zinc-50 dark:bg-zinc-800 px-3 py-2">{{ __('home.vr_read_only') }}</p>
+    @endunless
 
-        {{-- صاحب العرض وحده يرى الخانات نفسها مقفولة — والحفظ محروس في المكوّن --}}
-        <fieldset @disabled(! $canEditReport)>
-            @include('livewire.offices.visit-reports.form-fields')
-        </fieldset>
-    </div>
+    {{-- صاحب العرض وحده يرى الخانات نفسها مقفولة — والحفظ محروس في المكوّن --}}
+    <fieldset @disabled(! $canEditReport) class="space-y-6">
+        @include('livewire.offices.visit-reports.form-fields')
+    </fieldset>
 
     @if($canEditReport)
     <div class="flex justify-end">

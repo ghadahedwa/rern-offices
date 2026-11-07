@@ -118,6 +118,65 @@ it('shows the report read-only to a viewer and refuses a save call', function ()
     expect($office->fresh()->office_needs)->toBe('نص المفتش السري');
 });
 
+// ── كارت الزيارة ──
+
+it('fills today in Cairo time with the visit-today button and saves it only on save', function () {
+    // ١١:٣٠ مساءً UTC = ١:٣٠ فجراً بالقاهرة يوم ٥ — بـUTC كان سيصير يوم ٤
+    $this->travelTo(\Carbon\CarbonImmutable::parse('2026-11-04 23:30:00', 'UTC'));
+    $office = vrOffice(['visited_at' => '2026-06-27']);
+    $user   = vrUser($office->governorate, ['offices.inspector-report.edit']);
+
+    $page = Livewire::actingAs($user)->test(VisitReport::class, ['office' => $office, 'type' => 'inspector'])
+        ->assertSee(__('home.vr_visit_today'))
+        ->call('visitToday')
+        ->assertSet('visited_at', '2026-11-05');
+
+    expect($office->fresh()->visited_at->format('Y-m-d'))->toBe('2026-06-27');
+
+    $page->call('save');
+    expect($office->fresh()->visited_at->format('Y-m-d'))->toBe('2026-11-05');
+});
+
+it('hides the visit-today button from a viewer and refuses its call', function () {
+    $office = vrOffice(['visited_at' => '2026-06-27']);
+    $user   = vrUser($office->governorate, ['offices.inspector-report.view']);
+
+    Livewire::actingAs($user)->test(VisitReport::class, ['office' => $office, 'type' => 'inspector'])
+        ->assertDontSee(__('home.vr_visit_today'))
+        ->call('visitToday')
+        ->assertForbidden();
+});
+
+it('shows the saved last visit of the report itself and how long ago', function () {
+    $this->travelTo(\Carbon\CarbonImmutable::parse('2026-11-05 10:00:00', 'UTC'));
+    $office = vrOffice(['visited_at' => '2026-06-27', 'counselor_visited_at' => null]);
+    $user   = vrUser($office->governorate, ['offices.inspector-report.edit', 'offices.counselor-report.edit']);
+
+    // الخانة تتغيّر قبل الحفظ والكارت يبقى على المحفوظ
+    Livewire::actingAs($user)->test(VisitReport::class, ['office' => $office, 'type' => 'inspector'])
+        ->set('visited_at', '2026-11-01')
+        ->assertSee('27 يونيو 2026')
+        ->assertSee('منذ 4 شهور')
+        ->assertDontSee('text-amber-700');
+
+    Livewire::actingAs($user)->test(VisitReport::class, ['office' => $office, 'type' => 'counselor'])
+        ->assertSee(__('home.vr_never_visited'))
+        ->assertDontSee('27 يونيو 2026');
+});
+
+it('marks a last visit six months old or more as overdue', function (string $visited, string $since) {
+    $this->travelTo(\Carbon\CarbonImmutable::parse('2026-11-05 10:00:00', 'UTC'));
+    $office = vrOffice(['visited_at' => $visited]);
+    $user   = vrUser($office->governorate, ['offices.inspector-report.edit']);
+
+    Livewire::actingAs($user)->test(VisitReport::class, ['office' => $office, 'type' => 'inspector'])
+        ->assertSee($since)
+        ->assertSee('text-amber-700');
+})->with([
+    'eight months' => ['2026-03-01', 'منذ 8 شهور'],
+    'two years'    => ['2024-10-01', 'منذ سنتين'],
+]);
+
 it('saves the counselor report without touching the inspector report', function () {
     $office = vrOffice();
     $user   = vrUser($office->governorate, ['offices.counselor-report.edit']);

@@ -364,6 +364,16 @@ return [
     'vr_saved'                 => 'تم حفظ التقرير',
     'vr_read_only'             => 'للاطلاع فقط — لا تملك صلاحية تعديل هذا التقرير',
     'vr_save'                  => 'حفظ التقرير',
+    'vr_last_visit'            => 'آخر زيارة مسجَّلة',
+    'vr_never_visited'         => 'لم تُسجَّل زيارة بعد',
+    'vr_visit_date'            => 'تاريخ الزيارة',
+    'vr_visit_today'           => 'زيارة اليوم',
+    'vr_since_today'           => 'اليوم',
+    'vr_since_days'            => '{1} منذ يوم|{2} منذ يومين|[3,10] منذ :count أيام|[11,*] منذ :count يوماً',
+    'vr_since_months'          => '{1} منذ شهر|{2} منذ شهرين|[3,10] منذ :count شهور|[11,*] منذ :count شهراً',
+    'vr_since_years'           => '{1} منذ سنة|{2} منذ سنتين|[3,10] منذ :count سنوات|[11,*] منذ :count سنة',
+    'vr_section_ratings'       => 'التقييم',
+    'vr_section_notes'         => 'الملاحظات',
 
     // Office create — section headers
     'section_basic_data'       => 'البيانات الأساسية',

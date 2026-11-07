@@ -19,8 +19,7 @@
     </div>
 
     @if($account->acceptsEntry())
-        {{-- ── الملخّص: إجمالي السنة + الشهر التالي ──
-             ⚠️ الأحجام الكبيرة inline: الـlayout يفرض `* { font-size: inherit; }` فيُبطل فئات text-* --}}
+        {{-- ── الملخّص: إجمالي السنة + الشهر التالي ── --}}
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div class="sm:col-span-2 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-sm p-5">
                 <p class="text-xs text-zinc-500 dark:text-zinc-400">

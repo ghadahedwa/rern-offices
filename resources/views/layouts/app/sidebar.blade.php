@@ -4,7 +4,11 @@
         @include('partials.head')
         <style>
             html { font-size: 17px; }
-            * { font-size: inherit; }
+            /* أحجام الخط: فئات text-* تعمل (العنوان أكبر من التسمية)، والصغير له حدٌّ أدنى
+               يُقرأ طول اليوم — xs ≈ 14px و sm ≈ 15px بدل 12.75 و 14.9 على قاعدة 17px.
+               خارج طبقات Tailwind عمداً فيغلبها. */
+            :root { --text-xs: 0.8125rem; --text-sm: 0.9rem; }
+            .text-\[10px\], .text-\[11px\] { font-size: 0.8125rem; }
             [data-flux-sidebar-item],
             [data-flux-sidebar-item] span,
             [data-flux-sidebar-item] a,
