@@ -38,6 +38,18 @@ return [
             'report' => false,
         ],
 
+        // مستندات الشئون المالية (صور أوامر الدفع) — قرصٌ خاص بلا رابط مباشر،
+        // يُقرأ عبر FinanceAttachmentController بحارس finance.view.
+        // ⚠️ منفصلٌ عن `local` عمداً: ملفات Livewire المؤقتة على `local`، فمشاركته
+        //    تخلط مستنداتٍ ماليةً دائمة بملفاتٍ تُنظَّف دورياً.
+        'finance' => [
+            'driver' => 'local',
+            'root' => storage_path('app/private/finance'),
+            'serve' => false,
+            'throw' => false,
+            'report' => false,
+        ],
+
         'public' => [
             'driver' => 'local',
             'root' => storage_path('app/public'),

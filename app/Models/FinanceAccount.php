@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
  * حساب مالي — أربعة صفوف ثابتة تزرعها الهجرة، لا تُضاف ولا تُحذف من شاشة.
@@ -39,5 +40,36 @@ class FinanceAccount extends Model
     public function label(): string
     {
         return __('home.fin_account_'.$this->key);
+    }
+
+    /** المفتاح في الرابط — `ministry_of_finance` ← `ministry-of-finance`. */
+    public function slug(): string
+    {
+        return str_replace('_', '-', $this->key);
+    }
+
+    public static function bySlug(string $slug): self
+    {
+        return static::byKey(str_replace('-', '_', $slug));
+    }
+
+    /** راوت صفحة الحساب — اسمه `finance.{slug}`. */
+    public function pageRoute(): string
+    {
+        return 'finance.'.$this->slug();
+    }
+
+    /**
+     * هل يُدخَل هذا الحساب في المرحلة الحالية؟ — المبلغ الواحد وحده (المرحلة ب).
+     * أبنية المحاكم (د) واتصالات (هـ) تُضاف بأشكالها.
+     */
+    public function acceptsEntry(): bool
+    {
+        return $this->kind === self::KIND_SINGLE;
+    }
+
+    public function months(): HasMany
+    {
+        return $this->hasMany(FinanceMonth::class);
     }
 }

@@ -304,6 +304,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::livewire('finance/mechanization', \App\Livewire\Finance\Mechanization::class)->name('finance.mechanization');
     Route::livewire('finance/telecom', \App\Livewire\Finance\Telecom::class)->name('finance.telecom');
     Route::livewire('finance/ministry-of-finance', \App\Livewire\Finance\MinistryOfFinance::class)->name('finance.ministry-of-finance');
+    // إدخال الشهر التالي — `finance.create` في المكوّن، والحساب بقائمةٍ بيضاء من الرابط
+    Route::livewire('finance/{account}/entry', \App\Livewire\Finance\MonthEntry::class)
+        ->whereIn('account', ['court-buildings', 'mechanization', 'telecom', 'ministry-of-finance'])
+        ->name('finance.entry');
+    // صورة أمر الدفع — على القرص الخاص، بحارس `finance.view` في الكنترولر
+    Route::get('finance/attachments/{attachment}', \App\Http\Controllers\Finance\FinanceAttachmentController::class)
+        ->name('finance.attachments.show');
 
     // عناصر أبنية المحاكم — قائمة مرجعية تحت «إدارة النظام»، **سوبر أدمن وحده**:
     // العنصر يدخل في مجموع حسابٍ يصدر به أمر دفع (نمط العطلات الرسمية).

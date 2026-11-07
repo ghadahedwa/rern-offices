@@ -1,0 +1,294 @@
+<?php
+
+use App\Livewire\Finance\Mechanization;
+use App\Livewire\Finance\MonthEntry;
+use App\Models\FinanceAccount;
+use App\Models\FinanceAttachment;
+use App\Models\FinanceMonth;
+use App\Models\User;
+use App\Support\Finance\AmountInWords;
+use App\Support\Finance\FinanceCalendar;
+use Carbon\CarbonImmutable;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
+use Livewire\Livewire;
+use Spatie\Permission\Models\Permission;
+use Spatie\Permission\Models\Role;
+
+uses(RefreshDatabase::class);
+
+beforeEach(function () {
+    Storage::fake(FinanceAttachment::DISK);
+    // ٥ نوفمبر ٢٠٢٦: أكتوبر ونوفمبر بدآ، وديسمبر لم يبدأ.
+    // ⚠️ تاريخٌ **في الماضي** لا المستقبل: تقديم الساعة يجعل Livewire يعدّ ملفاته المؤقتة
+    //    منتهية فيضيع اسمها الأصلي — والماضي يبقى صالحاً مهما تقدّم الزمن الحقيقي.
+    $this->travelTo(CarbonImmutable::parse('2026-11-05 10:00:00', 'UTC'));
+});
+
+function entryUser(array $abilities = ['finance.view', 'finance.create']): User
+{
+    foreach ($abilities as $ability) {
+        Permission::findOrCreate($ability, 'web');
+    }
+
+    $role = Role::findOrCreate('fin-entry-'.uniqid(), 'web');
+    $role->givePermissionTo($abilities);
+
+    return tap(User::factory()->create())->assignRole($role);
+}
+
+/** فورم شهرٍ صالح جاهز للمراجعة. */
+function filledEntry(string $account = 'mechanization', string $amount = '150000', string $number = '1234')
+{
+    return Livewire::test(MonthEntry::class, ['account' => $account])
+        ->set('amount', $amount)
+        ->set('orders.0.number', $number)
+        ->set('orders.0.issued_on', '2026-11-02')
+        ->set('picked.0', [UploadedFile::fake()->image('order.jpg')]);
+}
+
+// ── الإدخال ──────────────────────────────────────────────
+
+it('يحفظ أول شهر (أكتوبر) بأمر دفعه وصورته بعد التأكيد', function () {
+    $user = entryUser();
+    $this->actingAs($user);
+
+    filledEntry(amount: '١٥٠٬٠٠٠')
+        ->assertSet('month', '2026-10-01')
+        ->call('review')
+        ->assertHasNoErrors()
+        ->assertSet('reviewing', true)
+        ->assertSee(AmountInWords::pounds(150000))
+        ->call('save')
+        ->assertRedirect();
+
+    $month = FinanceMonth::with('paymentOrders.attachments')->sole();
+
+    expect($month->month->toDateString())->toBe('2026-10-01')
+        ->and($month->amount)->toBe(150000)
+        ->and($month->created_by)->toBe($user->id)
+        ->and($month->account->key)->toBe('mechanization')
+        ->and($month->paymentOrders)->toHaveCount(1)
+        ->and($month->paymentOrders[0]->number)->toBe('1234');
+
+    $file = $month->paymentOrders[0]->attachments->sole();
+    Storage::disk(FinanceAttachment::DISK)->assertExists($file->path);
+    expect($file->original_name)->toBe('order.jpg');
+});
+
+it('لا يحفظ شيئاً بالمراجعة وحدها', function () {
+    $this->actingAs(entryUser());
+
+    filledEntry()->call('review')->assertSet('reviewing', true);
+
+    expect(FinanceMonth::count())->toBe(0);
+});
+
+it('يحفظ أكثر من أمر دفع بترتيبها', function () {
+    $this->actingAs(entryUser());
+
+    filledEntry()
+        ->call('addOrder')
+        ->set('orders.1.number', '5678')
+        ->set('orders.1.issued_on', '2026-11-04')
+        ->set('picked.1', [UploadedFile::fake()->create('order2.pdf', 100, 'application/pdf')])
+        ->call('save');
+
+    expect(FinanceMonth::sole()->paymentOrders->pluck('number')->all())->toBe(['1234', '5678']);
+});
+
+it('يرفض أمر دفع بلا صورة', function () {
+    $this->actingAs(entryUser());
+
+    Livewire::test(MonthEntry::class, ['account' => 'mechanization'])
+        ->set('amount', '1000')
+        ->set('orders.0.number', '1')
+        ->set('orders.0.issued_on', '2026-11-02')
+        ->call('review')
+        ->assertHasErrors('orderFiles.0')
+        ->assertSet('reviewing', false);
+
+    expect(FinanceMonth::count())->toBe(0);
+});
+
+it('يرفض الكسر والسالب والنص — ولا يحوّل «12.5» إلى 125', function (string $amount) {
+    $this->actingAs(entryUser());
+
+    filledEntry(amount: $amount)->call('review')->assertHasErrors('amount');
+})->with(['12.5', '-5', 'ألف', '', '1234567890123']);
+
+it('يرفض أمر دفع بتاريخ لم يأتِ ورقمين متكررين', function () {
+    $this->actingAs(entryUser());
+
+    filledEntry()->set('orders.0.issued_on', '2026-11-06')->call('review')->assertHasErrors('orders.0.issued_on');
+
+    filledEntry()
+        ->call('addOrder')
+        ->set('orders.1.number', '1234')
+        ->set('orders.1.issued_on', '2026-11-04')
+        ->set('picked.1', [UploadedFile::fake()->image('b.jpg')])
+        ->call('review')
+        ->assertHasErrors('orders.1.number');
+});
+
+it('يرفض ملفاً ليس صورة ولا PDF', function () {
+    $this->actingAs(entryUser());
+
+    Livewire::test(MonthEntry::class, ['account' => 'mechanization'])
+        ->set('picked.0', [UploadedFile::fake()->create('x.exe', 10)])
+        ->assertHasErrors('orderFiles.0')
+        ->assertSet('orderFiles.0', []);
+});
+
+// ── ترتيب الشهور ─────────────────────────────────────────
+
+it('يجعل الشهر التالي ما بعد آخر مُدخَل ولا يفتح شهراً لم يبدأ', function () {
+    $this->actingAs(entryUser());
+
+    filledEntry()->call('save');
+    filledEntry()->assertSet('month', '2026-11-01')->call('save');
+
+    expect(FinanceMonth::orderBy('month')->pluck('month')->map->toDateString()->all())
+        ->toBe(['2026-10-01', '2026-11-01']);
+
+    // ديسمبر لم يبدأ: لا شهر في الفورم، والحفظ المباشر يُرفض
+    Livewire::test(MonthEntry::class, ['account' => 'mechanization'])
+        ->assertSet('month', null)
+        ->assertSee(__('home.fin_entry_not_due', ['month' => 'ديسمبر 2026']));
+});
+
+it('يفصل ترتيب كل حساب عن الآخر', function () {
+    $this->actingAs(entryUser());
+
+    filledEntry('mechanization')->call('save');
+
+    filledEntry('ministry-of-finance')->assertSet('month', '2026-10-01');
+});
+
+it('يرفض الحفظ إن أدخل مستخدمٌ آخر الشهر نفسه في الأثناء', function () {
+    $this->actingAs(entryUser());
+
+    $first  = filledEntry(amount: '100');
+    $second = filledEntry(amount: '200');
+
+    $first->call('save');
+    $second->call('save');
+
+    expect(FinanceMonth::count())->toBe(1)
+        ->and(FinanceMonth::sole()->amount)->toBe(100)
+        ->and(Storage::disk(FinanceAttachment::DISK)->allFiles(FinanceAttachment::DIRECTORY))->toHaveCount(1);
+});
+
+it('يحسب الشهر الجاري بتوقيت القاهرة', function () {
+    // ٢٣:٣٠ UTC آخر أكتوبر = ١:٣٠ فجر أول نوفمبر بالقاهرة
+    $this->travelTo(CarbonImmutable::parse('2026-10-31 23:30:00', 'UTC'));
+
+    expect(FinanceCalendar::currentMonth()->toDateString())->toBe('2026-11-01');
+});
+
+// ── الصلاحيات ────────────────────────────────────────────
+
+it('يمنع الإدخال عمّن لا يملك finance.create', function () {
+    $this->actingAs(entryUser(['finance.view']));
+
+    $this->get(route('finance.entry', 'mechanization'))->assertForbidden();
+
+    // ولا يُعرض له زرّ الإدخال
+    $this->get(route('finance.mechanization'))->assertDontSee(route('finance.entry', 'mechanization'), false);
+});
+
+it('يرفض الحفظ إن سُحبت الصلاحية والفورم مفتوح', function () {
+    $user = entryUser();
+    $this->actingAs($user);
+
+    $component = filledEntry();
+    $user->roles()->detach();
+    $user->unsetRelation('roles')->unsetRelation('permissions');
+    app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
+
+    $component->call('save')->assertForbidden();
+    expect(FinanceMonth::count())->toBe(0);
+});
+
+it('لا يفتح الإدخال لأبنية المحاكم واتصالات في هذه المرحلة', function () {
+    $this->actingAs(entryUser());
+
+    $this->get(route('finance.entry', 'court-buildings'))->assertNotFound();
+    $this->get(route('finance.entry', 'telecom'))->assertNotFound();
+    $this->get('/finance/unknown/entry')->assertNotFound();
+});
+
+// ── صفحة الحساب ──────────────────────────────────────────
+
+it('يعرض شهور السنة المالية وإجماليها وزرّ الشهر التالي', function () {
+    $this->actingAs(entryUser());
+
+    filledEntry(amount: '150000')->call('save');
+
+    $this->get(route('finance.mechanization'))
+        ->assertOk()
+        ->assertSee('أكتوبر 2026')
+        ->assertSee('يونيو 2027')
+        ->assertDontSee('سبتمبر 2026')
+        ->assertSee('150,000')
+        ->assertSee('أمر رقم 1234 بتاريخ 2026-11-02')
+        ->assertSee(__('home.fin_next_month', ['month' => 'نوفمبر 2026']))
+        ->assertSee(route('finance.entry', 'mechanization'), false);
+});
+
+it('يعرض الحساب الآخر بلا أرقام هذا الحساب', function () {
+    $this->actingAs(entryUser());
+
+    filledEntry(amount: '987654')->call('save');
+
+    $this->get(route('finance.ministry-of-finance'))->assertDontSee('987,654');
+});
+
+it('يتجاهل سنة مالية تالفة من الرابط', function () {
+    $this->actingAs(entryUser());
+
+    Livewire::withQueryParams(['year' => 1999])->test(Mechanization::class)->assertSet('year', 2026);
+    Livewire::withQueryParams(['year' => 2030])->test(Mechanization::class)->assertSet('year', 2026);
+});
+
+it('يقسم الشهور على السنة المالية يوليو–يونيو', function () {
+    expect(array_map(fn ($m) => $m->format('Y-m'), FinanceCalendar::monthsOf(2026)))
+        ->toHaveCount(9)
+        ->and(FinanceCalendar::monthsOf(2026)[0]->format('Y-m'))->toBe('2026-10')
+        ->and(FinanceCalendar::monthsOf(2027)[0]->format('Y-m'))->toBe('2027-07')
+        ->and(FinanceCalendar::monthsOf(2027))->toHaveCount(12)
+        ->and(FinanceCalendar::fiscalYearOf(CarbonImmutable::parse('2027-06-01')))->toBe(2026)
+        ->and(FinanceCalendar::fiscalYearOf(CarbonImmutable::parse('2027-07-01')))->toBe(2027);
+});
+
+// ── صورة أمر الدفع ───────────────────────────────────────
+
+it('يعرض صورة أمر الدفع لصاحب العرض وحده', function () {
+    $this->actingAs(entryUser());
+    filledEntry()->call('save');
+
+    $file = FinanceAttachment::sole();
+
+    $this->get(route('finance.attachments.show', $file))->assertOk();
+
+    $this->actingAs(entryUser(['offices.index']));
+    $this->get(route('finance.attachments.show', $file))->assertForbidden();
+
+    auth()->logout();
+    $this->get(route('finance.attachments.show', $file))->assertRedirect();
+});
+
+// ── التفقيط ──────────────────────────────────────────────
+
+it('يكتب المبلغ بالحروف', function (int $n, string $words) {
+    expect(AmountInWords::number($n))->toBe($words);
+})->with([
+    [0, 'صفر'],
+    [101, 'مائة وواحد'],
+    [2000, 'ألفان'],
+    [3500, 'ثلاثة آلاف وخمسمائة'],
+    [412500, 'أربعمائة واثنا عشر ألف وخمسمائة'],
+    [850000, 'ثمانمائة وخمسون ألف'],
+    [2500000, 'مليونان وخمسمائة ألف'],
+]);
