@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Support\Finance\FinanceCalendar;
+use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Facades\DB;
@@ -32,6 +34,34 @@ class FinanceAttachment extends Model
     public function url(): string
     {
         return route('finance.attachments.show', $this);
+    }
+
+    /**
+     * اسم الملف عند تنزيله — من بياناته لا من اسمه الأصلي:
+     * «حساب الميكنة (الوزير) - أكتوبر 2026 - أمر 1234 - 1.jpg».
+     *
+     * الأصلي غالباً اسم الكاميرا (IMG_20261102_143512.jpg) لا يقول شيئاً، ويبقى
+     * محفوظاً في `original_name` للمراجعة. ⚠️ يُحسب لحظة التنزيل لا عند الحفظ:
+     * رقم أمرٍ صُحِّح (المرحلة ج) يتبعه الاسم بلا تعديل.
+     */
+    public function downloadName(): string
+    {
+        $order = $this->paymentOrder;
+        $month = $order->month;
+        $index = $order->attachments->search(fn (self $a) => $a->is($this)) + 1;
+
+        // ⚠️ «/» في رقم الأمر (123/2026) فاصلُ مسار — لا يصلح في اسم ملف
+        $number = str_replace(['/', '\\'], '-', $order->number);
+
+        return sprintf(
+            '%s - %s - %s %s - %d.%s',
+            $month->account->label(),
+            FinanceCalendar::monthLabel(CarbonImmutable::parse($month->month)),
+            __('home.fin_order_word'),
+            $number,
+            $index,
+            strtolower(pathinfo($this->path, PATHINFO_EXTENSION))
+        );
     }
 
     public function isPdf(): bool

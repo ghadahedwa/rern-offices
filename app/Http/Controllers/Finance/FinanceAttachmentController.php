@@ -20,6 +20,9 @@ class FinanceAttachmentController extends Controller
         $disk = Storage::disk(FinanceAttachment::DISK);
         abort_unless($disk->exists($attachment->path), 404);
 
-        return $disk->response($attachment->path, $attachment->original_name);
+        // العارض في الصفحة يقرأ الملف معروضاً، وزرّ «تنزيل» يطلبه بـ`?download=1`
+        return request()->boolean('download')
+            ? $disk->download($attachment->path, $attachment->downloadName())
+            : $disk->response($attachment->path, $attachment->downloadName());
     }
 }

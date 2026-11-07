@@ -279,6 +279,93 @@ it('يعرض صورة أمر الدفع لصاحب العرض وحده', functio
     $this->get(route('finance.attachments.show', $file))->assertRedirect();
 });
 
+it('ينزّل صورة أمر الدفع باسمٍ من بياناتها لا باسم الكاميرا', function () {
+    $this->actingAs(entryUser());
+
+    filledEntry(number: '123/2026')
+        ->set('picked.0', [UploadedFile::fake()->image('IMG_20261102_143512.jpg')])
+        ->call('save');
+
+    [$first, $second] = FinanceAttachment::orderBy('id')->get()->all();
+
+    expect($first->downloadName())->toBe('حساب الميكنة (الوزير) - أكتوبر 2026 - أمر 123-2026 - 1.jpg')
+        ->and($second->downloadName())->toEndWith(' - 2.jpg')
+        // الاسم الأصلي محفوظ للمراجعة
+        ->and($second->original_name)->toBe('IMG_20261102_143512.jpg');
+
+    $disposition = $this->get(route('finance.attachments.show', $first))->headers->get('content-disposition');
+
+    expect(rawurldecode($disposition))->toContain('أمر 123-2026 - 1.jpg')->toStartWith('inline');
+
+    // زرّ «تنزيل» في العارض يطلبه مرفقاً لا معروضاً
+    $download = $this->get(route('finance.attachments.show', $first).'?download=1')->headers->get('content-disposition');
+    expect($download)->toStartWith('attachment');
+});
+
+it('يفتح الصور في عارض الصفحة بأسمائها ويتنقّل بين صور الأمر الواحد', function () {
+    $this->actingAs(entryUser());
+
+    filledEntry()->set('picked.0', [UploadedFile::fake()->create('p2.pdf', 50, 'application/pdf')])->call('save');
+
+    [$first, $second] = FinanceAttachment::orderBy('id')->get()->all();
+
+    // الرابط الواحد يحمل قائمة صور أمره كلها — العارض يتنقّل بينها
+    $this->get(route('finance.mechanization'))
+        ->assertSee('openViewer(JSON.parse', false)
+        ->assertSee($first->downloadName(), false)
+        ->assertSee($second->downloadName(), false)
+        ->assertSee('\u0022pdf\u0022:true', false)
+        ->assertSee('?download=1', false);
+});
+
+// ── تنبيهات المراجعة ─────────────────────────────────────
+
+it('لا ينبّه في الشهر العادي', function () {
+    $this->actingAs(entryUser());
+
+    filledEntry(amount: '150000')->call('save');
+
+    filledEntry(amount: '160000', number: '2222')->call('review')->assertViewHas('warnings', []);
+});
+
+it('ينبّه لرقم أمر دفع مسجَّل من قبل — في أي حساب — ويسمح بالحفظ', function () {
+    $this->actingAs(entryUser());
+
+    filledEntry('ministry-of-finance', number: '1234')->call('save');
+
+    filledEntry('mechanization', number: '1234')
+        ->call('review')
+        ->assertSee(__('home.fin_warn_duplicate_order', ['number' => '1234', 'account' => 'حساب وزارة المالية', 'month' => 'أكتوبر 2026']))
+        ->call('save');
+
+    expect(FinanceMonth::count())->toBe(2);
+});
+
+it('ينبّه لمبلغ بعيد عن الشهر السابق في الاتجاهين', function (string $amount, string $key) {
+    $this->actingAs(entryUser());
+
+    filledEntry(amount: '150000')->call('save');
+
+    filledEntry(amount: $amount, number: '2222')
+        ->call('review')
+        ->assertSee(__($key, ['factor' => 3, 'month' => 'أكتوبر 2026', 'amount' => '150,000']));
+})->with([
+    'صفر زائد' => ['1500000', 'home.fin_warn_amount_high'],
+    'صفر ناقص' => ['15000', 'home.fin_warn_amount_low'],
+]);
+
+it('ينبّه لأمر دفع أقدم من الشهر بأكثر من شهر', function () {
+    $this->actingAs(entryUser());
+
+    filledEntry()
+        ->set('orders.0.issued_on', '2026-08-20')
+        ->call('review')
+        ->assertSee(__('home.fin_warn_old_order', ['number' => '1234', 'date' => '2026-08-20', 'month' => 'أكتوبر 2026']));
+
+    // الشهر السابق مباشرةً طبيعي — أمر سبتمبر لشهر أكتوبر
+    filledEntry()->set('orders.0.issued_on', '2026-09-15')->call('review')->assertViewHas('warnings', []);
+});
+
 // ── التفقيط ──────────────────────────────────────────────
 
 it('يكتب المبلغ بالحروف', function (int $n, string $words) {

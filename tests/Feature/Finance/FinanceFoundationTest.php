@@ -216,3 +216,14 @@ it('لا يعطِّل ولا يحذف آخر عنصر مفعَّل', function ()
 
     expect(CourtBuildingItem::find($last->id))->not->toBeNull();
 });
+
+it('يسحب التصحيح والحذف من دور admin ويُبقي له العرض والإدخال', function () {
+    // الأدوار تُنشأ من الشاشة لا من الهجرات — فاختبار الداتابيز الجديدة بلا admin، ويُنشأ هنا كما على السيرفر
+    $admin = Role::findOrCreate('admin', 'web');
+    $admin->givePermissionTo(['finance.view', 'finance.create', 'finance.edit', 'finance.delete']);
+
+    (require database_path('migrations/2026_11_07_000003_revoke_finance_corrections_from_admin.php'))->up();
+
+    expect($admin->fresh()->permissions->pluck('name')->sort()->values()->all())
+        ->toBe(['finance.create', 'finance.view']);
+});

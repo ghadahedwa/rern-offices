@@ -32,6 +32,6 @@ class FinanceMonth extends Model
 
     public function paymentOrders(): HasMany
     {
-        return $this->hasMany(FinancePaymentOrder::class)->orderBy('position');
+        return $this->hasMany(FinancePaymentOrder::class)->orderBy('position')->chaperone('month');
     }
 }

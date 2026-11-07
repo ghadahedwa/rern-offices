@@ -34,6 +34,17 @@
             </div>
         @endif
 
+        {{-- عارض صور أوامر الدفع — يفتح فوق الصفحة، ويتنقّل بين صور الأمر الواحد --}}
+        <div x-data="{
+                files: [], index: 0,
+                get file() { return this.files[this.index] ?? null },
+                openViewer(files, index) { this.files = files; this.index = index },
+                closeViewer() { this.files = []; this.index = 0 },
+                step(by) { if (this.files.length > 1) this.index = (this.index + by + this.files.length) % this.files.length },
+             }"
+             @keydown.escape.window="closeViewer()"
+             @keydown.right.window="file && step(-1)"
+             @keydown.left.window="file && step(1)">
         <div class="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-sm overflow-hidden">
             <table class="w-full text-sm text-right sm:table-fixed">
                 <thead class="bg-zinc-50 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 text-xs">
@@ -55,7 +66,10 @@
                                     {{-- على الموبايل: أوامر الدفع والمُدخِل سطران تحت المبلغ --}}
                                     <div class="sm:hidden mt-1 space-y-0.5 text-xs text-zinc-500">
                                         @foreach($record->paymentOrders as $order)
-                                            <p>{{ __('home.fin_payment_order_line', ['number' => $order->number, 'date' => $order->issued_on->format('Y-m-d')]) }}</p>
+                                            <p>
+                                                {{ __('home.fin_payment_order_line', ['number' => $order->number, 'date' => $order->issued_on->format('Y-m-d')]) }}
+                                                @include('livewire.finance.partials.attachment-links', ['order' => $order])
+                                            </p>
                                         @endforeach
                                         <p>{{ $record->creator?->name ?? '—' }} · <span dir="ltr" class="inline-block">{{ \App\Support\LocalTime::date($record->created_at) }}</span></p>
                                     </div>
@@ -73,15 +87,7 @@
                                         @foreach($record->paymentOrders as $order)
                                             <li class="text-xs text-zinc-700 dark:text-zinc-200">
                                                 {{ __('home.fin_payment_order_line', ['number' => $order->number, 'date' => $order->issued_on->format('Y-m-d')]) }}
-                                                <span class="inline-flex flex-wrap gap-1 ms-1">
-                                                    @foreach($order->attachments as $file)
-                                                        <a href="{{ $file->url() }}" target="_blank"
-                                                           class="inline-flex items-center px-1.5 py-0.5 rounded bg-[#c9a847]/10 text-[#b8962e] hover:bg-[#c9a847]/20 transition"
-                                                           title="{{ $file->original_name }}">
-                                                            {{ $file->isPdf() ? 'PDF' : __('home.fin_image') }} {{ $loop->iteration }}
-                                                        </a>
-                                                    @endforeach
-                                                </span>
+                                                @include('livewire.finance.partials.attachment-links', ['order' => $order])
                                             </li>
                                         @endforeach
                                     </ul>
@@ -105,6 +111,56 @@
                     </tr>
                 </tfoot>
             </table>
+        </div>
+
+        <div x-show="file" x-transition.opacity style="display:none; z-index:9999;"
+             class="fixed inset-0 flex flex-col bg-black/90">
+            <div class="flex items-center gap-3 h-14 shrink-0 px-4">
+                <a :href="file?.download"
+                   class="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white text-sm font-medium transition">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3"/>
+                    </svg>
+                    {{ __('home.fin_download') }}
+                </a>
+                <p class="flex-1 min-w-0 truncate text-sm text-white/80" x-text="file?.title"></p>
+                <p x-show="files.length > 1" class="shrink-0 text-sm text-white/70" dir="ltr" x-text="(index + 1) + ' / ' + files.length"></p>
+            </div>
+
+            <div class="flex-1 min-h-0 flex items-center justify-center gap-3 px-4 pb-4" @click.self="closeViewer()">
+                <button type="button" x-show="files.length > 1" @click="step(-1)"
+                        class="shrink-0 w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 text-white grid place-items-center transition"
+                        title="{{ __('home.fin_viewer_prev') }}">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+                </button>
+
+                {{-- الإغلاق على الصورة نفسها، أعلاها في المنتصف (طلب المستخدمة) --}}
+                <div class="relative min-w-0 flex items-center justify-center"
+                     :class="file?.pdf ? 'w-full h-full max-w-[1000px]' : 'max-w-full'">
+                    <template x-if="file && ! file.pdf">
+                        <img :src="file.src" :alt="file.name" class="rounded-lg shadow-2xl object-contain"
+                             style="max-width: 100%; max-height: calc(100vh - 90px);">
+                    </template>
+                    <template x-if="file && file.pdf">
+                        <iframe :src="file.src" class="w-full h-full rounded-lg bg-white"></iframe>
+                    </template>
+
+                    <button type="button" @click="closeViewer()"
+                            class="absolute top-3 left-1/2 -translate-x-1/2 flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-red-500/90 hover:bg-red-600 text-white text-sm font-semibold shadow-lg transition">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
+                        {{ __('home.close') }}
+                    </button>
+                </div>
+
+                <button type="button" x-show="files.length > 1" @click="step(1)"
+                        class="shrink-0 w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 text-white grid place-items-center transition"
+                        title="{{ __('home.fin_viewer_next') }}">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+                </button>
+            </div>
+        </div>
         </div>
         @if($total > 0)
             <p class="text-xs text-zinc-500 dark:text-zinc-400 -mt-3">{{ \App\Support\Finance\AmountInWords::pounds($total) }}</p>

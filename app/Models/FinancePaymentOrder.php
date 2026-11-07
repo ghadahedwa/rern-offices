@@ -26,6 +26,7 @@ class FinancePaymentOrder extends Model
 
     public function attachments(): HasMany
     {
-        return $this->hasMany(FinanceAttachment::class)->orderBy('id');
+        // chaperone: اسم الصورة عند تنزيلها يقرأ أمرها وشهره — بلا استعلامٍ لكل صورة
+        return $this->hasMany(FinanceAttachment::class)->orderBy('id')->chaperone('paymentOrder');
     }
 }

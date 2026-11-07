@@ -64,7 +64,7 @@ trait IsAccountPage
             $records = FinanceMonth::query()
                 ->where('finance_account_id', $account->id)
                 ->whereBetween('month', [$months[0]->toDateString(), end($months)->toDateString()])
-                ->with(['creator', 'paymentOrders.attachments'])
+                ->with(['account', 'creator', 'paymentOrders.attachments'])
                 ->get()
                 ->keyBy(fn (FinanceMonth $m) => $m->month->format('Y-m'));
 

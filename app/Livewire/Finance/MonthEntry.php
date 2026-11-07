@@ -294,6 +294,74 @@ class MonthEntry extends Component
         );
     }
 
+    /** المبلغ «بعيد» عن الشهر السابق إن تجاوز أضعافه أو نزل عن جزئه هذا */
+    public const AMOUNT_JUMP_FACTOR = 3;
+
+    /**
+     * تنبيهات شاشة المراجعة — **تنبّه ولا تمنع**: لكلٍّ منها حالةٌ صحيحة نادرة،
+     * والقرار للمُدخِل وهو يرى الأرقام أمامه قبل القفل.
+     *
+     *   - رقم أمر دفع سُجِّل من قبل (أي حساب) — الأرجح الأمرُ نفسه مرتين.
+     *   - مبلغٌ بعيد عن الشهر السابق — صفرٌ زائد أو ناقص يفوت العين.
+     *   - أمر دفع أقدم من الشهر بأكثر من شهر — تاريخٌ كُتب خطأً.
+     */
+    protected function reviewWarnings(FinanceAccount $account, ?int $amount): array
+    {
+        if (! $this->reviewing || $this->month === null) {
+            return [];
+        }
+
+        $month    = CarbonImmutable::parse($this->month);
+        $warnings = [];
+
+        $numbers = array_values(array_filter(array_column($this->orders, 'number')));
+        if ($numbers) {
+            FinancePaymentOrder::whereIn('number', $numbers)
+                ->with('month.account')
+                ->get()
+                ->each(function (FinancePaymentOrder $order) use (&$warnings) {
+                    $warnings[] = __('home.fin_warn_duplicate_order', [
+                        'number'  => $order->number,
+                        'account' => $order->month->account->label(),
+                        'month'   => FinanceCalendar::monthLabel(CarbonImmutable::parse($order->month->month)),
+                    ]);
+                });
+        }
+
+        // ⚠️ نطاقٌ لا مساواة: العمود المصبوب `'date'` يُكتب `'Y-m-d 00:00:00'` على sqlite
+        $previous = FinanceMonth::where('finance_account_id', $account->id)
+            ->where('month', '>=', $month->subMonth()->toDateString())
+            ->where('month', '<', $month->toDateString())
+            ->value('amount');
+
+        if ($amount !== null && $previous > 0) {
+            $context = [
+                'month'  => FinanceCalendar::monthLabel($month->subMonth()),
+                'amount' => number_format($previous),
+                'factor' => self::AMOUNT_JUMP_FACTOR,
+            ];
+
+            if ($amount > $previous * self::AMOUNT_JUMP_FACTOR) {
+                $warnings[] = __('home.fin_warn_amount_high', $context);
+            } elseif ($amount * self::AMOUNT_JUMP_FACTOR < $previous) {
+                $warnings[] = __('home.fin_warn_amount_low', $context);
+            }
+        }
+
+        $oldest = $month->subMonth()->toDateString();
+        foreach ($this->orders as $order) {
+            if (($order['issued_on'] ?? '') !== '' && $order['issued_on'] < $oldest) {
+                $warnings[] = __('home.fin_warn_old_order', [
+                    'number' => $order['number'],
+                    'date'   => $order['issued_on'],
+                    'month'  => FinanceCalendar::monthLabel($month),
+                ]);
+            }
+        }
+
+        return $warnings;
+    }
+
     public function render()
     {
         $account = $this->account();
@@ -302,9 +370,13 @@ class MonthEntry extends Component
         return view('livewire.finance.month-entry', [
             'account'     => $account,
             'monthLabel'  => $this->month ? FinanceCalendar::monthLabel(CarbonImmutable::parse($this->month)) : null,
+            'fiscalLabel' => $this->month
+                ? FinanceCalendar::fiscalYearLabel(FinanceCalendar::fiscalYearOf(CarbonImmutable::parse($this->month)))
+                : null,
             'nextLabel'   => FinanceCalendar::monthLabel(FinanceCalendar::nextMonth($account)),
             'amountValue' => $amount,
             'amountWords' => $amount !== null ? AmountInWords::pounds($amount) : null,
+            'warnings'    => $this->reviewWarnings($account, $amount),
         ])->title(__('home.fin_entry_title', ['account' => $account->label()]));
     }
 }
