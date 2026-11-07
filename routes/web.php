@@ -297,6 +297,22 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::livewire('professions/{profession}/edit', \App\Livewire\Contractors\Professions\Create::class)->name('professions.edit');
     });
 
+    // فرع الشئون المالية — صفحة لكل حساب. الحراسة `finance.view` في المكوّن،
+    // و`create`/`edit`/`delete` داخل إجراءاتها (المرحلة ب فما بعد).
+    // ⚠️ بلا نطاق محافظات: الأرقام للجمهورية كلها.
+    Route::livewire('finance/court-buildings', \App\Livewire\Finance\CourtBuildings::class)->name('finance.court-buildings');
+    Route::livewire('finance/mechanization', \App\Livewire\Finance\Mechanization::class)->name('finance.mechanization');
+    Route::livewire('finance/telecom', \App\Livewire\Finance\Telecom::class)->name('finance.telecom');
+    Route::livewire('finance/ministry-of-finance', \App\Livewire\Finance\MinistryOfFinance::class)->name('finance.ministry-of-finance');
+
+    // عناصر أبنية المحاكم — قائمة مرجعية تحت «إدارة النظام»، **سوبر أدمن وحده**:
+    // العنصر يدخل في مجموع حسابٍ يصدر به أمر دفع (نمط العطلات الرسمية).
+    Route::middleware('role:super-admin')->group(function () {
+        Route::livewire('court-building-items', \App\Livewire\Finance\CourtBuildingItems\Index::class)->name('court-building-items.index');
+        Route::livewire('court-building-items/create', \App\Livewire\Finance\CourtBuildingItems\Create::class)->name('court-building-items.create');
+        Route::livewire('court-building-items/{courtBuildingItem}/edit', \App\Livewire\Finance\CourtBuildingItems\Create::class)->name('court-building-items.edit');
+    });
+
     // العطلات الرسمية — **سوبر أدمن وحده** (قرار العميل)، أضيق من contractors.settings:
     // ⚠️ القائمة قومية لا محلية، وعطلةٌ بتاريخ خاطئ تغيّر أيام العمل في تقارير المحافظات جميعاً.
     Route::middleware('role:super-admin')->group(function () {

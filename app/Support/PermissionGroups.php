@@ -46,6 +46,10 @@ class PermissionGroups
         'home.branch_correspondence' => [
             'المراسلات'         => ['prefix' => 'correspondence.', 'except' => ['correspondence.settings']],
         ],
+        // بلا نطاق محافظات — فليس في GOVERNORATE_BRANCHES
+        'home.branch_finance' => [
+            'الشئون المالية'    => ['prefix' => 'finance.'],
+        ],
         'home.branch_system' => [
             'إعدادات المقرات'   => ['names' => ['offices.settings']],
             'إعدادات المخازن'   => ['names' => ['warehouses.settings']],
@@ -110,6 +114,12 @@ class PermissionGroups
         'contractors.edit',
         'contractors.export',
         'contractors.delete',
+
+        // الشئون المالية بخطورتها: الإدخال ثم التصحيح ثم الحذف
+        'finance.view',
+        'finance.create',
+        'finance.edit',
+        'finance.delete',
     ];
 
     /**

@@ -163,6 +163,26 @@ return [
         ],
     ],
 
+    // الشئون المالية — أربعة حسابات بأرقام شهرية للجمهورية (documentation/finance-system.md).
+    // ⚠️ بلا نطاق محافظات. و`court-building-items.*` (عناصر أبنية المحاكم) تبقى في
+    //    «إدارة النظام» كباقي القوائم المرجعية — والنمط هنا `finance.*` فلا يطابقها.
+    'finance' => [
+        'label'         => 'home.branch_finance',
+        'icon'          => 'banknotes',
+        'default_route' => 'finance.court-buildings',
+        'entries' => [
+            'finance.court-buildings' => 'finance.view',
+        ],
+        'route_patterns' => [
+            'finance.*',
+        ],
+        'super_admin_only' => false,
+        // الإضافة والتعديل والحذف لا تفتح الفرع وحدها — تلزمها `finance.view`
+        'permissions' => [
+            'finance.view',
+        ],
+    ],
+
     'system' => [
         'label'         => 'home.branch_system',
         'icon'          => 'cog-6-tooth',
@@ -206,6 +226,8 @@ return [
             // إعدادات العاملين بالتعاقد (حالات الحضور — قائمة مرجعية).
             // ⚠️ النمط `attendance-statuses.*` لا `contractors.*` — الأخير فرع مستقل بنطاق محافظة
             'attendance-statuses.*',
+            // إعدادات الشئون المالية (عناصر أبنية المحاكم — قائمة مرجعية، سوبر أدمن وحده)
+            'court-building-items.*',
         ],
         'super_admin_only' => false,
         'permissions' => [

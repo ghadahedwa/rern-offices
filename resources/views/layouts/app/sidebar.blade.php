@@ -339,6 +339,23 @@
                     @endcan
                     @endif {{-- /branch: contractors --}}
 
+                    @if($currentBranch === 'finance')
+                    @can('finance.view')
+                    {{-- ⚠️ حارس Route::has على كل بند: route() في الـlayout مع cache راوتات قديم يُسقط كل الصفحات بـ500 --}}
+                    @foreach([
+                        'finance.court-buildings'     => ['building-library', 'fin_account_court_buildings'],
+                        'finance.mechanization'       => ['cpu-chip', 'fin_account_mechanization'],
+                        'finance.telecom'             => ['phone', 'fin_account_telecom'],
+                        'finance.ministry-of-finance' => ['banknotes', 'fin_account_ministry_of_finance'],
+                    ] as $finRoute => [$finIcon, $finLabel])
+                        @continue(! Route::has($finRoute))
+                        <flux:sidebar.item :icon="$finIcon" :href="route($finRoute)" :current="request()->routeIs($finRoute)" wire:navigate>
+                            {{ __('home.'.$finLabel) }}
+                        </flux:sidebar.item>
+                    @endforeach
+                    @endcan
+                    @endif {{-- /branch: finance --}}
+
                     @if($currentBranch === 'feedback')
                     {{-- الشاشات الثلاث بـfeedback.view، والمرفوضات بصلاحيتها المستقلة —
                          رابط يؤدي إلى ٤٠٣ أسوأ من غيابه --}}
@@ -461,6 +478,28 @@
                                 {{ __('home.ct_holidays') }}
                             </flux:sidebar.item>
                             @endif
+                        </div>
+                    </div>
+                    @endif
+
+                    {{-- إعدادات الشئون المالية (عناصر أبنية المحاكم) — سوبر أدمن وحده،
+                         و⚠️ Route::has لأن الرابط في الـlayout يُطلب من كل صفحة --}}
+                    @if(auth()->user()?->hasRole('super-admin') && Route::has('court-building-items.index'))
+                    <div x-data="{ open: {{ request()->routeIs('court-building-items.*') ? 'true' : 'false' }} }">
+                        <button @click="open = !open"
+                            class="nested-menu-btn flex items-center w-full px-3 py-2 font-medium rounded text-zinc-600 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-zinc-900 dark:hover:text-white transition-colors">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-gray-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            <span class="ml-2">{{ __('home.fin_settings') }}</span>
+                            <svg class="ml-auto w-4 h-4 transition-transform" :class="{ 'rotate-180': open }" viewBox="0 0 20 20">
+                                <path d="M5 8l5 5 5-5" fill="none" stroke="currentColor"/>
+                            </svg>
+                        </button>
+                        <div x-show="open" x-transition class="ml-6 mt-1 space-y-1 overflow-hidden [&_[data-content]]:text-xs! [&_[data-content]]:min-w-0">
+                            <flux:sidebar.item icon="list-bullet" :href="route('court-building-items.index')" :current="request()->routeIs('court-building-items.*')" wire:navigate>
+                                {{ __('home.fin_items_title') }}
+                            </flux:sidebar.item>
                         </div>
                     </div>
                     @endif
