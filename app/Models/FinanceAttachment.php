@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 
 /**
- * صورة أمر دفع — صورة أو PDF، حتى خمس للأمر.
+ * صورة أمر دفع — **صورة فقط** (قرار العميل 2026-11-07: لا PDF)، حتى خمس للأمر.
  *
  * ⚠️ **القرص الخاص `finance` لا `public`** (بخلاف مرفقات المخازن): مستندٌ مالي لا يُفتح برابطٍ
  *    مباشر بلا دخول — يُقرأ عبر `FinanceAttachmentController` بحارس `finance.view`.
@@ -21,8 +21,8 @@ class FinanceAttachment extends Model
     public const DIRECTORY = 'payment-orders';
     public const MAX_PER_ORDER = 5;
 
-    /** قواعد الملف الواحد — نفس قواعد مرفقات المخازن */
-    public const FILE_RULES = WarehouseAttachment::FILE_RULES;
+    /** قواعد الملف الواحد — صورة فقط، ١٠ ميجا (نفس سقف مرفقات المخازن) */
+    public const FILE_RULES = ['file', 'image', 'mimes:jpg,jpeg,png,webp', 'max:10240'];
 
     protected $fillable = ['finance_payment_order_id', 'path', 'original_name', 'uploaded_by'];
 

@@ -1,4 +1,4 @@
-{{-- روابط صور أمر الدفع — الضغط يفتح العارض في الصفحة (`openViewer` في account.blade.php)،
+{{-- صور أمر الدفع مصغّرةً متراكبة — الضغط يفتح العارض في الصفحة (`openViewer` في account.blade.php)،
      والرابط نفسه يبقى صالحاً (الضغط بالزرّ الأوسط يفتح تبويباً). المعاملة: $order --}}
 @php
     $files = $order->attachments->map(fn ($file) => [
@@ -10,13 +10,18 @@
         'pdf'      => $file->isPdf(),
     ])->values();
 @endphp
-<span class="inline-flex flex-wrap gap-1">
+<span class="inline-flex shrink-0 -space-x-2 space-x-reverse">
     @foreach($order->attachments as $file)
         <a href="{{ $file->url() }}" target="_blank"
            @click.prevent="openViewer(@js($files), {{ $loop->index }})"
-           class="inline-flex items-center px-1.5 py-0.5 rounded bg-[#c9a847]/10 text-[#b8962e] hover:bg-[#c9a847]/20 transition"
+           class="relative block w-9 h-9 rounded-md border-2 border-white dark:border-zinc-900 shadow-sm overflow-hidden bg-zinc-100 dark:bg-zinc-800 hover:z-10 hover:scale-110 transition"
            title="{{ $file->downloadName() }}">
-            {{ $file->isPdf() ? 'PDF' : __('home.fin_image') }} {{ $loop->iteration }}
+            {{-- الملفات القديمة قبل «صور فقط» قد تكون PDF — لا معاينة لها --}}
+            @if($file->isPdf())
+                <span class="w-full h-full grid place-items-center text-red-600 font-bold" style="font-size: 0.6rem">PDF</span>
+            @else
+                <img src="{{ $file->url() }}" alt="" loading="lazy" class="w-full h-full object-cover">
+            @endif
         </a>
     @endforeach
 </span>

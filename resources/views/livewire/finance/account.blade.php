@@ -19,20 +19,49 @@
     </div>
 
     @if($account->acceptsEntry())
-        @if($canEnter)
-            <div class="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[#c9a847]/40 bg-[#c9a847]/[0.06] px-4 py-3">
-                <p class="text-sm text-zinc-700 dark:text-zinc-200">
-                    {{ __('home.fin_next_month', ['month' => \App\Support\Finance\FinanceCalendar::monthLabel($nextMonth)]) }}
+        {{-- ── الملخّص: إجمالي السنة + الشهر التالي ──
+             ⚠️ الأحجام الكبيرة inline: الـlayout يفرض `* { font-size: inherit; }` فيُبطل فئات text-* --}}
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div class="sm:col-span-2 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-sm p-5">
+                <p class="text-xs text-zinc-500 dark:text-zinc-400">
+                    {{ __('home.fin_year_total_label') }} {{ \App\Support\Finance\FinanceCalendar::fiscalYearLabel($year) }}
+                    — {{ __('home.fin_year_range', ['from' => $yearFrom, 'to' => $yearTo]) }}
                 </p>
-                <a href="{{ route('finance.entry', $account->slug()) }}" wire:navigate
-                   class="inline-flex items-center gap-2 border border-[#c9a847] text-[#c9a847] hover:bg-[#c9a847]/10 text-sm font-medium px-4 py-2 rounded-lg transition">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
-                    </svg>
-                    {{ __('home.fin_enter_month') }}
-                </a>
+                @if($partial)
+                    <p class="text-xs text-zinc-400 mt-0.5">{{ __('home.fin_year_partial', ['count' => $monthCount, 'from' => $yearFrom]) }}</p>
+                @endif
+                <p class="font-bold text-zinc-800 dark:text-zinc-100 mt-1" dir="ltr" style="text-align: right; font-size: 2rem; line-height: 2.5rem">{{ number_format($total) }}</p>
+                @if($total > 0)
+                    <p class="text-xs text-[#b8962e] dark:text-[#d8b856] mt-1">{{ \App\Support\Finance\AmountInWords::pounds($total) }}</p>
+                @endif
+                <div class="mt-4 flex items-center gap-3 text-xs text-zinc-500 dark:text-zinc-400">
+                    {{-- في صفحة RTL يمتلئ الشريط من اليمين تلقائياً --}}
+                    <div class="flex-1 h-1.5 rounded-full bg-zinc-100 dark:bg-zinc-800 overflow-hidden">
+                        <div class="h-full bg-[#c9a847] rounded-full" style="width: {{ $monthCount ? round($entered / $monthCount * 100) : 0 }}%"></div>
+                    </div>
+                    <span class="shrink-0">{{ __('home.fin_entered_of', ['entered' => $entered, 'count' => $monthCount]) }}</span>
+                </div>
             </div>
-        @endif
+
+            <div class="rounded-xl border border-[#c9a847]/50 bg-[#c9a847]/10 p-5 flex flex-col justify-between gap-3">
+                <div>
+                    <p class="text-xs text-zinc-500 dark:text-zinc-400">{{ __('home.fin_next_month_badge') }}</p>
+                    <p class="font-bold text-zinc-800 dark:text-zinc-100 mt-1" style="font-size: 1.3rem">{{ \App\Support\Finance\FinanceCalendar::monthLabel($nextMonth) }}</p>
+                    @unless($nextDue)
+                        <p class="text-xs text-zinc-500 dark:text-zinc-400 mt-1">{{ __('home.fin_opens_on_first') }}</p>
+                    @endunless
+                </div>
+                @if($canEnter)
+                    <a href="{{ route('finance.entry', $account->slug()) }}" wire:navigate
+                       class="inline-flex items-center justify-center gap-2 bg-[#c9a847] hover:bg-[#b8962e] text-white text-sm font-medium py-2 rounded-lg transition">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
+                        </svg>
+                        {{ __('home.fin_enter_month') }}
+                    </a>
+                @endif
+            </div>
+        </div>
 
         {{-- عارض صور أوامر الدفع — يفتح فوق الصفحة، ويتنقّل بين صور الأمر الواحد --}}
         <div x-data="{
@@ -49,67 +78,72 @@
             <table class="w-full text-sm text-right sm:table-fixed">
                 <thead class="bg-zinc-50 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 text-xs">
                     <tr>
-                        <th class="px-4 py-3 font-medium sm:w-[22%]">{{ __('home.fin_month') }}</th>
-                        <th class="px-4 py-3 font-medium sm:w-[22%]">{{ __('home.fin_amount_label') }}</th>
-                        <th class="px-4 py-3 font-medium sm:w-[34%] max-sm:hidden">{{ __('home.fin_payment_orders') }}</th>
-                        <th class="px-4 py-3 font-medium sm:w-[22%] max-sm:hidden">{{ __('home.fin_entered_by') }}</th>
+                        <th class="px-4 py-3 font-medium sm:w-[24%]">{{ __('home.fin_month') }}</th>
+                        <th class="px-4 py-3 font-medium sm:w-[20%]">{{ __('home.fin_amount_label') }}</th>
+                        <th class="px-4 py-3 font-medium sm:w-[32%] max-sm:hidden">{{ __('home.fin_payment_order') }}</th>
+                        <th class="px-4 py-3 font-medium sm:w-[24%] max-sm:hidden">{{ __('home.fin_entered_by') }}</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-zinc-100 dark:divide-zinc-700">
                     @foreach($rows as $row)
                         @php $record = $row['record']; @endphp
-                        <tr wire:key="fin-row-{{ $row['month']->format('Y-m') }}" class="align-top {{ $row['isNext'] && $canEnter ? 'bg-[#c9a847]/[0.05]' : '' }}">
-                            <td class="px-4 py-3 font-medium text-zinc-800 dark:text-zinc-100">{{ $row['label'] }}</td>
-                            <td class="px-4 py-3">
-                                @if($record)
-                                    <span class="font-semibold text-zinc-800 dark:text-zinc-100" dir="ltr">{{ number_format($record->amount) }}</span>
-                                    {{-- على الموبايل: أوامر الدفع والمُدخِل سطران تحت المبلغ --}}
-                                    <div class="sm:hidden mt-1 space-y-0.5 text-xs text-zinc-500">
-                                        @foreach($record->paymentOrders as $order)
-                                            <p>
-                                                {{ __('home.fin_payment_order_line', ['number' => $order->number, 'date' => $order->issued_on->format('Y-m-d')]) }}
-                                                @include('livewire.finance.partials.attachment-links', ['order' => $order])
-                                            </p>
-                                        @endforeach
-                                        <p>{{ $record->creator?->name ?? '—' }} · <span dir="ltr" class="inline-block">{{ \App\Support\LocalTime::date($record->created_at) }}</span></p>
+                        @if($record)
+                            <tr wire:key="fin-row-{{ $row['month']->format('Y-m') }}">
+                                <td class="px-4 py-3">
+                                    <span class="inline-flex items-center gap-1.5 font-semibold text-zinc-800 dark:text-zinc-100">
+                                        {{ $row['label'] }}
+                                        {{-- مقفول: حُفظ فلا يُعدَّل إلا بالتصحيح --}}
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                            <title>{{ __('home.fin_locked') }}</title>
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z"/>
+                                        </svg>
+                                    </span>
+                                </td>
+                                <td class="px-4 py-3">
+                                    <span class="font-bold text-zinc-800 dark:text-zinc-100" dir="ltr" style="font-size: 1.05rem">{{ number_format($record->amount) }}</span>
+                                    {{-- على الموبايل: أمر الدفع والمُدخِل تحت المبلغ --}}
+                                    <div class="sm:hidden mt-2 space-y-2">
+                                        @include('livewire.finance.partials.payment-orders-cell', ['record' => $record])
+                                        <p class="text-xs text-zinc-500">{{ $record->creator?->name ?? '—' }} · <span dir="ltr" class="inline-block">{{ \App\Support\LocalTime::date($record->created_at) }}</span></p>
                                     </div>
-                                @elseif($row['isNext'] && $canEnter)
-                                    <span class="text-xs font-medium text-[#b8962e]">{{ __('home.fin_awaiting_entry') }}</span>
-                                @elseif(! $row['isDue'])
-                                    <span class="text-xs text-zinc-400">{{ __('home.fin_not_due') }}</span>
-                                @else
-                                    <span class="text-zinc-400">—</span>
-                                @endif
-                            </td>
-                            <td class="px-4 py-3 max-sm:hidden">
-                                @if($record)
-                                    <ul class="space-y-1.5">
-                                        @foreach($record->paymentOrders as $order)
-                                            <li class="text-xs text-zinc-700 dark:text-zinc-200">
-                                                {{ __('home.fin_payment_order_line', ['number' => $order->number, 'date' => $order->issued_on->format('Y-m-d')]) }}
-                                                @include('livewire.finance.partials.attachment-links', ['order' => $order])
-                                            </li>
-                                        @endforeach
-                                    </ul>
-                                @endif
-                            </td>
-                            <td class="px-4 py-3 max-sm:hidden text-xs text-zinc-500 dark:text-zinc-400">
-                                @if($record)
-                                    <p class="text-zinc-700 dark:text-zinc-200">{{ $record->creator?->name ?? '—' }}</p>
-                                    <p dir="ltr" class="text-right">{{ \App\Support\LocalTime::stamp($record->created_at) }}</p>
-                                @endif
-                            </td>
-                        </tr>
+                                </td>
+                                <td class="px-4 py-3 max-sm:hidden">
+                                    @include('livewire.finance.partials.payment-orders-cell', ['record' => $record])
+                                </td>
+                                <td class="px-4 py-3 max-sm:hidden text-xs">
+                                    <p class="text-zinc-800 dark:text-zinc-100">{{ $record->creator?->name ?? '—' }}</p>
+                                    {{-- التاريخ في عزلته — وسط السطر العربي يُقلب --}}
+                                    <p class="text-zinc-500 dark:text-zinc-400 mt-0.5">
+                                        <span dir="ltr" class="inline-block">{{ \App\Support\LocalTime::date($record->created_at) }}</span>
+                                        · {{ \App\Support\LocalTime::time($record->created_at) }}
+                                    </p>
+                                </td>
+                            </tr>
+                        @else
+                            {{-- الشهر التالي — بدأ ولم يُدخَل --}}
+                            <tr wire:key="fin-row-{{ $row['month']->format('Y-m') }}" class="bg-[#c9a847]/10">
+                                <td class="px-4 py-3 font-semibold text-zinc-800 dark:text-zinc-100">{{ $row['label'] }}</td>
+                                <td class="px-4 py-3" colspan="3">
+                                    <div class="flex items-center justify-between gap-3">
+                                        <span class="text-xs font-medium text-[#b8962e] dark:text-[#d8b856]">{{ __('home.fin_awaiting_entry') }}</span>
+                                        @if($canEnter)
+                                            <a href="{{ route('finance.entry', $account->slug()) }}" wire:navigate
+                                               class="inline-flex items-center gap-1 border border-[#c9a847] text-[#b8962e] hover:bg-[#c9a847]/10 text-xs font-medium px-3 py-1.5 rounded-lg transition">
+                                                + {{ __('home.fin_enter_short') }}
+                                            </a>
+                                        @endif
+                                    </div>
+                                </td>
+                            </tr>
+                        @endif
                     @endforeach
+
+                    @if($later)
+                        <tr wire:key="fin-row-later" class="bg-zinc-50/60 dark:bg-zinc-800/30">
+                            <td class="px-4 py-3 text-xs text-zinc-400" colspan="4">{{ __('home.fin_later_months', $later) }}</td>
+                        </tr>
+                    @endif
                 </tbody>
-                <tfoot class="bg-zinc-50 dark:bg-zinc-800 border-t border-zinc-200 dark:border-zinc-700">
-                    <tr>
-                        <td class="px-4 py-3 font-semibold text-zinc-700 dark:text-zinc-200">{{ __('home.fin_year_total') }}</td>
-                        <td class="px-4 py-3 font-semibold text-zinc-800 dark:text-zinc-100" dir="ltr" style="text-align: right">{{ number_format($total) }}</td>
-                        <td class="max-sm:hidden"></td>
-                        <td class="max-sm:hidden"></td>
-                    </tr>
-                </tfoot>
             </table>
         </div>
 
@@ -162,9 +196,6 @@
             </div>
         </div>
         </div>
-        @if($total > 0)
-            <p class="text-xs text-zinc-500 dark:text-zinc-400 -mt-3">{{ \App\Support\Finance\AmountInWords::pounds($total) }}</p>
-        @endif
 
     @else
         <div class="rounded-xl border border-dashed border-[#c9a847]/50 bg-[#c9a847]/[0.06] dark:bg-[#c9a847]/[0.08] p-8">

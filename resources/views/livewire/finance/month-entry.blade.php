@@ -1,11 +1,14 @@
 @php
     $inp = 'w-full border border-zinc-300 dark:border-zinc-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-[#c9a847]';
-    $lbl = 'block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1';
+    $lbl = 'block text-xs text-zinc-500 dark:text-zinc-400 mb-1';
     $pageUrl = route($account->pageRoute());
     $maxFiles = \App\Models\FinanceAttachment::MAX_PER_ORDER;
 @endphp
 
-<div class="max-w-4xl mx-auto p-6 space-y-6">
+{{-- «ورقة واحدة» (طلب المستخدمة: الصناديق المتداخلة وصفحة المراجعة المنفصلة كانت تُربك):
+     كارتٌ واحد — الشهر رأسه، والمبلغ وأمر الدفع متجاوران، والحفظ في تذييله —
+     والتأكيد نافذةٌ فوق الفورم لا صفحةٌ تحلّ محلّه. --}}
+<div class="max-w-4xl mx-auto p-6 space-y-5">
 
     {{-- Header --}}
     <div class="flex items-center gap-4">
@@ -26,66 +29,62 @@
         </div>
     @else
 
-    {{-- الشهر أولاً وبوضوح: هو ما يُدخَل، والنظام اختاره — فيُقرأ قبل أي حقل --}}
-    <div class="rounded-xl border border-[#c9a847]/40 bg-[#c9a847]/[0.06] dark:bg-[#c9a847]/[0.08] px-5 py-5 text-center space-y-4">
-        <div>
-            <p class="text-xs text-zinc-500 dark:text-zinc-400">{{ __('home.fin_entry_for') }}</p>
-            <p class="text-2xl font-bold text-zinc-800 dark:text-zinc-100 mt-1">{{ $monthLabel }}</p>
-            <p class="text-xs text-zinc-500 dark:text-zinc-400 mt-1">{{ __('home.fin_fiscal_year') }} {{ $fiscalLabel }}</p>
+    <div class="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-sm overflow-hidden">
+
+        {{-- رأس الورقة: الشهر — النظام اختاره، فيُقرأ قبل أي حقل --}}
+        <div class="flex flex-wrap items-center justify-between gap-2 px-6 py-4 bg-[#c9a847]/10 border-b border-[#c9a847]/30">
+            <div>
+                <p class="font-bold text-zinc-800 dark:text-zinc-100" style="font-size: 1.3rem">{{ __('home.fin_entry_for', ['month' => $monthLabel]) }}</p>
+                <p class="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">{{ __('home.fin_fiscal_year') }} {{ $fiscalLabel }}</p>
+            </div>
+            <span class="text-xs font-medium text-[#b8962e] dark:text-[#d8b856]">{{ __('home.fin_next_month_badge') }}</span>
         </div>
 
-        {{-- الخطوتان --}}
-        <div class="flex items-center justify-center gap-3 text-sm">
-            @foreach([1 => __('home.fin_step_data'), 2 => __('home.fin_step_review')] as $n => $stepLabel)
-                @php $active = ($n === 1 && ! $reviewing) || ($n === 2 && $reviewing); $done = $n === 1 && $reviewing; @endphp
-                @if($n === 2)
-                    <span class="w-10 h-px bg-[#c9a847]/50"></span>
+        <div class="grid grid-cols-1 md:grid-cols-2 max-md:divide-y md:divide-x md:divide-x-reverse divide-zinc-100 dark:divide-zinc-800">
+
+            {{-- المبلغ --}}
+            <div class="p-6 space-y-2">
+                <label class="block text-sm font-medium text-zinc-700 dark:text-zinc-300">{{ __('home.fin_amount_label') }} <span class="text-red-500">*</span></label>
+                {{-- الحروف تُحذف أثناء الكتابة والأرقام العربية تصير لاتينية (نمط رقم الموتور — ⚠️ لا x-data على حقل wire:model).
+                     ⚠️ **النقطة تبقى**: حذفها يجعل «12.5» 125 صامتة — تبقى فيرفضها الخادم برسالة. --}}
+                <input type="text" inputmode="numeric" dir="ltr" autocomplete="off"
+                       oninput="this.value = this.value.replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d)).replace(/[۰-۹]/g, d => '۰۱۲۳۴۵۶۷۸۹'.indexOf(d)).replace(/[^0-9.,٬،]/g, '')"
+                       wire:model.live.debounce.400ms="amount"
+                       style="font-size: 1.6rem" class="w-full border border-zinc-300 dark:border-zinc-600 rounded-lg px-4 py-3 font-bold text-left tracking-wide bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-[#c9a847]" />
+                @if($amountWords)
+                    <p class="text-sm text-[#b8962e] dark:text-[#d8b856]">{{ $amountWords }}</p>
+                @else
+                    <p class="text-xs text-zinc-400">{{ __('home.fin_amount_hint') }}</p>
                 @endif
-                <span class="flex items-center gap-2 {{ $active ? 'text-[#b8962e] dark:text-[#d8b856] font-semibold' : 'text-zinc-400' }}">
-                    <span class="w-6 h-6 rounded-full grid place-items-center text-xs font-bold
-                        {{ $active || $done ? 'bg-[#c9a847] text-white' : 'border border-zinc-300 dark:border-zinc-600' }}">
-                        {{ $done ? '✓' : $n }}
-                    </span>
-                    {{ $stepLabel }}
-                </span>
-            @endforeach
-        </div>
-    </div>
+                @error('amount') <p class="text-red-500 text-xs">{{ $message }}</p> @enderror
+            </div>
 
-    @if(! $reviewing)
-        {{-- ── الخطوة الأولى: البيانات ── --}}
-        <div wire:key="fin-step-form" class="space-y-6">
-            <div class="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-sm divide-y divide-zinc-100 dark:divide-zinc-800">
+            {{-- أوامر الدفع --}}
+            <div class="p-6 space-y-4">
+                <p class="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                    {{ __('home.fin_payment_order') }} @unless($noOrder)<span class="text-red-500">*</span>@endunless
+                </p>
 
-                {{-- المبلغ --}}
-                <div class="p-5">
-                    <div class="flex items-center gap-3 mb-4">
-                        <div class="w-1 h-5 bg-[#c9a847] rounded-full"></div>
-                        <h3 class="text-sm font-semibold text-zinc-600 dark:text-zinc-400 uppercase tracking-wide">{{ __('home.fin_amount_label') }} <span class="text-red-500">*</span></h3>
-                    </div>
-                    <input type="text" inputmode="numeric" dir="ltr" autocomplete="off"
-                           wire:model.live.debounce.400ms="amount"
-                           class="{{ $inp }} max-w-xs text-left text-lg font-semibold tracking-wide" />
-                    @if($amountWords)
-                        <p class="mt-2 text-sm text-[#b8962e] dark:text-[#d8b856]">{{ $amountWords }}</p>
-                    @endif
-                    <p class="mt-1 text-xs text-zinc-400">{{ __('home.fin_amount_hint') }}</p>
-                    @error('amount') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
-                </div>
+                {{-- شهرٌ بلا حركة: مبلغه صفر وقد لا يصدر له أمر دفع (قرار المستخدمة) --}}
+                @if($amountValue === 0)
+                    <label class="flex items-start gap-3 cursor-pointer rounded-lg border border-zinc-200 dark:border-zinc-700 px-3.5 py-3">
+                        <input type="checkbox" wire:model.live="noOrder"
+                               class="mt-0.5 w-4 h-4 rounded border-zinc-300 dark:border-zinc-600 text-[#c9a847] focus:ring-[#c9a847]" />
+                        <span>
+                            <span class="block text-sm font-medium text-zinc-700 dark:text-zinc-300">{{ __('home.fin_no_order') }}</span>
+                            <span class="block text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">{{ __('home.fin_no_order_hint') }}</span>
+                        </span>
+                    </label>
+                @endif
+                @error('noOrder') <p class="text-red-500 text-xs">{{ $message }}</p> @enderror
 
-                {{-- أوامر الدفع: كل أمر سطرٌ واحد — رقم · تاريخ · صورة --}}
-                <div class="p-5 space-y-4">
-                    <div class="flex items-center gap-3">
-                        <div class="w-1 h-5 bg-[#c9a847] rounded-full"></div>
-                        <h3 class="text-sm font-semibold text-zinc-600 dark:text-zinc-400 uppercase tracking-wide">{{ __('home.fin_payment_orders') }} <span class="text-red-500">*</span></h3>
-                    </div>
-
+                @unless($noOrder)
                     @foreach($orders as $i => $order)
                         @php $files = $orderFiles[$i] ?? []; $count = count($files); @endphp
                         {{-- أحداث الرفع تصعد من الحقل إلى هنا. ⚠️ لا x-data على الحقل نفسه (يكسر wire:model)،
-                             والقائمة والحقل يُخفيان ولا يُزالان (نمط مرفقات المخازن — إشارة «انتهى الرفع») --}}
+                             والحقل يُخفى ولا يُزال (نمط مرفقات المخازن — إشارة «انتهى الرفع») --}}
                         <div wire:key="fin-order-{{ $i }}-{{ count($orders) }}"
-                             class="rounded-lg bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700 p-4 space-y-3"
+                             class="space-y-3 {{ $i > 0 ? 'pt-4 border-t border-zinc-100 dark:border-zinc-800' : '' }}"
                              x-data="{ uploading: false, progress: 0, failed: false }"
                              x-on:livewire-upload-start="uploading = true; progress = 0; failed = false"
                              x-on:livewire-upload-progress="progress = $event.detail.progress"
@@ -103,10 +102,12 @@
                                 </div>
                             @endif
 
-                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 items-start">
+                            <div class="grid grid-cols-2 gap-3">
                                 <div>
                                     <label class="{{ $lbl }}">{{ __('home.fin_payment_order_number') }}</label>
-                                    <input type="text" wire:model="orders.{{ $i }}.number" autocomplete="off" class="{{ $inp }}" />
+                                    {{-- أرقام فقط: العربية تصير لاتينية وغير الأرقام يُحذف أثناء الكتابة --}}
+                                    <input type="text" inputmode="numeric" dir="ltr" wire:model="orders.{{ $i }}.number" autocomplete="off" class="{{ $inp }} text-left"
+                                           oninput="this.value = this.value.replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d)).replace(/[۰-۹]/g, d => '۰۱۲۳۴۵۶۷۸۹'.indexOf(d)).replace(/[^0-9]/g, '')" />
                                     @error("orders.$i.number") <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
                                 </div>
                                 <div>
@@ -114,33 +115,37 @@
                                     <input type="date" wire:model="orders.{{ $i }}.issued_on" class="{{ $inp }}" />
                                     @error("orders.$i.issued_on") <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
                                 </div>
-                                <div>
-                                    <label class="{{ $lbl }}">
-                                        {{ __('home.fin_payment_order_files') }}
-                                        <span class="text-xs font-normal text-zinc-400">({{ __('home.wh_attachments_count', ['count' => $count, 'max' => $maxFiles]) }})</span>
-                                    </label>
-                                    <label wire:key="fin-input-{{ $i }}" @if($count >= $maxFiles) style="display:none" @endif
-                                           class="cursor-pointer w-full inline-flex items-center justify-center gap-2 px-3 py-2 rounded-lg border border-dashed border-[#c9a847]/60 bg-white dark:bg-zinc-800 text-[#b8962e] text-sm font-medium hover:bg-[#c9a847]/10 transition">
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
-                                        </svg>
-                                        {{ $count ? __('home.wh_attachments_add_more') : __('home.wh_attachments_choose') }}
-                                        <input type="file" class="hidden" multiple wire:model="picked.{{ $i }}" accept="image/jpeg,image/png,.jpg,.jpeg,.png,.pdf" />
-                                    </label>
-                                </div>
                             </div>
 
-                            <ul wire:key="fin-files-{{ $i }}" @if(! $count) style="display:none" @endif class="flex flex-wrap gap-2">
+                            {{-- الصور مصغّرة — ليرى المُدخِل أنه رفع الورقة الصحيحة قبل القفل --}}
+                            <div class="flex flex-wrap items-center gap-2">
                                 @foreach($files as $j => $file)
-                                    <li wire:key="fin-file-{{ $i }}-{{ $j }}-{{ $file->getFilename() }}"
-                                        class="inline-flex items-center gap-2 max-w-full ps-3 pe-1.5 py-1 rounded-full bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 text-xs">
-                                        <span class="truncate text-zinc-700 dark:text-zinc-200" title="{{ $file->getClientOriginalName() }}">{{ $file->getClientOriginalName() }}</span>
+                                    <span wire:key="fin-file-{{ $i }}-{{ $j }}-{{ $file->getFilename() }}"
+                                          class="relative w-12 h-12 shrink-0" title="{{ $file->getClientOriginalName() }}">
+                                        {{-- ⚠️ الفحص باقٍ مع أن المنتقي يقبل الصور وحدها: ملفٌّ غير صورة يصل مباشرةً
+                                             (الحالة تمرّ بالمتصفح) فتُسقط معاينتُه الصفحة — والحفظ يرفضه بقواعده --}}
+                                        @if($file->isPreviewable())
+                                            <img src="{{ $file->temporaryUrl() }}" alt="" class="w-12 h-12 rounded-lg object-cover border border-zinc-200 dark:border-zinc-700">
+                                        @else
+                                            <span class="w-12 h-12 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800 block"></span>
+                                        @endif
+                                        {{-- رقم الصورة --}}
+                                        <span class="absolute bottom-0.5 start-0.5 min-w-4 h-4 px-1 rounded bg-black/60 text-white grid place-items-center leading-none" style="font-size: 0.65rem">{{ $j + 1 }}</span>
                                         <button type="button" wire:click="removeFile({{ $i }}, {{ $j }})"
-                                                class="shrink-0 w-5 h-5 rounded-full grid place-items-center text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 transition"
-                                                title="{{ __('home.wh_attachments_remove') }}">✕</button>
-                                    </li>
+                                                class="absolute -top-1.5 -end-1.5 w-5 h-5 rounded-full bg-red-500 hover:bg-red-600 text-white grid place-items-center shadow leading-none transition"
+                                                style="font-size: 0.65rem" title="{{ __('home.wh_attachments_remove') }}">✕</button>
+                                    </span>
                                 @endforeach
-                            </ul>
+
+                                <label wire:key="fin-input-{{ $i }}" @if($count >= $maxFiles) style="display:none" @endif
+                                       title="{{ __('home.fin_add_image') }}"
+                                       class="cursor-pointer w-12 h-12 shrink-0 rounded-lg border-2 border-dashed border-[#c9a847] text-[#b8962e] grid place-items-center hover:bg-[#c9a847]/10 transition">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
+                                    </svg>
+                                    <input type="file" class="hidden" multiple wire:model="picked.{{ $i }}" accept="image/jpeg,image/png,image/webp" />
+                                </label>
+                            </div>
 
                             <div x-show="uploading" style="display:none" class="flex items-center gap-3">
                                 <div class="flex-1 h-2 rounded-full bg-zinc-200 dark:bg-zinc-700 overflow-hidden">
@@ -154,80 +159,87 @@
                         </div>
                     @endforeach
 
-                    <div class="flex flex-wrap items-center justify-between gap-3">
-                        <p class="text-xs text-zinc-400 dark:text-zinc-500">{{ __('home.wh_attachments_hint', ['max' => $maxFiles]) }}</p>
+                    <div class="flex flex-wrap items-center justify-between gap-2">
                         @if(count($orders) < \App\Models\FinancePaymentOrder::MAX_PER_MONTH)
                             <button type="button" wire:click="addOrder"
-                                    class="inline-flex items-center gap-1.5 text-sm font-medium text-[#b8962e] hover:text-[#c9a847] transition">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
-                                </svg>
-                                {{ __('home.fin_payment_order_add') }}
+                                    class="text-xs font-medium text-[#b8962e] hover:text-[#c9a847] transition">
+                                + {{ __('home.fin_payment_order_add') }}
                             </button>
                         @endif
+                        <p class="text-[11px] text-zinc-400">{{ __('home.fin_images_hint', ['max' => $maxFiles]) }}</p>
                     </div>
-                </div>
-            </div>
-
-            <div class="flex items-center gap-3">
-                {{-- ⚠️ مقفول أثناء الرفع — وإلا جاءه «الصورة مطلوبة» وهو يراها مختارة --}}
-                <button type="button" wire:click="review" wire:loading.attr="disabled" wire:target="picked,review"
-                        class="bg-[#c9a847] hover:bg-[#b8962e] disabled:opacity-50 text-white text-sm font-medium px-5 py-2 rounded-lg transition">
-                    {{ __('home.fin_entry_review') }}
-                </button>
-                <a href="{{ $pageUrl }}" wire:navigate class="text-sm text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 transition">
-                    {{ __('home.cancel') }}
-                </a>
+                @endunless
             </div>
         </div>
 
-    @else
-        {{-- ── الخطوة الثانية: المراجعة ── --}}
-        <div wire:key="fin-step-review" class="space-y-6">
-            <div class="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-sm divide-y divide-zinc-100 dark:divide-zinc-800">
-                <div class="p-5">
-                    <p class="text-xs text-zinc-400 dark:text-zinc-500 mb-0.5">{{ __('home.fin_amount_label') }}</p>
-                    <p class="text-3xl font-bold text-zinc-800 dark:text-zinc-100" dir="ltr" style="text-align: right">{{ number_format($amountValue) }}</p>
-                    <p class="text-sm text-[#b8962e] dark:text-[#d8b856] mt-1">{{ $amountWords }}</p>
-                </div>
-                <div class="p-5">
-                    <p class="text-xs text-zinc-400 dark:text-zinc-500 mb-2">{{ __('home.fin_payment_orders') }}</p>
-                    <ul class="space-y-1.5">
-                        @foreach($orders as $i => $order)
-                            <li class="text-sm text-zinc-800 dark:text-zinc-100">
-                                {{ __('home.fin_payment_order_line', ['number' => $order['number'], 'date' => $order['issued_on']]) }}
-                                <span class="text-xs text-zinc-400">— {{ __('home.fin_files_count', ['count' => count($orderFiles[$i] ?? [])]) }}</span>
-                            </li>
-                        @endforeach
-                    </ul>
-                </div>
-            </div>
-
-            {{-- تنبيهات تستحق نظرة ثانية — لا تمنع الحفظ --}}
-            @if($warnings)
-                <div class="rounded-xl border border-red-300 dark:border-red-800 bg-red-50 dark:bg-red-900/20 px-4 py-3 space-y-2">
-                    <p class="text-sm font-semibold text-red-700 dark:text-red-300">{{ __('home.fin_warn_title') }}</p>
-                    <ul class="list-disc ps-5 space-y-1 text-sm text-red-700 dark:text-red-300">
-                        @foreach($warnings as $warning)
-                            <li>{{ $warning }}</li>
-                        @endforeach
-                    </ul>
-                </div>
-            @endif
-
-            <div class="rounded-xl border border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-900/20 px-4 py-3">
-                <p class="text-sm font-medium text-amber-800 dark:text-amber-200">{{ __('home.fin_entry_lock_warning') }}</p>
-            </div>
-
+        {{-- تذييل الورقة --}}
+        <div class="flex flex-wrap items-center justify-between gap-3 px-6 py-4 bg-zinc-50 dark:bg-zinc-800/60 border-t border-zinc-200 dark:border-zinc-700">
+            <p class="text-xs text-zinc-500 dark:text-zinc-400">{{ __('home.fin_entry_lock_note') }}</p>
             <div class="flex items-center gap-3">
-                <button type="button" wire:click="save" wire:loading.attr="disabled" wire:target="save"
+                <a href="{{ $pageUrl }}" wire:navigate class="text-sm text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 transition">
+                    {{ __('home.cancel') }}
+                </a>
+                {{-- ⚠️ مقفول أثناء الرفع — وإلا جاءه «الصورة مطلوبة» وهو يراها مختارة --}}
+                <button type="button" wire:click="review" wire:loading.attr="disabled" wire:target="picked,review"
                         class="bg-[#c9a847] hover:bg-[#b8962e] disabled:opacity-50 text-white text-sm font-medium px-5 py-2 rounded-lg transition">
-                    {{ __('home.fin_entry_confirm') }}
+                    {{ __('home.fin_entry_save') }}
                 </button>
-                <button type="button" wire:click="backToForm"
-                        class="text-sm text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 transition">
-                    {{ __('home.fin_entry_back_to_form') }}
-                </button>
+            </div>
+        </div>
+    </div>
+
+    {{-- ── نافذة التأكيد — فوق الفورم، و«رجوع للتعديل» يُغلقها والفورم كما هو ── --}}
+    @if($reviewing)
+        <div wire:key="fin-confirm" class="fixed inset-0 z-50 bg-black/50 grid place-items-center p-4"
+             x-data @keydown.escape.window="$wire.backToForm()">
+            <div class="w-full max-w-md max-h-[90vh] overflow-y-auto bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl">
+                <div class="px-6 pt-6 pb-4 text-center">
+                    <p class="text-sm text-zinc-500 dark:text-zinc-400">{{ __('home.fin_confirm_title', ['month' => $monthLabel]) }}</p>
+                    <p class="font-bold text-zinc-800 dark:text-zinc-100 mt-3" dir="ltr" style="font-size: 2.25rem; line-height: 2.75rem">{{ number_format($amountValue) }}</p>
+                    <p class="text-sm text-[#b8962e] dark:text-[#d8b856] mt-2">{{ $amountWords }}</p>
+                </div>
+
+                <div class="px-6 pb-4 space-y-2 text-sm">
+                    @if($noOrder)
+                        <div class="rounded-lg bg-zinc-50 dark:bg-zinc-800 px-3 py-2.5 text-zinc-700 dark:text-zinc-200">{{ __('home.fin_no_order') }}</div>
+                    @else
+                        @foreach($orders as $i => $order)
+                            @php $first = ($orderFiles[$i] ?? [])[0] ?? null; @endphp
+                            <div class="flex items-center gap-3 rounded-lg bg-zinc-50 dark:bg-zinc-800 p-2">
+                                @if($first?->isPreviewable())
+                                    <img src="{{ $first->temporaryUrl() }}" alt="" class="w-12 h-12 rounded object-cover shrink-0">
+                                @endif
+                                <div class="min-w-0 text-zinc-800 dark:text-zinc-100">
+                                    <p>{{ __('home.fin_payment_order_no', ['number' => $order['number']]) }}</p>
+                                    <p class="text-xs text-zinc-500">
+                                        <span dir="ltr" class="inline-block">{{ $order['issued_on'] }}</span>
+                                        · {{ __('home.fin_files_count', ['count' => count($orderFiles[$i] ?? [])]) }}
+                                    </p>
+                                </div>
+                            </div>
+                        @endforeach
+                    @endif
+
+                    {{-- تنبيهات تستحق نظرة ثانية — لا تمنع الحفظ --}}
+                    @foreach($warnings as $warning)
+                        <div class="rounded-lg border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20 px-3 py-2 text-xs text-red-700 dark:text-red-300">{{ $warning }}</div>
+                    @endforeach
+
+                    <div class="rounded-lg border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/20 px-3 py-2 text-xs text-amber-800 dark:text-amber-200">
+                        {{ __('home.fin_entry_lock_warning') }}
+                    </div>
+                </div>
+
+                <div class="flex gap-3 px-6 py-4 bg-zinc-50 dark:bg-zinc-800/60 border-t border-zinc-200 dark:border-zinc-700">
+                    <button type="button" wire:click="save" wire:loading.attr="disabled" wire:target="save"
+                            class="flex-1 bg-[#c9a847] hover:bg-[#b8962e] disabled:opacity-50 text-white text-sm font-medium py-2.5 rounded-lg transition">
+                        {{ __('home.fin_entry_confirm') }}
+                    </button>
+                    <button type="button" wire:click="backToForm"
+                            class="flex-1 border border-zinc-300 dark:border-zinc-600 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 text-sm py-2.5 rounded-lg transition">
+                        {{ __('home.fin_entry_back_to_form') }}
+                    </button>
+                </div>
             </div>
         </div>
     @endif

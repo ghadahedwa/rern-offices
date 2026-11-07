@@ -92,7 +92,7 @@ it('يحفظ أكثر من أمر دفع بترتيبها', function () {
         ->call('addOrder')
         ->set('orders.1.number', '5678')
         ->set('orders.1.issued_on', '2026-11-04')
-        ->set('picked.1', [UploadedFile::fake()->create('order2.pdf', 100, 'application/pdf')])
+        ->set('picked.1', [UploadedFile::fake()->image('order2.png')])
         ->call('save');
 
     expect(FinanceMonth::sole()->paymentOrders->pluck('number')->all())->toBe(['1234', '5678']);
@@ -118,6 +118,18 @@ it('يرفض الكسر والسالب والنص — ولا يحوّل «12.5»
     filledEntry(amount: $amount)->call('review')->assertHasErrors('amount');
 })->with(['12.5', '-5', 'ألف', '', '1234567890123']);
 
+it('يقبل رقم أمر الدفع أرقاماً فقط ويوحّد العربية', function () {
+    $this->actingAs(entryUser());
+
+    filledEntry(number: '12/A')->call('review')
+        ->assertHasErrors('orders.0.number')
+        ->assertSee(__('home.fin_order_number_digits'));
+
+    filledEntry(number: '١٢٣')->call('save');
+
+    expect(\App\Models\FinancePaymentOrder::sole()->number)->toBe('123');
+});
+
 it('يرفض أمر دفع بتاريخ لم يأتِ ورقمين متكررين', function () {
     $this->actingAs(entryUser());
 
@@ -132,13 +144,30 @@ it('يرفض أمر دفع بتاريخ لم يأتِ ورقمين متكرري�
         ->assertHasErrors('orders.1.number');
 });
 
-it('يرفض ملفاً ليس صورة ولا PDF', function () {
+it('يقبل الصور وحدها — ويرفض الـPDF وغيره', function (UploadedFile $file) {
     $this->actingAs(entryUser());
 
     Livewire::test(MonthEntry::class, ['account' => 'mechanization'])
-        ->set('picked.0', [UploadedFile::fake()->create('x.exe', 10)])
+        ->set('picked.0', [$file])
         ->assertHasErrors('orderFiles.0')
         ->assertSet('orderFiles.0', []);
+})->with([
+    'PDF'   => fn () => UploadedFile::fake()->create('order.pdf', 50, 'application/pdf'),
+    'برنامج' => fn () => UploadedFile::fake()->create('x.exe', 10),
+]);
+
+it('يرفض الـPDF عند الحفظ ولو تجاوز منتقي الصور', function () {
+    $this->actingAs(entryUser());
+
+    // `orderFiles` تُكتب مباشرةً — الحارس الثاني في قواعد الحفظ لا في المنتقي وحده
+    Livewire::test(MonthEntry::class, ['account' => 'mechanization'])
+        ->set('amount', '1000')
+        ->set('orders.0.number', '1234')
+        ->set('orders.0.issued_on', '2026-11-02')
+        ->set('orderFiles.0', [UploadedFile::fake()->create('order.pdf', 50, 'application/pdf')])
+        ->call('review')
+        ->assertHasErrors('orderFiles.0.0')
+        ->assertSet('reviewing', false);
 });
 
 // ── ترتيب الشهور ─────────────────────────────────────────
@@ -229,12 +258,40 @@ it('يعرض شهور السنة المالية وإجماليها وزرّ ال
     $this->get(route('finance.mechanization'))
         ->assertOk()
         ->assertSee('أكتوبر 2026')
-        ->assertSee('يونيو 2027')
         ->assertDontSee('سبتمبر 2026')
         ->assertSee('150,000')
-        ->assertSee('أمر رقم 1234 بتاريخ 2026-11-02')
-        ->assertSee(__('home.fin_next_month', ['month' => 'نوفمبر 2026']))
+        ->assertSee(\App\Support\Finance\AmountInWords::pounds(150000))
+        ->assertSee(__('home.fin_order_number_short', ['number' => '1234']))
+        ->assertSee('2026-11-02')
+        ->assertSee(__('home.fin_entered_of', ['entered' => 1, 'count' => 9]))
+        ->assertSee(__('home.fin_year_range', ['from' => 'أكتوبر 2026', 'to' => 'يونيو 2027']))
+        ->assertSee(__('home.fin_year_partial', ['count' => 9, 'from' => 'أكتوبر 2026']))
+        ->assertSee(__('home.fin_next_month_badge'))
+        ->assertSee(__('home.fin_awaiting_entry'))
         ->assertSee(route('finance.entry', 'mechanization'), false);
+});
+
+it('يطوي الشهور التالية في سطرٍ واحد', function () {
+    $this->actingAs(entryUser());
+
+    filledEntry()->call('save');
+
+    // أكتوبر مُدخَل · نوفمبر التالي · ديسمبر–يونيو سبعة مطويّة
+    $this->get(route('finance.mechanization'))
+        ->assertSee(__('home.fin_later_months', ['count' => 7, 'from' => 'ديسمبر 2026', 'to' => 'يونيو 2027']))
+        ->assertDontSee('مارس 2027');
+});
+
+it('لا يعرض زرّ الإدخال والشهر التالي لم يبدأ', function () {
+    $this->actingAs(entryUser());
+
+    filledEntry()->call('save');
+    filledEntry()->call('save'); // نوفمبر — وديسمبر لم يبدأ
+
+    $this->get(route('finance.mechanization'))
+        ->assertSee(__('home.fin_opens_on_first'))
+        ->assertDontSee(route('finance.entry', 'mechanization'), false)
+        ->assertSee(__('home.fin_later_months', ['count' => 7, 'from' => 'ديسمبر 2026', 'to' => 'يونيو 2027']));
 });
 
 it('يعرض الحساب الآخر بلا أرقام هذا الحساب', function () {
@@ -282,20 +339,20 @@ it('يعرض صورة أمر الدفع لصاحب العرض وحده', functio
 it('ينزّل صورة أمر الدفع باسمٍ من بياناتها لا باسم الكاميرا', function () {
     $this->actingAs(entryUser());
 
-    filledEntry(number: '123/2026')
+    filledEntry(number: '٤٥٦٧')
         ->set('picked.0', [UploadedFile::fake()->image('IMG_20261102_143512.jpg')])
         ->call('save');
 
     [$first, $second] = FinanceAttachment::orderBy('id')->get()->all();
 
-    expect($first->downloadName())->toBe('حساب الميكنة (الوزير) - أكتوبر 2026 - أمر 123-2026 - 1.jpg')
+    expect($first->downloadName())->toBe('حساب الميكنة (الوزير) - أكتوبر 2026 - أمر 4567 - 1.jpg')
         ->and($second->downloadName())->toEndWith(' - 2.jpg')
         // الاسم الأصلي محفوظ للمراجعة
         ->and($second->original_name)->toBe('IMG_20261102_143512.jpg');
 
     $disposition = $this->get(route('finance.attachments.show', $first))->headers->get('content-disposition');
 
-    expect(rawurldecode($disposition))->toContain('أمر 123-2026 - 1.jpg')->toStartWith('inline');
+    expect(rawurldecode($disposition))->toContain('أمر 4567 - 1.jpg')->toStartWith('inline');
 
     // زرّ «تنزيل» في العارض يطلبه مرفقاً لا معروضاً
     $download = $this->get(route('finance.attachments.show', $first).'?download=1')->headers->get('content-disposition');
@@ -305,7 +362,7 @@ it('ينزّل صورة أمر الدفع باسمٍ من بياناتها لا 
 it('يفتح الصور في عارض الصفحة بأسمائها ويتنقّل بين صور الأمر الواحد', function () {
     $this->actingAs(entryUser());
 
-    filledEntry()->set('picked.0', [UploadedFile::fake()->create('p2.pdf', 50, 'application/pdf')])->call('save');
+    filledEntry()->set('picked.0', [UploadedFile::fake()->image('p2.png')])->call('save');
 
     [$first, $second] = FinanceAttachment::orderBy('id')->get()->all();
 
@@ -314,8 +371,57 @@ it('يفتح الصور في عارض الصفحة بأسمائها ويتنقّ
         ->assertSee('openViewer(JSON.parse', false)
         ->assertSee($first->downloadName(), false)
         ->assertSee($second->downloadName(), false)
-        ->assertSee('\u0022pdf\u0022:true', false)
         ->assertSee('?download=1', false);
+});
+
+// ── الشهر بلا حركة ───────────────────────────────────────
+
+it('يحفظ شهراً مبلغه صفر بلا أمر دفع ويفتح ما بعده', function () {
+    $this->actingAs(entryUser());
+
+    Livewire::test(MonthEntry::class, ['account' => 'mechanization'])
+        ->set('amount', '0')
+        ->assertSee(__('home.fin_no_order'))
+        ->set('noOrder', true)
+        ->call('review')
+        ->assertHasNoErrors()
+        ->call('save');
+
+    $month = FinanceMonth::sole();
+    expect($month->amount)->toBe(0)->and($month->paymentOrders)->toHaveCount(0);
+
+    filledEntry()->assertSet('month', '2026-11-01');
+
+    $this->get(route('finance.mechanization'))->assertSee(__('home.fin_no_order'));
+});
+
+it('يرفض «بلا أمر دفع» لمبلغٍ غير الصفر — ولو وصلت من المتصفح', function () {
+    $this->actingAs(entryUser());
+
+    Livewire::test(MonthEntry::class, ['account' => 'mechanization'])
+        ->set('amount', '0')
+        ->set('noOrder', true)
+        ->set('amount', '5000')
+        ->assertSet('noOrder', false);
+
+    // القيمة مدسوسة مع مبلغ: لا تمرّ
+    Livewire::test(MonthEntry::class, ['account' => 'mechanization'])
+        ->set('noOrder', true)
+        ->set('amount', '5000')
+        ->set('noOrder', true)
+        ->call('save')
+        ->assertHasErrors('noOrder');
+
+    expect(FinanceMonth::count())->toBe(0);
+});
+
+it('يطلب أمر الدفع للصفر ما لم يُعلَّم «بلا أمر دفع»', function () {
+    $this->actingAs(entryUser());
+
+    Livewire::test(MonthEntry::class, ['account' => 'mechanization'])
+        ->set('amount', '0')
+        ->call('review')
+        ->assertHasErrors(['orders.0.number', 'orderFiles.0']);
 });
 
 // ── تنبيهات المراجعة ─────────────────────────────────────

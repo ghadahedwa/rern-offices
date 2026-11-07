@@ -15,6 +15,7 @@ use Flux\Flux;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Locked;
 use Livewire\Component;
@@ -55,6 +56,12 @@ class MonthEntry extends Component
     public array $picked = [];
 
     public bool $reviewing = false;
+
+    /**
+     * شهرٌ بلا أمر دفع — **لشهرٍ مبلغه صفر وحده** (قرار المستخدمة 2026-11-07).
+     * بلا هذا يقف الشهر الذي لا حركة فيه أمام كل ما بعده (الإدخال بالترتيب).
+     */
+    public bool $noOrder = false;
 
     /** مسارات خُزِّنت في هذا الحفظ — تُحذف إن تراجعت المعاملة */
     protected array $storedPaths = [];
@@ -134,10 +141,10 @@ class MonthEntry extends Component
 
             $messages = [];
             if ($rejected) {
-                $messages[] = __('home.wh_attachment_rejected', ['names' => implode('، ', $rejected)]);
+                $messages[] = __('home.fin_image_rejected', ['names' => implode('، ', $rejected)]);
             }
             if ($overflow) {
-                $messages[] = __('home.wh_attachments_max', ['max' => FinanceAttachment::MAX_PER_ORDER]);
+                $messages[] = __('home.fin_images_max', ['max' => FinanceAttachment::MAX_PER_ORDER]);
             }
             if ($messages) {
                 $this->addError("orderFiles.$index", implode(' — ', $messages));
@@ -175,12 +182,25 @@ class MonthEntry extends Component
 
     // ── الخطوات ──────────────────────────────────────────
 
+    /** المبلغ تغيّر عن الصفر ← يعود أمر الدفع إجبارياً */
+    public function updatedAmount(): void
+    {
+        if ($this->amountValue() !== 0) {
+            $this->noOrder = false;
+        }
+    }
+
     protected function rules(): array
     {
+        if ($this->noOrder) {
+            return ['amount' => ['required', 'regex:/^\d{1,12}$/']];
+        }
+
         return [
             'amount'              => ['required', 'regex:/^\d{1,12}$/'],
             'orders'              => ['required', 'array', 'min:1', 'max:'.FinancePaymentOrder::MAX_PER_MONTH],
-            'orders.*.number'     => ['required', 'string', 'max:100', 'distinct'],
+            // أرقام فقط (قرار المستخدمة) — بعد توحيد الأرقام العربية في validateEntry
+            'orders.*.number'     => ['required', 'regex:/^\d{1,30}$/', 'distinct'],
             'orders.*.issued_on'  => ['required', 'date', 'before_or_equal:'.now(LocalTime::timezone())->toDateString()],
             'orderFiles'          => ['array'],
             'orderFiles.*'        => ['required', 'array', 'min:1', 'max:'.FinanceAttachment::MAX_PER_ORDER],
@@ -193,6 +213,7 @@ class MonthEntry extends Component
         return [
             'amount.required'       => __('home.fin_amount_invalid'),
             'amount.regex'          => __('home.fin_amount_invalid'),
+            'orders.*.number.regex' => __('home.fin_order_number_digits'),
             'orderFiles.*.required' => __('home.fin_files_required'),
             'orderFiles.*.min'      => __('home.fin_files_required'),
         ];
@@ -215,6 +236,11 @@ class MonthEntry extends Component
         }
 
         $this->validate();
+
+        // ⚠️ في الإجراء لا في القالب: الخانة تظهر للصفر وحده، والقيمة تصل من المتصفح
+        if ($this->noOrder && (int) $this->amount !== 0) {
+            throw ValidationException::withMessages(['noOrder' => __('home.fin_no_order_zero_only')]);
+        }
     }
 
     public function review(): void
@@ -251,7 +277,7 @@ class MonthEntry extends Component
                     'created_by'         => auth()->id(),
                 ]);
 
-                foreach (array_values($this->orders) as $i => $order) {
+                foreach ($this->noOrder ? [] : array_values($this->orders) as $i => $order) {
                     $paymentOrder = $record->paymentOrders()->create([
                         'number'    => $order['number'],
                         'issued_on' => $order['issued_on'],
@@ -314,7 +340,8 @@ class MonthEntry extends Component
         $month    = CarbonImmutable::parse($this->month);
         $warnings = [];
 
-        $numbers = array_values(array_filter(array_column($this->orders, 'number')));
+        $orders  = $this->noOrder ? [] : $this->orders;
+        $numbers = array_values(array_filter(array_column($orders, 'number')));
         if ($numbers) {
             FinancePaymentOrder::whereIn('number', $numbers)
                 ->with('month.account')
@@ -349,7 +376,7 @@ class MonthEntry extends Component
         }
 
         $oldest = $month->subMonth()->toDateString();
-        foreach ($this->orders as $order) {
+        foreach ($orders as $order) {
             if (($order['issued_on'] ?? '') !== '' && $order['issued_on'] < $oldest) {
                 $warnings[] = __('home.fin_warn_old_order', [
                     'number' => $order['number'],
