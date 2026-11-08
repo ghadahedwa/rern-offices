@@ -98,6 +98,32 @@
                     </div>
                 </div>
             @else
+                {{-- التسكين للعرض فقط — يتغيّر من زرّي «نقل» و«إنهاء خدمة» في القائمة --}}
+                <div>
+                    <div class="flex items-center gap-3 mb-5">
+                        <div class="w-1 h-5 bg-[#c9a847] rounded-full"></div>
+                        <h3 class="text-sm font-semibold text-zinc-600 dark:text-zinc-400 uppercase tracking-wide">{{ __('home.ct_worker_assignment') }}</h3>
+                        @if($assignment && $assignment->ended_on)
+                            <span class="text-xs px-2 py-0.5 rounded-full bg-zinc-200 text-zinc-700 dark:bg-zinc-700 dark:text-zinc-200">{{ __('home.ct_worker_status_ended') }}</span>
+                        @endif
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <div>
+                            <p class="text-xs text-zinc-400 dark:text-zinc-500 mb-0.5">{{ __('home.ct_worker_governorate') }}</p>
+                            <p class="text-sm text-zinc-800 dark:text-zinc-100">{{ $assignment?->office?->governorate?->name ?? '—' }}</p>
+                        </div>
+                        <div>
+                            <p class="text-xs text-zinc-400 dark:text-zinc-500 mb-0.5">{{ __('home.ct_worker_office') }}</p>
+                            <p class="text-sm text-zinc-800 dark:text-zinc-100">{{ $assignment?->office?->name ?? '—' }}</p>
+                        </div>
+                        <div>
+                            <p class="text-xs text-zinc-400 dark:text-zinc-500 mb-0.5">{{ __('home.ct_worker_started_on') }}</p>
+                            <p class="text-sm text-zinc-800 dark:text-zinc-100" dir="ltr" style="text-align: right">{{ $assignment?->started_on?->format('Y-m-d') ?? '—' }}</p>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="rounded-lg border border-[#c9a847]/40 bg-[#c9a847]/[0.06] px-3.5 py-3">
                     <p class="text-xs leading-relaxed text-zinc-600 dark:text-zinc-300">{{ __('home.ct_worker_assignment_note') }}</p>
                 </div>

@@ -234,6 +234,40 @@ it('لا يمسّ تعديلُ البيانات التسكينَ', function () {
         ->and($contractor->fresh()->currentAssignment->started_on->toDateString())->toBe('2026-09-01');
 });
 
+it('يعرض فورمُ التعديل محافظةَ التسكين الحالي ومقرَّه للقراءة بلا خانات تعديل', function () {
+    $gov    = Governorate::factory()->create(['name' => 'محافظة المعروض']);
+    $old    = Office::factory()->create(['governorate_id' => $gov->id, 'name' => 'مقر قديم منقول منه']);
+    $office = Office::factory()->create(['governorate_id' => $gov->id, 'name' => 'مقر التسكين الحالي']);
+
+    $contractor = makeContractor($old, '2026-08-01');
+    $contractor->assignments()->update(['ended_on' => '2026-08-31']);
+    $contractor->assignments()->create(['office_id' => $office->id, 'started_on' => '2026-09-01']);
+
+    $this->actingAs(opUser(['contractors.index', 'contractors.edit'], [$gov]));
+
+    Livewire::test(Create::class, ['contractor' => $contractor])
+        ->assertSee('محافظة المعروض')
+        ->assertSee('مقر التسكين الحالي')
+        ->assertDontSee('مقر قديم منقول منه')
+        ->assertSee('2026-09-01')
+        ->assertDontSeeHtml('wire:model="office"')
+        ->assertDontSeeHtml('wire:model.live="governorate"')
+        ->assertDontSee(__('home.ct_worker_status_ended'));
+});
+
+it('يعرض فورمُ التعديل آخرَ تسكينٍ لمنتهي الخدمة بشارته', function () {
+    $gov        = Governorate::factory()->create();
+    $office     = Office::factory()->create(['governorate_id' => $gov->id, 'name' => 'آخر مقر قبل الإنهاء']);
+    $contractor = makeContractor($office, '2026-09-01');
+    $contractor->assignments()->update(['ended_on' => '2026-09-20']);
+
+    $this->actingAs(opUser(['contractors.index', 'contractors.edit'], [$gov]));
+
+    Livewire::test(Create::class, ['contractor' => $contractor])
+        ->assertSee('آخر مقر قبل الإنهاء')
+        ->assertSee(__('home.ct_worker_status_ended'));
+});
+
 // ── النقل ────────────────────────────────────────────────
 
 it('يُغلق النقلُ التسكينَ السابق في اليوم السابق ويفتح جديداً', function () {

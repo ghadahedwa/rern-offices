@@ -130,6 +130,11 @@ class Create extends Component
             // الشغّالة وحدها: الاستراحة وتحت الإنشاء والمعلَّق ليست مقارَّ عمل
             'offices'      => ContractorScope::assignableOffices($governorateId),
             // المعطَّلة تختفي من الإضافة وتبقى على أصحابها — ومع صفة المعروض لئلا تختفي عند التعديل
+            // التسكين الحالي — وآخر تسكين لمنتهي الخدمة — يُعرض في التعديل ولا يُعدَّل منه
+            'assignment'   => $this->contractor?->exists
+                ? $this->contractor->assignments()->with('office.governorate')
+                    ->orderByDesc('started_on')->first()
+                : null,
             'professions'  => Profession::query()
                 ->where(fn ($q) => $q->where('is_active', true)->orWhere('id', $this->contractor?->profession_id))
                 ->ordered()->get(['id', 'name']),
