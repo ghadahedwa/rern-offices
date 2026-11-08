@@ -165,6 +165,8 @@ return [
     'attributes' => [
         // الشئون المالية — فورم إدخال الشهر
         'orders.*.number'                        => 'رقم أمر الدفع',
+        'reason'                                 => 'السبب',
+        'deleteReason'                           => 'السبب',
         'orders.*.issued_on'                     => 'تاريخ أمر الدفع',
         'orderFiles.*.*'                         => 'صورة أمر الدفع',
 

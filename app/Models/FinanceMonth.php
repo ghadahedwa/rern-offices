@@ -34,4 +34,13 @@ class FinanceMonth extends Model
     {
         return $this->hasMany(FinancePaymentOrder::class)->orderBy('position')->chaperone('month');
     }
+
+    protected static function booted(): void
+    {
+        // ⚠️ الأوامر تُحذف بالموديل لا بـ`cascadeOnDelete` وحده: الأخير لا يُطلق حدث `deleted`
+        //    على الصور فتبقى ملفاتها يتيمة على القرص
+        static::deleting(function (self $month) {
+            $month->paymentOrders()->get()->each->delete();
+        });
+    }
 }

@@ -1,6 +1,7 @@
 {{-- ── Delete Confirmation Modal (مشترك) ──
      يتطلب في الـ component: bool $showDelete, string $deletingLabel, method deleteRow()
-     واختيارياً: $deletingWarning (تنبيه أحمر) و$deletingPrompt (نص السؤال بدل الافتراضي) --}}
+     واختيارياً: $deletingWarning (تنبيه أحمر) و$deletingPrompt (نص السؤال بدل الافتراضي)
+     و$deletingReasonModel (اسم خاصية سببٍ إجباري — يُظهر خانة السبب وخطأها) --}}
 <div x-show="$wire.showDelete"
      x-transition.opacity
      @click.self="$wire.showDelete = false"
@@ -33,6 +34,14 @@
                         <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/>
                     </svg>
                     <p class="text-xs leading-relaxed text-red-700 dark:text-red-400">{{ $deletingWarning }}</p>
+                </div>
+            @endif
+            @if(!empty($deletingReasonModel ?? ''))
+                <div class="space-y-1">
+                    <label class="block text-sm font-medium text-zinc-700 dark:text-zinc-300">{{ __('home.fin_reason_label') }} <span class="text-red-500">*</span></label>
+                    <textarea wire:model="{{ $deletingReasonModel }}" rows="2"
+                              class="w-full border border-zinc-300 dark:border-zinc-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-red-400"></textarea>
+                    @error($deletingReasonModel) <p class="text-red-500 text-xs">{{ $message }}</p> @enderror
                 </div>
             @endif
             <div class="flex gap-3">

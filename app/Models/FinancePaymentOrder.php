@@ -29,4 +29,12 @@ class FinancePaymentOrder extends Model
         // chaperone: اسم الصورة عند تنزيلها يقرأ أمرها وشهره — بلا استعلامٍ لكل صورة
         return $this->hasMany(FinanceAttachment::class)->orderBy('id')->chaperone('paymentOrder');
     }
+
+    protected static function booted(): void
+    {
+        // الصور بالموديل — حدثها يحذف ملفّها بعد الاعتماد (انظر FinanceAttachment)
+        static::deleting(function (self $order) {
+            $order->attachments()->get()->each->delete();
+        });
+    }
 }

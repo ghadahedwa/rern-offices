@@ -308,6 +308,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::livewire('finance/{account}/entry', \App\Livewire\Finance\MonthEntry::class)
         ->whereIn('account', ['court-buildings', 'mechanization', 'telecom', 'ministry-of-finance'])
         ->name('finance.entry');
+    // تصحيح شهرٍ محفوظ — المكوّن نفسه، و`finance.edit` فيه
+    Route::livewire('finance/{account}/{period}/correct', \App\Livewire\Finance\MonthEntry::class)
+        ->whereIn('account', ['court-buildings', 'mechanization', 'telecom', 'ministry-of-finance'])
+        ->where('period', '\d{4}-\d{2}')
+        ->name('finance.correct');
     // صورة أمر الدفع — على القرص الخاص، بحارس `finance.view` في الكنترولر
     Route::get('finance/attachments/{attachment}', \App\Http\Controllers\Finance\FinanceAttachmentController::class)
         ->name('finance.attachments.show');

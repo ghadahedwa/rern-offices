@@ -83,9 +83,13 @@
                         <th class="px-4 py-3 font-medium sm:w-[24%] max-sm:hidden">{{ __('home.fin_entered_by') }}</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-zinc-100 dark:divide-zinc-700">
+                <tbody class="divide-y divide-zinc-100 dark:divide-zinc-700" x-data="{ open: null }">
                     @foreach($rows as $row)
-                        @php $record = $row['record']; @endphp
+                        @php
+                            $record = $row['record'];
+                            $key    = $row['month']->format('Y-m');
+                            $events = $history->get($key, collect());
+                        @endphp
                         @if($record)
                             <tr wire:key="fin-row-{{ $row['month']->format('Y-m') }}">
                                 <td class="px-4 py-3">
@@ -97,6 +101,7 @@
                                             <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z"/>
                                         </svg>
                                     </span>
+                                    @include('livewire.finance.partials.history-badge')
                                 </td>
                                 <td class="px-4 py-3">
                                     <span class="font-bold text-zinc-800 dark:text-zinc-100" dir="ltr" style="font-size: 1.05rem">{{ number_format($record->amount) }}</span>
@@ -104,6 +109,7 @@
                                     <div class="sm:hidden mt-2 space-y-2">
                                         @include('livewire.finance.partials.payment-orders-cell', ['record' => $record])
                                         <p class="text-xs text-zinc-500">{{ $record->creator?->name ?? '—' }} · <span dir="ltr" class="inline-block">{{ \App\Support\LocalTime::date($record->created_at) }}</span></p>
+                                        @include('livewire.finance.partials.month-actions')
                                     </div>
                                 </td>
                                 <td class="px-4 py-3 max-sm:hidden">
@@ -116,12 +122,18 @@
                                         <span dir="ltr" class="inline-block">{{ \App\Support\LocalTime::date($record->created_at) }}</span>
                                         · {{ \App\Support\LocalTime::time($record->created_at) }}
                                     </p>
+                                    @include('livewire.finance.partials.month-actions')
                                 </td>
                             </tr>
+                            @include('livewire.finance.partials.history-rows')
                         @else
                             {{-- الشهر التالي — بدأ ولم يُدخَل --}}
                             <tr wire:key="fin-row-{{ $row['month']->format('Y-m') }}" class="bg-[#c9a847]/10">
-                                <td class="px-4 py-3 font-semibold text-zinc-800 dark:text-zinc-100">{{ $row['label'] }}</td>
+                                <td class="px-4 py-3 font-semibold text-zinc-800 dark:text-zinc-100">
+                                    {{ $row['label'] }}
+                                    {{-- شهرٌ حُذف وينتظر إعادة إدخاله — سجلّه يبقى ظاهراً --}}
+                                    @include('livewire.finance.partials.history-badge')
+                                </td>
                                 <td class="px-4 py-3" colspan="3">
                                     <div class="flex items-center justify-between gap-3">
                                         <span class="text-xs font-medium text-[#b8962e] dark:text-[#d8b856]">{{ __('home.fin_awaiting_entry') }}</span>
@@ -134,6 +146,7 @@
                                     </div>
                                 </td>
                             </tr>
+                            @include('livewire.finance.partials.history-rows')
                         @endif
                     @endforeach
 
@@ -204,6 +217,8 @@
             </div>
         </div>
     @endif
+
+    @include('livewire.partials.delete-modal', ['deletingReasonModel' => 'deleteReason'])
 
     {{-- أبنية المحاكم: العناصر التي سيُطلب كلٌّ منها في فورم الشهر --}}
     @if($items->isNotEmpty())

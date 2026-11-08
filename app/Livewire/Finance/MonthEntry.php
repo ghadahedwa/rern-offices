@@ -9,6 +9,7 @@ use App\Models\FinancePaymentOrder;
 use App\Support\ArabicDigits;
 use App\Support\Finance\AmountInWords;
 use App\Support\Finance\FinanceCalendar;
+use App\Support\Finance\FinanceHistory;
 use App\Support\LocalTime;
 use Carbon\CarbonImmutable;
 use Flux\Flux;
@@ -28,7 +29,8 @@ use Livewire\WithFileUploads;
  *
  * ⚠️ **الشهر يحسبه النظام لا يختاره المستخدم** (الإدخال بترتيب الشهور)، ويُعاد حسابه
  *    عند الحفظ تحت قفل: شهرٌ أدخله مستخدمٌ آخر في الأثناء يُرفض الحفظ عليه.
- * ⚠️ **الشهر يُقفل لحظة حفظه** — لا تعديل هنا. التصحيح في المرحلة (ج) بـ`finance.edit`.
+ * ⚠️ **الشهر يُقفل لحظة حفظه** — وتصحيحه في المكوّن نفسه (`finance.correct`) بـ`finance.edit`
+ *    و**سببٍ إجباري**، ويُسجَّل قبله وبعده في `FinanceHistory`. الشهر نفسه لا يتغيّر بالتصحيح.
  * ⚠️ **أمر دفع واحد على الأقل، ولكلٍّ صورة واحدة على الأقل** (قرار العميل) — والصور
  *    تُخزَّن داخل المعاملة وتُحذف مساراتها إن تراجعت.
  */
@@ -63,23 +65,74 @@ class MonthEntry extends Component
      */
     public bool $noOrder = false;
 
+    /** الشهر المُصحَّح — null في الإدخال */
+    #[Locked]
+    public ?int $editingId = null;
+
+    /** صور الأمر المحفوظة الباقية بفهرسه: [i => [معرّف…]] — التصحيح وحده */
+    public array $kept = [];
+
+    /** سبب التصحيح — إجباري (قرار العميل) */
+    public string $reason = '';
+
     /** مسارات خُزِّنت في هذا الحفظ — تُحذف إن تراجعت المعاملة */
     protected array $storedPaths = [];
 
-    public function mount(string $account): void
+    public function mount(string $account, ?string $period = null): void
     {
-        abort_unless(auth()->user()?->can('finance.create'), 403);
+        abort_unless(auth()->user()?->can($period === null ? 'finance.create' : 'finance.edit'), 403);
 
         $model = FinanceAccount::bySlug($account);
         abort_unless($model->acceptsEntry(), 404);
 
         $this->accountKey = $model->key;
 
+        if ($period !== null) {
+            $this->loadForCorrection($model, $period);
+
+            return;
+        }
+
         $next = FinanceCalendar::nextMonth($model);
         $this->month = FinanceCalendar::isDue($next) ? $next->toDateString() : null;
 
         $this->orders     = [['number' => '', 'issued_on' => '']];
         $this->orderFiles = [[]];
+    }
+
+    /** يملأ الفورم بالشهر المحفوظ — الصور المحفوظة في `kept` والجديدة في `orderFiles` */
+    protected function loadForCorrection(FinanceAccount $account, string $period): void
+    {
+        $month  = CarbonImmutable::createFromFormat('!Y-m', $period) ?: null;
+        $record = $month ? $this->findRecord($account, $month) : null;
+        abort_if($record === null, 404);
+
+        $record->load('paymentOrders.attachments');
+
+        $this->editingId = $record->id;
+        $this->month     = $month->toDateString();
+        $this->amount    = (string) $record->amount;
+        $this->noOrder   = $record->paymentOrders->isEmpty();
+
+        $this->orders = $record->paymentOrders->map(fn (FinancePaymentOrder $o) => [
+            'id'        => $o->id,
+            'number'    => $o->number,
+            'issued_on' => $o->issued_on?->toDateString() ?? '',
+        ])->values()->all() ?: [['id' => null, 'number' => '', 'issued_on' => '']];
+
+        $this->kept = $record->paymentOrders
+            ->map(fn (FinancePaymentOrder $o) => $o->attachments->pluck('id')->all())
+            ->values()->all() ?: [[]];
+        $this->orderFiles = array_fill(0, count($this->orders), []);
+    }
+
+    /** ⚠️ نطاقٌ لا مساواة: العمود المصبوب `'date'` يُكتب `'Y-m-d 00:00:00'` على sqlite */
+    protected function findRecord(FinanceAccount $account, CarbonImmutable $month): ?FinanceMonth
+    {
+        return FinanceMonth::where('finance_account_id', $account->id)
+            ->where('month', '>=', $month->toDateString())
+            ->where('month', '<', $month->addMonth()->toDateString())
+            ->first();
     }
 
     protected function account(): FinanceAccount
@@ -95,8 +148,9 @@ class MonthEntry extends Component
             return;
         }
 
-        $this->orders[]     = ['number' => '', 'issued_on' => ''];
+        $this->orders[]     = ['id' => null, 'number' => '', 'issued_on' => ''];
         $this->orderFiles[] = [];
+        $this->kept[]       = [];
     }
 
     public function removeOrder(int $index): void
@@ -105,9 +159,10 @@ class MonthEntry extends Component
             return;
         }
 
-        unset($this->orders[$index], $this->orderFiles[$index], $this->picked[$index]);
+        unset($this->orders[$index], $this->orderFiles[$index], $this->picked[$index], $this->kept[$index]);
         $this->orders     = array_values($this->orders);
         $this->orderFiles = array_values($this->orderFiles);
+        $this->kept       = array_values($this->kept);
         $this->picked     = [];
         $this->resetErrorBag();
     }
@@ -132,7 +187,7 @@ class MonthEntry extends Component
                     $rejected[] = $file->getClientOriginalName();
                     continue;
                 }
-                if (count($this->orderFiles[$index] ?? []) >= FinanceAttachment::MAX_PER_ORDER) {
+                if ($this->imageCount($index) >= FinanceAttachment::MAX_PER_ORDER) {
                     $overflow = true;
                     continue;
                 }
@@ -152,6 +207,18 @@ class MonthEntry extends Component
         }
 
         $this->picked = [];
+    }
+
+    /** صور الأمر: المحفوظة الباقية + الجديدة */
+    protected function imageCount(int $index): int
+    {
+        return count($this->orderFiles[$index] ?? []) + count($this->kept[$index] ?? []);
+    }
+
+    /** إزالة صورةٍ محفوظة من الأمر — تُحذف فعلاً عند حفظ التصحيح لا الآن */
+    public function removeKept(int $order, int $id): void
+    {
+        $this->kept[$order] = array_values(array_diff($this->kept[$order] ?? [], [$id]));
     }
 
     public function removeFile(int $order, int $file): void
@@ -192,18 +259,23 @@ class MonthEntry extends Component
 
     protected function rules(): array
     {
+        $reason = $this->editingId ? ['reason' => ['required', 'string', 'min:5', 'max:1000']] : [];
+
         if ($this->noOrder) {
-            return ['amount' => ['required', 'regex:/^\d{1,12}$/']];
+            return ['amount' => ['required', 'regex:/^\d{1,12}$/']] + $reason;
         }
 
-        return [
+        return $reason + [
             'amount'              => ['required', 'regex:/^\d{1,12}$/'],
             'orders'              => ['required', 'array', 'min:1', 'max:'.FinancePaymentOrder::MAX_PER_MONTH],
             // أرقام فقط (قرار المستخدمة) — بعد توحيد الأرقام العربية في validateEntry
             'orders.*.number'     => ['required', 'regex:/^\d{1,30}$/', 'distinct'],
             'orders.*.issued_on'  => ['required', 'date', 'before_or_equal:'.now(LocalTime::timezone())->toDateString()],
             'orderFiles'          => ['array'],
-            'orderFiles.*'        => ['required', 'array', 'min:1', 'max:'.FinanceAttachment::MAX_PER_ORDER],
+            // التصحيح: الحدّان على المحفوظ + الجديد معاً — في validateEntry
+            'orderFiles.*'        => $this->editingId
+                ? ['array']
+                : ['required', 'array', 'min:1', 'max:'.FinanceAttachment::MAX_PER_ORDER],
             'orderFiles.*.*'      => FinanceAttachment::FILE_RULES,
         ];
     }
@@ -216,16 +288,20 @@ class MonthEntry extends Component
             'orders.*.number.regex' => __('home.fin_order_number_digits'),
             'orderFiles.*.required' => __('home.fin_files_required'),
             'orderFiles.*.min'      => __('home.fin_files_required'),
+            'reason.required'       => __('home.fin_reason_required'),
+            'reason.min'            => __('home.fin_reason_required'),
         ];
     }
 
     protected function validateEntry(): void
     {
-        abort_unless(auth()->user()?->can('finance.create'), 403);
+        abort_unless(auth()->user()?->can($this->editingId ? 'finance.edit' : 'finance.create'), 403);
         abort_if($this->month === null, 404);
 
         $this->amount = self::normalizeAmount($this->amount);
+        $this->reason = trim($this->reason);
         $this->orders = array_map(fn (array $o) => [
+            'id'        => isset($o['id']) && ctype_digit((string) $o['id']) ? (int) $o['id'] : null,
             'number'    => trim(ArabicDigits::toLatin((string) ($o['number'] ?? ''))),
             'issued_on' => (string) ($o['issued_on'] ?? ''),
         ], $this->orders);
@@ -240,6 +316,33 @@ class MonthEntry extends Component
         // ⚠️ في الإجراء لا في القالب: الخانة تظهر للصفر وحده، والقيمة تصل من المتصفح
         if ($this->noOrder && (int) $this->amount !== 0) {
             throw ValidationException::withMessages(['noOrder' => __('home.fin_no_order_zero_only')]);
+        }
+
+        if ($this->editingId && ! $this->noOrder) {
+            // ⚠️ `kept` يصل من المتصفح: يبقى منه ما هو صورةٌ فعلاً لأمر هذا الصفّ — وإلا عدّ
+            //    معرّفٌ مدسوس صورةً فمرّ أمرٌ بلا صورة
+            $owned = FinanceAttachment::query()
+                ->whereHas('paymentOrder', fn ($q) => $q->where('finance_month_id', $this->editingId))
+                ->get(['id', 'finance_payment_order_id'])
+                ->groupBy('finance_payment_order_id');
+
+            foreach ($this->orders as $i => $order) {
+                $ids = $owned->get($order['id'] ?? 0)?->pluck('id')->all() ?? [];
+                $this->kept[$i] = array_values(array_intersect(array_map('intval', (array) ($this->kept[$i] ?? [])), $ids));
+            }
+
+            $errors = [];
+            foreach (array_keys($this->orders) as $i) {
+                $count = $this->imageCount($i);
+                if ($count < 1) {
+                    $errors["orderFiles.$i"] = __('home.fin_files_required');
+                } elseif ($count > FinanceAttachment::MAX_PER_ORDER) {
+                    $errors["orderFiles.$i"] = __('home.fin_images_max', ['max' => FinanceAttachment::MAX_PER_ORDER]);
+                }
+            }
+            if ($errors) {
+                throw ValidationException::withMessages($errors);
+            }
         }
     }
 
@@ -256,6 +359,12 @@ class MonthEntry extends Component
 
     public function save(): void
     {
+        if ($this->editingId) {
+            $this->saveCorrection();
+
+            return;
+        }
+
         $this->validateEntry();
 
         $account = $this->account();
@@ -320,6 +429,120 @@ class MonthEntry extends Component
         );
     }
 
+    /**
+     * حفظ التصحيح: المبلغ · الأوامر (تُحدَّث وتُضاف وتُحذف) · الصور (المُزالة تُحذف بالموديل
+     * فيُحذف ملفّها بعد الاعتماد، والجديدة تُخزَّن) — ثم السجلّ قبل/بعد بسببه.
+     *
+     * ⚠️ معرّف الأمر والصورة يصلان من المتصفح: ما ليس لهذا الشهر يُهمَل (الأمر يُعامل جديداً).
+     * ⚠️ تصحيحٌ لا يغيّر شيئاً يُرفض — وإلا امتلأ السجلّ بأسبابٍ بلا تغيير.
+     */
+    protected function saveCorrection(): void
+    {
+        $this->validateEntry();
+
+        $account = $this->account();
+        $month   = CarbonImmutable::parse($this->month);
+
+        try {
+            $result = DB::transaction(function () use ($account, $month) {
+                $record = FinanceMonth::whereKey($this->editingId)
+                    ->where('finance_account_id', $account->id)
+                    ->lockForUpdate()
+                    ->first();
+
+                if ($record === null) {
+                    return 'stale';
+                }
+
+                $record->load('paymentOrders.attachments');
+                $before  = FinanceHistory::snapshot($record);
+                $added   = 0;
+                $removed = 0;
+
+                $record->update(['amount' => (int) $this->amount]);
+
+                $existing = $record->paymentOrders->keyBy('id');
+                $wanted   = $this->noOrder ? [] : array_values($this->orders);
+                $keepIds  = array_filter(array_column($wanted, 'id'), fn ($id) => $existing->has($id));
+
+                foreach ($existing->except($keepIds) as $order) {
+                    $removed += $order->attachments->count();
+                    $order->delete();
+                }
+
+                foreach ($wanted as $i => $data) {
+                    $order = $existing->get($data['id'] ?? 0);
+
+                    if ($order && in_array($order->id, $keepIds, true)) {
+                        $order->update([
+                            'number'    => $data['number'],
+                            'issued_on' => $data['issued_on'],
+                            'position'  => $i + 1,
+                        ]);
+
+                        foreach ($order->attachments->whereNotIn('id', $this->kept[$i] ?? []) as $attachment) {
+                            $attachment->delete();
+                            $removed++;
+                        }
+                    } else {
+                        $order = $record->paymentOrders()->create([
+                            'number'    => $data['number'],
+                            'issued_on' => $data['issued_on'],
+                            'position'  => $i + 1,
+                        ]);
+                    }
+
+                    foreach ($this->orderFiles[$i] ?? [] as $file) {
+                        $path = $file->store(FinanceAttachment::DIRECTORY, FinanceAttachment::DISK);
+                        $this->storedPaths[] = $path;
+
+                        $order->attachments()->create([
+                            'path'          => $path,
+                            'original_name' => $file->getClientOriginalName(),
+                            'uploaded_by'   => auth()->id(),
+                        ]);
+                        $added++;
+                    }
+                }
+
+                $after = FinanceHistory::snapshot($record->fresh());
+
+                if ($before === $after && ! $added && ! $removed) {
+                    // الاستثناء يُرجِع المعاملة كلها (ترتيبٌ أُعيد كتابته بالقيمة نفسها)
+                    $this->reviewing = false;
+
+                    throw ValidationException::withMessages(['reason' => __('home.fin_correction_unchanged')]);
+                }
+
+                FinanceHistory::record(
+                    FinanceHistory::EVENT_CORRECTED, $account, $month, $this->reason,
+                    $before, $after, $added, $removed,
+                );
+
+                return 'saved';
+            });
+        } catch (\Throwable $e) {
+            Storage::disk(FinanceAttachment::DISK)->delete($this->storedPaths);
+            $this->storedPaths = [];
+
+            throw $e;
+        }
+
+        if ($result === 'stale') {
+            Flux::toast(variant: 'danger', text: __('home.fin_correction_stale'));
+            $this->redirect(route($account->pageRoute()), navigate: true);
+
+            return;
+        }
+
+        Flux::toast(variant: 'success', text: __('home.fin_correction_saved', ['month' => FinanceCalendar::monthLabel($month)]));
+
+        $this->redirect(
+            route($account->pageRoute(), ['year' => FinanceCalendar::fiscalYearOf($month)]),
+            navigate: true
+        );
+    }
+
     /** المبلغ «بعيد» عن الشهر السابق إن تجاوز أضعافه أو نزل عن جزئه هذا */
     public const AMOUNT_JUMP_FACTOR = 3;
 
@@ -344,6 +567,7 @@ class MonthEntry extends Component
         $numbers = array_values(array_filter(array_column($orders, 'number')));
         if ($numbers) {
             FinancePaymentOrder::whereIn('number', $numbers)
+                ->when($this->editingId, fn ($q) => $q->where('finance_month_id', '!=', $this->editingId))
                 ->with('month.account')
                 ->get()
                 ->each(function (FinancePaymentOrder $order) use (&$warnings) {
@@ -393,6 +617,9 @@ class MonthEntry extends Component
     {
         $account = $this->account();
         $amount  = $this->amountValue();
+        $record  = $this->editingId
+            ? FinanceMonth::with('account', 'paymentOrders.attachments')->find($this->editingId)
+            : null;
 
         return view('livewire.finance.month-entry', [
             'account'     => $account,
@@ -404,6 +631,10 @@ class MonthEntry extends Component
             'amountValue' => $amount,
             'amountWords' => $amount !== null ? AmountInWords::pounds($amount) : null,
             'warnings'    => $this->reviewWarnings($account, $amount),
-        ])->title(__('home.fin_entry_title', ['account' => $account->label()]));
+            'record'      => $record,
+            'keptFiles'   => $record
+                ? $record->paymentOrders->flatMap->attachments->keyBy('id')
+                : collect(),
+        ])->title(__($record ? 'home.fin_correction_title' : 'home.fin_entry_title', ['account' => $account->label()]));
     }
 }

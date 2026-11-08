@@ -34,10 +34,14 @@
         {{-- رأس الورقة: الشهر — النظام اختاره، فيُقرأ قبل أي حقل --}}
         <div class="flex flex-wrap items-center justify-between gap-2 px-6 py-4 bg-[#c9a847]/10 border-b border-[#c9a847]/30">
             <div>
-                <p class="font-bold text-zinc-800 dark:text-zinc-100" style="font-size: 1.3rem">{{ __('home.fin_entry_for', ['month' => $monthLabel]) }}</p>
+                <p class="font-bold text-zinc-800 dark:text-zinc-100" style="font-size: 1.3rem">{{ __($record ? 'home.fin_correction_for' : 'home.fin_entry_for', ['month' => $monthLabel]) }}</p>
                 <p class="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">{{ __('home.fin_fiscal_year') }} {{ $fiscalLabel }}</p>
             </div>
-            <span class="text-xs font-medium text-[#b8962e] dark:text-[#d8b856]">{{ __('home.fin_next_month_badge') }}</span>
+            @if($record)
+                <span class="text-xs font-medium px-2.5 py-1 rounded-full bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-200">{{ __('home.fin_correction_badge') }}</span>
+            @else
+                <span class="text-xs font-medium text-[#b8962e] dark:text-[#d8b856]">{{ __('home.fin_next_month_badge') }}</span>
+            @endif
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 max-md:divide-y md:divide-x md:divide-x-reverse divide-zinc-100 dark:divide-zinc-800">
@@ -80,7 +84,7 @@
 
                 @unless($noOrder)
                     @foreach($orders as $i => $order)
-                        @php $files = $orderFiles[$i] ?? []; $count = count($files); @endphp
+                        @php $files = $orderFiles[$i] ?? []; $saved = $kept[$i] ?? []; $count = count($files) + count($saved); @endphp
                         {{-- أحداث الرفع تصعد من الحقل إلى هنا. ⚠️ لا x-data على الحقل نفسه (يكسر wire:model)،
                              والحقل يُخفى ولا يُزال (نمط مرفقات المخازن — إشارة «انتهى الرفع») --}}
                         <div wire:key="fin-order-{{ $i }}-{{ count($orders) }}"
@@ -119,6 +123,19 @@
 
                             {{-- الصور مصغّرة — ليرى المُدخِل أنه رفع الورقة الصحيحة قبل القفل --}}
                             <div class="flex flex-wrap items-center gap-2">
+                                {{-- التصحيح: الصور المحفوظة أولاً — إزالتها تُحذف عند حفظ التصحيح لا الآن --}}
+                                @foreach($saved as $j => $id)
+                                    @php $att = $keptFiles->get($id); @endphp
+                                    @if($att)
+                                        <span wire:key="fin-kept-{{ $i }}-{{ $id }}" class="relative w-12 h-12 shrink-0" title="{{ $att->original_name }}">
+                                            <img src="{{ $att->url() }}" alt="" class="w-12 h-12 rounded-lg object-cover border border-zinc-200 dark:border-zinc-700">
+                                            <span class="absolute bottom-0.5 start-0.5 min-w-4 h-4 px-1 rounded bg-black/60 text-white grid place-items-center leading-none" style="font-size: 0.65rem">{{ $j + 1 }}</span>
+                                            <button type="button" wire:click="removeKept({{ $i }}, {{ $id }})"
+                                                    class="absolute -top-1.5 -end-1.5 w-5 h-5 rounded-full bg-red-500 hover:bg-red-600 text-white grid place-items-center shadow leading-none transition"
+                                                    style="font-size: 0.65rem" title="{{ __('home.wh_attachments_remove') }}">✕</button>
+                                        </span>
+                                    @endif
+                                @endforeach
                                 @foreach($files as $j => $file)
                                     <span wire:key="fin-file-{{ $i }}-{{ $j }}-{{ $file->getFilename() }}"
                                           class="relative w-12 h-12 shrink-0" title="{{ $file->getClientOriginalName() }}">
@@ -130,7 +147,7 @@
                                             <span class="w-12 h-12 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800 block"></span>
                                         @endif
                                         {{-- رقم الصورة --}}
-                                        <span class="absolute bottom-0.5 start-0.5 min-w-4 h-4 px-1 rounded bg-black/60 text-white grid place-items-center leading-none" style="font-size: 0.65rem">{{ $j + 1 }}</span>
+                                        <span class="absolute bottom-0.5 start-0.5 min-w-4 h-4 px-1 rounded bg-black/60 text-white grid place-items-center leading-none" style="font-size: 0.65rem">{{ count($saved) + $j + 1 }}</span>
                                         <button type="button" wire:click="removeFile({{ $i }}, {{ $j }})"
                                                 class="absolute -top-1.5 -end-1.5 w-5 h-5 rounded-full bg-red-500 hover:bg-red-600 text-white grid place-items-center shadow leading-none transition"
                                                 style="font-size: 0.65rem" title="{{ __('home.wh_attachments_remove') }}">✕</button>
@@ -172,9 +189,18 @@
             </div>
         </div>
 
+        {{-- سبب التصحيح — إجباري ويُحفظ في السجلّ عند الشهر (قرار العميل) --}}
+        @if($record)
+            <div class="px-6 py-4 border-t border-zinc-100 dark:border-zinc-800 space-y-1">
+                <label class="block text-sm font-medium text-zinc-700 dark:text-zinc-300">{{ __('home.fin_reason_label') }} <span class="text-red-500">*</span></label>
+                <textarea wire:model="reason" rows="2" class="{{ $inp }}" placeholder="{{ __('home.fin_reason_placeholder') }}"></textarea>
+                @error('reason') <p class="text-red-500 text-xs">{{ $message }}</p> @enderror
+            </div>
+        @endif
+
         {{-- تذييل الورقة --}}
         <div class="flex flex-wrap items-center justify-between gap-3 px-6 py-4 bg-zinc-50 dark:bg-zinc-800/60 border-t border-zinc-200 dark:border-zinc-700">
-            <p class="text-xs text-zinc-500 dark:text-zinc-400">{{ __('home.fin_entry_lock_note') }}</p>
+            <p class="text-xs text-zinc-500 dark:text-zinc-400">{{ __($record ? 'home.fin_correction_note' : 'home.fin_entry_lock_note') }}</p>
             <div class="flex items-center gap-3">
                 <a href="{{ $pageUrl }}" wire:navigate class="text-sm text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 transition">
                     {{ __('home.cancel') }}
@@ -182,7 +208,7 @@
                 {{-- ⚠️ مقفول أثناء الرفع — وإلا جاءه «الصورة مطلوبة» وهو يراها مختارة --}}
                 <button type="button" wire:click="review" wire:loading.attr="disabled" wire:target="picked,review"
                         class="bg-[#c9a847] hover:bg-[#b8962e] disabled:opacity-50 text-white text-sm font-medium px-5 py-2 rounded-lg transition">
-                    {{ __('home.fin_entry_save') }}
+                    {{ __($record ? 'home.fin_correction_save' : 'home.fin_entry_save') }}
                 </button>
             </div>
         </div>
@@ -194,7 +220,11 @@
              x-data @keydown.escape.window="$wire.backToForm()">
             <div class="w-full max-w-md max-h-[90vh] overflow-y-auto bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl">
                 <div class="px-6 pt-6 pb-4 text-center">
-                    <p class="text-sm text-zinc-500 dark:text-zinc-400">{{ __('home.fin_confirm_title', ['month' => $monthLabel]) }}</p>
+                    <p class="text-sm text-zinc-500 dark:text-zinc-400">{{ __($record ? 'home.fin_correction_confirm_title' : 'home.fin_confirm_title', ['month' => $monthLabel]) }}</p>
+                    @if($record && $record->amount !== $amountValue)
+                        {{-- المبلغ قبل التصحيح مشطوباً — ليرى المصحِّح الفرق قبل الحفظ --}}
+                        <p class="text-zinc-400 line-through mt-3" dir="ltr" style="font-size: 1.1rem">{{ number_format($record->amount) }}</p>
+                    @endif
                     <p class="font-bold text-zinc-800 dark:text-zinc-100 mt-3" dir="ltr" style="font-size: 2.25rem; line-height: 2.75rem">{{ number_format($amountValue) }}</p>
                     <p class="text-sm text-[#b8962e] dark:text-[#d8b856] mt-2">{{ $amountWords }}</p>
                 </div>
@@ -204,16 +234,22 @@
                         <div class="rounded-lg bg-zinc-50 dark:bg-zinc-800 px-3 py-2.5 text-zinc-700 dark:text-zinc-200">{{ __('home.fin_no_order') }}</div>
                     @else
                         @foreach($orders as $i => $order)
-                            @php $first = ($orderFiles[$i] ?? [])[0] ?? null; @endphp
+                            @php
+                                $firstKept = $keptFiles->get(($kept[$i] ?? [])[0] ?? 0);
+                                $first = ($orderFiles[$i] ?? [])[0] ?? null;
+                                $total = count($orderFiles[$i] ?? []) + count($kept[$i] ?? []);
+                            @endphp
                             <div class="flex items-center gap-3 rounded-lg bg-zinc-50 dark:bg-zinc-800 p-2">
-                                @if($first?->isPreviewable())
+                                @if($firstKept)
+                                    <img src="{{ $firstKept->url() }}" alt="" class="w-12 h-12 rounded object-cover shrink-0">
+                                @elseif($first?->isPreviewable())
                                     <img src="{{ $first->temporaryUrl() }}" alt="" class="w-12 h-12 rounded object-cover shrink-0">
                                 @endif
                                 <div class="min-w-0 text-zinc-800 dark:text-zinc-100">
                                     <p>{{ __('home.fin_payment_order_no', ['number' => $order['number']]) }}</p>
                                     <p class="text-xs text-zinc-500">
                                         <span dir="ltr" class="inline-block">{{ $order['issued_on'] }}</span>
-                                        · {{ __('home.fin_files_count', ['count' => count($orderFiles[$i] ?? [])]) }}
+                                        · {{ __('home.fin_files_count', ['count' => $total]) }}
                                     </p>
                                 </div>
                             </div>
@@ -225,8 +261,15 @@
                         <div class="rounded-lg border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20 px-3 py-2 text-xs text-red-700 dark:text-red-300">{{ $warning }}</div>
                     @endforeach
 
+                    @if($record)
+                        <div class="rounded-lg bg-zinc-50 dark:bg-zinc-800 px-3 py-2.5 text-zinc-700 dark:text-zinc-200">
+                            <p class="text-xs text-zinc-500">{{ __('home.fin_reason_label') }}</p>
+                            <p class="mt-0.5 whitespace-pre-line">{{ $reason }}</p>
+                        </div>
+                    @endif
+
                     <div class="rounded-lg border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/20 px-3 py-2 text-xs text-amber-800 dark:text-amber-200">
-                        {{ __('home.fin_entry_lock_warning') }}
+                        {{ __($record ? 'home.fin_correction_warning' : 'home.fin_entry_lock_warning') }}
                     </div>
                 </div>
 
