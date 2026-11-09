@@ -2,7 +2,6 @@
 
 namespace App\Livewire\Finance\Concerns;
 
-use App\Models\CourtBuildingItem;
 use App\Models\FinanceAccount;
 use App\Models\FinanceMonth;
 use App\Support\Finance\FinanceCalendar;
@@ -139,7 +138,6 @@ trait IsAccountPage
 
         $data = [
             'account'    => $account,
-            'items'      => collect(),
             'rows'       => [],
             'total'      => 0,
             'years'      => FinanceCalendar::fiscalYears(),
@@ -158,17 +156,13 @@ trait IsAccountPage
             'canDelete'  => false,
         ];
 
-        if ($account->kind === FinanceAccount::KIND_ITEMIZED) {
-            $data['items'] = CourtBuildingItem::active()->ordered()->get();
-        }
-
         if ($account->acceptsEntry()) {
             $months = FinanceCalendar::monthsOf($this->year);
 
             $records = FinanceMonth::query()
                 ->where('finance_account_id', $account->id)
                 ->whereBetween('month', [$months[0]->toDateString(), end($months)->toDateString()])
-                ->with(['account', 'creator', 'paymentOrders.attachments'])
+                ->with(['account', 'creator', 'paymentOrders.attachments', 'items.item'])
                 ->get()
                 ->keyBy(fn (FinanceMonth $m) => $m->month->format('Y-m'));
 

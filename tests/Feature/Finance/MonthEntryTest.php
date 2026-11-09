@@ -240,10 +240,9 @@ it('يرفض الحفظ إن سُحبت الصلاحية والفورم مفتو
     expect(FinanceMonth::count())->toBe(0);
 });
 
-it('لا يفتح الإدخال لأبنية المحاكم واتصالات في هذه المرحلة', function () {
+it('لا يفتح الإدخال لاتصالات في هذه المرحلة', function () {
     $this->actingAs(entryUser());
 
-    $this->get(route('finance.entry', 'court-buildings'))->assertNotFound();
     $this->get(route('finance.entry', 'telecom'))->assertNotFound();
     $this->get('/finance/unknown/entry')->assertNotFound();
 });

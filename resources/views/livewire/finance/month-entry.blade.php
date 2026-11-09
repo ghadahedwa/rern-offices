@@ -44,8 +44,45 @@
             @endif
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 max-md:divide-y md:divide-x md:divide-x-reverse divide-zinc-100 dark:divide-zinc-800">
+        @php $itemized = $itemRows->isNotEmpty(); @endphp
+        <div class="grid grid-cols-1 {{ $itemized ? 'md:grid-cols-5' : 'md:grid-cols-2' }} max-md:divide-y md:divide-x md:divide-x-reverse divide-zinc-100 dark:divide-zinc-800">
 
+            @if($itemized)
+            {{-- أبنية المحاكم: العناصر تحت بعضها والإجمالي يُحسب أسفلها (نموذج 2026-11-08) --}}
+            <div class="p-6 md:col-span-3">
+                <div class="flex flex-wrap items-baseline justify-between gap-2 mb-3">
+                    <p class="text-sm font-medium text-zinc-700 dark:text-zinc-300">{{ __('home.fin_items_label', ['count' => count($itemIds)]) }} <span class="text-red-500">*</span></p>
+                    <p class="text-xs text-zinc-400">{{ __('home.fin_items_zero_hint') }}</p>
+                </div>
+                <div class="divide-y divide-zinc-100 dark:divide-zinc-800">
+                    @foreach($itemIds as $n => $itemId)
+                        @php $failed = $errors->has("items.$itemId"); @endphp
+                        <div wire:key="fin-item-{{ $itemId }}" class="py-2">
+                            <label class="flex items-center gap-3">
+                                <span class="w-5 shrink-0 text-xs text-zinc-400">{{ $n + 1 }}</span>
+                                <span class="flex-1 min-w-0 text-sm text-zinc-700 dark:text-zinc-200">{{ $itemRows->get($itemId)?->name }}</span>
+                                {{-- نمط خانة المبلغ: الحروف تُحذف والنقطة تبقى فيرفضها الخادم --}}
+                                <input type="text" inputmode="numeric" dir="ltr" autocomplete="off"
+                                       oninput="this.value = this.value.replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d)).replace(/[۰-۹]/g, d => '۰۱۲۳۴۵۶۷۸۹'.indexOf(d)).replace(/[^0-9.,٬،]/g, '')"
+                                       wire:model.live.debounce.400ms="items.{{ $itemId }}"
+                                       class="w-36 shrink-0 rounded-lg px-3 py-1.5 text-left font-semibold text-zinc-800 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-[#c9a847] {{ $failed ? 'border-2 border-red-300 bg-red-50/40 dark:bg-red-900/20' : 'border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-800' }}" />
+                            </label>
+                            @error("items.$itemId") <p class="text-red-500 text-xs mt-1 ms-8">{{ $message }}</p> @enderror
+                        </div>
+                    @endforeach
+                </div>
+
+                <div class="mt-4 rounded-lg bg-[#c9a847]/10 border border-[#c9a847]/40 px-4 py-3">
+                    <div class="flex items-center justify-between gap-3">
+                        <span class="text-sm font-semibold text-zinc-700 dark:text-zinc-200">{{ __('home.fin_total_auto') }}</span>
+                        <span dir="ltr" class="font-bold text-zinc-800 dark:text-zinc-100" style="font-size: 1.6rem">{{ $amountValue !== null ? number_format($amountValue) : '—' }}</span>
+                    </div>
+                    @if($amountWords)
+                        <p class="text-xs text-[#b8962e] dark:text-[#d8b856] mt-1">{{ $amountWords }}</p>
+                    @endif
+                </div>
+            </div>
+            @else
             {{-- المبلغ --}}
             <div class="p-6 space-y-2">
                 <label class="block text-sm font-medium text-zinc-700 dark:text-zinc-300">{{ __('home.fin_amount_label') }} <span class="text-red-500">*</span></label>
@@ -62,11 +99,13 @@
                 @endif
                 @error('amount') <p class="text-red-500 text-xs">{{ $message }}</p> @enderror
             </div>
+            @endif
 
             {{-- أوامر الدفع --}}
-            <div class="p-6 space-y-4">
+            <div class="p-6 space-y-4 {{ $itemized ? 'md:col-span-2' : '' }}">
                 <p class="text-sm font-medium text-zinc-700 dark:text-zinc-300">
                     {{ __('home.fin_payment_order') }} @unless($noOrder)<span class="text-red-500">*</span>@endunless
+                    @if($itemized)<span class="block text-xs font-normal text-zinc-400 mt-0.5">{{ __('home.fin_order_covers_total') }}</span>@endif
                 </p>
 
                 {{-- شهرٌ بلا حركة: مبلغه صفر وقد لا يصدر له أمر دفع (قرار المستخدمة) --}}
@@ -228,6 +267,25 @@
                     <p class="font-bold text-zinc-800 dark:text-zinc-100 mt-3" dir="ltr" style="font-size: 2.25rem; line-height: 2.75rem">{{ number_format($amountValue) }}</p>
                     <p class="text-sm text-[#b8962e] dark:text-[#d8b856] mt-2">{{ $amountWords }}</p>
                 </div>
+
+                @if($itemized)
+                    {{-- العناصر مختصرة — الصفر باهت، والمتغيّر في التصحيح بقيمته القديمة مشطوبة --}}
+                    @php $savedItems = $record?->items->pluck('amount', 'court_building_item_id') ?? collect(); @endphp
+                    <div class="mx-6 mb-4 rounded-lg bg-zinc-50 dark:bg-zinc-800 px-3 py-2 divide-y divide-zinc-200/70 dark:divide-zinc-700 text-xs">
+                        @foreach($itemIds as $itemId)
+                            @php $value = (int) ($items[$itemId] ?? 0); $old = $savedItems->get($itemId); @endphp
+                            <div class="flex items-center justify-between gap-3 py-1">
+                                <span class="text-zinc-600 dark:text-zinc-300">{{ $itemRows->get($itemId)?->name }}</span>
+                                <span dir="ltr" class="shrink-0">
+                                    @if($old !== null && $old !== $value)
+                                        <span class="line-through text-zinc-400 me-1">{{ number_format($old) }}</span>
+                                    @endif
+                                    <span class="{{ $value === 0 ? 'text-zinc-400' : 'font-semibold text-zinc-800 dark:text-zinc-100' }}">{{ number_format($value) }}</span>
+                                </span>
+                            </div>
+                        @endforeach
+                    </div>
+                @endif
 
                 <div class="px-6 pb-4 space-y-2 text-sm">
                     @if($noOrder)

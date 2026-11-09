@@ -35,6 +35,16 @@ class FinanceMonth extends Model
         return $this->hasMany(FinancePaymentOrder::class)->orderBy('position')->chaperone('month');
     }
 
+    /** عناصر أبنية المحاكم بترتيبها المعتمد — الحساب ذو العناصر وحده */
+    public function items(): HasMany
+    {
+        return $this->hasMany(FinanceMonthItem::class)
+            ->join('court_building_items', 'court_building_items.id', '=', 'finance_month_items.court_building_item_id')
+            ->orderBy('court_building_items.order')
+            ->orderBy('court_building_items.name')
+            ->select('finance_month_items.*');
+    }
+
     protected static function booted(): void
     {
         // ⚠️ الأوامر تُحذف بالموديل لا بـ`cascadeOnDelete` وحده: الأخير لا يُطلق حدث `deleted`

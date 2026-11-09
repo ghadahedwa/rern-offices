@@ -25,9 +25,12 @@ class FinanceHistory
     /** صورة الشهر كما تُحفظ في السجلّ — أرقامٌ لا نصوص، فالعرض يُترجمها وقتها */
     public static function snapshot(FinanceMonth $month): array
     {
-        $month->loadMissing('paymentOrders.attachments');
+        $month->loadMissing('paymentOrders.attachments', 'items.item');
 
-        return [
+        // أبنية المحاكم: قيمة كل عنصر **باسمه وقت الحفظ** — اسمٌ يُعدَّل لاحقاً لا يغيّر التاريخ
+        $items = $month->items->mapWithKeys(fn ($i) => [$i->item->name => (int) $i->amount])->all();
+
+        return ($items ? ['items' => $items] : []) + [
             'amount' => (int) $month->amount,
             'orders' => $month->paymentOrders->map(fn ($order) => [
                 'number'    => $order->number,
@@ -92,9 +95,21 @@ class FinanceHistory
             ]];
         }
 
+        // العنصر الذي تغيّر بالتحديد — قبل الإجمالي (هو السبب والإجمالي نتيجته)
+        foreach ($after['items'] ?? [] as $name => $value) {
+            $old = $before['items'][$name] ?? null;
+            if ($old !== $value) {
+                $lines[] = [
+                    'label' => $name,
+                    'from'  => $old === null ? null : number_format((int) $old),
+                    'to'    => number_format((int) $value),
+                ];
+            }
+        }
+
         if (($before['amount'] ?? null) !== ($after['amount'] ?? null)) {
             $lines[] = [
-                'label' => __('home.fin_amount_label'),
+                'label' => isset($after['items']) ? __('home.fin_total_label') : __('home.fin_amount_label'),
                 'from'  => number_format((int) ($before['amount'] ?? 0)),
                 'to'    => number_format((int) ($after['amount'] ?? 0)),
             ];

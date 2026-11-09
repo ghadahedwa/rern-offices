@@ -78,12 +78,12 @@
                 <thead class="bg-zinc-50 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 text-xs">
                     <tr>
                         <th class="px-4 py-3 font-medium sm:w-[24%]">{{ __('home.fin_month') }}</th>
-                        <th class="px-4 py-3 font-medium sm:w-[20%]">{{ __('home.fin_amount_label') }}</th>
+                        <th class="px-4 py-3 font-medium sm:w-[20%]">{{ $account->isItemized() ? __('home.fin_total_label_unit') : __('home.fin_amount_label') }}</th>
                         <th class="px-4 py-3 font-medium sm:w-[32%] max-sm:hidden">{{ __('home.fin_payment_order') }}</th>
                         <th class="px-4 py-3 font-medium sm:w-[24%] max-sm:hidden">{{ __('home.fin_entered_by') }}</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-zinc-100 dark:divide-zinc-700" x-data="{ open: null }">
+                <tbody class="divide-y divide-zinc-100 dark:divide-zinc-700" x-data="{ open: null, itemsOpen: null }">
                     @foreach($rows as $row)
                         @php
                             $record = $row['record'];
@@ -101,6 +101,16 @@
                                             <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z"/>
                                         </svg>
                                     </span>
+                                    @if($record->items->isNotEmpty())
+                                        {{-- أبنية المحاكم: العناصر تُفتح تحت الشهر --}}
+                                        <button type="button" @click="itemsOpen = itemsOpen === '{{ $key }}' ? null : '{{ $key }}'"
+                                                class="ms-1.5 inline-flex items-center gap-1 rounded-full bg-zinc-100 dark:bg-zinc-800 px-2 py-0.5 text-xs font-medium text-zinc-600 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition">
+                                            {{ __('home.fin_items_toggle') }}
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3 transition" :class="itemsOpen === '{{ $key }}' && 'rotate-180'" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
+                                            </svg>
+                                        </button>
+                                    @endif
                                     @include('livewire.finance.partials.history-badge')
                                 </td>
                                 <td class="px-4 py-3">
@@ -125,6 +135,22 @@
                                     @include('livewire.finance.partials.month-actions')
                                 </td>
                             </tr>
+                            @if($record->items->isNotEmpty())
+                                {{-- العناصر في عمودين: ١–٤ ثم ٥–٨ (grid-flow-col)، والصفر باهت --}}
+                                <tr wire:key="fin-items-{{ $key }}" x-show="itemsOpen === '{{ $key }}'" style="display:none" class="bg-zinc-50/70 dark:bg-zinc-800/40">
+                                    <td colspan="4" class="px-4 py-3">
+                                        <div class="grid grid-cols-1 sm:grid-cols-2 sm:grid-flow-col gap-x-8 gap-y-1.5 text-xs"
+                                             style="grid-template-rows: repeat({{ (int) ceil($record->items->count() / 2) }}, auto)">
+                                            @foreach($record->items as $item)
+                                                <div class="flex items-baseline justify-between gap-3 border-b border-dashed border-zinc-200 dark:border-zinc-700 pb-1">
+                                                    <span class="text-zinc-600 dark:text-zinc-300">{{ $loop->iteration }} · {{ $item->item->name }}</span>
+                                                    <span dir="ltr" class="shrink-0 {{ $item->amount === 0 ? 'text-zinc-400' : 'font-semibold text-zinc-800 dark:text-zinc-100' }}">{{ number_format($item->amount) }}</span>
+                                                </div>
+                                            @endforeach
+                                        </div>
+                                    </td>
+                                </tr>
+                            @endif
                             @include('livewire.finance.partials.history-rows')
                         @else
                             {{-- الشهر التالي — بدأ ولم يُدخَل --}}
@@ -219,23 +245,5 @@
     @endif
 
     @include('livewire.partials.delete-modal', ['deletingReasonModel' => 'deleteReason'])
-
-    {{-- أبنية المحاكم: العناصر التي سيُطلب كلٌّ منها في فورم الشهر --}}
-    @if($items->isNotEmpty())
-        <div class="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-sm p-5">
-            <div class="flex items-center gap-3 mb-5">
-                <div class="w-1 h-5 bg-[#c9a847] rounded-full"></div>
-                <h3 class="text-sm font-semibold text-zinc-600 dark:text-zinc-400 uppercase tracking-wide">{{ __('home.fin_items_title') }}</h3>
-            </div>
-            <ol class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2 text-sm text-zinc-700 dark:text-zinc-200">
-                @foreach($items as $item)
-                    <li class="flex items-baseline gap-2">
-                        <span class="text-xs text-zinc-400 w-5 shrink-0">{{ $loop->iteration }}</span>
-                        <span>{{ $item->name }}</span>
-                    </li>
-                @endforeach
-            </ol>
-        </div>
-    @endif
 
 </div>

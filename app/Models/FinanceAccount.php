@@ -60,12 +60,17 @@ class FinanceAccount extends Model
     }
 
     /**
-     * هل يُدخَل هذا الحساب في المرحلة الحالية؟ — المبلغ الواحد وحده (المرحلة ب).
-     * أبنية المحاكم (د) واتصالات (هـ) تُضاف بأشكالها.
+     * هل يُدخَل هذا الحساب في المرحلة الحالية؟ — المبلغ الواحد (ب) وأبنية المحاكم (د).
+     * اتصالات (هـ) تُضاف بشكلها.
      */
     public function acceptsEntry(): bool
     {
-        return $this->kind === self::KIND_SINGLE;
+        return in_array($this->kind, [self::KIND_SINGLE, self::KIND_ITEMIZED], true);
+    }
+
+    public function isItemized(): bool
+    {
+        return $this->kind === self::KIND_ITEMIZED;
     }
 
     public function months(): HasMany

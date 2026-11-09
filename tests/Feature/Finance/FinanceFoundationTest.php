@@ -78,11 +78,11 @@ it('يفتح الصفحات الأربع لصاحب العرض باسم حساب
     }
 });
 
-it('يعرض عناصر أبنية المحاكم في صفحتها وحدها', function () {
-    $this->actingAs(finUser(['finance.view']));
+it('يطلب عناصر أبنية المحاكم في فورم شهرها وحده', function () {
+    $this->actingAs(finUser(['finance.view', 'finance.create']));
 
-    $this->get(route('finance.court-buildings'))->assertSee('مكاتب مميزة');
-    $this->get(route('finance.mechanization'))->assertDontSee('مكاتب مميزة');
+    $this->get(route('finance.entry', 'court-buildings'))->assertSee('مكاتب مميزة');
+    $this->get(route('finance.entry', 'mechanization'))->assertDontSee('مكاتب مميزة');
 });
 
 it('يمنع الصفحات عمّن لا يملك العرض — ولو ملك الإدخال والتصحيح', function () {
@@ -182,15 +182,15 @@ it('يحذف العنصر غير المستعمَل بعد التأكيد وحد
 });
 
 it('لا يحذف عنصراً سُجِّلت له قيمة في شهر', function () {
-    // جدول القيم يُنشأ في المرحلة (د) — الحارس يصير حقيقياً لحظة إنشائه
-    Schema::create(CourtBuildingItem::VALUES_TABLE, function (Blueprint $table) {
-        $table->id();
-        $table->foreignId('court_building_item_id');
-        $table->unsignedBigInteger('amount');
-    });
-
-    $item = CourtBuildingItem::where('name', 'سيارات صباحي')->first();
-    DB::table(CourtBuildingItem::VALUES_TABLE)->insert(['court_building_item_id' => $item->id, 'amount' => 0]);
+    $item  = CourtBuildingItem::where('name', 'سيارات صباحي')->first();
+    $month = \App\Models\FinanceMonth::create([
+        'finance_account_id' => \App\Models\FinanceAccount::byKey('court_buildings')->id,
+        'month'              => '2026-10-01',
+        'amount'             => 0,
+    ]);
+    DB::table(CourtBuildingItem::VALUES_TABLE)->insert([
+        'finance_month_id' => $month->id, 'court_building_item_id' => $item->id, 'amount' => 0,
+    ]);
 
     $this->actingAs(finSuperAdmin());
 

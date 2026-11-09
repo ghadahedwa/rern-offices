@@ -2,9 +2,11 @@
 
 namespace App\Livewire\Finance;
 
+use App\Models\CourtBuildingItem;
 use App\Models\FinanceAccount;
 use App\Models\FinanceAttachment;
 use App\Models\FinanceMonth;
+use App\Models\FinanceMonthItem;
 use App\Models\FinancePaymentOrder;
 use App\Support\ArabicDigits;
 use App\Support\Finance\AmountInWords;
@@ -75,6 +77,16 @@ class MonthEntry extends Component
     /** سبب التصحيح — إجباري (قرار العميل) */
     public string $reason = '';
 
+    /**
+     * أبنية المحاكم: عناصر الفورم بترتيبها — المفعَّلة عند الإدخال، وعناصر الشهر نفسه عند
+     * التصحيح (عنصرٌ عُطِّل بعده يبقى، وعنصرٌ أُضيف بعده لا يُطلب في شهرٍ مقفول).
+     */
+    #[Locked]
+    public array $itemIds = [];
+
+    /** قيمة كل عنصر بمعرّفه: [id => '…'] — الإجمالي يُحسب منها لا يُكتب */
+    public array $items = [];
+
     /** مسارات خُزِّنت في هذا الحفظ — تُحذف إن تراجعت المعاملة */
     protected array $storedPaths = [];
 
@@ -98,6 +110,11 @@ class MonthEntry extends Component
 
         $this->orders     = [['number' => '', 'issued_on' => '']];
         $this->orderFiles = [[]];
+
+        if ($model->isItemized()) {
+            $this->itemIds = CourtBuildingItem::active()->ordered()->pluck('id')->all();
+            $this->items   = array_fill_keys($this->itemIds, '');
+        }
     }
 
     /** يملأ الفورم بالشهر المحفوظ — الصور المحفوظة في `kept` والجديدة في `orderFiles` */
@@ -107,7 +124,12 @@ class MonthEntry extends Component
         $record = $month ? $this->findRecord($account, $month) : null;
         abort_if($record === null, 404);
 
-        $record->load('paymentOrders.attachments');
+        $record->load('paymentOrders.attachments', 'items');
+
+        if ($account->isItemized()) {
+            $this->itemIds = $record->items->pluck('court_building_item_id')->all();
+            $this->items   = $record->items->mapWithKeys(fn ($i) => [$i->court_building_item_id => (string) $i->amount])->all();
+        }
 
         $this->editingId = $record->id;
         $this->month     = $month->toDateString();
@@ -239,15 +261,34 @@ class MonthEntry extends Component
         return preg_replace('/[\s,٬،]/u', '', ArabicDigits::toLatin(trim($value))) ?? '';
     }
 
-    /** المبلغ رقماً إن كان صالحاً — يقرؤه التفقيط الحيّ وشاشة التأكيد. */
+    /**
+     * المبلغ رقماً إن كان صالحاً — يقرؤه التفقيط الحيّ وشاشة التأكيد.
+     * أبنية المحاكم: مجموع ما كُتب صالحاً من العناصر (يتحدّث مع الكتابة)، وnull قبل أول رقم.
+     */
     public function amountValue(): ?int
     {
+        if ($this->itemIds) {
+            $values = array_filter(
+                array_map(fn ($id) => $this->itemValue($id), $this->itemIds),
+                fn ($v) => $v !== null
+            );
+
+            return $values ? array_sum($values) : null;
+        }
+
         $digits = self::normalizeAmount($this->amount);
 
         return preg_match('/^\d{1,12}$/', $digits) ? (int) $digits : null;
     }
 
     // ── الخطوات ──────────────────────────────────────────
+
+    protected function itemValue(int|string $id): ?int
+    {
+        $digits = self::normalizeAmount((string) ($this->items[$id] ?? ''));
+
+        return preg_match('/^\d{1,12}$/', $digits) ? (int) $digits : null;
+    }
 
     /** المبلغ تغيّر عن الصفر ← يعود أمر الدفع إجبارياً */
     public function updatedAmount(): void
@@ -257,16 +298,25 @@ class MonthEntry extends Component
         }
     }
 
+    public function updatedItems(): void
+    {
+        $this->updatedAmount();
+    }
+
     protected function rules(): array
     {
         $reason = $this->editingId ? ['reason' => ['required', 'string', 'min:5', 'max:1000']] : [];
 
+        // أبنية المحاكم: كل عنصرٍ إلزامي (الصفر مسموح) — والإجمالي يُحسب بعد التحقق
+        $amount = $this->itemIds
+            ? ['items' => ['required', 'array'], 'items.*' => ['required', 'regex:/^\d{1,12}$/']]
+            : ['amount' => ['required', 'regex:/^\d{1,12}$/']];
+
         if ($this->noOrder) {
-            return ['amount' => ['required', 'regex:/^\d{1,12}$/']] + $reason;
+            return $amount + $reason;
         }
 
-        return $reason + [
-            'amount'              => ['required', 'regex:/^\d{1,12}$/'],
+        return $reason + $amount + [
             'orders'              => ['required', 'array', 'min:1', 'max:'.FinancePaymentOrder::MAX_PER_MONTH],
             // أرقام فقط (قرار المستخدمة) — بعد توحيد الأرقام العربية في validateEntry
             'orders.*.number'     => ['required', 'regex:/^\d{1,30}$/', 'distinct'],
@@ -285,6 +335,8 @@ class MonthEntry extends Component
         return [
             'amount.required'       => __('home.fin_amount_invalid'),
             'amount.regex'          => __('home.fin_amount_invalid'),
+            'items.*.required'      => __('home.fin_item_required'),
+            'items.*.regex'         => __('home.fin_amount_invalid'),
             'orders.*.number.regex' => __('home.fin_order_number_digits'),
             'orderFiles.*.required' => __('home.fin_files_required'),
             'orderFiles.*.min'      => __('home.fin_files_required'),
@@ -300,6 +352,14 @@ class MonthEntry extends Component
 
         $this->amount = self::normalizeAmount($this->amount);
         $this->reason = trim($this->reason);
+
+        // ⚠️ العناصر من `itemIds` المقفولة لا من مفاتيح ما وصل — مفتاحٌ مدسوس لا يُحفظ،
+        //    وعنصرٌ حُذف مفتاحه من المتصفح يبقى مطلوباً
+        if ($this->itemIds) {
+            $this->items = collect($this->itemIds)
+                ->mapWithKeys(fn ($id) => [$id => self::normalizeAmount((string) ($this->items[$id] ?? ''))])
+                ->all();
+        }
         $this->orders = array_map(fn (array $o) => [
             'id'        => isset($o['id']) && ctype_digit((string) $o['id']) ? (int) $o['id'] : null,
             'number'    => trim(ArabicDigits::toLatin((string) ($o['number'] ?? ''))),
@@ -312,6 +372,10 @@ class MonthEntry extends Component
         }
 
         $this->validate();
+
+        if ($this->itemIds) {
+            $this->amount = (string) array_sum(array_map('intval', $this->items));
+        }
 
         // ⚠️ في الإجراء لا في القالب: الخانة تظهر للصفر وحده، والقيمة تصل من المتصفح
         if ($this->noOrder && (int) $this->amount !== 0) {
@@ -385,6 +449,10 @@ class MonthEntry extends Component
                     'amount'             => (int) $this->amount,
                     'created_by'         => auth()->id(),
                 ]);
+
+                foreach ($this->items as $itemId => $value) {
+                    $record->items()->create(['court_building_item_id' => $itemId, 'amount' => (int) $value]);
+                }
 
                 foreach ($this->noOrder ? [] : array_values($this->orders) as $i => $order) {
                     $paymentOrder = $record->paymentOrders()->create([
@@ -460,6 +528,14 @@ class MonthEntry extends Component
                 $removed = 0;
 
                 $record->update(['amount' => (int) $this->amount]);
+
+                // العناصر: قيمٌ لعناصر الشهر نفسه (`itemIds` من الصفّ عند الفتح)
+                foreach ($this->items as $itemId => $value) {
+                    // ⚠️ لا عبر علاقة `items()` — فيها join، وsqlite لا يقبل UPDATE بـjoin
+                    FinanceMonthItem::where('finance_month_id', $record->id)
+                        ->where('court_building_item_id', $itemId)
+                        ->update(['amount' => (int) $value]);
+                }
 
                 $existing = $record->paymentOrders->keyBy('id');
                 $wanted   = $this->noOrder ? [] : array_values($this->orders);
@@ -618,7 +694,7 @@ class MonthEntry extends Component
         $account = $this->account();
         $amount  = $this->amountValue();
         $record  = $this->editingId
-            ? FinanceMonth::with('account', 'paymentOrders.attachments')->find($this->editingId)
+            ? FinanceMonth::with('account', 'paymentOrders.attachments', 'items')->find($this->editingId)
             : null;
 
         return view('livewire.finance.month-entry', [
@@ -632,6 +708,10 @@ class MonthEntry extends Component
             'amountWords' => $amount !== null ? AmountInWords::pounds($amount) : null,
             'warnings'    => $this->reviewWarnings($account, $amount),
             'record'      => $record,
+            // بترتيب `itemIds` (ترتيب العناصر وقت فتح الفورم)
+            'itemRows'    => $this->itemIds
+                ? CourtBuildingItem::whereIn('id', $this->itemIds)->get()->keyBy('id')
+                : collect(),
             'keptFiles'   => $record
                 ? $record->paymentOrders->flatMap->attachments->keyBy('id')
                 : collect(),
