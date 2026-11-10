@@ -4,9 +4,11 @@
         $corrections = $events->where('event', \App\Support\Finance\FinanceHistory::EVENT_CORRECTED)->count();
         $deletions   = $events->where('event', \App\Support\Finance\FinanceHistory::EVENT_DELETED)->count();
         // الاثنان يُعدّان — شهرٌ حُذف ثم أُعيد إدخاله لا يُخفي حذفه خلف «عُدِّل»
+        $notes       = $events->filter(fn ($e) => \App\Support\Finance\FinanceHistory::isNoteEvent($e))->count();
         $parts = array_filter([
             $corrections ? __('home.fin_history_badge', ['count' => $corrections]) : null,
             $deletions ? __('home.fin_history_badge_deleted', ['count' => $deletions]) : null,
+            $notes ? __('home.fin_history_badge_notes', ['count' => $notes]) : null,
         ]);
     @endphp
     <button type="button" @click="open = open === '{{ $key }}' ? null : '{{ $key }}'"

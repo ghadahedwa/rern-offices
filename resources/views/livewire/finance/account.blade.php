@@ -94,7 +94,7 @@
                         <th class="px-4 py-3 font-medium sm:w-[24%] max-sm:hidden">{{ __('home.fin_entered_by') }}</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-zinc-100 dark:divide-zinc-700" x-data="{ open: null, itemsOpen: null }">
+                <tbody class="divide-y divide-zinc-100 dark:divide-zinc-700" x-data="{ open: null, itemsOpen: null, notesOpen: null }">
                     @foreach($rows as $row)
                         @php
                             $record = $row['record'];
@@ -123,6 +123,7 @@
                                         </button>
                                     @endif
                                     @include('livewire.finance.partials.history-badge')
+@include('livewire.finance.partials.notes-button')
                                 </td>
                                 <td class="px-4 py-3">
                                     <span class="font-bold text-zinc-800 dark:text-zinc-100" dir="ltr" style="font-size: 1.05rem">{{ number_format($record->amount) }}</span>
@@ -163,6 +164,7 @@
                                 </tr>
                             @endif
                             @include('livewire.finance.partials.history-rows')
+@include('livewire.finance.partials.notes-rows')
                         @else
                             {{-- الشهر التالي — بدأ ولم يُدخَل --}}
                             <tr wire:key="fin-row-{{ $row['month']->format('Y-m') }}" class="bg-[#c9a847]/10">
@@ -170,6 +172,7 @@
                                     {{ $row['label'] }}
                                     {{-- شهرٌ حُذف وينتظر إعادة إدخاله — سجلّه يبقى ظاهراً --}}
                                     @include('livewire.finance.partials.history-badge')
+@include('livewire.finance.partials.notes-button')
                                 </td>
                                 <td class="px-4 py-3" colspan="3">
                                     <div class="flex items-center justify-between gap-3">
@@ -184,6 +187,7 @@
                                 </td>
                             </tr>
                             @include('livewire.finance.partials.history-rows')
+@include('livewire.finance.partials.notes-rows')
                         @endif
                     @endforeach
 
@@ -256,6 +260,7 @@
         </div>
     @endif
 
-    @include('livewire.partials.delete-modal', ['deletingReasonModel' => 'deleteReason'])
+    {{-- حذف ملاحظةٍ بلا سبب، وحذف الشهر بسببٍ إجباري --}}
+    @include('livewire.partials.delete-modal', ['deletingReasonModel' => $deletingNoteId ? '' : 'deleteReason'])
 
 </div>

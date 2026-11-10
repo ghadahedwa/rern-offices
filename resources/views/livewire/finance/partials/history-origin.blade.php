@@ -9,6 +9,6 @@
             · <span dir="ltr" class="inline-block">{{ \App\Support\LocalTime::date($record->created_at) }}</span>
             {{ \App\Support\LocalTime::time($record->created_at) }}
         </p>
-        <p class="mt-1 text-zinc-700 dark:text-zinc-200">{{ \App\Support\Finance\FinanceHistory::summary($current->last()->properties['before'] ?? []) }}</p>
+        <p class="mt-1 text-zinc-700 dark:text-zinc-200">{{ \App\Support\Finance\FinanceHistory::summary($originEvent->properties['before'] ?? []) }}</p>
     </div>
 </li>

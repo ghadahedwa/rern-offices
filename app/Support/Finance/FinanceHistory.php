@@ -22,6 +22,10 @@ class FinanceHistory
     public const EVENT_CORRECTED = 'corrected';
     public const EVENT_DELETED   = 'deleted';
 
+    /** تعديل ملاحظة شهرٍ مقفول أو حذفها — بلا سببٍ إجباري (الملاحظة نفسها كلام) */
+    public const EVENT_NOTE_EDITED  = 'note_edited';
+    public const EVENT_NOTE_DELETED = 'note_deleted';
+
     /** مفتاح «الشهر» لسجلّ الرصيد الافتتاحي (اتصالات) — يُعرض تحت صفّه في الجدول */
     public const OPENING = 'opening';
 
@@ -87,8 +91,36 @@ class FinanceHistory
      * ما تغيّر بلغة المستخدم: [['label', 'from', 'to'], …] — المبلغ وأوامر الدفع،
      * وصورٌ أُضيفت أو حُذفت ولو بقي عددها (استُبدلت صورة بأخرى).
      */
+    /** سجلّ ملاحظة على شهرٍ مقفول: نصّها قبل وبعد (null بعد = حُذفت) */
+    public static function recordNote(string $event, FinanceAccount $account, CarbonInterface $month, string $before, ?string $after): void
+    {
+        activity(self::LOG)
+            ->causedBy(auth()->user())
+            ->event($event)
+            ->withProperties([
+                'account'     => $account->key,
+                'month'       => $month->format('Y-m'),
+                'note_before' => $before,
+                'note_after'  => $after,
+            ])
+            ->log($event);
+    }
+
+    public static function isNoteEvent(Activity $activity): bool
+    {
+        return in_array($activity->event, [self::EVENT_NOTE_EDITED, self::EVENT_NOTE_DELETED], true);
+    }
+
     public static function changes(Activity $activity): array
     {
+        if (self::isNoteEvent($activity)) {
+            return [[
+                'label' => __('home.fin_note'),
+                'from'  => $activity->properties['note_before'] ?? '',
+                'to'    => $activity->properties['note_after'] ?? null,
+            ]];
+        }
+
         $before = $activity->properties['before'] ?? [];
         $after  = $activity->properties['after'] ?? null;
         $lines  = [];
@@ -161,6 +193,7 @@ class FinanceHistory
      */
     public static function splitAtDeletion(Collection $events): array
     {
+        // ⚠️ حذف الشهر وحده يقسم — حذف ملاحظةٍ (`note_deleted`) لا ينهي إدخالاً
         $current = $events->takeUntil(fn (Activity $a) => $a->event === self::EVENT_DELETED);
 
         return [$current->values(), $events->slice($current->count())->values()];

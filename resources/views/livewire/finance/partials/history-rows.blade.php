@@ -7,12 +7,15 @@
             ? \App\Support\Finance\FinanceHistory::splitAtDeletion($events)
             : [collect(), $events];
         $total = $events->count();
+        // «الأصل» من أقدم **تصحيح أرقام** — أحداث الملاحظات لا تحمل أرقام الشهر
+        $originEvent = $current->where('event', \App\Support\Finance\FinanceHistory::EVENT_CORRECTED)->last();
+        $showOrigin  = $originEvent !== null;
     @endphp
     <tr wire:key="fin-history-{{ $key }}" x-show="open === '{{ $key }}'" style="display:none" class="bg-amber-50/50 dark:bg-amber-900/10">
         <td colspan="{{ $cols ?? 4 }}" class="px-4 py-3">
             <ol class="space-y-3">
                 @foreach($current->concat($older) as $index => $event)
-                    @if($loop->index === $current->count() && $current->isNotEmpty())
+                    @if($loop->index === $current->count() && $showOrigin)
                         @include('livewire.finance.partials.history-origin')
                     @endif
                     <li class="flex gap-3 text-xs">
@@ -29,9 +32,11 @@
                                     <span class="ms-1 rounded bg-amber-200/70 dark:bg-amber-800/50 px-1.5 py-0.5 font-medium text-amber-800 dark:text-amber-200">{{ __('home.fin_history_latest') }}</span>
                                 @endif
                             </p>
-                            <p class="mt-1 text-zinc-700 dark:text-zinc-200">
-                                <span class="text-zinc-400">{{ __('home.fin_reason_label') }}:</span> {{ $event->properties['reason'] ?? '' }}
-                            </p>
+                            @if(($event->properties['reason'] ?? '') !== '')
+                                <p class="mt-1 text-zinc-700 dark:text-zinc-200">
+                                    <span class="text-zinc-400">{{ __('home.fin_reason_label') }}:</span> {{ $event->properties['reason'] }}
+                                </p>
+                            @endif
                             <ul class="mt-1 space-y-0.5">
                                 @foreach(\App\Support\Finance\FinanceHistory::changes($event) as $change)
                                     <li class="text-zinc-600 dark:text-zinc-300">
@@ -49,7 +54,7 @@
                         </div>
                     </li>
                 @endforeach
-                @if($current->isNotEmpty() && $older->isEmpty())
+                @if($showOrigin && $older->isEmpty())
                     @include('livewire.finance.partials.history-origin')
                 @endif
             </ol>

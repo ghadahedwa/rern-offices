@@ -7,6 +7,7 @@ use App\Models\FinanceAccount;
 use App\Models\FinanceAttachment;
 use App\Models\FinanceMonth;
 use App\Models\FinanceMonthItem;
+use App\Models\FinanceNote;
 use App\Models\FinancePaymentOrder;
 use App\Support\ArabicDigits;
 use App\Support\Finance\AmountInWords;
@@ -93,6 +94,9 @@ class MonthEntry extends Component
     public bool $ledger = false;
 
     public string $income = '';
+
+    /** ملاحظة اختيارية مع الإدخال (المرحلة و) — الإدخال وحده، والتصحيح يدير الملاحظات من صفحة الحساب */
+    public string $note = '';
 
     public string $expense = '';
 
@@ -378,7 +382,9 @@ class MonthEntry extends Component
 
     protected function rules(): array
     {
-        $reason = $this->editingId ? ['reason' => ['required', 'string', 'min:5', 'max:1000']] : [];
+        $reason = $this->editingId
+            ? ['reason' => ['required', 'string', 'min:5', 'max:1000']]
+            : ['note' => ['nullable', 'string', 'max:'.FinanceNote::MAX_LENGTH]];
 
         // أبنية المحاكم: كل عنصرٍ إلزامي (الصفر مسموح) — والإجمالي يُحسب بعد التحقق
         $amount = match (true) {
@@ -545,6 +551,15 @@ class MonthEntry extends Component
 
                 foreach ($this->items as $itemId => $value) {
                     $record->items()->create(['court_building_item_id' => $itemId, 'amount' => (int) $value]);
+                }
+
+                if (($body = trim($this->note)) !== '') {
+                    FinanceNote::create([
+                        'finance_account_id' => $account->id,
+                        'month'              => $month->toDateString(),
+                        'body'               => $body,
+                        'created_by'         => auth()->id(),
+                    ]);
                 }
 
                 foreach ($this->noOrder ? [] : array_values($this->orders) as $i => $order) {

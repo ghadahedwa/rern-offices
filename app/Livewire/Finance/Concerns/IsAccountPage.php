@@ -4,6 +4,7 @@ namespace App\Livewire\Finance\Concerns;
 
 use App\Models\FinanceAccount;
 use App\Models\FinanceMonth;
+use App\Models\FinanceNote;
 use App\Support\Finance\FinanceCalendar;
 use App\Support\Finance\FinanceHistory;
 use Carbon\CarbonImmutable;
@@ -43,7 +44,140 @@ trait IsAccountPage
     public string $openingReason = '';
     public bool $correctingOpening = false;
 
+    // ── الملاحظات (المرحلة و) ──
+    /** مسوّدة ملاحظةٍ جديدة لكل شهر: ['Y-m' => '…'] */
+    public array $noteDrafts = [];
+
+    #[Locked]
+    public ?int $editingNoteId = null;
+
+    public string $editingNoteBody = '';
+
+    /** ملاحظةٌ مرشّحة للحذف — المودال المشترك نفسه بلا خانة سبب */
+    #[Locked]
+    public ?int $deletingNoteId = null;
+
     abstract protected function accountKey(): string;
+
+    /** الشهر من مفتاح الرابط `Y-m` — التالف null */
+    protected static function monthFromKey(string $key): ?CarbonImmutable
+    {
+        if (! preg_match('/^\d{4}-\d{2}$/', $key)) {
+            return null;
+        }
+
+        return CarbonImmutable::createFromFormat('!Y-m', $key) ?: null;
+    }
+
+    protected function noteRules(string $field): array
+    {
+        return [$field => ['required', 'string', 'max:'.FinanceNote::MAX_LENGTH]];
+    }
+
+    public function addNote(string $key): void
+    {
+        $account = FinanceAccount::byKey($this->accountKey());
+        $month   = self::monthFromKey($key);
+
+        abort_unless($month && FinanceNote::canAdd(auth()->user(), $account, $month), 403);
+
+        $body = trim((string) ($this->noteDrafts[$key] ?? ''));
+        $this->noteDrafts[$key] = $body;
+        $this->validate(
+            $this->noteRules("noteDrafts.$key"),
+            ["noteDrafts.$key.required" => __('home.fin_note_required')],
+        );
+
+        FinanceNote::create([
+            'finance_account_id' => $account->id,
+            'month'              => $month->toDateString(),
+            'body'               => $body,
+            'created_by'         => auth()->id(),
+        ]);
+
+        unset($this->noteDrafts[$key]);
+    }
+
+    protected function noteOf(int $id): FinanceNote
+    {
+        // ⚠️ معرّفٌ من المتصفح: ملاحظة حسابٍ آخر لا تُفتح من صفحة هذا الحساب
+        $note = FinanceNote::with('account')
+            ->whereKey($id)
+            ->whereHas('account', fn ($q) => $q->where('key', $this->accountKey()))
+            ->first();
+        abort_if($note === null, 404);
+
+        return $note;
+    }
+
+    public function startEditNote(int $id): void
+    {
+        $note = $this->noteOf($id);
+        abort_unless($note->canBeEditedBy(auth()->user()), 403);
+
+        $this->editingNoteId   = $note->id;
+        $this->editingNoteBody = $note->body;
+        $this->resetErrorBag();
+    }
+
+    public function cancelEditNote(): void
+    {
+        $this->editingNoteId   = null;
+        $this->editingNoteBody = '';
+    }
+
+    /** ⚠️ الصلاحية تُفحص من جديد: الشهر قد يُقفل والتعديل مفتوح، فيصير لصاحب `finance.edit` وحده */
+    public function saveNote(): void
+    {
+        if ($this->editingNoteId === null) {
+            return;
+        }
+
+        $note = $this->noteOf($this->editingNoteId);
+        abort_unless($note->canBeEditedBy(auth()->user()), 403);
+
+        $this->editingNoteBody = trim($this->editingNoteBody);
+        $this->validate($this->noteRules('editingNoteBody'), ['editingNoteBody.required' => __('home.fin_note_required')]);
+
+        if ($note->body !== $this->editingNoteBody) {
+            DB::transaction(function () use ($note) {
+                if ($note->isLocked()) {
+                    FinanceHistory::recordNote(FinanceHistory::EVENT_NOTE_EDITED, $note->account, $note->month, $note->body, $this->editingNoteBody);
+                }
+                $note->update(['body' => $this->editingNoteBody]);
+            });
+        }
+
+        $this->cancelEditNote();
+    }
+
+    public function confirmDeleteNote(int $id): void
+    {
+        $note = $this->noteOf($id);
+        abort_unless($note->canBeDeletedBy(auth()->user()), 403);
+
+        $this->deletingId      = null;
+        $this->deletingNoteId  = $note->id;
+        $this->deletingLabel   = \Illuminate\Support\Str::limit($note->body, 80);
+        $this->deletingWarning = '';
+        $this->showDelete      = true;
+    }
+
+    protected function deleteNote(): void
+    {
+        $note = $this->noteOf($this->deletingNoteId);
+        abort_unless($note->canBeDeletedBy(auth()->user()), 403);
+
+        DB::transaction(function () use ($note) {
+            if ($note->isLocked()) {
+                FinanceHistory::recordNote(FinanceHistory::EVENT_NOTE_DELETED, $note->account, $note->month, $note->body, null);
+            }
+            $note->delete();
+        });
+
+        $this->showDelete     = false;
+        $this->deletingNoteId = null;
+    }
 
     protected static function openingDigits(string $value): string
     {
@@ -184,6 +318,7 @@ trait IsAccountPage
         $last    = $this->lastMonth($account);
         abort_unless($last && $last->id === $id, 403);
 
+        $this->deletingNoteId  = null;
         $this->deletingId      = $id;
         $this->deletingLabel   = FinanceCalendar::monthLabel(CarbonImmutable::parse($last->month));
         $this->deletingWarning = __('home.fin_delete_warning');
@@ -199,6 +334,12 @@ trait IsAccountPage
      */
     public function deleteRow(): void
     {
+        if ($this->showDelete && $this->deletingNoteId !== null) {
+            $this->deleteNote();
+
+            return;
+        }
+
         if (! $this->showDelete || $this->deletingId === null) {
             return;
         }
@@ -266,6 +407,8 @@ trait IsAccountPage
             'lastId'     => null,
             'canCorrect' => false,
             'canDelete'  => false,
+            'notes'      => collect(),
+            'noteAdd'    => [],
         ];
 
         if ($account->acceptsEntry()) {
@@ -300,6 +443,17 @@ trait IsAccountPage
             }
 
             $data['rows']       = $rows;
+
+            // الملاحظات بشهرها، وهل يُضيف المستخدم على كل صفّ معروض (الحارس نفسه في addNote)
+            $data['notes'] = FinanceNote::where('finance_account_id', $account->id)
+                ->whereBetween('month', [$months[0]->toDateString(), end($months)->toDateString().' 23:59:59'])
+                ->with('author')
+                ->orderBy('id')
+                ->get()
+                ->groupBy(fn (FinanceNote $n) => $n->month->format('Y-m'));
+            foreach ($rows as $row) {
+                $data['noteAdd'][$row['month']->format('Y-m')] = FinanceNote::canAdd(auth()->user(), $account, $row['month']);
+            }
             $data['later']      = $later ? [
                 'count' => count($later),
                 'from'  => FinanceCalendar::monthLabel($later[0]),

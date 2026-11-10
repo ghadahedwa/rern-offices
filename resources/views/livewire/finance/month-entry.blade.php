@@ -275,6 +275,15 @@
             </div>
         </div>
 
+        {{-- ملاحظة اختيارية مع الإدخال — تُقفل مع الشهر، فلا يعود إليها صاحب الإدخال وحده بعد الحفظ --}}
+        @unless($record)
+            <div class="px-6 py-4 border-t border-zinc-100 dark:border-zinc-800 space-y-1">
+                <label class="block text-sm font-medium text-zinc-700 dark:text-zinc-300">{{ __('home.fin_note_optional') }}</label>
+                <textarea wire:model="note" rows="2" class="{{ $inp }}" placeholder="{{ __('home.fin_note_placeholder') }}"></textarea>
+                @error('note') <p class="text-red-500 text-xs">{{ $message }}</p> @enderror
+            </div>
+        @endunless
+
         {{-- سبب التصحيح — إجباري ويُحفظ في السجلّ عند الشهر (قرار العميل) --}}
         @if($record)
             <div class="px-6 py-4 border-t border-zinc-100 dark:border-zinc-800 space-y-1">

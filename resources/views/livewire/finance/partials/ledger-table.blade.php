@@ -17,13 +17,14 @@
                 <th class="px-3 py-3 font-medium sm:w-[14%] max-sm:hidden">{{ __('home.fin_entered_by') }}</th>
             </tr>
         </thead>
-        <tbody class="divide-y divide-zinc-100 dark:divide-zinc-700" x-data="{ open: null }">
+        <tbody class="divide-y divide-zinc-100 dark:divide-zinc-700" x-data="{ open: null, notesOpen: null }">
             @if($showOpening)
                 @php $key = \App\Support\Finance\FinanceHistory::OPENING; $events = $history->get($key, collect()); $record = null; @endphp
                 <tr wire:key="fin-row-opening" class="bg-zinc-50/60 dark:bg-zinc-800/30">
                     <td class="px-4 py-3 text-xs text-zinc-600 dark:text-zinc-300" colspan="4">
                         <span class="inline-flex items-center gap-1.5">{{ __('home.fin_opening_row') }} {!! $lockIcon !!}</span>
                         @include('livewire.finance.partials.history-badge')
+@include('livewire.finance.partials.notes-button')
                     </td>
                     <td class="px-3 py-3"><span dir="ltr" class="font-semibold text-zinc-700 dark:text-zinc-200">{{ number_format($account->opening_balance) }}</span></td>
                     <td class="px-3 py-3 max-sm:hidden"></td>
@@ -64,6 +65,7 @@
                     </tr>
                 @endif
                 @include('livewire.finance.partials.history-rows')
+@include('livewire.finance.partials.notes-rows')
             @endif
 
             @foreach($rows as $row)
@@ -78,6 +80,7 @@
                         <td class="px-4 py-3">
                             <span class="inline-flex items-center gap-1.5 font-semibold text-zinc-800 dark:text-zinc-100">{{ $row['label'] }} {!! $lockIcon !!}</span>
                             @include('livewire.finance.partials.history-badge')
+@include('livewire.finance.partials.notes-button')
                             <div class="sm:hidden mt-2 space-y-2">
                                 <p class="text-xs text-zinc-400">{{ __('home.fin_carried_in') }}: <span dir="ltr">{{ number_format($calc['carried'] ?? 0) }}</span></p>
                                 @include('livewire.finance.partials.payment-orders-cell', ['record' => $record])
@@ -98,11 +101,13 @@
                         </td>
                     </tr>
                     @include('livewire.finance.partials.history-rows')
+@include('livewire.finance.partials.notes-rows')
                 @else
                     <tr wire:key="fin-row-{{ $key }}" class="bg-[#c9a847]/10">
                         <td class="px-4 py-3 font-semibold text-zinc-800 dark:text-zinc-100">
                             {{ $row['label'] }}
                             @include('livewire.finance.partials.history-badge')
+@include('livewire.finance.partials.notes-button')
                         </td>
                         <td class="px-3 py-3" colspan="{{ $cols - 1 }}">
                             <div class="flex items-center justify-between gap-3">
@@ -117,6 +122,7 @@
                         </td>
                     </tr>
                     @include('livewire.finance.partials.history-rows')
+@include('livewire.finance.partials.notes-rows')
                 @endif
             @endforeach
 
