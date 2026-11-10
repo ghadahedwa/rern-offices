@@ -167,6 +167,10 @@ return [
         'orders.*.number'                        => 'رقم أمر الدفع',
         'reason'                                 => 'السبب',
         'deleteReason'                           => 'السبب',
+        'openingReason'                          => 'السبب',
+        'openingInput'                           => 'الرصيد الافتتاحي',
+        'income'                                 => 'الإيراد',
+        'expense'                                => 'المنصرف',
         'orders.*.issued_on'                     => 'تاريخ أمر الدفع',
         'orderFiles.*.*'                         => 'صورة أمر الدفع',
 

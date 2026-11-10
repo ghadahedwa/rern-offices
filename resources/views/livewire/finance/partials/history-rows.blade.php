@@ -9,7 +9,7 @@
         $total = $events->count();
     @endphp
     <tr wire:key="fin-history-{{ $key }}" x-show="open === '{{ $key }}'" style="display:none" class="bg-amber-50/50 dark:bg-amber-900/10">
-        <td colspan="4" class="px-4 py-3">
+        <td colspan="{{ $cols ?? 4 }}" class="px-4 py-3">
             <ol class="space-y-3">
                 @foreach($current->concat($older) as $index => $event)
                     @if($loop->index === $current->count() && $current->isNotEmpty())

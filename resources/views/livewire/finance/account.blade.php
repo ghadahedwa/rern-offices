@@ -19,8 +19,15 @@
     </div>
 
     @if($account->acceptsEntry())
+        @if($account->needsOpening())
+            @include('livewire.finance.partials.ledger-opening')
+        @endif
+
         {{-- ── الملخّص: إجمالي السنة + الشهر التالي ── --}}
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            @if($account->isLedger())
+                @include('livewire.finance.partials.ledger-summary')
+            @else
             <div class="sm:col-span-2 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-sm p-5">
                 <p class="text-xs text-zinc-500 dark:text-zinc-400">
                     {{ __('home.fin_year_total_label') }} {{ \App\Support\Finance\FinanceCalendar::fiscalYearLabel($year) }}
@@ -41,6 +48,7 @@
                     <span class="shrink-0">{{ __('home.fin_entered_of', ['entered' => $entered, 'count' => $monthCount]) }}</span>
                 </div>
             </div>
+            @endif
 
             <div class="rounded-xl border border-[#c9a847]/50 bg-[#c9a847]/10 p-5 flex flex-col justify-between gap-3">
                 <div>
@@ -73,6 +81,9 @@
              @keydown.escape.window="closeViewer()"
              @keydown.right.window="file && step(-1)"
              @keydown.left.window="file && step(1)">
+        @if($account->isLedger())
+            @include('livewire.finance.partials.ledger-table')
+        @else
         <div class="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-sm overflow-hidden">
             <table class="w-full text-sm text-right sm:table-fixed">
                 <thead class="bg-zinc-50 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 text-xs">
@@ -184,6 +195,7 @@
                 </tbody>
             </table>
         </div>
+        @endif
 
         <div x-show="file" x-transition.opacity style="display:none; z-index:9999;"
              class="fixed inset-0 flex flex-col bg-black/90">

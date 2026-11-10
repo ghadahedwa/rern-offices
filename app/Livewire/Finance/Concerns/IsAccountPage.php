@@ -8,7 +8,9 @@ use App\Support\Finance\FinanceCalendar;
 use App\Support\Finance\FinanceHistory;
 use Carbon\CarbonImmutable;
 use Flux\Flux;
+use App\Support\Finance\TelecomLedger;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Locked;
 use Livewire\Attributes\Url;
 
@@ -36,7 +38,117 @@ trait IsAccountPage
     /** سبب الحذف — إجباري كالتصحيح، ويبقى في السجلّ بعد زوال الشهر */
     public string $deleteReason = '';
 
+    // ── اتصالات: الرصيد الافتتاحي ──
+    public string $openingInput = '';
+    public string $openingReason = '';
+    public bool $correctingOpening = false;
+
     abstract protected function accountKey(): string;
+
+    protected static function openingDigits(string $value): string
+    {
+        return preg_replace('/[\s,٬،]/u', '', \App\Support\ArabicDigits::toLatin(trim($value))) ?? '';
+    }
+
+    /**
+     * يُكتب **مرة واحدة** بـ`finance.create` ويُقفل كالشهر (قرار المستخدمة). ⚠️ الحارسان في
+     * الإجراء: الصلاحية، و«لم يُكتب بعد» تحت قفل الحساب — نداءٌ ثانٍ لا يستبدل رصيداً قائماً.
+     */
+    public function saveOpening(): void
+    {
+        abort_unless(auth()->user()?->can('finance.create'), 403);
+
+        $this->openingInput = self::openingDigits($this->openingInput);
+        $this->validate(
+            ['openingInput' => ['required', 'regex:/^\d{1,12}$/']],
+            ['openingInput.required' => __('home.fin_amount_invalid'), 'openingInput.regex' => __('home.fin_amount_invalid')],
+        );
+
+        $saved = DB::transaction(function () {
+            $account = FinanceAccount::where('key', $this->accountKey())->lockForUpdate()->firstOrFail();
+            abort_unless($account->isLedger(), 404);
+
+            if ($account->opening_balance !== null) {
+                return false;
+            }
+
+            $account->update([
+                'opening_balance' => (int) $this->openingInput,
+                'opening_set_by'  => auth()->id(),
+                'opening_set_at'  => now(),
+            ]);
+
+            return true;
+        });
+
+        $this->openingInput = '';
+        Flux::toast(
+            variant: $saved ? 'success' : 'danger',
+            text: __($saved ? 'home.fin_opening_saved' : 'home.fin_opening_already_set'),
+        );
+    }
+
+    public function startOpeningCorrection(): void
+    {
+        abort_unless(auth()->user()?->can('finance.edit'), 403);
+
+        $this->openingInput      = (string) FinanceAccount::byKey($this->accountKey())->opening_balance;
+        $this->openingReason     = '';
+        $this->correctingOpening = true;
+        $this->resetErrorBag();
+    }
+
+    /**
+     * تصحيح الرصيد الافتتاحي — بسببٍ وسجلّ كالشهر. ⚠️ يغيّر مرحَّل الشهور كلها، فيُرفض إن صار
+     * أي شهرٍ سالباً، والرسالة تسمّيه.
+     */
+    public function correctOpening(): void
+    {
+        abort_unless(auth()->user()?->can('finance.edit'), 403);
+
+        $this->openingInput  = self::openingDigits($this->openingInput);
+        $this->openingReason = trim($this->openingReason);
+        $this->validate(
+            ['openingInput' => ['required', 'regex:/^\d{1,12}$/'], 'openingReason' => ['required', 'string', 'min:5', 'max:1000']],
+            [
+                'openingInput.required'  => __('home.fin_amount_invalid'),
+                'openingInput.regex'     => __('home.fin_amount_invalid'),
+                'openingReason.required' => __('home.fin_reason_required'),
+                'openingReason.min'      => __('home.fin_reason_required'),
+            ],
+        );
+
+        DB::transaction(function () {
+            $account = FinanceAccount::where('key', $this->accountKey())->lockForUpdate()->firstOrFail();
+            abort_unless($account->isLedger() && $account->opening_balance !== null, 404);
+
+            $old = (int) $account->opening_balance;
+            $new = (int) $this->openingInput;
+
+            if ($old === $new) {
+                throw ValidationException::withMessages(['openingReason' => __('home.fin_correction_unchanged')]);
+            }
+
+            $negative = TelecomLedger::firstNegative($account, [], $new);
+            if ($negative) {
+                throw ValidationException::withMessages(['openingInput' => __('home.fin_correction_negative', [
+                    'month'   => FinanceCalendar::monthLabel($negative['month']),
+                    'balance' => number_format($negative['balance']),
+                ])]);
+            }
+
+            FinanceHistory::record(
+                FinanceHistory::EVENT_CORRECTED, $account, FinanceHistory::OPENING, $this->openingReason,
+                ['amount' => $old, 'orders' => []], ['amount' => $new, 'orders' => []],
+            );
+            $account->update(['opening_balance' => $new]);
+        });
+
+        $this->correctingOpening = false;
+        $this->openingInput      = '';
+        $this->openingReason     = '';
+        Flux::toast(variant: 'success', text: __('home.fin_opening_corrected'));
+    }
 
     public function mount(): void
     {
@@ -200,9 +312,23 @@ trait IsAccountPage
             $data['yearFrom']   = FinanceCalendar::monthLabel($months[0]);
             $data['yearTo']     = FinanceCalendar::monthLabel(end($months));
             $data['partial']    = count($months) < 12;
+
+            if ($account->isLedger()) {
+                // السلسلة كلها لا شهور السنة وحدها — مرحَّل يوليو من يونيو السنة السابقة
+                $chain = TelecomLedger::chain($account);
+                $data['ledger']        = $chain;
+                $data['yearIncome']    = $records->sum('income');
+                $data['yearExpense']   = $records->sum('amount');
+                $data['balanceNow']    = $chain ? end($chain)['balance'] : $account->opening_balance;
+                $data['balanceAfter']  = $chain ? FinanceCalendar::monthLabel(end($chain)['month']) : null;
+                $data['openingBy']     = $account->openingSetter?->name;
+                // صفّ الافتتاحي في جدول سنته الأولى وحدها
+                $data['showOpening']   = $account->opening_balance !== null && $months[0]->lessThanOrEqualTo(FinanceCalendar::firstMonth());
+                $data['canSetOpening'] = $account->needsOpening() && auth()->user()->can('finance.create');
+            }
             $data['nextMonth']  = $next;
             $data['nextDue']    = $nextDue;
-            $data['canEnter']   = auth()->user()->can('finance.create') && $nextDue;
+            $data['canEnter']   = auth()->user()->can('finance.create') && $nextDue && ! $account->needsOpening();
             $data['history']    = FinanceHistory::forAccount($account);
             $data['lastId']     = $this->lastMonth($account)?->id;
             $data['canCorrect'] = auth()->user()->can('finance.edit');

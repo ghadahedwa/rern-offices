@@ -8,7 +8,7 @@
                 @include('livewire.finance.partials.attachment-links', ['order' => $order])
                 <div class="text-xs min-w-0">
                     <p class="text-zinc-800 dark:text-zinc-100">{{ __('home.fin_order_number_short', ['number' => $order->number]) }}</p>
-                    <p class="text-zinc-500 dark:text-zinc-400"><span dir="ltr" class="inline-block">{{ $order->issued_on->format('Y-m-d') }}</span></p>
+                    <p class="text-zinc-500 dark:text-zinc-400"><span dir="ltr" class="inline-block whitespace-nowrap">{{ $order->issued_on->format('Y-m-d') }}</span></p>
                 </div>
             </div>
         @endforeach

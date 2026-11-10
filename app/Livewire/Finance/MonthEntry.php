@@ -12,6 +12,7 @@ use App\Support\ArabicDigits;
 use App\Support\Finance\AmountInWords;
 use App\Support\Finance\FinanceCalendar;
 use App\Support\Finance\FinanceHistory;
+use App\Support\Finance\TelecomLedger;
 use App\Support\LocalTime;
 use Carbon\CarbonImmutable;
 use Flux\Flux;
@@ -87,6 +88,14 @@ class MonthEntry extends Component
     /** قيمة كل عنصر بمعرّفه: [id => '…'] — الإجمالي يُحسب منها لا يُكتب */
     public array $items = [];
 
+    /** اتصالات: الحساب ذو الرصيد — إيراد ومنصرف، و`amount` يصير المنصرف بعد التحقق */
+    #[Locked]
+    public bool $ledger = false;
+
+    public string $income = '';
+
+    public string $expense = '';
+
     /** مسارات خُزِّنت في هذا الحفظ — تُحذف إن تراجعت المعاملة */
     protected array $storedPaths = [];
 
@@ -98,6 +107,7 @@ class MonthEntry extends Component
         abort_unless($model->acceptsEntry(), 404);
 
         $this->accountKey = $model->key;
+        $this->ledger     = $model->isLedger();
 
         if ($period !== null) {
             $this->loadForCorrection($model, $period);
@@ -106,7 +116,8 @@ class MonthEntry extends Component
         }
 
         $next = FinanceCalendar::nextMonth($model);
-        $this->month = FinanceCalendar::isDue($next) ? $next->toDateString() : null;
+        // اتصالات بلا رصيدٍ افتتاحي: لا شهر يُفتح — الصفحة تردّه إلى صفحة الحساب ليكتبه
+        $this->month = FinanceCalendar::isDue($next) && ! $model->needsOpening() ? $next->toDateString() : null;
 
         $this->orders     = [['number' => '', 'issued_on' => '']];
         $this->orderFiles = [[]];
@@ -135,6 +146,11 @@ class MonthEntry extends Component
         $this->month     = $month->toDateString();
         $this->amount    = (string) $record->amount;
         $this->noOrder   = $record->paymentOrders->isEmpty();
+
+        if ($this->ledger) {
+            $this->income  = (string) (int) $record->income;
+            $this->expense = (string) $record->amount;
+        }
 
         $this->orders = $record->paymentOrders->map(fn (FinancePaymentOrder $o) => [
             'id'        => $o->id,
@@ -267,6 +283,11 @@ class MonthEntry extends Component
      */
     public function amountValue(): ?int
     {
+        // اتصالات: «المبلغ» المنصرف — ما يغطيه أمر الدفع، وصفرُه يُسقط أمر الدفع
+        if ($this->ledger) {
+            return self::parseAmount($this->expense);
+        }
+
         if ($this->itemIds) {
             $values = array_filter(
                 array_map(fn ($id) => $this->itemValue($id), $this->itemIds),
@@ -285,9 +306,61 @@ class MonthEntry extends Component
 
     protected function itemValue(int|string $id): ?int
     {
-        $digits = self::normalizeAmount((string) ($this->items[$id] ?? ''));
+        return self::parseAmount((string) ($this->items[$id] ?? ''));
+    }
+
+    protected static function parseAmount(string $value): ?int
+    {
+        $digits = self::normalizeAmount($value);
 
         return preg_match('/^\d{1,12}$/', $digits) ? (int) $digits : null;
+    }
+
+    public function updatedExpense(): void
+    {
+        $this->updatedAmount();
+    }
+
+    /**
+     * اتصالات: المرحَّل إلى هذا الشهر — رصيد ما قبله. للإدخال رصيد آخر شهر، وللتصحيح
+     * رصيد ما قبل الشهر نفسه في السلسلة.
+     */
+    protected function carriedIn(FinanceAccount $account): int
+    {
+        return $this->editingId
+            ? TelecomLedger::carriedInto($account, CarbonImmutable::parse($this->month))
+            : TelecomLedger::closingBalance($account);
+    }
+
+    /**
+     * ⚠️ **الرصيد لا يكون سالباً** (قرار العميل) — إدخالاً: المنصرف ≤ المرحَّل + الإيراد؛
+     *    وتصحيحاً: السلسلة كلها بعد القيم الجديدة، والرسالة تسمّي أول شهرٍ يصير سالباً.
+     */
+    protected function guardNegative(FinanceAccount $account): void
+    {
+        $income  = (int) $this->income;
+        $expense = (int) $this->expense;
+
+        if (! $this->editingId) {
+            $available = $this->carriedIn($account) + $income;
+            if ($expense > $available) {
+                throw ValidationException::withMessages([
+                    'expense' => __('home.fin_expense_over_available', ['available' => number_format($available)]),
+                ]);
+            }
+
+            return;
+        }
+
+        $negative = TelecomLedger::firstNegative($account, [$this->editingId => ['income' => $income, 'expense' => $expense]]);
+        if ($negative) {
+            throw ValidationException::withMessages([
+                'expense' => __('home.fin_correction_negative', [
+                    'month'   => FinanceCalendar::monthLabel($negative['month']),
+                    'balance' => number_format($negative['balance']),
+                ]),
+            ]);
+        }
     }
 
     /** المبلغ تغيّر عن الصفر ← يعود أمر الدفع إجبارياً */
@@ -308,9 +381,11 @@ class MonthEntry extends Component
         $reason = $this->editingId ? ['reason' => ['required', 'string', 'min:5', 'max:1000']] : [];
 
         // أبنية المحاكم: كل عنصرٍ إلزامي (الصفر مسموح) — والإجمالي يُحسب بعد التحقق
-        $amount = $this->itemIds
-            ? ['items' => ['required', 'array'], 'items.*' => ['required', 'regex:/^\d{1,12}$/']]
-            : ['amount' => ['required', 'regex:/^\d{1,12}$/']];
+        $amount = match (true) {
+            $this->ledger => ['income' => ['required', 'regex:/^\d{1,12}$/'], 'expense' => ['required', 'regex:/^\d{1,12}$/']],
+            (bool) $this->itemIds => ['items' => ['required', 'array'], 'items.*' => ['required', 'regex:/^\d{1,12}$/']],
+            default => ['amount' => ['required', 'regex:/^\d{1,12}$/']],
+        };
 
         if ($this->noOrder) {
             return $amount + $reason;
@@ -335,6 +410,10 @@ class MonthEntry extends Component
         return [
             'amount.required'       => __('home.fin_amount_invalid'),
             'amount.regex'          => __('home.fin_amount_invalid'),
+            'income.required'       => __('home.fin_amount_invalid'),
+            'income.regex'          => __('home.fin_amount_invalid'),
+            'expense.required'      => __('home.fin_amount_invalid'),
+            'expense.regex'         => __('home.fin_amount_invalid'),
             'items.*.required'      => __('home.fin_item_required'),
             'items.*.regex'         => __('home.fin_amount_invalid'),
             'orders.*.number.regex' => __('home.fin_order_number_digits'),
@@ -350,8 +429,10 @@ class MonthEntry extends Component
         abort_unless(auth()->user()?->can($this->editingId ? 'finance.edit' : 'finance.create'), 403);
         abort_if($this->month === null, 404);
 
-        $this->amount = self::normalizeAmount($this->amount);
-        $this->reason = trim($this->reason);
+        $this->amount  = self::normalizeAmount($this->amount);
+        $this->income  = self::normalizeAmount($this->income);
+        $this->expense = self::normalizeAmount($this->expense);
+        $this->reason  = trim($this->reason);
 
         // ⚠️ العناصر من `itemIds` المقفولة لا من مفاتيح ما وصل — مفتاحٌ مدسوس لا يُحفظ،
         //    وعنصرٌ حُذف مفتاحه من المتصفح يبقى مطلوباً
@@ -375,6 +456,12 @@ class MonthEntry extends Component
 
         if ($this->itemIds) {
             $this->amount = (string) array_sum(array_map('intval', $this->items));
+        }
+
+        if ($this->ledger) {
+            $this->amount = $this->expense;
+            // فحصٌ مبكر للمراجعة — ويُعاد داخل معاملة الحفظ بعد قفل الحساب
+            $this->guardNegative($this->account());
         }
 
         // ⚠️ في الإجراء لا في القالب: الخانة تظهر للصفر وحده، والقيمة تصل من المتصفح
@@ -443,10 +530,16 @@ class MonthEntry extends Component
                     return false;
                 }
 
+                if ($this->ledger) {
+                    // ⚠️ يُعاد هنا تحت القفل: تصحيحٌ لشهرٍ سابق في الأثناء يغيّر المرحَّل
+                    $this->guardNegative($account->fresh());
+                }
+
                 $record = FinanceMonth::create([
                     'finance_account_id' => $account->id,
                     'month'              => $month->toDateString(),
                     'amount'             => (int) $this->amount,
+                    'income'             => $this->ledger ? (int) $this->income : null,
                     'created_by'         => auth()->id(),
                 ]);
 
@@ -513,6 +606,9 @@ class MonthEntry extends Component
 
         try {
             $result = DB::transaction(function () use ($account, $month) {
+                // قفل الحساب أولاً (ترتيب الإدخال والحذف نفسه) — فحص السالب يقرأ السلسلة كلها
+                FinanceAccount::whereKey($account->id)->lockForUpdate()->first();
+
                 $record = FinanceMonth::whereKey($this->editingId)
                     ->where('finance_account_id', $account->id)
                     ->lockForUpdate()
@@ -527,7 +623,14 @@ class MonthEntry extends Component
                 $added   = 0;
                 $removed = 0;
 
-                $record->update(['amount' => (int) $this->amount]);
+                if ($this->ledger) {
+                    $this->guardNegative($account->fresh());
+                }
+
+                $record->update([
+                    'amount' => (int) $this->amount,
+                    'income' => $this->ledger ? (int) $this->income : $record->income,
+                ]);
 
                 // العناصر: قيمٌ لعناصر الشهر نفسه (`itemIds` من الصفّ عند الفتح)
                 foreach ($this->items as $itemId => $value) {
@@ -619,6 +722,32 @@ class MonthEntry extends Component
         );
     }
 
+    /**
+     * مربع الحساب في الفورم (يتحدّث مع الكتابة): المرحَّل + الإيراد = المتاح − المنصرف = الرصيد.
+     * القيمة غير الصالحة صفرٌ في العرض وحده — التحقق يرفضها عند المراجعة.
+     */
+    protected function ledgerCalc(FinanceAccount $account): array
+    {
+        $month   = CarbonImmutable::parse($this->month);
+        $carried = $this->carriedIn($account);
+        $income  = self::parseAmount($this->income) ?? 0;
+        $expense = self::parseAmount($this->expense) ?? 0;
+
+        $previous = $month->subMonth();
+
+        return [
+            'carriedFrom' => $previous->lessThan(FinanceCalendar::firstMonth())
+                ? __('home.fin_opening_balance')
+                : FinanceCalendar::monthLabel($previous),
+            'carried'     => $carried,
+            'income'      => $income,
+            'available'   => $carried + $income,
+            'expense'     => $expense,
+            'balance'     => $carried + $income - $expense,
+            'nextLabel'   => FinanceCalendar::monthLabel($month->addMonth()),
+        ];
+    }
+
     /** المبلغ «بعيد» عن الشهر السابق إن تجاوز أضعافه أو نزل عن جزئه هذا */
     public const AMOUNT_JUMP_FACTOR = 3;
 
@@ -708,6 +837,8 @@ class MonthEntry extends Component
             'amountWords' => $amount !== null ? AmountInWords::pounds($amount) : null,
             'warnings'    => $this->reviewWarnings($account, $amount),
             'record'      => $record,
+            'needsOpening' => $account->needsOpening(),
+            'ledgerCalc'  => $this->ledger && $this->month ? $this->ledgerCalc($account) : null,
             // بترتيب `itemIds` (ترتيب العناصر وقت فتح الفورم)
             'itemRows'    => $this->itemIds
                 ? CourtBuildingItem::whereIn('id', $this->itemIds)->get()->keyBy('id')

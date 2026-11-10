@@ -13,11 +13,13 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  */
 class FinanceMonth extends Model
 {
-    protected $fillable = ['finance_account_id', 'month', 'amount', 'created_by'];
+    /** `amount`: المبلغ · إجمالي العناصر (أبنية المحاكم) · **المنصرف** (اتصالات، و`income` إيراده) */
+    protected $fillable = ['finance_account_id', 'month', 'amount', 'income', 'created_by'];
 
     protected $casts = [
         'month'  => 'date',
         'amount' => 'integer',
+        'income' => 'integer',
     ];
 
     public function account(): BelongsTo

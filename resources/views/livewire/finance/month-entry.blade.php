@@ -25,7 +25,13 @@
     @if(! $monthLabel)
         {{-- الشهر التالي لم يبدأ بعد --}}
         <div class="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-sm p-8 text-center">
-            <p class="text-sm text-zinc-600 dark:text-zinc-300">{{ __('home.fin_entry_not_due', ['month' => $nextLabel]) }}</p>
+            @if($needsOpening)
+                {{-- اتصالات: الرصيد الافتتاحي يُكتب في صفحة الحساب قبل أول شهر --}}
+                <p class="text-sm text-zinc-600 dark:text-zinc-300">{{ __('home.fin_opening_needed_first') }}</p>
+                <a href="{{ $pageUrl }}" wire:navigate class="inline-block mt-3 text-sm font-medium text-[#b8962e] hover:text-[#c9a847]">{{ __('home.fin_opening_go') }}</a>
+            @else
+                <p class="text-sm text-zinc-600 dark:text-zinc-300">{{ __('home.fin_entry_not_due', ['month' => $nextLabel]) }}</p>
+            @endif
         </div>
     @else
 
@@ -44,10 +50,50 @@
             @endif
         </div>
 
-        @php $itemized = $itemRows->isNotEmpty(); @endphp
-        <div class="grid grid-cols-1 {{ $itemized ? 'md:grid-cols-5' : 'md:grid-cols-2' }} max-md:divide-y md:divide-x md:divide-x-reverse divide-zinc-100 dark:divide-zinc-800">
+        @php $itemized = $itemRows->isNotEmpty(); $wide = $itemized || $ledger; @endphp
+        <div class="grid grid-cols-1 {{ $wide ? 'md:grid-cols-5' : 'md:grid-cols-2' }} max-md:divide-y md:divide-x md:divide-x-reverse divide-zinc-100 dark:divide-zinc-800">
 
-            @if($itemized)
+            @if($ledger)
+            {{-- اتصالات: الإيراد والمنصرف، وتحتهما الحساب حيّاً — والسالب أحمر يُرفض (نموذج 2026-11-10) --}}
+            @php
+                $c = $ledgerCalc;
+                $negative = $c['balance'] < 0;
+                $numIn = 'w-full rounded-lg px-4 py-2.5 font-bold text-left text-zinc-800 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-[#c9a847]';
+                $digitsOnly = "this.value = this.value.replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d)).replace(/[۰-۹]/g, d => '۰۱۲۳۴۵۶۷۸۹'.indexOf(d)).replace(/[^0-9.,٬،]/g, '')";
+            @endphp
+            <div class="p-6 md:col-span-3 space-y-5">
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">{{ __('home.fin_income') }} <span class="text-red-500">*</span></label>
+                        <input type="text" inputmode="numeric" dir="ltr" autocomplete="off" oninput="{{ $digitsOnly }}"
+                               wire:model.live.debounce.400ms="income" style="font-size: 1.4rem"
+                               class="{{ $numIn }} {{ $errors->has('income') ? 'border-2 border-red-300 bg-red-50/40 dark:bg-red-900/20' : 'border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-800' }}" />
+                        @error('income') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">{{ __('home.fin_expense') }} <span class="text-red-500">*</span></label>
+                        <input type="text" inputmode="numeric" dir="ltr" autocomplete="off" oninput="{{ $digitsOnly }}"
+                               wire:model.live.debounce.400ms="expense" style="font-size: 1.4rem"
+                               class="{{ $numIn }} {{ $negative || $errors->has('expense') ? 'border-2 border-red-300 bg-red-50/40 dark:bg-red-900/20' : 'border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-800' }}" />
+                    </div>
+                </div>
+
+                <div class="rounded-lg border border-zinc-200 dark:border-zinc-700 overflow-hidden text-sm">
+                    <div class="flex justify-between px-4 py-2 bg-zinc-50 dark:bg-zinc-800/60"><span class="text-zinc-500">{{ __('home.fin_carried_from', ['from' => $c['carriedFrom']]) }}</span><span dir="ltr" class="font-semibold text-zinc-700 dark:text-zinc-200">{{ number_format($c['carried']) }}</span></div>
+                    <div class="flex justify-between px-4 py-2"><span class="text-zinc-500">+ {{ __('home.fin_income') }}</span><span dir="ltr" class="font-semibold text-emerald-700 dark:text-emerald-400">{{ number_format($c['income']) }}</span></div>
+                    <div class="flex justify-between px-4 py-2 border-t border-dashed border-zinc-200 dark:border-zinc-700"><span class="text-zinc-500">= {{ __('home.fin_available') }}</span><span dir="ltr" class="font-semibold text-zinc-800 dark:text-zinc-100">{{ number_format($c['available']) }}</span></div>
+                    <div class="flex justify-between px-4 py-2"><span class="text-zinc-500">− {{ __('home.fin_expense') }}</span><span dir="ltr" class="font-semibold text-red-600 dark:text-red-400">{{ number_format($c['expense']) }}</span></div>
+                    <div class="flex justify-between items-center px-4 py-3 border-t {{ $negative ? 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800' : 'bg-[#c9a847]/10 border-[#c9a847]/40' }}">
+                        <span class="font-semibold {{ $negative ? 'text-red-700 dark:text-red-300' : 'text-zinc-700 dark:text-zinc-200' }}">{{ __('home.fin_balance_to', ['month' => $c['nextLabel']]) }}</span>
+                        <span dir="ltr" class="font-bold {{ $negative ? 'text-red-700 dark:text-red-300' : 'text-zinc-800 dark:text-zinc-100' }}" style="font-size: 1.4rem">{{ number_format($c['balance']) }}</span>
+                    </div>
+                </div>
+                @if($negative)
+                    <p class="text-xs text-red-600 dark:text-red-400 -mt-3">{{ __('home.fin_expense_over_available', ['available' => number_format($c['available'])]) }}</p>
+                @endif
+                @error('expense') <p class="text-red-500 text-xs -mt-3">{{ $message }}</p> @enderror
+            </div>
+            @elseif($itemized)
             {{-- أبنية المحاكم: العناصر تحت بعضها والإجمالي يُحسب أسفلها (نموذج 2026-11-08) --}}
             <div class="p-6 md:col-span-3">
                 <div class="flex flex-wrap items-baseline justify-between gap-2 mb-3">
@@ -102,10 +148,11 @@
             @endif
 
             {{-- أوامر الدفع --}}
-            <div class="p-6 space-y-4 {{ $itemized ? 'md:col-span-2' : '' }}">
+            <div class="p-6 space-y-4 {{ $wide ? 'md:col-span-2' : '' }}">
                 <p class="text-sm font-medium text-zinc-700 dark:text-zinc-300">
                     {{ __('home.fin_payment_order') }} @unless($noOrder)<span class="text-red-500">*</span>@endunless
                     @if($itemized)<span class="block text-xs font-normal text-zinc-400 mt-0.5">{{ __('home.fin_order_covers_total') }}</span>@endif
+                    @if($ledger)<span class="block text-xs font-normal text-zinc-400 mt-0.5">{{ __('home.fin_order_covers_expense') }}</span>@endif
                 </p>
 
                 {{-- شهرٌ بلا حركة: مبلغه صفر وقد لا يصدر له أمر دفع (قرار المستخدمة) --}}
@@ -260,12 +307,30 @@
             <div class="w-full max-w-md max-h-[90vh] overflow-y-auto bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl">
                 <div class="px-6 pt-6 pb-4 text-center">
                     <p class="text-sm text-zinc-500 dark:text-zinc-400">{{ __($record ? 'home.fin_correction_confirm_title' : 'home.fin_confirm_title', ['month' => $monthLabel]) }}</p>
+                    @if($ledger)
+                        {{-- اتصالات: الإيراد والمنصرف (القديم مشطوباً في التصحيح) ثم الرصيد المرحَّل بالتفقيط --}}
+                        <div class="mt-4 grid grid-cols-2 gap-3 text-sm">
+                            @foreach(['income' => [(int) $income, $record ? (int) $record->income : null, 'text-emerald-700 dark:text-emerald-400'], 'expense' => [(int) $expense, $record?->amount, 'text-red-600 dark:text-red-400']] as $field => [$value, $old, $color])
+                                <div class="rounded-lg bg-zinc-50 dark:bg-zinc-800 px-3 py-2">
+                                    <p class="text-xs text-zinc-500">{{ __('home.fin_'.$field) }}</p>
+                                    @if($old !== null && $old !== $value)
+                                        <p dir="ltr" class="line-through text-zinc-400 text-xs">{{ number_format($old) }}</p>
+                                    @endif
+                                    <p dir="ltr" class="font-bold {{ $color }}" style="font-size: 1.2rem">{{ number_format($value) }}</p>
+                                </div>
+                            @endforeach
+                        </div>
+                        <p class="text-xs text-zinc-500 mt-4">{{ __('home.fin_balance_to', ['month' => $ledgerCalc['nextLabel']]) }}</p>
+                        <p class="font-bold text-zinc-800 dark:text-zinc-100 mt-1" dir="ltr" style="font-size: 2rem; line-height: 2.5rem">{{ number_format($ledgerCalc['balance']) }}</p>
+                        <p class="text-sm text-[#b8962e] dark:text-[#d8b856] mt-2">{{ \App\Support\Finance\AmountInWords::pounds(max(0, $ledgerCalc['balance'])) }}</p>
+                    @else
                     @if($record && $record->amount !== $amountValue)
                         {{-- المبلغ قبل التصحيح مشطوباً — ليرى المصحِّح الفرق قبل الحفظ --}}
                         <p class="text-zinc-400 line-through mt-3" dir="ltr" style="font-size: 1.1rem">{{ number_format($record->amount) }}</p>
                     @endif
                     <p class="font-bold text-zinc-800 dark:text-zinc-100 mt-3" dir="ltr" style="font-size: 2.25rem; line-height: 2.75rem">{{ number_format($amountValue) }}</p>
                     <p class="text-sm text-[#b8962e] dark:text-[#d8b856] mt-2">{{ $amountWords }}</p>
+                    @endif
                 </div>
 
                 @if($itemized)

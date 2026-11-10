@@ -22,6 +22,9 @@ class FinanceHistory
     public const EVENT_CORRECTED = 'corrected';
     public const EVENT_DELETED   = 'deleted';
 
+    /** مفتاح «الشهر» لسجلّ الرصيد الافتتاحي (اتصالات) — يُعرض تحت صفّه في الجدول */
+    public const OPENING = 'opening';
+
     /** صورة الشهر كما تُحفظ في السجلّ — أرقامٌ لا نصوص، فالعرض يُترجمها وقتها */
     public static function snapshot(FinanceMonth $month): array
     {
@@ -30,7 +33,10 @@ class FinanceHistory
         // أبنية المحاكم: قيمة كل عنصر **باسمه وقت الحفظ** — اسمٌ يُعدَّل لاحقاً لا يغيّر التاريخ
         $items = $month->items->mapWithKeys(fn ($i) => [$i->item->name => (int) $i->amount])->all();
 
-        return ($items ? ['items' => $items] : []) + [
+        // اتصالات: الإيراد بجوار `amount` (المنصرف)
+        $income = $month->income !== null ? ['income' => (int) $month->income] : [];
+
+        return ($items ? ['items' => $items] : []) + $income + [
             'amount' => (int) $month->amount,
             'orders' => $month->paymentOrders->map(fn ($order) => [
                 'number'    => $order->number,
@@ -43,7 +49,7 @@ class FinanceHistory
     public static function record(
         string $event,
         FinanceAccount $account,
-        CarbonInterface $month,
+        CarbonInterface|string $month,
         string $reason,
         array $before,
         ?array $after,
@@ -55,7 +61,7 @@ class FinanceHistory
             ->event($event)
             ->withProperties([
                 'account'        => $account->key,
-                'month'          => $month->format('Y-m'),
+                'month'          => is_string($month) ? $month : $month->format('Y-m'),
                 'reason'         => $reason,
                 'before'         => $before,
                 'after'          => $after,
@@ -107,9 +113,22 @@ class FinanceHistory
             }
         }
 
+        if (array_key_exists('income', $after) && ($before['income'] ?? null) !== $after['income']) {
+            $lines[] = [
+                'label' => __('home.fin_income'),
+                'from'  => number_format((int) ($before['income'] ?? 0)),
+                'to'    => number_format((int) $after['income']),
+            ];
+        }
+
         if (($before['amount'] ?? null) !== ($after['amount'] ?? null)) {
             $lines[] = [
-                'label' => isset($after['items']) ? __('home.fin_total_label') : __('home.fin_amount_label'),
+                'label' => match (true) {
+                    ($activity->properties['month'] ?? '') === self::OPENING => __('home.fin_opening_balance'),
+                    isset($after['items'])  => __('home.fin_total_label'),
+                    isset($after['income']) => __('home.fin_expense'),
+                    default                 => __('home.fin_amount_label'),
+                },
                 'from'  => number_format((int) ($before['amount'] ?? 0)),
                 'to'    => number_format((int) ($after['amount'] ?? 0)),
             ];
@@ -155,6 +174,13 @@ class FinanceHistory
 
     protected static function describe(array $snapshot): string
     {
+        if (array_key_exists('income', $snapshot)) {
+            return __('home.fin_history_ledger', [
+                'income'  => number_format((int) $snapshot['income']),
+                'expense' => number_format((int) ($snapshot['amount'] ?? 0)),
+            ]).' — '.self::describeOrders($snapshot['orders'] ?? []);
+        }
+
         return number_format((int) ($snapshot['amount'] ?? 0)).' — '.self::describeOrders($snapshot['orders'] ?? []);
     }
 

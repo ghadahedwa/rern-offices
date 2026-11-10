@@ -26,11 +26,18 @@ class FinanceAccount extends Model
     public const KIND_ITEMIZED = 'itemized';
     public const KIND_LEDGER   = 'ledger';
 
-    protected $fillable = ['key', 'kind', 'order'];
+    protected $fillable = ['key', 'kind', 'order', 'opening_balance', 'opening_set_by', 'opening_set_at'];
 
     protected $casts = [
-        'order' => 'integer',
+        'order'           => 'integer',
+        'opening_balance' => 'integer',
+        'opening_set_at'  => 'datetime',
     ];
+
+    public function openingSetter(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(User::class, 'opening_set_by');
+    }
 
     public static function byKey(string $key): self
     {
@@ -60,12 +67,22 @@ class FinanceAccount extends Model
     }
 
     /**
-     * هل يُدخَل هذا الحساب في المرحلة الحالية؟ — المبلغ الواحد (ب) وأبنية المحاكم (د).
-     * اتصالات (هـ) تُضاف بشكلها.
+     * هل يُدخَل هذا الحساب؟ — الأشكال الثلاثة: المبلغ الواحد (ب) · أبنية المحاكم (د) · اتصالات (هـ).
      */
     public function acceptsEntry(): bool
     {
-        return in_array($this->kind, [self::KIND_SINGLE, self::KIND_ITEMIZED], true);
+        return in_array($this->kind, [self::KIND_SINGLE, self::KIND_ITEMIZED, self::KIND_LEDGER], true);
+    }
+
+    public function isLedger(): bool
+    {
+        return $this->kind === self::KIND_LEDGER;
+    }
+
+    /** اتصالات: لا شهر قبل الرصيد الافتتاحي — عليه تُحسب الأرصدة كلها */
+    public function needsOpening(): bool
+    {
+        return $this->isLedger() && $this->opening_balance === null;
     }
 
     public function isItemized(): bool
