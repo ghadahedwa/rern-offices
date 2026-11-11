@@ -17,7 +17,7 @@
         @endforeach
     </select>
     @error('role') <p class="text-red-500 text-xs">{{ $message }}</p> @enderror
-    @if($role && ! $needsGovernorates && ! $needsEntity && ! $needsWarehouses)
+    @if($role && ! $needsGovernorates && ! $needsEntity && ! $needsWarehouses && ! $needsFinanceUnits)
         <p class="text-xs text-zinc-500 dark:text-zinc-400">{{ __('home.user_scope_none_hint') }}</p>
     @endif
 </div>
@@ -97,6 +97,31 @@
                 @enderror
             @endif
         @endunless
+    </div>
+@endif
+
+{{-- نطاق الشئون المالية: الوحدات الحسابية — يرى ويُدخل ما رُبط به وحده.
+     ⚠️ القائمة الفارغة «لا وحدة»، والتحقق يمنع حفظها لمن دوره يستلزمها. --}}
+@if($needsFinanceUnits)
+    <div class="flex flex-col gap-3 rounded-xl border border-[#c9a847]/40 bg-[#c9a847]/5 dark:bg-[#c9a847]/10 p-4">
+        <div>
+            <label class="text-sm font-medium text-zinc-700 dark:text-zinc-300">{{ __('home.fin_units_title') }} <span class="text-red-500">*</span></label>
+            <p class="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">{{ __('home.user_finance_units_hint') }}</p>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+            @foreach($financeUnits as $unit)
+                <label wire:key="fin-unit-{{ $unit->id }}" class="flex items-center gap-3 p-3 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 hover:bg-zinc-50 dark:hover:bg-zinc-800 cursor-pointer transition">
+                    <input type="checkbox" wire:model="selectedFinanceUnits"
+                           value="{{ $unit->id }}"
+                           class="w-4 h-4 shrink-0 rounded accent-[#c9a847]" />
+                    <span class="text-sm text-zinc-700 dark:text-zinc-300">{{ $unit->name }}</span>
+                    @unless($unit->is_active)
+                        <span class="ms-auto text-[11px] px-2 py-0.5 rounded-full bg-zinc-200 dark:bg-zinc-700 text-zinc-600 dark:text-zinc-300">{{ __('home.ct_status_inactive_badge') }}</span>
+                    @endunless
+                </label>
+            @endforeach
+        </div>
+        @error('selectedFinanceUnits') <p class="text-red-500 text-xs">{{ $message }}</p> @enderror
     </div>
 @endif
 

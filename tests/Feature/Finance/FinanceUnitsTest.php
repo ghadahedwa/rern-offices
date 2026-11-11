@@ -142,3 +142,117 @@ it('لا يعطِّل ولا يحذف آخر وحدة مفعَّلة', function 
     Livewire::test(UnitIndex::class)->call('askDelete', $last->id)->call('deleteRow');
     expect(FinanceUnit::find($last->id))->not->toBeNull();
 });
+
+// ── ربط المستخدم بالوحدات (فورم المستخدم) ─────────────────
+
+function financeRole(string $name, array $abilities): Role
+{
+    foreach ($abilities as $ability) {
+        Permission::findOrCreate($ability, 'web');
+    }
+
+    return tap(Role::findOrCreate($name, 'web'))->givePermissionTo($abilities);
+}
+
+function unitId(string $city): int
+{
+    return FinanceUnit::where('name', 'like', '%'.$city)->value('id');
+}
+
+it('يُظهر قسم الوحدات لدور الوحدات وحده لا للحسابات العامة', function () {
+    $this->actingAs(unitsSuperAdmin());
+    financeRole('وحدة حسابية', ['finance.units.view', 'finance.units.create']);
+    financeRole('حسابات عامة فقط', ['finance.accounts.view', 'finance.accounts.create']);
+
+    Livewire::test(\App\Livewire\Users\Create::class)
+        ->set('role', 'وحدة حسابية')
+        ->assertViewHas('needsFinanceUnits', true)
+        ->assertSee('الوحدة الحسابية بالأقصر')
+        ->set('role', 'حسابات عامة فقط')
+        ->assertViewHas('needsFinanceUnits', false);
+});
+
+it('يحفظ المستخدم بوحدته ويرفض حفظه بلا وحدة', function () {
+    $this->actingAs(unitsSuperAdmin());
+    financeRole('وحدة حسابية', ['finance.units.view', 'finance.units.create']);
+
+    $form = fn () => Livewire::test(\App\Livewire\Users\Create::class)
+        ->set('name', 'مدخل طنطا')
+        ->set('username', 'tanta'.uniqid())
+        ->set('password', '1234')
+        ->set('password_confirmation', '1234')
+        ->set('role', 'وحدة حسابية');
+
+    $form()->call('save')->assertHasErrors('selectedFinanceUnits');
+
+    $form()->set('selectedFinanceUnits', [(string) unitId('بطنطا')])->call('save')->assertHasNoErrors();
+
+    expect(User::where('name', 'مدخل طنطا')->sole()->financeUnits->pluck('id')->all())->toBe([unitId('بطنطا')]);
+});
+
+it('يرفض معرّف وحدةٍ غير موجودة', function () {
+    $this->actingAs(unitsSuperAdmin());
+    financeRole('وحدة حسابية', ['finance.units.view']);
+
+    Livewire::test(\App\Livewire\Users\Create::class)
+        ->set('name', 'س')->set('username', 'x'.uniqid())
+        ->set('password', '1234')->set('password_confirmation', '1234')
+        ->set('role', 'وحدة حسابية')
+        ->set('selectedFinanceUnits', ['99999'])
+        ->call('save')
+        ->assertHasErrors('selectedFinanceUnits.0');
+});
+
+it('يحمّل وحدات المستخدم في التعديل ويحدّثها', function () {
+    $this->actingAs(unitsSuperAdmin());
+    financeRole('وحدة حسابية', ['finance.units.view', 'finance.units.create']);
+
+    $user = tap(User::factory()->create())->assignRole('وحدة حسابية');
+    $user->financeUnits()->sync([unitId('بأسيوط')]);
+
+    Livewire::test(\App\Livewire\Users\Edit::class, ['user' => $user])
+        ->assertSet('selectedFinanceUnits', [(string) unitId('بأسيوط')])
+        ->set('selectedFinanceUnits', [(string) unitId('بأسيوط'), (string) unitId('بالأقصر')])
+        ->call('save')
+        ->assertHasNoErrors();
+
+    expect($user->fresh()->financeUnits->pluck('id')->sort()->values()->all())
+        ->toBe(collect([unitId('بأسيوط'), unitId('بالأقصر')])->sort()->values()->all());
+});
+
+it('يُفرّغ الوحدات حين يتغيّر الدور إلى دورٍ بلا وحدات — ولو أرسلها المتصفح', function () {
+    $this->actingAs(unitsSuperAdmin());
+    financeRole('وحدة حسابية', ['finance.units.view']);
+    financeRole('حسابات عامة فقط', ['finance.accounts.view']);
+
+    $user = tap(User::factory()->create())->assignRole('وحدة حسابية');
+    $user->financeUnits()->sync([unitId('بالقاهرة')]);
+
+    Livewire::test(\App\Livewire\Users\Edit::class, ['user' => $user])
+        ->set('role', 'حسابات عامة فقط')
+        ->assertSet('selectedFinanceUnits', [])
+        ->set('selectedFinanceUnits', [(string) unitId('بالقاهرة')])
+        ->call('save')
+        ->assertHasNoErrors();
+
+    expect($user->fresh()->financeUnits)->toHaveCount(0);
+});
+
+it('يرتّب منسدلة الأدوار بترتيب إنشائها في فورم المستخدم وصفحة المستخدمين', function () {
+    $this->actingAs(unitsSuperAdmin());
+    Role::findOrCreate('وحدة حسابية', 'web');
+    Role::findOrCreate('الحسابات العامة', 'web');
+    Role::findOrCreate('عرض فقط', 'web');
+
+    $expected = Role::orderBy('id')->pluck('name')->all();
+
+    Livewire::test(\App\Livewire\Users\Index::class)
+        ->assertViewHas('roles', fn ($roles) => $roles->pluck('name')->all() === $expected);
+
+    Livewire::test(\App\Livewire\Users\Create::class)
+        ->assertViewHas('roles', fn ($roles) => $roles->pluck('name')->all() === $expected);
+
+    $user = User::factory()->create();
+    Livewire::test(\App\Livewire\Users\Edit::class, ['user' => $user])
+        ->assertViewHas('roles', fn ($roles) => $roles->pluck('name')->all() === $expected);
+});

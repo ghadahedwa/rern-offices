@@ -216,6 +216,20 @@ class PermissionGroups
         return self::hasBranch($permissionNames, self::ENTITY_BRANCH);
     }
 
+    /**
+     * هل يستلزم هذا الدور اختيار وحدات حسابية؟ — صلاحيتا الوحدات بعينهما لا عنوان الفرع:
+     * صاحب الحسابات العامة وحدها لا وحدة له.
+     */
+    public static function needsFinanceUnits(iterable $permissionNames): bool
+    {
+        $names = is_array($permissionNames) ? $permissionNames : iterator_to_array($permissionNames);
+
+        return (bool) array_intersect($names, [
+            \App\Support\Finance\FinanceAccess::UNITS_VIEW,
+            \App\Support\Finance\FinanceAccess::UNITS_CREATE,
+        ]);
+    }
+
     /** هل يستلزم هذا الدور اختيار مخازن؟ */
     public static function needsWarehouses(iterable $permissionNames): bool
     {

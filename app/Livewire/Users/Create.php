@@ -70,6 +70,7 @@ class Create extends Component
         $user->assignRole($this->role);
         $user->governorates()->sync($scope['governorates']);
         $user->warehouses()->sync($scope['warehouses']);
+        $user->financeUnits()->sync($scope['finance_units']);
 
         Flux::toast(variant: 'success', text: __('home.user_created'));
         $this->redirect(route('users.index'), navigate: true);
@@ -78,12 +79,14 @@ class Create extends Component
     public function render()
     {
         return view('livewire.users.create', [
-            'roles'              => Role::all(),
+            'roles'              => Role::orderBy('id')->get(), // بترتيب إنشاء الأدوار — ومنسدلة صفحة المستخدمين مثلها
             'governorates'       => Governorate::orderBy('order')->orderBy('id')->get(),
             'entities'           => CorrespondenceEntity::where('is_active', true)->orderBy('order')->orderBy('id')->get(),
             'needsGovernorates'  => PermissionGroups::needsGovernorates($this->rolePermissionNames()),
             'needsEntity'        => PermissionGroups::needsEntity($this->rolePermissionNames()),
             'needsWarehouses'    => PermissionGroups::needsWarehouses($this->rolePermissionNames()),
+            'needsFinanceUnits'  => PermissionGroups::needsFinanceUnits($this->rolePermissionNames()),
+            'financeUnits'       => \App\Models\FinanceUnit::ordered()->get(),
             'warehouses'         => Warehouse::ordered()->get(),
         ]);
     }

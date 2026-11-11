@@ -225,6 +225,7 @@ return [
 
         'monthFile' => 'ملف الكشف',
         'selectedWarehouses' => 'المخازن',
+        'selectedFinanceUnits' => 'الوحدات الحسابية',
         // المراسلات — أطراف
         'code'                  => 'الرمز',
         'order'                 => 'الترتيب',

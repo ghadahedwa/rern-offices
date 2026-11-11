@@ -60,6 +60,7 @@ class Edit extends Component
         $this->job_title                = $user->job_title ?? '';
         $this->selectedWarehouses       = $user->warehouses->pluck('id')->map(fn ($id) => (string) $id)->toArray();
         $this->allWarehouses            = (bool) $user->all_warehouses;
+        $this->selectedFinanceUnits     = $user->financeUnits->pluck('id')->map(fn ($id) => (string) $id)->toArray();
 
         // ⚠️ الظِلّ يُبدأ بالمحفوظ لا فارغاً: بدونه يُحسب كل محافظات المستخدم
         //    «مضافةً» عند أول تعديل، فتُعاد إليه مخازنُ نزعها بيده من قبل.
@@ -102,6 +103,7 @@ class Edit extends Component
         $this->user->syncRoles([$this->role]);
         $this->user->governorates()->sync($scope['governorates']);
         $this->user->warehouses()->sync($scope['warehouses']);
+        $this->user->financeUnits()->sync($scope['finance_units']);
 
         Flux::toast(variant: 'success', text: __('home.user_updated'));
         $this->redirect(route('users.index'), navigate: true);
@@ -110,12 +112,14 @@ class Edit extends Component
     public function render()
     {
         return view('livewire.users.edit', [
-            'roles'             => Role::all(),
+            'roles'             => Role::orderBy('id')->get(), // بترتيب إنشاء الأدوار — ومنسدلة صفحة المستخدمين مثلها
             'governorates'      => Governorate::orderBy('order')->orderBy('id')->get(),
             'entities'          => CorrespondenceEntity::where('is_active', true)->orderBy('order')->orderBy('id')->get(),
             'needsGovernorates' => PermissionGroups::needsGovernorates($this->rolePermissionNames()),
             'needsEntity'       => PermissionGroups::needsEntity($this->rolePermissionNames()),
             'needsWarehouses'   => PermissionGroups::needsWarehouses($this->rolePermissionNames()),
+            'needsFinanceUnits' => PermissionGroups::needsFinanceUnits($this->rolePermissionNames()),
+            'financeUnits'      => \App\Models\FinanceUnit::ordered()->get(),
             'warehouses'        => Warehouse::ordered()->get(),
         ]);
     }

@@ -26,6 +26,11 @@ class FinanceUnit extends Model
         'order'     => 'integer',
     ];
 
+    public function users(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
+    {
+        return $this->belongsToMany(User::class);
+    }
+
     /** ترتيب العرض الواحد: الترتيب اليدوي ثم الاسم */
     public function scopeOrdered(Builder $query): Builder
     {

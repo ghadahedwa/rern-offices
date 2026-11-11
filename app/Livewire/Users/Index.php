@@ -61,7 +61,8 @@ class Index extends Component
 
     public function render()
     {
-        $roles    = Role::orderBy('name')->get();
+        // بترتيب إنشاء الأدوار كفورم المستخدم (طلب المستخدمة) — لا أبجدياً
+        $roles    = Role::orderBy('id')->get();
         $entities = \App\Models\CorrespondenceEntity::orderBy('order')->orderBy('id')->get();
 
         $users = User::with(['roles', 'governorates', 'correspondenceEntity'])

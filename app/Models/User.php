@@ -60,6 +60,12 @@ class User extends Authenticatable
         return $this->belongsToMany(Governorate::class);
     }
 
+    /** الوحدات الحسابية المربوط بها — يرى ويُدخل ما فيها وحده (الشئون المالية) */
+    public function financeUnits(): BelongsToMany
+    {
+        return $this->belongsToMany(FinanceUnit::class);
+    }
+
     /**
      * نطاق المخازن — نظير «المحافظات» للمقرات: نطاق على المستخدم لا على الدور.
      *

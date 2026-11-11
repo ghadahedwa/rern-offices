@@ -24,6 +24,9 @@ trait ResolvesRoleScopes
      */
     public array $governoratesShadow = [];
 
+    /** نطاق الشئون المالية: الوحدات الحسابية — الفارغة تعني «لا وحدة»، فتُمنع لمن دوره يستلزمها */
+    public array $selectedFinanceUnits = [];
+
     /** أسماء صلاحيات الدور المختار. */
     public function rolePermissionNames(): array
     {
@@ -57,6 +60,10 @@ trait ResolvesRoleScopes
         if (! PermissionGroups::needsWarehouses($permissions)) {
             $this->selectedWarehouses = [];
             $this->allWarehouses      = false;
+        }
+
+        if (! PermissionGroups::needsFinanceUnits($permissions)) {
+            $this->selectedFinanceUnits = [];
         }
     }
 
@@ -121,6 +128,12 @@ trait ResolvesRoleScopes
             'selectedWarehouses' => PermissionGroups::needsWarehouses($permissions) && ! $this->allWarehouses
                 ? ['required', 'array', 'min:1']
                 : ['array'],
+
+            // ⚠️ بالسبب نفسه: مستخدم وحدةٍ بلا وحدة لا يرى شيئاً ولا يعرف لماذا
+            'selectedFinanceUnits'   => PermissionGroups::needsFinanceUnits($permissions)
+                ? ['required', 'array', 'min:1']
+                : ['array'],
+            'selectedFinanceUnits.*' => ['integer', 'exists:finance_units,id'],
         ];
     }
 
@@ -150,6 +163,9 @@ trait ResolvesRoleScopes
             // تظهر في الفورم حين يُنزع «الكل» فتوهم بنطاقٍ لم يُقصد
             'warehouses'     => $needsWarehouses && ! $allWarehouses ? $this->selectedWarehouses : [],
             'all_warehouses' => $allWarehouses,
+            'finance_units'  => PermissionGroups::needsFinanceUnits($permissions)
+                ? array_map('intval', $this->selectedFinanceUnits)
+                : [],
         ];
     }
 }
