@@ -8,12 +8,15 @@
     </div>
 
     <div class="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-sm p-5">
-        {{-- خمسة أعمدة من sm فأعلى (كما كانت دائماً)، وعمود واحد على الموبايل: المبالغ بعشرة أرقام تتداخل في خُمس الشاشة. --}}
+        {{-- خمسة أعمدة من sm فأعلى (كما كانت دائماً)، وعمود واحد على الموبايل: المبالغ بعشرة أرقام تتداخل في خُمس الشاشة.
+             الأيقونة فوق التسمية والرقم لا بجوارهما (طلب المستخدمة 2026-11-11): بجوارهما كانت تأخذ من عرض المبلغ
+             فتلتفّ التسمية («المطالبات / الملغاة») ويضيق الرقم. وعلى الموبايل (عمودٌ واحد بعرض الشاشة) تبقى بجوارهما
+             فلا يطول الكارت بلا داعٍ. --}}
         <div class="grid gap-4 grid-cols-1 sm:grid-cols-5">
 
             {{-- إجمالي المطالبات --}}
-            <div class="flex items-start gap-2">
-                <div class="w-8 h-8 rounded-lg bg-[#c9a847]/10 flex items-center justify-center shrink-0 mt-0.5">
+            <div class="flex sm:flex-col items-start gap-2">
+                <div class="w-8 h-8 rounded-lg bg-[#c9a847]/10 flex items-center justify-center shrink-0">
                     <flux:icon.document-text variant="outline" class="w-4 h-4 text-[#b8962e] dark:text-[#c9a847]" />
                 </div>
                 <div>
@@ -24,8 +27,8 @@
             </div>
 
             {{-- المطالبات الملغاة --}}
-            <div class="flex items-start gap-2">
-                <div class="w-8 h-8 rounded-lg bg-amber-50 dark:bg-amber-900/20 flex items-center justify-center shrink-0 mt-0.5">
+            <div class="flex sm:flex-col items-start gap-2">
+                <div class="w-8 h-8 rounded-lg bg-amber-50 dark:bg-amber-900/20 flex items-center justify-center shrink-0">
                     <flux:icon.x-circle variant="outline" class="w-4 h-4 text-amber-500" />
                 </div>
                 <div>
@@ -36,8 +39,8 @@
             </div>
 
             {{-- ما تم تحصيله --}}
-            <div class="flex items-start gap-2">
-                <div class="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 flex items-center justify-center shrink-0 mt-0.5">
+            <div class="flex sm:flex-col items-start gap-2">
+                <div class="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 flex items-center justify-center shrink-0">
                     <flux:icon.banknotes variant="outline" class="w-4 h-4 text-emerald-500" />
                 </div>
                 <div>
@@ -48,8 +51,8 @@
             </div>
 
             {{-- المديونية --}}
-            <div class="flex items-start gap-2">
-                <div class="w-8 h-8 rounded-lg {{ $claimsDebt < 0 ? 'bg-red-50 dark:bg-red-900/20' : 'bg-zinc-100 dark:bg-zinc-800' }} flex items-center justify-center shrink-0 mt-0.5">
+            <div class="flex sm:flex-col items-start gap-2">
+                <div class="w-8 h-8 rounded-lg {{ $claimsDebt < 0 ? 'bg-red-50 dark:bg-red-900/20' : 'bg-zinc-100 dark:bg-zinc-800' }} flex items-center justify-center shrink-0">
                     <flux:icon.scale variant="outline" class="w-4 h-4 {{ $claimsDebt < 0 ? 'text-red-500' : 'text-zinc-400' }}" />
                 </div>
                 <div>
@@ -60,7 +63,7 @@
             </div>
 
             {{-- نسبة التحصيل --}}
-            <div class="flex items-start gap-2">
+            <div class="flex sm:flex-col items-start gap-2">
                 @php
                     $rateColor = $claimsRate === null
                         ? 'text-zinc-400'
@@ -71,7 +74,7 @@
                         : ($claimsRate >= 80 ? 'bg-emerald-50 dark:bg-emerald-900/20'
                             : ($claimsRate >= 50 ? 'bg-amber-50 dark:bg-amber-900/20' : 'bg-red-50 dark:bg-red-900/20'));
                 @endphp
-                <div class="w-8 h-8 rounded-lg {{ $rateBg }} flex items-center justify-center shrink-0 mt-0.5">
+                <div class="w-8 h-8 rounded-lg {{ $rateBg }} flex items-center justify-center shrink-0">
                     <flux:icon.chart-pie variant="outline" class="w-4 h-4 {{ $rateColor }}" />
                 </div>
                 <div>
