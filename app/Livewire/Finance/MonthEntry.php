@@ -11,6 +11,7 @@ use App\Models\FinanceNote;
 use App\Models\FinancePaymentOrder;
 use App\Support\ArabicDigits;
 use App\Support\Finance\AmountInWords;
+use App\Support\Finance\FinanceAccess;
 use App\Support\Finance\FinanceCalendar;
 use App\Support\Finance\FinanceHistory;
 use App\Support\Finance\TelecomLedger;
@@ -105,10 +106,9 @@ class MonthEntry extends Component
 
     public function mount(string $account, ?string $period = null): void
     {
-        abort_unless(auth()->user()?->can($period === null ? 'finance.create' : 'finance.edit'), 403);
-
         $model = FinanceAccount::bySlug($account);
         abort_unless($model->acceptsEntry(), 404);
+        abort_unless($period === null ? FinanceAccess::canEnter(auth()->user(), $model) : FinanceAccess::canCorrect(auth()->user()), 403);
 
         $this->accountKey = $model->key;
         $this->ledger     = $model->isLedger();
@@ -432,7 +432,7 @@ class MonthEntry extends Component
 
     protected function validateEntry(): void
     {
-        abort_unless(auth()->user()?->can($this->editingId ? 'finance.edit' : 'finance.create'), 403);
+        abort_unless($this->editingId ? FinanceAccess::canCorrect(auth()->user()) : FinanceAccess::canEnter(auth()->user(), $this->account()), 403);
         abort_if($this->month === null, 404);
 
         $this->amount  = self::normalizeAmount($this->amount);

@@ -297,14 +297,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::livewire('professions/{profession}/edit', \App\Livewire\Contractors\Professions\Create::class)->name('professions.edit');
     });
 
-    // فرع الشئون المالية — صفحة لكل حساب. الحراسة `finance.view` في المكوّن،
+    // فرع الشئون المالية — صفحة لكل حساب. الحراسة `FinanceAccess::canView` في المكوّن،
     // و`create`/`edit`/`delete` داخل إجراءاتها (المرحلة ب فما بعد).
     // ⚠️ بلا نطاق محافظات: الأرقام للجمهورية كلها.
     Route::livewire('finance/court-buildings', \App\Livewire\Finance\CourtBuildings::class)->name('finance.court-buildings');
     Route::livewire('finance/mechanization', \App\Livewire\Finance\Mechanization::class)->name('finance.mechanization');
     Route::livewire('finance/telecom', \App\Livewire\Finance\Telecom::class)->name('finance.telecom');
     Route::livewire('finance/ministry-of-finance', \App\Livewire\Finance\MinistryOfFinance::class)->name('finance.ministry-of-finance');
-    // إدخال الشهر التالي — `finance.create` في المكوّن، والحساب بقائمةٍ بيضاء من الرابط
+    // إدخال الشهر التالي — `FinanceAccess::canEnter` في المكوّن، والحساب بقائمةٍ بيضاء من الرابط
     Route::livewire('finance/{account}/entry', \App\Livewire\Finance\MonthEntry::class)
         ->whereIn('account', ['court-buildings', 'mechanization', 'telecom', 'ministry-of-finance'])
         ->name('finance.entry');
@@ -313,7 +313,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->whereIn('account', ['court-buildings', 'mechanization', 'telecom', 'ministry-of-finance'])
         ->where('period', '\d{4}-\d{2}')
         ->name('finance.correct');
-    // صورة أمر الدفع — على القرص الخاص، بحارس `finance.view` في الكنترولر
+    // صورة أمر الدفع — على القرص الخاص، بحارس عرض حسابها في الكنترولر
     Route::get('finance/attachments/{attachment}', \App\Http\Controllers\Finance\FinanceAttachmentController::class)
         ->name('finance.attachments.show');
 
@@ -323,6 +323,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::livewire('court-building-items', \App\Livewire\Finance\CourtBuildingItems\Index::class)->name('court-building-items.index');
         Route::livewire('court-building-items/create', \App\Livewire\Finance\CourtBuildingItems\Create::class)->name('court-building-items.create');
         Route::livewire('court-building-items/{courtBuildingItem}/edit', \App\Livewire\Finance\CourtBuildingItems\Create::class)->name('court-building-items.edit');
+
+        // الوحدات الحسابية — أبنية المحاكم مجموع ما تُدخله (بالنمط والحارس نفسيهما)
+        Route::livewire('finance-units', \App\Livewire\Finance\Units\Index::class)->name('finance-units.index');
+        Route::livewire('finance-units/create', \App\Livewire\Finance\Units\Create::class)->name('finance-units.create');
+        Route::livewire('finance-units/{financeUnit}/edit', \App\Livewire\Finance\Units\Create::class)->name('finance-units.edit');
     });
 
     // العطلات الرسمية — **سوبر أدمن وحده** (قرار العميل)، أضيق من contractors.settings:

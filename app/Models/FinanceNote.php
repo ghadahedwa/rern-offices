@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\Finance\FinanceAccess;
 use App\Support\Finance\FinanceCalendar;
 use Carbon\CarbonImmutable;
 use Carbon\CarbonInterface;
@@ -12,7 +13,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * ملاحظة على شهرٍ من حساب — أكثر من واحدة للشهر، بتاريخها وكاتبها (قرار العميل).
  *
  * **تتبع قفل شهرها** (قرار المستخدمة): والشهر مفتوح (لم تُحفظ أرقامه) يكتبها صاحب
- * `finance.create` ويعدّلها ويحذفها **كاتبها وحده**؛ ولحظة حفظ الشهر تُقفل معه، فالإضافة
+ * إدخال الحساب (`FinanceAccess::canEnter`) ويعدّلها ويحذفها **كاتبها وحده**؛ ولحظة حفظ الشهر تُقفل معه، فالإضافة
  * والتعديل بـ`finance.edit` والحذف بـ`finance.delete` — ويُسجَّل ذلك في سجلّ الشهر.
  * ⚠️ الحُرّاس هنا والإجراءات تستدعيها — الزرّ المخفي لا يمنع النداء.
  */
@@ -53,7 +54,7 @@ class FinanceNote extends Model
     }
 
     /**
-     * الإضافة: شهرٌ بين أول شهرٍ والشهر التالي للإدخال (ما بعده لم يأتِ دوره)، بـ`finance.create`
+     * الإضافة: شهرٌ بين أول شهرٍ والشهر التالي للإدخال (ما بعده لم يأتِ دوره)، بإدخال الحساب
      * والشهر مفتوح، أو بـ`finance.edit` بعد قفله.
      */
     public static function canAdd(?User $user, FinanceAccount $account, CarbonInterface $month): bool
@@ -66,8 +67,8 @@ class FinanceNote extends Model
         }
 
         return self::monthIsLocked($account, $month)
-            ? $user->can('finance.edit')
-            : $user->can('finance.create');
+            ? FinanceAccess::canCorrect($user)
+            : FinanceAccess::canEnter($user, $account);
     }
 
     public function canBeEditedBy(?User $user): bool
@@ -93,6 +94,6 @@ class FinanceNote extends Model
 
         return ! $this->isLocked()
             && $this->created_by === $user->id
-            && $user->can('finance.create');
+            && FinanceAccess::canEnter($user, $this->account);
     }
 }

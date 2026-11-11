@@ -26,7 +26,7 @@ beforeEach(function () {
     $this->travelTo(CarbonImmutable::parse('2026-11-05 10:00:00', 'UTC'));
 });
 
-function courtUser(array $abilities = ['finance.view', 'finance.create', 'finance.edit', 'finance.delete']): User
+function courtUser(array $abilities = ['finance.accounts.view', 'finance.court-total.view', 'finance.accounts.create', 'finance.units.create', 'finance.edit', 'finance.delete']): User
 {
     foreach ($abilities as $ability) {
         Permission::findOrCreate($ability, 'web');

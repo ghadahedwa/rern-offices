@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\Storage;
  * صورة أمر دفع — **صورة فقط** (قرار العميل 2026-11-07: لا PDF)، حتى خمس للأمر.
  *
  * ⚠️ **القرص الخاص `finance` لا `public`** (بخلاف مرفقات المخازن): مستندٌ مالي لا يُفتح برابطٍ
- *    مباشر بلا دخول — يُقرأ عبر `FinanceAttachmentController` بحارس `finance.view`.
+ *    مباشر بلا دخول — يُقرأ عبر `FinanceAttachmentController` بحارس عرض حسابها (`FinanceAccess::canView`).
  */
 class FinanceAttachment extends Model
 {

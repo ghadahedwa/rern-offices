@@ -115,11 +115,15 @@ class PermissionGroups
         'contractors.export',
         'contractors.delete',
 
-        // الشئون المالية بخطورتها: الإدخال ثم التصحيح ثم الحذف
-        'finance.view',
-        'finance.create',
+        // الشئون المالية: العرض والإدخال لكل جزء، ثم التصحيح والحذف والتقارير (FinanceAccess::ALL)
+        'finance.accounts.view',
+        'finance.accounts.create',
+        'finance.court-total.view',
+        'finance.units.view',
+        'finance.units.create',
         'finance.edit',
         'finance.delete',
+        'finance.reports',
     ];
 
     /**

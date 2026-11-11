@@ -5,6 +5,7 @@ namespace App\Livewire\Finance\Concerns;
 use App\Models\FinanceAccount;
 use App\Models\FinanceMonth;
 use App\Models\FinanceNote;
+use App\Support\Finance\FinanceAccess;
 use App\Support\Finance\FinanceCalendar;
 use App\Support\Finance\FinanceHistory;
 use Carbon\CarbonImmutable;
@@ -19,7 +20,7 @@ use Livewire\Attributes\Url;
  * صفحة حساب مالي — الصفحات الأربع تشترك فيها، وكلٌّ يحدّد حسابه بـ`accountKey()`.
  *
  * جدول شهور **السنة المالية** المختارة (يوليو–يونيو) وإجماليها، وزرّ «إدخال»
- * على **الشهر التالي وحده** (الإدخال بترتيب الشهور) لمن يملك `finance.create`.
+ * على **الشهر التالي وحده** (الإدخال بترتيب الشهور) لمن يملك إدخال الحساب (`FinanceAccess::canEnter`).
  * الحسابان الآخران (أبنية المحاكم · اتصالات) يُفتحان للإدخال في مرحلتيهما.
  */
 trait IsAccountPage
@@ -185,12 +186,12 @@ trait IsAccountPage
     }
 
     /**
-     * يُكتب **مرة واحدة** بـ`finance.create` ويُقفل كالشهر (قرار المستخدمة). ⚠️ الحارسان في
+     * يُكتب **مرة واحدة** بإدخال الحسابات العامة ويُقفل كالشهر (قرار المستخدمة). ⚠️ الحارسان في
      * الإجراء: الصلاحية، و«لم يُكتب بعد» تحت قفل الحساب — نداءٌ ثانٍ لا يستبدل رصيداً قائماً.
      */
     public function saveOpening(): void
     {
-        abort_unless(auth()->user()?->can('finance.create'), 403);
+        abort_unless(FinanceAccess::canEnter(auth()->user(), FinanceAccount::byKey($this->accountKey())), 403);
 
         $this->openingInput = self::openingDigits($this->openingInput);
         $this->validate(
@@ -286,7 +287,7 @@ trait IsAccountPage
 
     public function mount(): void
     {
-        abort_unless(auth()->user()?->can('finance.view'), 403);
+        abort_unless(FinanceAccess::canView(auth()->user(), FinanceAccount::byKey($this->accountKey())), 403);
 
         // ⚠️ القيمة التالفة أو خارج المدى تُهمَل ولا تُخرج جدولاً فارغاً
         if ($this->year === null || ! FinanceCalendar::isValidFiscalYear($this->year)) {
@@ -478,11 +479,11 @@ trait IsAccountPage
                 $data['openingBy']     = $account->openingSetter?->name;
                 // صفّ الافتتاحي في جدول سنته الأولى وحدها
                 $data['showOpening']   = $account->opening_balance !== null && $months[0]->lessThanOrEqualTo(FinanceCalendar::firstMonth());
-                $data['canSetOpening'] = $account->needsOpening() && auth()->user()->can('finance.create');
+                $data['canSetOpening'] = $account->needsOpening() && FinanceAccess::canEnter(auth()->user(), $account);
             }
             $data['nextMonth']  = $next;
             $data['nextDue']    = $nextDue;
-            $data['canEnter']   = auth()->user()->can('finance.create') && $nextDue && ! $account->needsOpening();
+            $data['canEnter']   = FinanceAccess::canEnter(auth()->user(), $account) && $nextDue && ! $account->needsOpening();
             $data['history']    = FinanceHistory::forAccount($account);
             $data['lastId']     = $this->lastMonth($account)?->id;
             $data['canCorrect'] = auth()->user()->can('finance.edit');

@@ -170,16 +170,20 @@ return [
         'label'         => 'home.branch_finance',
         'icon'          => 'banknotes',
         'default_route' => 'finance.court-buildings',
+        // الهبوط على أول صفحةٍ يملك عرضها (الراوت => الصلاحية)
         'entries' => [
-            'finance.court-buildings' => 'finance.view',
+            'finance.court-buildings' => 'finance.court-total.view',
+            'finance.mechanization'   => 'finance.accounts.view',
         ],
         'route_patterns' => [
             'finance.*',
         ],
         'super_admin_only' => false,
-        // الإضافة والتعديل والحذف لا تفتح الفرع وحدها — تلزمها `finance.view`
+        // صلاحيات العرض وحدها تفتح الفرع (`FinanceAccess::BRANCH`) — الإدخال والتصحيح لا يفتحانه بلا عرض.
+        // ⚠️ `finance.units.view` تُضاف مع صفحات الوحدات (الدفعة الثانية): قبلها لا صفحة يهبط عليها صاحبها.
         'permissions' => [
-            'finance.view',
+            'finance.accounts.view',
+            'finance.court-total.view',
         ],
     ],
 
@@ -228,6 +232,8 @@ return [
             'attendance-statuses.*',
             // إعدادات الشئون المالية (عناصر أبنية المحاكم — قائمة مرجعية، سوبر أدمن وحده)
             'court-building-items.*',
+            // والوحدات الحسابية — ⚠️ النمط `finance-units.*` لا `finance.*` (فرع الشئون المالية)
+            'finance-units.*',
         ],
         'super_admin_only' => false,
         'permissions' => [

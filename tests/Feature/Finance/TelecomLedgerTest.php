@@ -25,7 +25,7 @@ beforeEach(function () {
     $this->travelTo(CarbonImmutable::parse('2026-11-05 10:00:00', 'UTC'));
 });
 
-function telUser(array $abilities = ['finance.view', 'finance.create', 'finance.edit', 'finance.delete']): User
+function telUser(array $abilities = ['finance.accounts.view', 'finance.court-total.view', 'finance.accounts.create', 'finance.units.create', 'finance.edit', 'finance.delete']): User
 {
     foreach ($abilities as $ability) {
         Permission::findOrCreate($ability, 'web');
@@ -90,7 +90,7 @@ it('يحفظ الرصيد الافتتاحي مرة واحدة ولا يستبد
 });
 
 it('يمنع كتابة الرصيد الافتتاحي بلا صلاحية الإدخال', function () {
-    $this->actingAs(telUser(['finance.view']));
+    $this->actingAs(telUser(['finance.accounts.view', 'finance.court-total.view']));
 
     Livewire::test(Telecom::class)->set('openingInput', '5000')->call('saveOpening')->assertForbidden();
     expect(telAccount()->opening_balance)->toBeNull();
@@ -220,7 +220,7 @@ it('يصحّح الرصيد الافتتاحي بسببٍ ويرفض ما يُن
 });
 
 it('يمنع تصحيح الرصيد الافتتاحي بلا finance.edit', function () {
-    $this->actingAs(telUser(['finance.view', 'finance.create']));
+    $this->actingAs(telUser(['finance.accounts.view', 'finance.court-total.view', 'finance.accounts.create', 'finance.units.create']));
     setOpening();
 
     Livewire::test(Telecom::class)->call('startOpeningCorrection')->assertForbidden();

@@ -26,7 +26,7 @@ beforeEach(function () {
     $this->travelTo(CarbonImmutable::parse('2026-11-05 10:00:00', 'UTC'));
 });
 
-function entryUser(array $abilities = ['finance.view', 'finance.create']): User
+function entryUser(array $abilities = ['finance.accounts.view', 'finance.court-total.view', 'finance.accounts.create', 'finance.units.create']): User
 {
     foreach ($abilities as $ability) {
         Permission::findOrCreate($ability, 'web');
@@ -219,7 +219,7 @@ it('يحسب الشهر الجاري بتوقيت القاهرة', function () {
 // ── الصلاحيات ────────────────────────────────────────────
 
 it('يمنع الإدخال عمّن لا يملك finance.create', function () {
-    $this->actingAs(entryUser(['finance.view']));
+    $this->actingAs(entryUser(['finance.accounts.view', 'finance.court-total.view']));
 
     $this->get(route('finance.entry', 'mechanization'))->assertForbidden();
 

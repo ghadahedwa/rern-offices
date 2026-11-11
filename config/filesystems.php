@@ -39,7 +39,7 @@ return [
         ],
 
         // مستندات الشئون المالية (صور أوامر الدفع) — قرصٌ خاص بلا رابط مباشر،
-        // يُقرأ عبر FinanceAttachmentController بحارس finance.view.
+        // يُقرأ عبر FinanceAttachmentController بحارس عرض حساب الصورة (FinanceAccess::canView).
         // ⚠️ منفصلٌ عن `local` عمداً: ملفات Livewire المؤقتة على `local`، فمشاركته
         //    تخلط مستنداتٍ ماليةً دائمة بملفاتٍ تُنظَّف دورياً.
         'finance' => [

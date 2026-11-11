@@ -23,7 +23,7 @@ beforeEach(function () {
     $this->travelTo(CarbonImmutable::parse('2026-11-05 10:00:00', 'UTC'));
 });
 
-function correctionUser(array $abilities = ['finance.view', 'finance.create', 'finance.edit', 'finance.delete']): User
+function correctionUser(array $abilities = ['finance.accounts.view', 'finance.court-total.view', 'finance.accounts.create', 'finance.units.create', 'finance.edit', 'finance.delete']): User
 {
     foreach ($abilities as $ability) {
         Permission::findOrCreate($ability, 'web');
@@ -66,7 +66,7 @@ it('يفتح التصحيح بالقيم المحفوظة لصاحب finance.edi
         ->assertSet('orders.0.issued_on', '2026-11-02')
         ->assertSee(__('home.fin_correction_for', ['month' => 'أكتوبر 2026']));
 
-    $this->actingAs(correctionUser(['finance.view', 'finance.create']));
+    $this->actingAs(correctionUser(['finance.accounts.view', 'finance.court-total.view', 'finance.accounts.create', 'finance.units.create']));
     $this->get(route('finance.correct', ['mechanization', '2026-10']))->assertForbidden();
 });
 
@@ -241,7 +241,7 @@ it('يصحّح بنفسه حتى بلا finance.create', function () {
     $this->actingAs(correctionUser());
     savedMonth();
 
-    $this->actingAs(correctionUser(['finance.view', 'finance.edit']));
+    $this->actingAs(correctionUser(['finance.accounts.view', 'finance.court-total.view', 'finance.edit']));
     correction()->set('amount', '1')->set('reason', 'تصحيح المبلغ')->call('save')->assertHasNoErrors();
 
     expect(FinanceMonth::sole()->amount)->toBe(1);
@@ -341,7 +341,7 @@ it('يمنع الحذف بلا finance.delete', function () {
     $this->actingAs(correctionUser());
     $month = savedMonth();
 
-    $this->actingAs(correctionUser(['finance.view', 'finance.edit']));
+    $this->actingAs(correctionUser(['finance.accounts.view', 'finance.court-total.view', 'finance.edit']));
     Livewire::test(Mechanization::class)->call('confirmDelete', $month->id)->assertForbidden();
 
     expect(FinanceMonth::count())->toBe(1);
@@ -358,7 +358,7 @@ it('يُظهر التصحيح لصاحبه، والحذف على آخر شهرٍ
         ->assertSeeHtml('confirmDelete('.$november->id.')')
         ->assertDontSeeHtml('confirmDelete('.$october->id.')');
 
-    $this->actingAs(correctionUser(['finance.view', 'finance.create']));
+    $this->actingAs(correctionUser(['finance.accounts.view', 'finance.court-total.view', 'finance.accounts.create', 'finance.units.create']));
     Livewire::test(Mechanization::class)
         ->assertDontSee(route('finance.correct', ['mechanization', '2026-10']), false)
         ->assertDontSeeHtml('confirmDelete(');
