@@ -64,10 +64,13 @@ class FinanceCalendar
         return $months;
     }
 
-    /** الشهر الذي يُدخَل بعد آخر مُدخَل — أكتوبر ٢٠٢٦ إن لم يُدخَل شيء. */
-    public static function nextMonth(FinanceAccount $account): CarbonImmutable
+    /**
+     * الشهر الذي يُدخَل بعد آخر مُدخَل — أكتوبر ٢٠٢٦ إن لم يُدخَل شيء.
+     * ⚠️ داخل دفتر الوحدة لأبنية المحاكم: كل وحدة ماشية بشهورها (قرار المستخدمة).
+     */
+    public static function nextMonth(FinanceAccount $account, ?int $unitId = null): CarbonImmutable
     {
-        $last = FinanceMonth::where('finance_account_id', $account->id)->max('month');
+        $last = FinanceMonth::where('finance_account_id', $account->id)->forUnit($unitId)->max('month');
 
         return $last
             ? CarbonImmutable::parse($last)->startOfMonth()->addMonth()

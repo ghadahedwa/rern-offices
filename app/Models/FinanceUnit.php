@@ -31,6 +31,22 @@ class FinanceUnit extends Model
         return $this->belongsToMany(User::class);
     }
 
+    /**
+     * الاسم المختصر لرأس عمودٍ ضيّق: «الوحدة الحسابية بطنطا» ← «طنطا»، و«…بالقاهرة» ← «القاهرة».
+     * اسمٌ لا يبدأ بالبادئة يُعرض كما هو.
+     */
+    public function shortName(): string
+    {
+        $prefix = 'الوحدة الحسابية ';
+        if (! str_starts_with($this->name, $prefix)) {
+            return $this->name;
+        }
+
+        $rest = trim(mb_substr($this->name, mb_strlen($prefix)));
+
+        return str_starts_with($rest, 'ب') ? mb_substr($rest, 1) : $rest;
+    }
+
     /** ترتيب العرض الواحد: الترتيب اليدوي ثم الاسم */
     public function scopeOrdered(Builder $query): Builder
     {

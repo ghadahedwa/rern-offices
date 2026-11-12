@@ -109,17 +109,13 @@ it('يحذف الوحدة غير المستعمَلة بعد التأكيد وح
 });
 
 it('لا يحذف وحدةً سُجِّل لها شهر', function () {
-    // عمود الوحدة على الشهور يُضاف في الدفعة الثانية — الحارس يصير حقيقياً لحظة إضافته
-    Schema::table(FinanceUnit::MONTHS_TABLE, function (Blueprint $table) {
-        $table->unsignedBigInteger(FinanceUnit::MONTHS_COLUMN)->nullable();
-    });
-
     $unit = FinanceUnit::where('name', 'الوحدة الحسابية بطنطا')->first();
     FinanceMonth::create([
         'finance_account_id' => FinanceAccount::byKey('court_buildings')->id,
+        'finance_unit_id'    => $unit->id,
         'month'              => '2026-10-01',
         'amount'             => 0,
-    ])->forceFill([FinanceUnit::MONTHS_COLUMN => $unit->id])->save();
+    ]);
 
     $this->actingAs(unitsSuperAdmin());
     Livewire::test(UnitIndex::class)->call('askDelete', $unit->id)->call('deleteRow');

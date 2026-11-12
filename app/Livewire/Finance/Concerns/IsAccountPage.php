@@ -5,6 +5,7 @@ namespace App\Livewire\Finance\Concerns;
 use App\Models\FinanceAccount;
 use App\Models\FinanceMonth;
 use App\Models\FinanceNote;
+use App\Models\FinanceUnit;
 use App\Support\Finance\FinanceAccess;
 use App\Support\Finance\FinanceCalendar;
 use App\Support\Finance\FinanceHistory;
@@ -25,6 +26,13 @@ use Livewire\Attributes\Url;
  */
 trait IsAccountPage
 {
+    /**
+     * وحدة الصفحة — صفحة الوحدة الحسابية (`Finance\Unit`)، وNULL للحسابات الثلاثة.
+     * ⚠️ كل استعلامٍ هنا داخل دفتر الوحدة: شهورها وآخر شهرها وملاحظاتها وسجلّها.
+     */
+    #[Locked]
+    public ?int $unitId = null;
+
     /** سنة بداية السنة المالية — تصل من الرابط فتُفحص */
     #[Url(as: 'year')]
     public ?int $year = null;
@@ -80,7 +88,7 @@ trait IsAccountPage
         $account = FinanceAccount::byKey($this->accountKey());
         $month   = self::monthFromKey($key);
 
-        abort_unless($month && FinanceNote::canAdd(auth()->user(), $account, $month), 403);
+        abort_unless($month && FinanceNote::canAdd(auth()->user(), $account, $month, $this->unit()), 403);
 
         $body = trim((string) ($this->noteDrafts[$key] ?? ''));
         $this->noteDrafts[$key] = $body;
@@ -91,6 +99,7 @@ trait IsAccountPage
 
         FinanceNote::create([
             'finance_account_id' => $account->id,
+            'finance_unit_id'    => $this->unitId,
             'month'              => $month->toDateString(),
             'body'               => $body,
             'created_by'         => auth()->id(),
@@ -105,6 +114,8 @@ trait IsAccountPage
         $note = FinanceNote::with('account')
             ->whereKey($id)
             ->whereHas('account', fn ($q) => $q->where('key', $this->accountKey()))
+            // ⚠️ وملاحظة وحدةٍ أخرى (أو الإجمالي) لا تُفتح من صفحة هذه الوحدة
+            ->when($this->unitId === null, fn ($q) => $q->whereNull('finance_unit_id'), fn ($q) => $q->where('finance_unit_id', $this->unitId))
             ->first();
         abort_if($note === null, 404);
 
@@ -143,7 +154,7 @@ trait IsAccountPage
         if ($note->body !== $this->editingNoteBody) {
             DB::transaction(function () use ($note) {
                 if ($note->isLocked()) {
-                    FinanceHistory::recordNote(FinanceHistory::EVENT_NOTE_EDITED, $note->account, $note->month, $note->body, $this->editingNoteBody);
+                    FinanceHistory::recordNote(FinanceHistory::EVENT_NOTE_EDITED, $note->account, $note->month, $note->body, $this->editingNoteBody, $note->finance_unit_id);
                 }
                 $note->update(['body' => $this->editingNoteBody]);
             });
@@ -171,7 +182,7 @@ trait IsAccountPage
 
         DB::transaction(function () use ($note) {
             if ($note->isLocked()) {
-                FinanceHistory::recordNote(FinanceHistory::EVENT_NOTE_DELETED, $note->account, $note->month, $note->body, null);
+                FinanceHistory::recordNote(FinanceHistory::EVENT_NOTE_DELETED, $note->account, $note->month, $note->body, null, $note->finance_unit_id);
             }
             $note->delete();
         });
@@ -289,6 +300,24 @@ trait IsAccountPage
     {
         abort_unless(FinanceAccess::canView(auth()->user(), FinanceAccount::byKey($this->accountKey())), 403);
 
+        $this->initYear();
+    }
+
+    protected function unit(): ?FinanceUnit
+    {
+        return $this->unitId ? FinanceUnit::find($this->unitId) : null;
+    }
+
+    /** إدخال شهرٍ جديد في دفتر الصفحة: الوحدة بربطها، والحسابات الثلاثة بصلاحيتها */
+    protected function canEnterHere(FinanceAccount $account): bool
+    {
+        $unit = $this->unit();
+
+        return $unit ? FinanceAccess::canEnterUnit(auth()->user(), $unit) : FinanceAccess::canEnter(auth()->user(), $account);
+    }
+
+    protected function initYear(): void
+    {
         // ⚠️ القيمة التالفة أو خارج المدى تُهمَل ولا تُخرج جدولاً فارغاً
         if ($this->year === null || ! FinanceCalendar::isValidFiscalYear($this->year)) {
             $this->year = FinanceCalendar::fiscalYearOf(FinanceCalendar::currentMonth());
@@ -308,7 +337,7 @@ trait IsAccountPage
      */
     protected function lastMonth(FinanceAccount $account): ?FinanceMonth
     {
-        return FinanceMonth::where('finance_account_id', $account->id)->orderByDesc('month')->first();
+        return FinanceMonth::where('finance_account_id', $account->id)->forUnit($this->unitId)->orderByDesc('month')->first();
     }
 
     public function confirmDelete(int $id): void
@@ -368,6 +397,7 @@ trait IsAccountPage
                 FinanceHistory::EVENT_DELETED, $account, $month, $this->deleteReason,
                 FinanceHistory::snapshot($last), null,
                 imagesRemoved: $last->paymentOrders->sum(fn ($o) => $o->attachments->count()),
+                unitId: $this->unitId,
             );
             $last->delete();
 
@@ -417,12 +447,13 @@ trait IsAccountPage
 
             $records = FinanceMonth::query()
                 ->where('finance_account_id', $account->id)
+                ->forUnit($this->unitId)
                 ->whereBetween('month', [$months[0]->toDateString(), end($months)->toDateString()])
                 ->with(['account', 'creator', 'paymentOrders.attachments', 'items.item'])
                 ->get()
                 ->keyBy(fn (FinanceMonth $m) => $m->month->format('Y-m'));
 
-            $next    = FinanceCalendar::nextMonth($account);
+            $next    = FinanceCalendar::nextMonth($account, $this->unitId);
             $nextDue = FinanceCalendar::isDue($next);
 
             // الجدول: المُدخَل + الشهر التالي إن بدأ — وما بعده سطرٌ واحد مطويّ
@@ -447,13 +478,14 @@ trait IsAccountPage
 
             // الملاحظات بشهرها، وهل يُضيف المستخدم على كل صفّ معروض (الحارس نفسه في addNote)
             $data['notes'] = FinanceNote::where('finance_account_id', $account->id)
+                ->when($this->unitId === null, fn ($q) => $q->whereNull('finance_unit_id'), fn ($q) => $q->where('finance_unit_id', $this->unitId))
                 ->whereBetween('month', [$months[0]->toDateString(), end($months)->toDateString().' 23:59:59'])
                 ->with('author')
                 ->orderBy('id')
                 ->get()
                 ->groupBy(fn (FinanceNote $n) => $n->month->format('Y-m'));
             foreach ($rows as $row) {
-                $data['noteAdd'][$row['month']->format('Y-m')] = FinanceNote::canAdd(auth()->user(), $account, $row['month']);
+                $data['noteAdd'][$row['month']->format('Y-m')] = FinanceNote::canAdd(auth()->user(), $account, $row['month'], $this->unit());
             }
             $data['later']      = $later ? [
                 'count' => count($later),
@@ -483,13 +515,22 @@ trait IsAccountPage
             }
             $data['nextMonth']  = $next;
             $data['nextDue']    = $nextDue;
-            $data['canEnter']   = FinanceAccess::canEnter(auth()->user(), $account) && $nextDue && ! $account->needsOpening();
-            $data['history']    = FinanceHistory::forAccount($account);
+            $data['canEnter']   = $this->canEnterHere($account) && $nextDue && ! $account->needsOpening();
+            $data['history']    = FinanceHistory::forAccount($account, $this->unitId);
             $data['lastId']     = $this->lastMonth($account)?->id;
             $data['canCorrect'] = auth()->user()->can('finance.edit');
             $data['canDelete']  = auth()->user()->can('finance.delete');
         }
 
-        return view('livewire.finance.account', $data)->title($account->label());
+        $unit = $this->unit();
+        // روابط الدفتر: الوحدة براوتاتها، والحسابات الثلاثة براوتات الحساب
+        $data['unit']       = $unit;
+        $data['pageTitle']  = $unit?->name ?? $account->label();
+        $data['entryUrl']   = $unit ? route('finance.unit-entry', $unit) : route('finance.entry', $account->slug());
+        $data['correctUrl'] = fn (FinanceMonth $m) => $unit
+            ? route('finance.unit-correct', [$unit, $m->month->format('Y-m')])
+            : route('finance.correct', [$account->slug(), $m->month->format('Y-m')]);
+
+        return view('livewire.finance.account', $data)->title($data['pageTitle']);
     }
 }

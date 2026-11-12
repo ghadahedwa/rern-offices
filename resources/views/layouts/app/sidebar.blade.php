@@ -358,6 +358,14 @@
                             {{ __('home.'.$finLabel) }}
                         </flux:sidebar.item>
                     @endforeach
+                    {{-- الوحدات الحسابية التي يفتحها المستخدم (صلاحية العرض والربط) — تحت أبنية المحاكم --}}
+                    @if(Route::has('finance.unit'))
+                        @foreach(\App\Support\Finance\FinanceAccess::viewableUnits(auth()->user()) as $finUnit)
+                            <flux:sidebar.item icon="building-office" :href="route('finance.unit', $finUnit)" :current="request()->routeIs('finance.unit*') && (int) request()->route('financeUnit')?->id === $finUnit->id" wire:navigate>
+                                {{ $finUnit->name }}
+                            </flux:sidebar.item>
+                        @endforeach
+                    @endif
                     @endif {{-- /branch: finance --}}
 
                     @if($currentBranch === 'feedback')

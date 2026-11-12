@@ -78,10 +78,13 @@ it('يفتح الصفحات الأربع لصاحب العرض باسم حساب
     }
 });
 
-it('يطلب عناصر أبنية المحاكم في فورم شهرها وحده', function () {
-    $this->actingAs(finUser(['finance.accounts.view', 'finance.court-total.view', 'finance.accounts.create', 'finance.units.create']));
+it('يطلب عناصر أبنية المحاكم في فورم شهر الوحدة وحده', function () {
+    $user = finUser(['finance.accounts.view', 'finance.accounts.create', 'finance.units.view', 'finance.units.create']);
+    $unit = \App\Models\FinanceUnit::ordered()->first();
+    $user->financeUnits()->sync([$unit->id]);
+    $this->actingAs($user);
 
-    $this->get(route('finance.entry', 'court-buildings'))->assertSee('مكاتب مميزة');
+    $this->get(route('finance.unit-entry', $unit))->assertSee('مكاتب مميزة');
     $this->get(route('finance.entry', 'mechanization'))->assertDontSee('مكاتب مميزة');
 });
 
@@ -292,13 +295,19 @@ it('يهبط صاحب الحسابات العامة وحدها على الميك
 it('يفصل إدخال الحسابات العامة عن إدخال الوحدات', function () {
     $this->actingAs(finUser(['finance.accounts.view', 'finance.accounts.create']));
 
+    $unit = \App\Models\FinanceUnit::ordered()->first();
+
     $this->get(route('finance.entry', 'mechanization'))->assertOk();
-    $this->get(route('finance.entry', 'court-buildings'))->assertForbidden();
+    $this->get(route('finance.unit-entry', $unit))->assertForbidden();
 
-    $this->actingAs(finUser(['finance.court-total.view', 'finance.units.create']));
+    $unitUser = finUser(['finance.units.view', 'finance.units.create']);
+    $unitUser->financeUnits()->sync([$unit->id]);
+    $this->actingAs($unitUser);
 
-    $this->get(route('finance.entry', 'court-buildings'))->assertOk();
+    $this->get(route('finance.unit-entry', $unit))->assertOk();
     $this->get(route('finance.entry', 'telecom'))->assertForbidden();
+    // أبنية المحاكم لا تُدخَل إلا من وحدة
+    $this->get(route('finance.entry', 'court-buildings'))->assertNotFound();
 });
 
 it('ملاحظة الشهر المفتوح بإدخال حسابها نفسه', function () {

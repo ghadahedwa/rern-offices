@@ -3,7 +3,10 @@
 namespace App\Support\Finance;
 
 use App\Models\FinanceAccount;
+use App\Models\FinanceMonth;
+use App\Models\FinanceUnit;
 use App\Models\User;
+use Illuminate\Support\Collection;
 
 /**
  * صلاحيات الشئون المالية — المصدر الواحد (ملف العميل 2026-11-11 · الدفعة الأولى).
@@ -55,14 +58,63 @@ class FinanceAccess
     }
 
     /**
-     * إدخال شهرٍ جديد (والرصيد الافتتاحي وملاحظة الشهر المفتوح).
-     *
-     * ⚠️ أبنية المحاكم بـ`units.create` **مؤقتاً** حتى تصير شهورها على الوحدات (الدفعة الثانية)
-     *    — فيُضاف هناك شرط الوحدة المربوطة.
+     * إدخال الحسابات الثلاثة (والرصيد الافتتاحي). أبنية المحاكم لا تُدخَل إلا بوحدةٍ (`canEnterUnit`)،
+     * و«الإدخال» عليها هنا لملاحظات صفحة الإجمالي وحدها: عرضه مع إدخال الوحدات.
      */
     public static function canEnter(?User $user, FinanceAccount $account): bool
     {
-        return (bool) $user?->can($account->isItemized() ? self::UNITS_CREATE : self::ACCOUNTS_CREATE);
+        return $account->isItemized()
+            ? (bool) ($user?->can(self::UNITS_CREATE) && $user->can(self::COURT_TOTAL_VIEW))
+            : (bool) $user?->can(self::ACCOUNTS_CREATE);
+    }
+
+    // ── الوحدات الحسابية: الصلاحية **و** الربط في فورم المستخدم ──
+
+    /** السوبر أدمن يرى الوحدات كلها بلا ربط — وغيره ما رُبط به وحده */
+    protected static function isLinked(User $user, FinanceUnit|int $unit): bool
+    {
+        if ($user->hasRole('super-admin')) {
+            return true;
+        }
+
+        $id = $unit instanceof FinanceUnit ? $unit->id : $unit;
+
+        return $user->financeUnits()->whereKey($id)->exists();
+    }
+
+    public static function canViewUnit(?User $user, FinanceUnit|int $unit): bool
+    {
+        return (bool) $user?->can(self::UNITS_VIEW) && self::isLinked($user, $unit);
+    }
+
+    /** ⚠️ الوحدة المعطَّلة لا تُدخل شهوراً جديدة (وتبقى شهورها تُصحَّح) */
+    public static function canEnterUnit(?User $user, FinanceUnit $unit): bool
+    {
+        return $unit->is_active
+            && (bool) $user?->can(self::UNITS_CREATE)
+            && self::isLinked($user, $unit);
+    }
+
+    /** الوحدات التي يفتحها المستخدم بترتيبها — للقائمة الجانبية وروابط صفحة الإجمالي */
+    public static function viewableUnits(?User $user): Collection
+    {
+        if (! $user?->can(self::UNITS_VIEW)) {
+            return collect();
+        }
+
+        return $user->hasRole('super-admin')
+            ? FinanceUnit::ordered()->get()
+            : $user->financeUnits()->ordered()->get();
+    }
+
+    /** صورة أمر دفع: عرض حسابها — وصورة شهر وحدةٍ لعارض الإجمالي أو لمن يفتح وحدتها */
+    public static function canViewMonth(?User $user, FinanceMonth $month): bool
+    {
+        if ($month->finance_unit_id !== null) {
+            return (bool) $user?->can(self::COURT_TOTAL_VIEW) || self::canViewUnit($user, $month->finance_unit_id);
+        }
+
+        return self::canView($user, $month->account);
     }
 
     public static function canCorrect(?User $user): bool

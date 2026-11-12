@@ -21,7 +21,7 @@ class FinanceNote extends Model
 {
     public const MAX_LENGTH = 2000;
 
-    protected $fillable = ['finance_account_id', 'month', 'body', 'created_by'];
+    protected $fillable = ['finance_account_id', 'finance_unit_id', 'month', 'body', 'created_by'];
 
     protected $casts = [
         'month' => 'date',
@@ -32,17 +32,37 @@ class FinanceNote extends Model
         return $this->belongsTo(FinanceAccount::class, 'finance_account_id');
     }
 
+    /** وحدة الشهر — NULL لملاحظات الحسابات الثلاثة وصفحة إجمالي أبنية المحاكم */
+    public function unit(): BelongsTo
+    {
+        return $this->belongsTo(FinanceUnit::class, 'finance_unit_id');
+    }
+
     public function author(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
     }
 
-    /** هل حُفظت أرقام الشهر؟ — ⚠️ نطاقٌ لا مساواة (`'Y-m-d 00:00:00'` على sqlite) */
-    public static function monthIsLocked(FinanceAccount $account, CarbonInterface $month): bool
+    /** ملاحظات صفحة إجمالي أبنية المحاكم — لا وحدة ولا شهرٌ مُدخَل وراءها */
+    protected static function isTotalPage(FinanceAccount $account, ?int $unitId): bool
     {
+        return $account->isItemized() && $unitId === null;
+    }
+
+    /**
+     * هل حُفظت أرقام الشهر في دفتره (الوحدة أو الحساب)؟ — ⚠️ نطاقٌ لا مساواة (`'Y-m-d 00:00:00'` على sqlite).
+     * ملاحظات صفحة الإجمالي لا تُقفل: لا شهرَ فيها يُحفظ.
+     */
+    public static function monthIsLocked(FinanceAccount $account, CarbonInterface $month, ?int $unitId = null): bool
+    {
+        if (self::isTotalPage($account, $unitId)) {
+            return false;
+        }
+
         $month = CarbonImmutable::parse($month)->startOfMonth();
 
         return FinanceMonth::where('finance_account_id', $account->id)
+            ->forUnit($unitId)
             ->where('month', '>=', $month->toDateString())
             ->where('month', '<', $month->addMonth()->toDateString())
             ->exists();
@@ -50,25 +70,34 @@ class FinanceNote extends Model
 
     public function isLocked(): bool
     {
-        return self::monthIsLocked($this->account, $this->month);
+        return self::monthIsLocked($this->account, $this->month, $this->finance_unit_id);
     }
 
     /**
-     * الإضافة: شهرٌ بين أول شهرٍ والشهر التالي للإدخال (ما بعده لم يأتِ دوره)، بإدخال الحساب
-     * والشهر مفتوح، أو بـ`finance.edit` بعد قفله.
+     * الإضافة: شهرٌ بين أول شهرٍ والشهر التالي للدفتر (ما بعده لم يأتِ دوره) — وفي صفحة الإجمالي
+     * حتى الشهر الجاري. بإدخال الدفتر والشهر مفتوح، أو بـ`finance.edit` بعد قفله.
      */
-    public static function canAdd(?User $user, FinanceAccount $account, CarbonInterface $month): bool
+    public static function canAdd(?User $user, FinanceAccount $account, CarbonInterface $month, ?FinanceUnit $unit = null): bool
     {
-        $month = CarbonImmutable::parse($month)->startOfMonth();
+        $month  = CarbonImmutable::parse($month)->startOfMonth();
+        $unitId = $unit?->id;
+        $last   = self::isTotalPage($account, $unitId)
+            ? FinanceCalendar::currentMonth()
+            : FinanceCalendar::nextMonth($account, $unitId);
 
-        if (! $user || $month->lessThan(FinanceCalendar::firstMonth())
-            || $month->greaterThan(FinanceCalendar::nextMonth($account))) {
+        if (! $user || $month->lessThan(FinanceCalendar::firstMonth()) || $month->greaterThan($last)) {
             return false;
         }
 
-        return self::monthIsLocked($account, $month)
-            ? FinanceAccess::canCorrect($user)
-            : FinanceAccess::canEnter($user, $account);
+        if ($unit && ! FinanceAccess::canViewUnit($user, $unit)) {
+            return false;
+        }
+
+        if (self::monthIsLocked($account, $month, $unitId)) {
+            return FinanceAccess::canCorrect($user);
+        }
+
+        return $unit ? FinanceAccess::canEnterUnit($user, $unit) : FinanceAccess::canEnter($user, $account);
     }
 
     public function canBeEditedBy(?User $user): bool
@@ -94,6 +123,6 @@ class FinanceNote extends Model
 
         return ! $this->isLocked()
             && $this->created_by === $user->id
-            && FinanceAccess::canEnter($user, $this->account);
+            && ($this->unit ? FinanceAccess::canEnterUnit($user, $this->unit) : FinanceAccess::canEnter($user, $this->account));
     }
 }

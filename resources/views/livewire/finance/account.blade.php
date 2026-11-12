@@ -3,7 +3,7 @@
 <div class="max-w-4xl mx-auto p-6 space-y-6">
 
     <div class="flex flex-wrap items-center justify-between gap-4">
-        <h1 class="text-2xl font-semibold text-zinc-800 dark:text-zinc-100">{{ $account->label() }}</h1>
+        <h1 class="text-2xl font-semibold text-zinc-800 dark:text-zinc-100">{{ $pageTitle }}</h1>
 
         @if($account->acceptsEntry())
             <div class="flex items-center gap-3">
@@ -59,7 +59,7 @@
                     @endunless
                 </div>
                 @if($canEnter)
-                    <a href="{{ route('finance.entry', $account->slug()) }}" wire:navigate
+                    <a href="{{ $entryUrl }}" wire:navigate
                        class="inline-flex items-center justify-center gap-2 bg-[#c9a847] hover:bg-[#b8962e] text-white text-sm font-medium py-2 rounded-lg transition">
                         <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
@@ -178,7 +178,7 @@
                                     <div class="flex items-center justify-between gap-3">
                                         <span class="text-xs font-medium text-[#b8962e] dark:text-[#d8b856]">{{ __('home.fin_awaiting_entry') }}</span>
                                         @if($canEnter)
-                                            <a href="{{ route('finance.entry', $account->slug()) }}" wire:navigate
+                                            <a href="{{ $entryUrl }}" wire:navigate
                                                class="inline-flex items-center gap-1 border border-[#c9a847] text-[#b8962e] hover:bg-[#c9a847]/10 text-xs font-medium px-3 py-1.5 rounded-lg transition">
                                                 + {{ __('home.fin_enter_short') }}
                                             </a>

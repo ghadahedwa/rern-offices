@@ -59,12 +59,15 @@ class FinanceHistory
         ?array $after,
         int $imagesAdded = 0,
         int $imagesRemoved = 0,
+        ?int $unitId = null,
     ): void {
         activity(self::LOG)
             ->causedBy(auth()->user())
             ->event($event)
             ->withProperties([
                 'account'        => $account->key,
+                // دفتر الوحدة لأبنية المحاكم — كل وحدة سجلّها (NULL للحسابات الثلاثة)
+                'unit'           => $unitId,
                 'month'          => is_string($month) ? $month : $month->format('Y-m'),
                 'reason'         => $reason,
                 'before'         => $before,
@@ -76,11 +79,12 @@ class FinanceHistory
     }
 
     /** سجلّ الحساب مجمَّعاً بالشهر (`Y-m`) — الأحدث أولاً */
-    public static function forAccount(FinanceAccount $account): Collection
+    public static function forAccount(FinanceAccount $account, ?int $unitId = null): Collection
     {
         return Activity::query()
             ->where('log_name', self::LOG)
             ->where('properties->account', $account->key)
+            ->when($unitId === null, fn ($q) => $q->whereNull('properties->unit'), fn ($q) => $q->where('properties->unit', $unitId))
             ->with('causer')
             ->latest('id')
             ->get()
@@ -92,13 +96,14 @@ class FinanceHistory
      * وصورٌ أُضيفت أو حُذفت ولو بقي عددها (استُبدلت صورة بأخرى).
      */
     /** سجلّ ملاحظة على شهرٍ مقفول: نصّها قبل وبعد (null بعد = حُذفت) */
-    public static function recordNote(string $event, FinanceAccount $account, CarbonInterface $month, string $before, ?string $after): void
+    public static function recordNote(string $event, FinanceAccount $account, CarbonInterface $month, string $before, ?string $after, ?int $unitId = null): void
     {
         activity(self::LOG)
             ->causedBy(auth()->user())
             ->event($event)
             ->withProperties([
                 'account'     => $account->key,
+                'unit'        => $unitId,
                 'month'       => $month->format('Y-m'),
                 'note_before' => $before,
                 'note_after'  => $after,

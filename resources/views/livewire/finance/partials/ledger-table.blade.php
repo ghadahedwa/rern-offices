@@ -113,7 +113,7 @@
                             <div class="flex items-center justify-between gap-3">
                                 <span class="text-xs font-medium text-[#b8962e] dark:text-[#d8b856]">{{ __('home.fin_awaiting_entry') }}</span>
                                 @if($canEnter)
-                                    <a href="{{ route('finance.entry', $account->slug()) }}" wire:navigate
+                                    <a href="{{ $entryUrl }}" wire:navigate
                                        class="inline-flex items-center gap-1 border border-[#c9a847] text-[#b8962e] hover:bg-[#c9a847]/10 text-xs font-medium px-3 py-1.5 rounded-lg transition">
                                         + {{ __('home.fin_enter_short') }}
                                     </a>

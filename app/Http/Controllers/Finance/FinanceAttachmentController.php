@@ -17,7 +17,7 @@ class FinanceAttachmentController extends Controller
 {
     public function __invoke(FinanceAttachment $attachment)
     {
-        abort_unless(FinanceAccess::canView(auth()->user(), $attachment->paymentOrder->month->account), 403);
+        abort_unless(FinanceAccess::canViewMonth(auth()->user(), $attachment->paymentOrder->month), 403);
 
         $disk = Storage::disk(FinanceAttachment::DISK);
         abort_unless($disk->exists($attachment->path), 404);

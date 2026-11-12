@@ -3,7 +3,7 @@
 @if($canCorrect || ($canDelete && $record->id === $lastId))
     <div class="flex flex-wrap items-center gap-1.5 mt-2">
         @if($canCorrect)
-            <a href="{{ route('finance.correct', [$account->slug(), $record->month->format('Y-m')]) }}" wire:navigate
+            <a href="{{ $correctUrl($record) }}" wire:navigate
                class="inline-flex items-center rounded-full bg-blue-50 dark:bg-blue-900/30 px-2.5 py-1 text-xs font-medium text-blue-700 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-900/50 transition">
                 {{ __('home.fin_correct') }}
             </a>

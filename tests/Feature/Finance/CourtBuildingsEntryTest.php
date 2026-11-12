@@ -26,7 +26,7 @@ beforeEach(function () {
     $this->travelTo(CarbonImmutable::parse('2026-11-05 10:00:00', 'UTC'));
 });
 
-function courtUser(array $abilities = ['finance.accounts.view', 'finance.court-total.view', 'finance.accounts.create', 'finance.units.create', 'finance.edit', 'finance.delete']): User
+function courtUser(array $abilities = ['finance.accounts.view', 'finance.court-total.view', 'finance.units.view', 'finance.units.create', 'finance.edit', 'finance.delete']): User
 {
     foreach ($abilities as $ability) {
         Permission::findOrCreate($ability, 'web');
@@ -35,7 +35,16 @@ function courtUser(array $abilities = ['finance.accounts.view', 'finance.court-t
     $role = Role::findOrCreate('fin-court-'.uniqid(), 'web');
     $role->givePermissionTo($abilities);
 
-    return tap(User::factory()->create())->assignRole($role);
+    // مربوطٌ بوحدة القاهرة — شهور أبنية المحاكم على الوحدات (الدفعة الثانية)
+    $user = tap(User::factory()->create())->assignRole($role);
+    $user->financeUnits()->sync([cairo()->id]);
+
+    return $user;
+}
+
+function cairo(): \App\Models\FinanceUnit
+{
+    return \App\Models\FinanceUnit::where('name', 'الوحدة الحسابية بالقاهرة')->sole();
 }
 
 /** القيم الثمانية بترتيب العناصر — مجموعها 1,000 + 2,000 + … + 8,000 = 36,000 */
@@ -48,7 +57,7 @@ function courtValues(): array
 
 function courtEntry(?array $values = null)
 {
-    $c = Livewire::test(MonthEntry::class, ['account' => 'court-buildings']);
+    $c = Livewire::test(MonthEntry::class, ['account' => 'court-buildings', 'financeUnit' => cairo()]);
     foreach ($values ?? courtValues() as $id => $value) {
         $c->set("items.$id", $value);
     }
@@ -114,10 +123,10 @@ it('لا يطلب العنصر المعطَّل في شهرٍ جديد، ويب�
     $item = CourtBuildingItem::where('name', 'سيارات جمعة')->first();
     $item->update(['is_active' => false]);
 
-    Livewire::test(MonthEntry::class, ['account' => 'court-buildings'])
+    Livewire::test(MonthEntry::class, ['account' => 'court-buildings', 'financeUnit' => cairo()])
         ->assertDontSee('سيارات جمعة');
 
-    Livewire::test(MonthEntry::class, ['account' => 'court-buildings', 'period' => '2026-10'])
+    Livewire::test(MonthEntry::class, ['account' => 'court-buildings', 'period' => '2026-10', 'financeUnit' => cairo()])
         ->assertSee('سيارات جمعة')
         ->assertSet("items.{$item->id}", '6000');
 });
@@ -127,7 +136,7 @@ it('يصحّح عنصراً فيتبعه الإجمالي، والسجلّ يس�
     courtEntry()->call('save');
     $item = CourtBuildingItem::where('name', 'مكاتب مميزة')->first();
 
-    Livewire::test(MonthEntry::class, ['account' => 'court-buildings', 'period' => '2026-10'])
+    Livewire::test(MonthEntry::class, ['account' => 'court-buildings', 'period' => '2026-10', 'financeUnit' => cairo()])
         ->set("items.{$item->id}", '700')
         ->set('reason', 'مكاتب مميزة كُتبت بزيادة صفر')
         ->call('save')
@@ -141,7 +150,7 @@ it('يصحّح عنصراً فيتبعه الإجمالي، والسجلّ يس�
     expect($log->properties['before']['items']['مكاتب مميزة'])->toBe(7000)
         ->and($log->properties['after']['items']['مكاتب مميزة'])->toBe(700);
 
-    $this->get(route('finance.court-buildings'))
+    $this->get(route('finance.unit', cairo()))
         ->assertSeeInOrder(['مكاتب مميزة', '7,000', '700', __('home.fin_total_label'), '36,000', '29,700']);
 });
 
@@ -149,7 +158,7 @@ it('يعرض العناصر تحت الشهر في صفحة الحساب', funct
     $this->actingAs(courtUser());
     courtEntry()->call('save');
 
-    Livewire::test(CourtBuildings::class)
+    Livewire::test(\App\Livewire\Finance\Unit::class, ['financeUnit' => cairo()])
         ->assertSee(__('home.fin_total_label_unit'))
         ->assertSee(__('home.fin_items_toggle'))
         ->assertSee('36,000')
@@ -164,7 +173,7 @@ it('يحذف عناصر الشهر بحذفه فيصير العنصر قابلا
 
     expect($item->isInUse())->toBeTrue();
 
-    Livewire::test(CourtBuildings::class)
+    Livewire::test(\App\Livewire\Finance\Unit::class, ['financeUnit' => cairo()])
         ->call('confirmDelete', $month->id)
         ->set('deleteReason', 'أُدخل خطأً')
         ->call('deleteRow');
@@ -177,7 +186,7 @@ it('يحفظ شهراً إجماليه صفر بلا أمر دفع', function ()
     $this->actingAs(courtUser());
     $zeros = array_fill_keys(array_keys(courtValues()), '0');
 
-    $c = Livewire::test(MonthEntry::class, ['account' => 'court-buildings']);
+    $c = Livewire::test(MonthEntry::class, ['account' => 'court-buildings', 'financeUnit' => cairo()]);
     foreach ($zeros as $id => $v) {
         $c->set("items.$id", $v);
     }

@@ -1,7 +1,6 @@
 @php
     $inp = 'w-full border border-zinc-300 dark:border-zinc-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-[#c9a847]';
     $lbl = 'block text-xs text-zinc-500 dark:text-zinc-400 mb-1';
-    $pageUrl = route($account->pageRoute());
     $maxFiles = \App\Models\FinanceAttachment::MAX_PER_ORDER;
 @endphp
 
@@ -19,7 +18,7 @@
                 <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
             </svg>
         </a>
-        <h1 class="text-2xl font-semibold text-zinc-800 dark:text-zinc-100">{{ $account->label() }}</h1>
+        <h1 class="text-2xl font-semibold text-zinc-800 dark:text-zinc-100">{{ $pageTitle }}</h1>
     </div>
 
     @if(! $monthLabel)

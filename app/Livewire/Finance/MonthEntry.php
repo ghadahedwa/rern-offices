@@ -8,6 +8,7 @@ use App\Models\FinanceAttachment;
 use App\Models\FinanceMonth;
 use App\Models\FinanceMonthItem;
 use App\Models\FinanceNote;
+use App\Models\FinanceUnit;
 use App\Models\FinancePaymentOrder;
 use App\Support\ArabicDigits;
 use App\Support\Finance\AmountInWords;
@@ -101,14 +102,23 @@ class MonthEntry extends Component
 
     public string $expense = '';
 
+    /** الوحدة الحسابية — أبنية المحاكم لا تُدخل إلا بها، والحسابات الثلاثة NULL */
+    #[Locked]
+    public ?int $unitId = null;
+
     /** مسارات خُزِّنت في هذا الحفظ — تُحذف إن تراجعت المعاملة */
     protected array $storedPaths = [];
 
-    public function mount(string $account, ?string $period = null): void
+    public function mount(string $account, ?string $period = null, ?FinanceUnit $financeUnit = null): void
     {
         $model = FinanceAccount::bySlug($account);
         abort_unless($model->acceptsEntry(), 404);
-        abort_unless($period === null ? FinanceAccess::canEnter(auth()->user(), $model) : FinanceAccess::canCorrect(auth()->user()), 403);
+
+        // ⚠️ أبنية المحاكم مجموع وحداتها: لا تُدخَل إلا من صفحة وحدة، والوحدة لا تُذكر لغيرها
+        abort_unless($model->isItemized() === ($financeUnit?->exists === true), 404);
+
+        $this->unitId = $financeUnit?->id;
+        abort_unless($period === null ? $this->canEnterHere($model) : $this->canCorrectHere(), 403);
 
         $this->accountKey = $model->key;
         $this->ledger     = $model->isLedger();
@@ -119,7 +129,7 @@ class MonthEntry extends Component
             return;
         }
 
-        $next = FinanceCalendar::nextMonth($model);
+        $next = FinanceCalendar::nextMonth($model, $this->unitId);
         // اتصالات بلا رصيدٍ افتتاحي: لا شهر يُفتح — الصفحة تردّه إلى صفحة الحساب ليكتبه
         $this->month = FinanceCalendar::isDue($next) && ! $model->needsOpening() ? $next->toDateString() : null;
 
@@ -172,9 +182,45 @@ class MonthEntry extends Component
     protected function findRecord(FinanceAccount $account, CarbonImmutable $month): ?FinanceMonth
     {
         return FinanceMonth::where('finance_account_id', $account->id)
+            ->forUnit($this->unitId)
             ->where('month', '>=', $month->toDateString())
             ->where('month', '<', $month->addMonth()->toDateString())
             ->first();
+    }
+
+    protected function unit(): ?FinanceUnit
+    {
+        return $this->unitId ? FinanceUnit::find($this->unitId) : null;
+    }
+
+    /** إدخال شهرٍ في دفتر الصفحة: الوحدة بصلاحيتها وربطها، والحسابات الثلاثة بصلاحيتها */
+    protected function canEnterHere(FinanceAccount $account): bool
+    {
+        $unit = $this->unit();
+
+        return $unit ? FinanceAccess::canEnterUnit(auth()->user(), $unit) : FinanceAccess::canEnter(auth()->user(), $account);
+    }
+
+    /** التصحيح: صلاحيته — وفي الوحدة أن يفتحها أيضاً */
+    protected function canCorrectHere(): bool
+    {
+        $unit = $this->unit();
+
+        return FinanceAccess::canCorrect(auth()->user())
+            && (! $unit || FinanceAccess::canViewUnit(auth()->user(), $unit));
+    }
+
+    /** صفحة الرجوع: صفحة الوحدة أو صفحة الحساب */
+    protected function pageUrl(array $query = []): string
+    {
+        return $this->unitId
+            ? route('finance.unit', ['financeUnit' => $this->unitId] + $query)
+            : route($this->account()->pageRoute(), $query);
+    }
+
+    protected function pageTitle(): string
+    {
+        return $this->unit()?->name ?? $this->account()->label();
     }
 
     protected function account(): FinanceAccount
@@ -432,7 +478,7 @@ class MonthEntry extends Component
 
     protected function validateEntry(): void
     {
-        abort_unless($this->editingId ? FinanceAccess::canCorrect(auth()->user()) : FinanceAccess::canEnter(auth()->user(), $this->account()), 403);
+        abort_unless($this->editingId ? $this->canCorrectHere() : $this->canEnterHere($this->account()), 403);
         abort_if($this->month === null, 404);
 
         $this->amount  = self::normalizeAmount($this->amount);
@@ -532,7 +578,7 @@ class MonthEntry extends Component
                 // القفل على صفّ الحساب يرتّب الحفظ المتزامن لنفس الحساب
                 FinanceAccount::whereKey($account->id)->lockForUpdate()->first();
 
-                if (! FinanceCalendar::nextMonth($account)->equalTo($month)) {
+                if (! FinanceCalendar::nextMonth($account, $this->unitId)->equalTo($month)) {
                     return false;
                 }
 
@@ -543,6 +589,7 @@ class MonthEntry extends Component
 
                 $record = FinanceMonth::create([
                     'finance_account_id' => $account->id,
+                    'finance_unit_id'    => $this->unitId,
                     'month'              => $month->toDateString(),
                     'amount'             => (int) $this->amount,
                     'income'             => $this->ledger ? (int) $this->income : null,
@@ -556,6 +603,7 @@ class MonthEntry extends Component
                 if (($body = trim($this->note)) !== '') {
                     FinanceNote::create([
                         'finance_account_id' => $account->id,
+                        'finance_unit_id'    => $this->unitId,
                         'month'              => $month->toDateString(),
                         'body'               => $body,
                         'created_by'         => auth()->id(),
@@ -592,7 +640,7 @@ class MonthEntry extends Component
 
         if (! $saved) {
             Flux::toast(variant: 'danger', text: __('home.fin_entry_stale'));
-            $this->redirect(route($account->pageRoute()), navigate: true);
+            $this->redirect($this->pageUrl(), navigate: true);
 
             return;
         }
@@ -600,7 +648,7 @@ class MonthEntry extends Component
         Flux::toast(variant: 'success', text: __('home.fin_entry_saved', ['month' => FinanceCalendar::monthLabel($month)]));
 
         $this->redirect(
-            route($account->pageRoute(), ['year' => FinanceCalendar::fiscalYearOf($month)]),
+            $this->pageUrl(['year' => FinanceCalendar::fiscalYearOf($month)]),
             navigate: true
         );
     }
@@ -710,7 +758,7 @@ class MonthEntry extends Component
 
                 FinanceHistory::record(
                     FinanceHistory::EVENT_CORRECTED, $account, $month, $this->reason,
-                    $before, $after, $added, $removed,
+                    $before, $after, $added, $removed, $this->unitId,
                 );
 
                 return 'saved';
@@ -724,7 +772,7 @@ class MonthEntry extends Component
 
         if ($result === 'stale') {
             Flux::toast(variant: 'danger', text: __('home.fin_correction_stale'));
-            $this->redirect(route($account->pageRoute()), navigate: true);
+            $this->redirect($this->pageUrl(), navigate: true);
 
             return;
         }
@@ -732,7 +780,7 @@ class MonthEntry extends Component
         Flux::toast(variant: 'success', text: __('home.fin_correction_saved', ['month' => FinanceCalendar::monthLabel($month)]));
 
         $this->redirect(
-            route($account->pageRoute(), ['year' => FinanceCalendar::fiscalYearOf($month)]),
+            $this->pageUrl(['year' => FinanceCalendar::fiscalYearOf($month)]),
             navigate: true
         );
     }
@@ -801,6 +849,7 @@ class MonthEntry extends Component
 
         // ⚠️ نطاقٌ لا مساواة: العمود المصبوب `'date'` يُكتب `'Y-m-d 00:00:00'` على sqlite
         $previous = FinanceMonth::where('finance_account_id', $account->id)
+            ->forUnit($this->unitId)
             ->where('month', '>=', $month->subMonth()->toDateString())
             ->where('month', '<', $month->toDateString())
             ->value('amount');
@@ -847,7 +896,9 @@ class MonthEntry extends Component
             'fiscalLabel' => $this->month
                 ? FinanceCalendar::fiscalYearLabel(FinanceCalendar::fiscalYearOf(CarbonImmutable::parse($this->month)))
                 : null,
-            'nextLabel'   => FinanceCalendar::monthLabel(FinanceCalendar::nextMonth($account)),
+            'nextLabel'   => FinanceCalendar::monthLabel(FinanceCalendar::nextMonth($account, $this->unitId)),
+            'pageUrl'     => $this->pageUrl(),
+            'pageTitle'   => $this->pageTitle(),
             'amountValue' => $amount,
             'amountWords' => $amount !== null ? AmountInWords::pounds($amount) : null,
             'warnings'    => $this->reviewWarnings($account, $amount),
@@ -861,6 +912,6 @@ class MonthEntry extends Component
             'keptFiles'   => $record
                 ? $record->paymentOrders->flatMap->attachments->keyBy('id')
                 : collect(),
-        ])->title(__($record ? 'home.fin_correction_title' : 'home.fin_entry_title', ['account' => $account->label()]));
+        ])->title(__($record ? 'home.fin_correction_title' : 'home.fin_entry_title', ['account' => $this->pageTitle()]));
     }
 }

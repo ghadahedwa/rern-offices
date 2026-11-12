@@ -14,7 +14,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class FinanceMonth extends Model
 {
     /** `amount`: المبلغ · إجمالي العناصر (أبنية المحاكم) · **المنصرف** (اتصالات، و`income` إيراده) */
-    protected $fillable = ['finance_account_id', 'month', 'amount', 'income', 'created_by'];
+    protected $fillable = ['finance_account_id', 'finance_unit_id', 'month', 'amount', 'income', 'created_by'];
 
     protected $casts = [
         'month'  => 'date',
@@ -25,6 +25,23 @@ class FinanceMonth extends Model
     public function account(): BelongsTo
     {
         return $this->belongsTo(FinanceAccount::class, 'finance_account_id');
+    }
+
+    /** الوحدة الحسابية — لأبنية المحاكم وحدها، والحسابات الثلاثة NULL */
+    public function unit(): BelongsTo
+    {
+        return $this->belongsTo(FinanceUnit::class, 'finance_unit_id');
+    }
+
+    /**
+     * شهور «دفترٍ» واحد: الوحدة لأبنية المحاكم، وNULL للحسابات الثلاثة — كل ترتيبٍ وآخر شهرٍ
+     * وتفرّدٍ يُحسب داخل الدفتر لا الحساب كله (كل وحدة ماشية بشهورها).
+     */
+    public function scopeForUnit(\Illuminate\Database\Eloquent\Builder $query, ?int $unitId): \Illuminate\Database\Eloquent\Builder
+    {
+        return $unitId === null
+            ? $query->whereNull('finance_months.finance_unit_id')
+            : $query->where('finance_months.finance_unit_id', $unitId);
     }
 
     public function creator(): BelongsTo
