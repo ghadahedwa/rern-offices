@@ -189,7 +189,8 @@ it('يعرض الشهور × الوحدات والإجمالي والناقص', 
         ->assertSee('12,000')
         ->assertSee(__('home.fin_units_of', ['entered' => 2, 'count' => 6]))
         ->assertSee(__('home.fin_units_missing', ['names' => 'الإسكندرية · الأقصر · أسيوط · الإسماعيلية']))
-        ->assertSee(__('home.fin_month_not_ended'));
+        ->assertSee(__('home.fin_month_open'))
+        ->assertSeeInOrder(['الإسكندرية', __('home.fin_not_entered')]);
 });
 
 it('يجمع العناصر للشهر وللسنة', function () {
