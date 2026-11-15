@@ -313,15 +313,17 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->whereIn('account', ['court-buildings', 'mechanization', 'telecom', 'ministry-of-finance'])
         ->where('period', '\d{4}-\d{2}')
         ->name('finance.correct');
-    // الوحدات الحسابية — أبنية المحاكم مجموعها. الصفحة والإدخال والتصحيح بحارس الصلاحية **والربط**
-    // (`FinanceAccess::canViewUnit`/`canEnterUnit`) في المكوّنين.
-    Route::livewire('finance/court-buildings/units/{financeUnit}', \App\Livewire\Finance\Unit::class)
+    // الوحدات الحسابية — صفحة الوحدة تبويبٌ لكل حساب، وصفحة الحساب إجماليها. الصفحة والإدخال
+    // والتصحيح بحارس الصلاحية **والربط** (`FinanceAccess::canViewUnit`/`canEnterUnit`) في المكوّنين.
+    $unitAccounts = \App\Models\FinanceAccount::unitSlugs();
+    Route::livewire('finance/units/{financeUnit}/{account?}', \App\Livewire\Finance\Unit::class)
+        ->whereIn('account', $unitAccounts)
         ->name('finance.unit');
-    Route::livewire('finance/court-buildings/units/{financeUnit}/entry', \App\Livewire\Finance\MonthEntry::class)
-        ->defaults('account', 'court-buildings')
+    Route::livewire('finance/units/{financeUnit}/{account}/entry', \App\Livewire\Finance\MonthEntry::class)
+        ->whereIn('account', $unitAccounts)
         ->name('finance.unit-entry');
-    Route::livewire('finance/court-buildings/units/{financeUnit}/{period}/correct', \App\Livewire\Finance\MonthEntry::class)
-        ->defaults('account', 'court-buildings')
+    Route::livewire('finance/units/{financeUnit}/{account}/{period}/correct', \App\Livewire\Finance\MonthEntry::class)
+        ->whereIn('account', $unitAccounts)
         ->where('period', '\d{4}-\d{2}')
         ->name('finance.unit-correct');
     // هبوط صاحب الوحدات وحدها على أول وحدةٍ يفتحها (الفرع يهبط براوتٍ بلا معاملات)

@@ -48,3 +48,9 @@ function something()
 {
     // ..
 }
+
+/** الوحدة الحسابية بالقاهرة — تزرعها هجرة الوحدات. حسابات الوحدات لا تُدخَل إلا بوحدة (2026-11-15). */
+function finCairo(): \App\Models\FinanceUnit
+{
+    return \App\Models\FinanceUnit::where('name', 'like', '%بالقاهرة%')->firstOrFail();
+}

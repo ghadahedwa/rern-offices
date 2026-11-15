@@ -1,6 +1,6 @@
 <?php
 
-use App\Livewire\Finance\Mechanization;
+use App\Livewire\Finance\Unit;
 use App\Livewire\Finance\MonthEntry;
 use App\Models\FinanceAccount;
 use App\Models\FinanceAttachment;
@@ -26,7 +26,7 @@ beforeEach(function () {
     $this->travelTo(CarbonImmutable::parse('2026-11-05 10:00:00', 'UTC'));
 });
 
-function entryUser(array $abilities = ['finance.accounts.view', 'finance.court-total.view', 'finance.accounts.create', 'finance.units.create']): User
+function entryUser(array $abilities = ['finance.accounts.view', 'finance.court-total.view', 'finance.units.view', 'finance.accounts.create', 'finance.units.create']): User
 {
     foreach ($abilities as $ability) {
         Permission::findOrCreate($ability, 'web');
@@ -35,13 +35,13 @@ function entryUser(array $abilities = ['finance.accounts.view', 'finance.court-t
     $role = Role::findOrCreate('fin-entry-'.uniqid(), 'web');
     $role->givePermissionTo($abilities);
 
-    return tap(User::factory()->create())->assignRole($role);
+    return tap(User::factory()->create(), fn (User $u) => $u->financeUnits()->attach(finCairo()))->assignRole($role);
 }
 
 /** فورم شهرٍ صالح جاهز للمراجعة. */
 function filledEntry(string $account = 'mechanization', string $amount = '150000', string $number = '1234')
 {
-    return Livewire::test(MonthEntry::class, ['account' => $account])
+    return Livewire::test(MonthEntry::class, ['account' => $account, 'financeUnit' => finCairo()])
         ->set('amount', $amount)
         ->set('orders.0.number', $number)
         ->set('orders.0.issued_on', '2026-11-02')
@@ -101,7 +101,7 @@ it('يحفظ أكثر من أمر دفع بترتيبها', function () {
 it('يرفض أمر دفع بلا صورة', function () {
     $this->actingAs(entryUser());
 
-    Livewire::test(MonthEntry::class, ['account' => 'mechanization'])
+    Livewire::test(MonthEntry::class, ['account' => 'mechanization', 'financeUnit' => finCairo()])
         ->set('amount', '1000')
         ->set('orders.0.number', '1')
         ->set('orders.0.issued_on', '2026-11-02')
@@ -147,7 +147,7 @@ it('يرفض أمر دفع بتاريخ لم يأتِ ورقمين متكرري�
 it('يقبل الصور وحدها — ويرفض الـPDF وغيره', function (UploadedFile $file) {
     $this->actingAs(entryUser());
 
-    Livewire::test(MonthEntry::class, ['account' => 'mechanization'])
+    Livewire::test(MonthEntry::class, ['account' => 'mechanization', 'financeUnit' => finCairo()])
         ->set('picked.0', [$file])
         ->assertHasErrors('orderFiles.0')
         ->assertSet('orderFiles.0', []);
@@ -160,7 +160,7 @@ it('يرفض الـPDF عند الحفظ ولو تجاوز منتقي الصور
     $this->actingAs(entryUser());
 
     // `orderFiles` تُكتب مباشرةً — الحارس الثاني في قواعد الحفظ لا في المنتقي وحده
-    Livewire::test(MonthEntry::class, ['account' => 'mechanization'])
+    Livewire::test(MonthEntry::class, ['account' => 'mechanization', 'financeUnit' => finCairo()])
         ->set('amount', '1000')
         ->set('orders.0.number', '1234')
         ->set('orders.0.issued_on', '2026-11-02')
@@ -182,7 +182,7 @@ it('يجعل الشهر التالي ما بعد آخر مُدخَل ولا يف
         ->toBe(['2026-10-01', '2026-11-01']);
 
     // ديسمبر لم يبدأ: لا شهر في الفورم، والحفظ المباشر يُرفض
-    Livewire::test(MonthEntry::class, ['account' => 'mechanization'])
+    Livewire::test(MonthEntry::class, ['account' => 'mechanization', 'financeUnit' => finCairo()])
         ->assertSet('month', null)
         ->assertSee(__('home.fin_entry_not_due', ['month' => 'ديسمبر 2026']));
 });
@@ -219,12 +219,12 @@ it('يحسب الشهر الجاري بتوقيت القاهرة', function () {
 // ── الصلاحيات ────────────────────────────────────────────
 
 it('يمنع الإدخال عمّن لا يملك finance.create', function () {
-    $this->actingAs(entryUser(['finance.accounts.view', 'finance.court-total.view']));
+    $this->actingAs(entryUser(['finance.accounts.view', 'finance.court-total.view', 'finance.units.view']));
 
-    $this->get(route('finance.entry', 'mechanization'))->assertForbidden();
+    $this->get(route('finance.unit-entry', [finCairo(), 'mechanization']))->assertForbidden();
 
     // ولا يُعرض له زرّ الإدخال
-    $this->get(route('finance.mechanization'))->assertDontSee(route('finance.entry', 'mechanization'), false);
+    $this->get(route('finance.unit', [finCairo(), 'mechanization']))->assertDontSee(route('finance.unit-entry', [finCairo(), 'mechanization']), false);
 });
 
 it('يرفض الحفظ إن سُحبت الصلاحية والفورم مفتوح', function () {
@@ -253,7 +253,7 @@ it('يعرض شهور السنة المالية وإجماليها وزرّ ال
 
     filledEntry(amount: '150000')->call('save');
 
-    $this->get(route('finance.mechanization'))
+    $this->get(route('finance.unit', [finCairo(), 'mechanization']))
         ->assertOk()
         ->assertSee('أكتوبر 2026')
         ->assertDontSee('سبتمبر 2026')
@@ -266,7 +266,7 @@ it('يعرض شهور السنة المالية وإجماليها وزرّ ال
         ->assertSee(__('home.fin_year_partial', ['count' => 9, 'from' => 'أكتوبر 2026']))
         ->assertSee(__('home.fin_next_month_badge'))
         ->assertSee(__('home.fin_awaiting_entry'))
-        ->assertSee(route('finance.entry', 'mechanization'), false);
+        ->assertSee(route('finance.unit-entry', [finCairo(), 'mechanization']), false);
 });
 
 it('يطوي الشهور التالية في سطرٍ واحد', function () {
@@ -275,7 +275,7 @@ it('يطوي الشهور التالية في سطرٍ واحد', function () {
     filledEntry()->call('save');
 
     // أكتوبر مُدخَل · نوفمبر التالي · ديسمبر–يونيو سبعة مطويّة
-    $this->get(route('finance.mechanization'))
+    $this->get(route('finance.unit', [finCairo(), 'mechanization']))
         ->assertSee(__('home.fin_later_months', ['count' => 7, 'from' => 'ديسمبر 2026', 'to' => 'يونيو 2027']))
         ->assertDontSee('مارس 2027');
 });
@@ -286,9 +286,9 @@ it('لا يعرض زرّ الإدخال والشهر التالي لم يبدأ'
     filledEntry()->call('save');
     filledEntry()->call('save'); // نوفمبر — وديسمبر لم يبدأ
 
-    $this->get(route('finance.mechanization'))
+    $this->get(route('finance.unit', [finCairo(), 'mechanization']))
         ->assertSee(__('home.fin_opens_on_first'))
-        ->assertDontSee(route('finance.entry', 'mechanization'), false)
+        ->assertDontSee(route('finance.unit-entry', [finCairo(), 'mechanization']), false)
         ->assertSee(__('home.fin_later_months', ['count' => 7, 'from' => 'ديسمبر 2026', 'to' => 'يونيو 2027']));
 });
 
@@ -297,14 +297,14 @@ it('يعرض الحساب الآخر بلا أرقام هذا الحساب', fun
 
     filledEntry(amount: '987654')->call('save');
 
-    $this->get(route('finance.ministry-of-finance'))->assertDontSee('987,654');
+    $this->get(route('finance.unit', [finCairo(), 'ministry-of-finance']))->assertDontSee('987,654');
 });
 
 it('يتجاهل سنة مالية تالفة من الرابط', function () {
     $this->actingAs(entryUser());
 
-    Livewire::withQueryParams(['year' => 1999])->test(Mechanization::class)->assertSet('year', 2026);
-    Livewire::withQueryParams(['year' => 2030])->test(Mechanization::class)->assertSet('year', 2026);
+    Livewire::withQueryParams(['year' => 1999])->test(Unit::class, ['financeUnit' => finCairo(), 'account' => 'mechanization'])->assertSet('year', 2026);
+    Livewire::withQueryParams(['year' => 2030])->test(Unit::class, ['financeUnit' => finCairo(), 'account' => 'mechanization'])->assertSet('year', 2026);
 });
 
 it('يقسم الشهور على السنة المالية يوليو–يونيو', function () {
@@ -365,7 +365,7 @@ it('يفتح الصور في عارض الصفحة بأسمائها ويتنقّ
     [$first, $second] = FinanceAttachment::orderBy('id')->get()->all();
 
     // الرابط الواحد يحمل قائمة صور أمره كلها — العارض يتنقّل بينها
-    $this->get(route('finance.mechanization'))
+    $this->get(route('finance.unit', [finCairo(), 'mechanization']))
         ->assertSee('openViewer(JSON.parse', false)
         ->assertSee($first->downloadName(), false)
         ->assertSee($second->downloadName(), false)
@@ -377,7 +377,7 @@ it('يفتح الصور في عارض الصفحة بأسمائها ويتنقّ
 it('يحفظ شهراً مبلغه صفر بلا أمر دفع ويفتح ما بعده', function () {
     $this->actingAs(entryUser());
 
-    Livewire::test(MonthEntry::class, ['account' => 'mechanization'])
+    Livewire::test(MonthEntry::class, ['account' => 'mechanization', 'financeUnit' => finCairo()])
         ->set('amount', '0')
         ->assertSee(__('home.fin_no_order'))
         ->set('noOrder', true)
@@ -390,20 +390,20 @@ it('يحفظ شهراً مبلغه صفر بلا أمر دفع ويفتح ما �
 
     filledEntry()->assertSet('month', '2026-11-01');
 
-    $this->get(route('finance.mechanization'))->assertSee(__('home.fin_no_order'));
+    $this->get(route('finance.unit', [finCairo(), 'mechanization']))->assertSee(__('home.fin_no_order'));
 });
 
 it('يرفض «بلا أمر دفع» لمبلغٍ غير الصفر — ولو وصلت من المتصفح', function () {
     $this->actingAs(entryUser());
 
-    Livewire::test(MonthEntry::class, ['account' => 'mechanization'])
+    Livewire::test(MonthEntry::class, ['account' => 'mechanization', 'financeUnit' => finCairo()])
         ->set('amount', '0')
         ->set('noOrder', true)
         ->set('amount', '5000')
         ->assertSet('noOrder', false);
 
     // القيمة مدسوسة مع مبلغ: لا تمرّ
-    Livewire::test(MonthEntry::class, ['account' => 'mechanization'])
+    Livewire::test(MonthEntry::class, ['account' => 'mechanization', 'financeUnit' => finCairo()])
         ->set('noOrder', true)
         ->set('amount', '5000')
         ->set('noOrder', true)
@@ -416,7 +416,7 @@ it('يرفض «بلا أمر دفع» لمبلغٍ غير الصفر — ولو 
 it('يطلب أمر الدفع للصفر ما لم يُعلَّم «بلا أمر دفع»', function () {
     $this->actingAs(entryUser());
 
-    Livewire::test(MonthEntry::class, ['account' => 'mechanization'])
+    Livewire::test(MonthEntry::class, ['account' => 'mechanization', 'financeUnit' => finCairo()])
         ->set('amount', '0')
         ->call('review')
         ->assertHasErrors(['orders.0.number', 'orderFiles.0']);

@@ -1,10 +1,12 @@
 <?php
 
 use App\Livewire\Finance\MonthEntry;
-use App\Livewire\Finance\Telecom;
+use App\Livewire\Finance\Unit;
 use App\Models\FinanceAccount;
 use App\Models\FinanceAttachment;
 use App\Models\FinanceMonth;
+use App\Models\FinanceOpening;
+use App\Models\FinanceUnit;
 use App\Models\User;
 use App\Support\Finance\FinanceHistory;
 use App\Support\Finance\TelecomLedger;
@@ -17,6 +19,10 @@ use Spatie\Activitylog\Models\Activity;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 
+/*
+ * اتصالات على الوحدات الحسابية (المرحلة ٢ · 2026-11-15): لكل وحدة رصيدها الافتتاحي وسلسلة أرصدتها.
+ */
+
 uses(RefreshDatabase::class);
 
 beforeEach(function () {
@@ -25,7 +31,12 @@ beforeEach(function () {
     $this->travelTo(CarbonImmutable::parse('2026-11-05 10:00:00', 'UTC'));
 });
 
-function telUser(array $abilities = ['finance.accounts.view', 'finance.court-total.view', 'finance.accounts.create', 'finance.units.create', 'finance.edit', 'finance.delete']): User
+function telUnit(string $city = 'بالقاهرة'): FinanceUnit
+{
+    return FinanceUnit::where('name', 'like', '%'.$city)->sole();
+}
+
+function telUser(array $abilities = ['finance.units.view', 'finance.units.create', 'finance.edit', 'finance.delete'], array $cities = ['بالقاهرة']): User
 {
     foreach ($abilities as $ability) {
         Permission::findOrCreate($ability, 'web');
@@ -34,7 +45,10 @@ function telUser(array $abilities = ['finance.accounts.view', 'finance.court-tot
     $role = Role::findOrCreate('fin-tel-'.uniqid(), 'web');
     $role->givePermissionTo($abilities);
 
-    return tap(User::factory()->create())->assignRole($role);
+    $user = tap(User::factory()->create())->assignRole($role);
+    $user->financeUnits()->sync(collect($cities)->map(fn ($c) => telUnit($c)->id)->all());
+
+    return $user;
 }
 
 function telAccount(): FinanceAccount
@@ -42,14 +56,34 @@ function telAccount(): FinanceAccount
     return FinanceAccount::byKey('telecom');
 }
 
-function setOpening(int $value = 5000): void
+function setOpening(int $value = 5000, string $city = 'بالقاهرة'): void
 {
-    telAccount()->update(['opening_balance' => $value]);
+    FinanceOpening::create(['finance_account_id' => telAccount()->id, 'finance_unit_id' => telUnit($city)->id, 'amount' => $value]);
 }
 
-function telEntry(string $income, string $expense, ?string $period = null)
+function openingOf(string $city = 'بالقاهرة'): ?int
 {
-    $params = ['account' => 'telecom'] + ($period ? ['period' => $period] : []);
+    return telAccount()->openingFor(telUnit($city)->id)?->amount;
+}
+
+function telPage(string $city = 'بالقاهرة')
+{
+    return Livewire::test(Unit::class, ['financeUnit' => telUnit($city), 'account' => 'telecom']);
+}
+
+function telUrl(string $city = 'بالقاهرة'): string
+{
+    return route('finance.unit', [telUnit($city), 'telecom']);
+}
+
+function telClosing(string $city = 'بالقاهرة'): int
+{
+    return TelecomLedger::closingBalance(telAccount(), telUnit($city)->id);
+}
+
+function telEntry(string $income, string $expense, ?string $period = null, string $city = 'بالقاهرة')
+{
+    $params = ['account' => 'telecom', 'financeUnit' => telUnit($city)] + ($period ? ['period' => $period] : []);
     $c = Livewire::test(MonthEntry::class, $params)->set('income', $income)->set('expense', $expense);
 
     if ($period === null) {
@@ -63,42 +97,69 @@ function telEntry(string $income, string $expense, ?string $period = null)
 
 // ── الرصيد الافتتاحي ─────────────────────────────────────
 
-it('يطلب الرصيد الافتتاحي قبل أول شهر', function () {
+it('يطلب رصيد الوحدة الافتتاحي قبل أول شهر', function () {
     $this->actingAs(telUser());
 
-    $this->get(route('finance.telecom'))->assertSee(__('home.fin_opening_needed_title'));
+    $this->get(telUrl())->assertSee(__('home.fin_opening_needed_title'));
 
-    Livewire::test(MonthEntry::class, ['account' => 'telecom'])
+    Livewire::test(MonthEntry::class, ['account' => 'telecom', 'financeUnit' => telUnit()])
         ->assertSet('month', null)
         ->assertSee(__('home.fin_opening_needed_first'));
 
-    $this->get(route('finance.telecom'))->assertDontSee(route('finance.entry', 'telecom'), false);
+    $this->get(telUrl())->assertDontSee(route('finance.unit-entry', [telUnit(), 'telecom']), false);
 });
 
-it('يحفظ الرصيد الافتتاحي مرة واحدة ولا يستبدله', function () {
-    $user = telUser();
+it('يحفظ رصيد الوحدة الافتتاحي مرة واحدة ولا يستبدله — ولا يمسّ وحدةً أخرى', function () {
+    $user = telUser(cities: ['بالقاهرة', 'بطنطا']);
     $this->actingAs($user);
 
-    Livewire::test(Telecom::class)->set('openingInput', '٥٬٠٠٠')->call('saveOpening')->assertHasNoErrors();
+    telPage()->set('openingInput', '٥٬٠٠٠')->call('saveOpening')->assertHasNoErrors();
 
-    $account = telAccount();
-    expect($account->opening_balance)->toBe(5000)
-        ->and($account->opening_set_by)->toBe($user->id);
+    $opening = telAccount()->openingFor(telUnit()->id);
+    expect($opening->amount)->toBe(5000)
+        ->and($opening->set_by)->toBe($user->id)
+        ->and(openingOf('بطنطا'))->toBeNull();
 
-    Livewire::test(Telecom::class)->set('openingInput', '9000')->call('saveOpening');
-    expect(telAccount()->opening_balance)->toBe(5000);
+    telPage()->set('openingInput', '9000')->call('saveOpening');
+    expect(openingOf())->toBe(5000);
+
+    // طنطا ما زالت تطلب رصيدها
+    $this->get(telUrl('بطنطا'))->assertSee(__('home.fin_opening_needed_title'));
+    $this->get(telUrl())->assertDontSee(__('home.fin_opening_needed_title'));
 });
 
-it('يمنع كتابة الرصيد الافتتاحي بلا صلاحية الإدخال', function () {
-    $this->actingAs(telUser(['finance.accounts.view', 'finance.court-total.view']));
+it('يمنع كتابة الرصيد الافتتاحي بلا إدخال الوحدات، ولا تُفتح وحدةٌ ليست للمستخدم', function () {
+    $this->actingAs(telUser(['finance.units.view']));
 
-    Livewire::test(Telecom::class)->set('openingInput', '5000')->call('saveOpening')->assertForbidden();
-    expect(telAccount()->opening_balance)->toBeNull();
+    telPage()->set('openingInput', '5000')->call('saveOpening')->assertForbidden();
+    expect(openingOf())->toBeNull();
+
+    telPage('بطنطا')->assertForbidden();
+});
+
+it('لا يُكتب رصيدٌ افتتاحي في صفحة إجمالي اتصالات (لا دفتر بلا وحدة)', function () {
+    Permission::findOrCreate('finance.accounts.view', 'web');
+    Permission::findOrCreate('finance.accounts.create', 'web');
+    $user = tap(User::factory()->create())->givePermissionTo(['finance.accounts.view', 'finance.accounts.create']);
+    $this->actingAs($user);
+
+    Livewire::test(\App\Livewire\Finance\Telecom::class)
+        ->assertSee(__('home.fin_total_ledger_note'))
+        ->set('openingInput', '5000')->call('saveOpening')->assertNotFound();
+
+    expect(FinanceOpening::count())->toBe(0);
+});
+
+it('لا تُحذف وحدةٌ لها رصيدٌ افتتاحي', function () {
+    setOpening();
+
+    expect(telUnit()->isInUse())->toBeTrue()
+        ->and(telUnit('بطنطا')->isInUse())->toBeFalse();
 });
 
 // ── الإدخال ──────────────────────────────────────────────
 
-it('يحفظ أكتوبر بإيراده ومنصرفه ويحسب الرصيد من الافتتاحي', function () {
+it('يحفظ أكتوبر بإيراده ومنصرفه ويحسب الرصيد من افتتاحي الوحدة', function () {
     $this->actingAs(telUser());
     setOpening();
 
@@ -110,9 +171,26 @@ it('يحفظ أكتوبر بإيراده ومنصرفه ويحسب الرصيد 
     $month = FinanceMonth::sole();
     expect($month->income)->toBe(10000)
         ->and($month->amount)->toBe(7000)
-        ->and(TelecomLedger::closingBalance(telAccount()))->toBe(8000);
+        ->and($month->finance_unit_id)->toBe(telUnit()->id)
+        ->and(telClosing())->toBe(8000);
 
-    $this->get(route('finance.telecom'))->assertSeeInOrder(['5,000', '10,000', '7,000', '8,000']);
+    $this->get(telUrl())->assertSeeInOrder(['5,000', '10,000', '7,000', '8,000']);
+});
+
+it('سلسلة كل وحدة مستقلة: رصيد القاهرة لا يغطي منصرف طنطا', function () {
+    $this->actingAs(telUser(cities: ['بالقاهرة', 'بطنطا']));
+    setOpening(50000);
+    setOpening(100, 'بطنطا');
+
+    telEntry('0', '201', city: 'بطنطا')->call('review')
+        ->assertHasErrors('expense')
+        ->assertSee(__('home.fin_expense_over_available', ['available' => '100']));
+
+    telEntry('50', '150', city: 'بطنطا')->call('save')->assertHasNoErrors();
+    telEntry('0', '1000')->call('save')->assertHasNoErrors();
+
+    expect(telClosing('بطنطا'))->toBe(0)
+        ->and(telClosing())->toBe(49000);
 });
 
 it('يرفض منصرفاً أكبر من المتاح ويقبل ما يساويه', function () {
@@ -125,7 +203,7 @@ it('يرفض منصرفاً أكبر من المتاح ويقبل ما يساو�
     expect(FinanceMonth::count())->toBe(0);
 
     telEntry('10000', '15000')->call('save')->assertHasNoErrors();
-    expect(TelecomLedger::closingBalance(telAccount()))->toBe(0);
+    expect(telClosing())->toBe(0);
 });
 
 it('يحسب نوفمبر من مرحَّل أكتوبر', function () {
@@ -136,14 +214,14 @@ it('يحسب نوفمبر من مرحَّل أكتوبر', function () {
     telEntry('1000', '9001')->call('review')->assertHasErrors('expense');
     telEntry('1000', '9000')->call('save')->assertHasNoErrors();
 
-    expect(TelecomLedger::closingBalance(telAccount()))->toBe(0);
+    expect(telClosing())->toBe(0);
 });
 
 it('يحفظ شهراً منصرفه صفر بلا أمر دفع', function () {
     $this->actingAs(telUser());
     setOpening();
 
-    Livewire::test(MonthEntry::class, ['account' => 'telecom'])
+    Livewire::test(MonthEntry::class, ['account' => 'telecom', 'financeUnit' => telUnit()])
         ->set('income', '3000')->set('expense', '0')->set('noOrder', true)
         ->call('save')->assertHasNoErrors();
 
@@ -175,58 +253,63 @@ it('يصحّح أكتوبر فيتبعه رصيد نوفمبر، والسجلّ 
 
     telEntry('11000', '7000', '2026-10')->set('reason', 'الإيراد كُتب ناقصاً')->call('save')->assertHasNoErrors();
 
-    expect(TelecomLedger::closingBalance(telAccount()))->toBe(7000);
+    expect(telClosing())->toBe(7000);
 
     $log = Activity::where('log_name', FinanceHistory::LOG)->sole();
     expect($log->properties['before']['income'])->toBe(10000)
         ->and($log->properties['after']['income'])->toBe(11000);
 
-    $this->get(route('finance.telecom'))->assertSeeInOrder([__('home.fin_income').':', '10,000', '11,000']);
+    $this->get(telUrl())->assertSeeInOrder([__('home.fin_income').':', '10,000', '11,000']);
 });
 
-it('يصحّح الرصيد الافتتاحي بسببٍ ويرفض ما يُنتج سالباً', function () {
-    $this->actingAs(telUser());
+it('يصحّح رصيد الوحدة الافتتاحي بسببٍ ويرفض ما يُنتج سالباً', function () {
+    $this->actingAs(telUser(cities: ['بالقاهرة', 'بطنطا']));
     setOpening();
+    setOpening(777, 'بطنطا');
     telEntry('10000', '15000')->call('save'); // أكتوبر يصير صفراً
 
-    Livewire::test(Telecom::class)
+    telPage()
         ->call('startOpeningCorrection')
         ->set('openingInput', '4000')
         ->set('openingReason', 'الرصيد الصحيح أقل')
         ->call('correctOpening')
         ->assertHasErrors('openingInput');
-    expect(telAccount()->opening_balance)->toBe(5000);
+    expect(openingOf())->toBe(5000);
 
-    Livewire::test(Telecom::class)
+    telPage()
         ->call('startOpeningCorrection')
         ->set('openingInput', '6000')
         ->call('correctOpening')
         ->assertHasErrors('openingReason');
 
-    Livewire::test(Telecom::class)
+    telPage()
         ->call('startOpeningCorrection')
         ->set('openingInput', '6000')
         ->set('openingReason', 'كشف البنك بتاريخ 30 سبتمبر')
         ->call('correctOpening')
         ->assertHasNoErrors();
 
-    expect(telAccount()->opening_balance)->toBe(6000)
-        ->and(TelecomLedger::closingBalance(telAccount()))->toBe(1000);
+    expect(openingOf())->toBe(6000)
+        ->and(openingOf('بطنطا'))->toBe(777)
+        ->and(telClosing())->toBe(1000);
 
     $log = Activity::where('log_name', FinanceHistory::LOG)->sole();
-    expect($log->properties['month'])->toBe(FinanceHistory::OPENING);
+    expect($log->properties['month'])->toBe(FinanceHistory::OPENING)
+        ->and($log->properties['unit'])->toBe(telUnit()->id);
 
-    $this->get(route('finance.telecom'))->assertSee('كشف البنك بتاريخ 30 سبتمبر');
+    $this->get(telUrl())->assertSee('كشف البنك بتاريخ 30 سبتمبر');
+    // سجلّ رصيد القاهرة لا يظهر في طنطا
+    $this->get(telUrl('بطنطا'))->assertDontSee('كشف البنك بتاريخ 30 سبتمبر');
 });
 
 it('يمنع تصحيح الرصيد الافتتاحي بلا finance.edit', function () {
-    $this->actingAs(telUser(['finance.accounts.view', 'finance.court-total.view', 'finance.accounts.create', 'finance.units.create']));
+    $this->actingAs(telUser(['finance.units.view', 'finance.units.create']));
     setOpening();
 
-    Livewire::test(Telecom::class)->call('startOpeningCorrection')->assertForbidden();
-    Livewire::test(Telecom::class)
+    telPage()->call('startOpeningCorrection')->assertForbidden();
+    telPage()
         ->set('openingInput', '1')->set('openingReason', 'سببٌ كافٍ')
         ->call('correctOpening')->assertForbidden();
 
-    expect(telAccount()->opening_balance)->toBe(5000);
+    expect(openingOf())->toBe(5000);
 });

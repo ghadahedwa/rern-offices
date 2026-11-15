@@ -26,18 +26,11 @@ class FinanceAccount extends Model
     public const KIND_ITEMIZED = 'itemized';
     public const KIND_LEDGER   = 'ledger';
 
-    protected $fillable = ['key', 'kind', 'order', 'opening_balance', 'opening_set_by', 'opening_set_at'];
+    protected $fillable = ['key', 'kind', 'order'];
 
     protected $casts = [
-        'order'           => 'integer',
-        'opening_balance' => 'integer',
-        'opening_set_at'  => 'datetime',
+        'order' => 'integer',
     ];
-
-    public function openingSetter(): \Illuminate\Database\Eloquent\Relations\BelongsTo
-    {
-        return $this->belongsTo(User::class, 'opening_set_by');
-    }
 
     public static function byKey(string $key): self
     {
@@ -79,15 +72,51 @@ class FinanceAccount extends Model
         return $this->kind === self::KIND_LEDGER;
     }
 
-    /** اتصالات: لا شهر قبل الرصيد الافتتاحي — عليه تُحسب الأرصدة كلها */
-    public function needsOpening(): bool
+    /** الرصيد الافتتاحي للوحدة — لكل وحدة رصيدها (المرحلة ٢، 2026-11-15) */
+    public function openingFor(?int $unitId): ?FinanceOpening
     {
-        return $this->isLedger() && $this->opening_balance === null;
+        if (! $this->isLedger() || $unitId === null) {
+            return null;
+        }
+
+        return FinanceOpening::where('finance_account_id', $this->id)->where('finance_unit_id', $unitId)->first();
+    }
+
+    /**
+     * اتصالات: لا شهر للوحدة قبل رصيدها الافتتاحي — عليه تُحسب أرصدتها كلها.
+     * صفحة الإجمالي (بلا وحدة) لا دفتر لها فلا تطلبه.
+     */
+    public function needsOpening(?int $unitId): bool
+    {
+        return $this->isLedger() && $unitId !== null && $this->openingFor($unitId) === null;
     }
 
     public function isItemized(): bool
     {
         return $this->kind === self::KIND_ITEMIZED;
+    }
+
+    /**
+     * الحسابات التي تُدخلها الوحدات الحسابية — كلٌّ لنفسها، وصفحة الحساب إجماليها (طلب العميل
+     * 2026-11-15: الحسابات «زي أبنية المحاكم بالظبط»). اتصالات معها بالرصيد الافتتاحي لكل وحدة.
+     */
+    public const UNIT_ACCOUNTS = [self::COURT_BUILDINGS, self::MECHANIZATION, self::TELECOM, self::MINISTRY_OF_FINANCE];
+
+    public function byUnits(): bool
+    {
+        return in_array($this->key, self::UNIT_ACCOUNTS, true);
+    }
+
+    /** مفاتيح الرابط لحسابات الوحدات — قائمة الراوتات البيضاء */
+    public static function unitSlugs(): array
+    {
+        return array_map(fn ($k) => str_replace('_', '-', $k), self::UNIT_ACCOUNTS);
+    }
+
+    /** حسابات الوحدات بترتيبها — تبويبات صفحة الوحدة */
+    public static function unitAccounts(): \Illuminate\Support\Collection
+    {
+        return static::whereIn('key', self::UNIT_ACCOUNTS)->orderBy('order')->get();
     }
 
     public function months(): HasMany

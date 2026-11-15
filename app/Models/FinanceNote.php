@@ -46,7 +46,7 @@ class FinanceNote extends Model
     /** ملاحظات صفحة إجمالي أبنية المحاكم — لا وحدة ولا شهرٌ مُدخَل وراءها */
     protected static function isTotalPage(FinanceAccount $account, ?int $unitId): bool
     {
-        return $account->isItemized() && $unitId === null;
+        return $account->byUnits() && $unitId === null;
     }
 
     /**

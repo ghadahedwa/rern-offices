@@ -26,7 +26,7 @@
                         @include('livewire.finance.partials.history-badge')
 @include('livewire.finance.partials.notes-button')
                     </td>
-                    <td class="px-3 py-3"><span dir="ltr" class="font-semibold text-zinc-700 dark:text-zinc-200">{{ number_format($account->opening_balance) }}</span></td>
+                    <td class="px-3 py-3"><span dir="ltr" class="font-semibold text-zinc-700 dark:text-zinc-200">{{ number_format($openingBalance) }}</span></td>
                     <td class="px-3 py-3 max-sm:hidden"></td>
                     <td class="px-3 py-3 max-sm:hidden text-xs">
                         <p class="text-zinc-800 dark:text-zinc-100">{{ $openingBy ?? '—' }}</p>

@@ -18,7 +18,7 @@
         </div>
         <div>
             <p class="text-zinc-400">{{ __('home.fin_opening_balance') }}</p>
-            <p dir="ltr" class="text-right font-semibold text-zinc-700 dark:text-zinc-200" style="font-size: 1rem">{{ $account->opening_balance !== null ? number_format($account->opening_balance) : '—' }}</p>
+            <p dir="ltr" class="text-right font-semibold text-zinc-700 dark:text-zinc-200" style="font-size: 1rem">{{ $openingBalance !== null ? number_format($openingBalance) : '—' }}</p>
         </div>
     </div>
     <p class="text-xs text-zinc-400 mt-3">{{ __('home.fin_entered_of', ['entered' => $entered, 'count' => $monthCount]) }} · {{ __('home.fin_year_range', ['from' => $yearFrom, 'to' => $yearTo]) }}</p>

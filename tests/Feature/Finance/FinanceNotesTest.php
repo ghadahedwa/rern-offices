@@ -1,7 +1,6 @@
 <?php
 
-use App\Livewire\Finance\Mechanization;
-use App\Livewire\Finance\MinistryOfFinance;
+use App\Livewire\Finance\Unit;
 use App\Livewire\Finance\MonthEntry;
 use App\Models\FinanceAccount;
 use App\Models\FinanceAttachment;
@@ -26,7 +25,7 @@ beforeEach(function () {
     $this->travelTo(CarbonImmutable::parse('2026-11-05 10:00:00', 'UTC'));
 });
 
-function noteUser(array $abilities = ['finance.accounts.view', 'finance.court-total.view', 'finance.accounts.create', 'finance.units.create']): User
+function noteUser(array $abilities = ['finance.accounts.view', 'finance.court-total.view', 'finance.units.view', 'finance.accounts.create', 'finance.units.create']): User
 {
     foreach ($abilities as $ability) {
         Permission::findOrCreate($ability, 'web');
@@ -35,18 +34,18 @@ function noteUser(array $abilities = ['finance.accounts.view', 'finance.court-to
     $role = Role::findOrCreate('fin-note-'.uniqid(), 'web');
     $role->givePermissionTo($abilities);
 
-    return tap(User::factory()->create())->assignRole($role);
+    return tap(User::factory()->create(), fn (User $u) => $u->financeUnits()->attach(finCairo()))->assignRole($role);
 }
 
 function adminNoteUser(): User
 {
-    return noteUser(['finance.accounts.view', 'finance.court-total.view', 'finance.accounts.create', 'finance.units.create', 'finance.edit', 'finance.delete']);
+    return noteUser(['finance.accounts.view', 'finance.court-total.view', 'finance.units.view', 'finance.accounts.create', 'finance.units.create', 'finance.edit', 'finance.delete']);
 }
 
 /** يحفظ أكتوبر للميكنة — فيُقفل وملاحظاته معه */
 function lockOctober(string $note = ''): void
 {
-    Livewire::test(MonthEntry::class, ['account' => 'mechanization'])
+    Livewire::test(MonthEntry::class, ['account' => 'mechanization', 'financeUnit' => finCairo()])
         ->set('amount', '1000')
         ->set('orders.0.number', '77')
         ->set('orders.0.issued_on', '2026-11-02')
@@ -60,6 +59,7 @@ function noteOn(string $month, User $author, string $body = 'ملاحظة'): Fin
 {
     return FinanceNote::create([
         'finance_account_id' => FinanceAccount::byKey('mechanization')->id,
+        'finance_unit_id'    => finCairo()->id,
         'month'              => $month.'-01',
         'body'               => $body,
         'created_by'         => $author->id,
@@ -71,7 +71,7 @@ it('يضيف ملاحظة على الشهر التالي المفتوح ويعر
     $user->update(['name' => 'كاتب الملاحظة']);
     $this->actingAs($user);
 
-    Livewire::test(Mechanization::class)
+    Livewire::test(Unit::class, ['financeUnit' => finCairo(), 'account' => 'mechanization'])
         ->set('noteDrafts.2026-10', 'تأخّر وصول أمر الدفع')
         ->call('addNote', '2026-10')
         ->assertHasNoErrors()
@@ -86,9 +86,9 @@ it('يضيف ملاحظة على الشهر التالي المفتوح ويعر
 it('يرفض الملاحظة الفارغة وعلى شهرٍ لم يأتِ دوره', function () {
     $this->actingAs(noteUser());
 
-    Livewire::test(Mechanization::class)->set('noteDrafts.2026-10', '  ')->call('addNote', '2026-10')->assertHasErrors('noteDrafts.2026-10');
-    Livewire::test(Mechanization::class)->set('noteDrafts.2026-12', 'مبكراً')->call('addNote', '2026-12')->assertForbidden();
-    Livewire::test(Mechanization::class)->call('addNote', 'xx')->assertForbidden();
+    Livewire::test(Unit::class, ['financeUnit' => finCairo(), 'account' => 'mechanization'])->set('noteDrafts.2026-10', '  ')->call('addNote', '2026-10')->assertHasErrors('noteDrafts.2026-10');
+    Livewire::test(Unit::class, ['financeUnit' => finCairo(), 'account' => 'mechanization'])->set('noteDrafts.2026-12', 'مبكراً')->call('addNote', '2026-12')->assertForbidden();
+    Livewire::test(Unit::class, ['financeUnit' => finCairo(), 'account' => 'mechanization'])->call('addNote', 'xx')->assertForbidden();
 
     expect(FinanceNote::count())->toBe(0);
 });
@@ -106,11 +106,11 @@ it('والشهر مفتوح: يعدّل الكاتب ملاحظته ولا يع�
     $note   = noteOn('2026-10', $author);
 
     $this->actingAs(noteUser());
-    Livewire::test(Mechanization::class)->call('startEditNote', $note->id)->assertForbidden();
-    Livewire::test(Mechanization::class)->call('confirmDeleteNote', $note->id)->assertForbidden();
+    Livewire::test(Unit::class, ['financeUnit' => finCairo(), 'account' => 'mechanization'])->call('startEditNote', $note->id)->assertForbidden();
+    Livewire::test(Unit::class, ['financeUnit' => finCairo(), 'account' => 'mechanization'])->call('confirmDeleteNote', $note->id)->assertForbidden();
 
     $this->actingAs($author);
-    Livewire::test(Mechanization::class)
+    Livewire::test(Unit::class, ['financeUnit' => finCairo(), 'account' => 'mechanization'])
         ->call('startEditNote', $note->id)
         ->set('editingNoteBody', 'بعد التعديل')
         ->call('saveNote')
@@ -126,9 +126,9 @@ it('بعد قفل الشهر: الكاتب بصلاحية الإدخال وحد�
     $note = noteOn('2026-10', $author);
     lockOctober();
 
-    Livewire::test(Mechanization::class)->set('noteDrafts.2026-10', 'متأخرة')->call('addNote', '2026-10')->assertForbidden();
-    Livewire::test(Mechanization::class)->call('startEditNote', $note->id)->assertForbidden();
-    Livewire::test(Mechanization::class)->call('confirmDeleteNote', $note->id)->assertForbidden();
+    Livewire::test(Unit::class, ['financeUnit' => finCairo(), 'account' => 'mechanization'])->set('noteDrafts.2026-10', 'متأخرة')->call('addNote', '2026-10')->assertForbidden();
+    Livewire::test(Unit::class, ['financeUnit' => finCairo(), 'account' => 'mechanization'])->call('startEditNote', $note->id)->assertForbidden();
+    Livewire::test(Unit::class, ['financeUnit' => finCairo(), 'account' => 'mechanization'])->call('confirmDeleteNote', $note->id)->assertForbidden();
 });
 
 it('يرفض حفظ تعديلٍ بدأ والشهر مفتوح ثم قُفل', function () {
@@ -136,7 +136,7 @@ it('يرفض حفظ تعديلٍ بدأ والشهر مفتوح ثم قُفل', 
     $this->actingAs($author);
     $note = noteOn('2026-10', $author);
 
-    $page = Livewire::test(Mechanization::class)->call('startEditNote', $note->id)->set('editingNoteBody', 'تعديل متأخر');
+    $page = Livewire::test(Unit::class, ['financeUnit' => finCairo(), 'account' => 'mechanization'])->call('startEditNote', $note->id)->set('editingNoteBody', 'تعديل متأخر');
     lockOctober();
     $page->call('saveNote')->assertForbidden();
 
@@ -150,7 +150,7 @@ it('بعد القفل: التعديل والحذف بالتصحيح ويُسجَ
     lockOctober();
 
     $this->actingAs(adminNoteUser());
-    Livewire::test(Mechanization::class)
+    Livewire::test(Unit::class, ['financeUnit' => finCairo(), 'account' => 'mechanization'])
         ->call('startEditNote', $note->id)
         ->set('editingNoteBody', 'النص المصحَّح')
         ->call('saveNote')
@@ -161,7 +161,7 @@ it('بعد القفل: التعديل والحذف بالتصحيح ويُسجَ
         ->and($log->properties['note_before'])->toBe('النص الأول')
         ->and($log->properties['note_after'])->toBe('النص المصحَّح');
 
-    Livewire::test(Mechanization::class)
+    Livewire::test(Unit::class, ['financeUnit' => finCairo(), 'account' => 'mechanization'])
         ->call('confirmDeleteNote', $note->id)
         ->assertSet('showDelete', true)
         ->call('deleteRow')
@@ -171,7 +171,7 @@ it('بعد القفل: التعديل والحذف بالتصحيح ويُسجَ
         ->and(FinanceMonth::count())->toBe(1)
         ->and(Activity::where('event', FinanceHistory::EVENT_NOTE_DELETED)->sole()->properties['note_before'])->toBe('النص المصحَّح');
 
-    $this->get(route('finance.mechanization'))
+    $this->get(route('finance.unit', [finCairo(), 'mechanization']))
         ->assertSee(__('home.fin_history_badge_notes', ['count' => 2]))
         ->assertSee(__('home.fin_history_event_note_deleted'));
 });
@@ -180,8 +180,8 @@ it('لا تُفتح ملاحظة حسابٍ آخر من صفحة حساب', func
     $this->actingAs(adminNoteUser());
     $note = noteOn('2026-10', auth()->user());
 
-    Livewire::test(MinistryOfFinance::class)->call('startEditNote', $note->id)->assertNotFound();
-    Livewire::test(MinistryOfFinance::class)->call('confirmDeleteNote', $note->id)->assertNotFound();
+    Livewire::test(Unit::class, ['financeUnit' => finCairo(), 'account' => 'ministry-of-finance'])->call('startEditNote', $note->id)->assertNotFound();
+    Livewire::test(Unit::class, ['financeUnit' => finCairo(), 'account' => 'ministry-of-finance'])->call('confirmDeleteNote', $note->id)->assertNotFound();
 });
 
 it('لا تُفسد أحداث الملاحظات سطر «الأصل» ولا يقسم حذفها السجلّ', function () {
@@ -190,12 +190,12 @@ it('لا تُفسد أحداث الملاحظات سطر «الأصل» ولا �
     $note = noteOn('2026-10', auth()->user());
 
     // حدث الملاحظة **قبل** التصحيح: فأقدم أحداث الصفّ ملاحظةٌ لا تحمل أرقاماً، و«الأصل» يُقرأ من التصحيح
-    Livewire::test(Mechanization::class)->call('confirmDeleteNote', $note->id)->call('deleteRow');
+    Livewire::test(Unit::class, ['financeUnit' => finCairo(), 'account' => 'mechanization'])->call('confirmDeleteNote', $note->id)->call('deleteRow');
 
-    Livewire::test(MonthEntry::class, ['account' => 'mechanization', 'period' => '2026-10'])
+    Livewire::test(MonthEntry::class, ['account' => 'mechanization', 'financeUnit' => finCairo(), 'period' => '2026-10'])
         ->set('amount', '2000')->set('reason', 'المبلغ الصحيح')->call('save')->assertHasNoErrors();
 
-    $this->get(route('finance.mechanization'))->assertSeeInOrder([
+    $this->get(route('finance.unit', [finCairo(), 'mechanization']))->assertSeeInOrder([
         'المبلغ الصحيح', '2,000',
         __('home.fin_history_event_note_deleted'),
         __('home.fin_history_origin'), '1,000',

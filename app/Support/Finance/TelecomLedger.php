@@ -12,6 +12,7 @@ use Carbon\CarbonImmutable;
  *     رصيد آخر الشهر = المرحَّل من قبله + الإيراد − المنصرف
  *
  * وأول شهر يأخذ الرصيد الافتتاحي مكان المرحَّل. في الشهر: `income` الإيراد و`amount` المنصرف.
+ * ⚠️ **السلسلة دفتر وحدة** (المرحلة ٢، 2026-11-15): لكل وحدة افتتاحيها وشهورها، ولا تختلط وحدتان.
  *
  * ⚠️ **لحظيّ لا مخزَّن**: يُحسب من الصفوف في كل مرة، فتصحيح أكتوبر يصل لكل ما بعده.
  * ⚠️ **الرصيد لا يكون سالباً أبداً** — `firstNegative` يُفحص قبل كل إدخال وتصحيح
@@ -24,12 +25,13 @@ class TelecomLedger
      *
      * @param  array<int, array{income:int, expense:int}>  $overrides  قيمٌ بديلة لشهورٍ بمعرّفها (فحص تصحيح قبل حفظه)
      */
-    public static function chain(FinanceAccount $account, array $overrides = [], ?int $opening = null): array
+    public static function chain(FinanceAccount $account, ?int $unitId, array $overrides = [], ?int $opening = null): array
     {
-        $balance = $opening ?? (int) $account->opening_balance;
+        $balance = $opening ?? self::opening($account, $unitId);
         $rows    = [];
 
         $months = FinanceMonth::where('finance_account_id', $account->id)
+            ->forUnit($unitId)
             ->orderBy('month')
             ->get(['id', 'month', 'income', 'amount']);
 
@@ -52,23 +54,29 @@ class TelecomLedger
     }
 
     /** الرصيد بعد آخر شهرٍ مُدخَل (أو الافتتاحي إن لم يُدخَل شيء) — مرحَّل الشهر التالي */
-    public static function closingBalance(FinanceAccount $account): int
+    public static function closingBalance(FinanceAccount $account, ?int $unitId): int
     {
-        $chain = self::chain($account);
+        $chain = self::chain($account, $unitId);
 
-        return $chain ? end($chain)['balance'] : (int) $account->opening_balance;
+        return $chain ? end($chain)['balance'] : self::opening($account, $unitId);
+    }
+
+    /** الرصيد الافتتاحي للوحدة — صفرٌ إن لم يُكتب (والإدخال مقفولٌ قبله أصلاً) */
+    public static function opening(FinanceAccount $account, ?int $unitId): int
+    {
+        return (int) $account->openingFor($unitId)?->amount;
     }
 
     /** المرحَّل إلى شهرٍ محفوظ — رصيد ما قبله */
-    public static function carriedInto(FinanceAccount $account, CarbonImmutable $month): int
+    public static function carriedInto(FinanceAccount $account, ?int $unitId, CarbonImmutable $month): int
     {
-        return self::chain($account)[$month->format('Y-m')]['carried'] ?? self::closingBalance($account);
+        return self::chain($account, $unitId)[$month->format('Y-m')]['carried'] ?? self::closingBalance($account, $unitId);
     }
 
     /** أول شهرٍ يصير رصيده سالباً لو طُبّقت هذه القيم — null إن بقيت السلسلة سليمة */
-    public static function firstNegative(FinanceAccount $account, array $overrides = [], ?int $opening = null): ?array
+    public static function firstNegative(FinanceAccount $account, ?int $unitId, array $overrides = [], ?int $opening = null): ?array
     {
-        foreach (self::chain($account, $overrides, $opening) as $row) {
+        foreach (self::chain($account, $unitId, $overrides, $opening) as $row) {
             if ($row['balance'] < 0) {
                 return $row;
             }

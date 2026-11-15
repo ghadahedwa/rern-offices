@@ -114,8 +114,8 @@ class MonthEntry extends Component
         $model = FinanceAccount::bySlug($account);
         abort_unless($model->acceptsEntry(), 404);
 
-        // ⚠️ أبنية المحاكم مجموع وحداتها: لا تُدخَل إلا من صفحة وحدة، والوحدة لا تُذكر لغيرها
-        abort_unless($model->isItemized() === ($financeUnit?->exists === true), 404);
+        // ⚠️ حسابات الوحدات لا تُدخَل إلا من صفحة وحدة، والوحدة لا تُذكر لغيرها
+        abort_unless($model->byUnits() === ($financeUnit?->exists === true), 404);
 
         $this->unitId = $financeUnit?->id;
         abort_unless($period === null ? $this->canEnterHere($model) : $this->canCorrectHere(), 403);
@@ -131,7 +131,7 @@ class MonthEntry extends Component
 
         $next = FinanceCalendar::nextMonth($model, $this->unitId);
         // اتصالات بلا رصيدٍ افتتاحي: لا شهر يُفتح — الصفحة تردّه إلى صفحة الحساب ليكتبه
-        $this->month = FinanceCalendar::isDue($next) && ! $model->needsOpening() ? $next->toDateString() : null;
+        $this->month = FinanceCalendar::isDue($next) && ! $model->needsOpening($this->unitId) ? $next->toDateString() : null;
 
         $this->orders     = [['number' => '', 'issued_on' => '']];
         $this->orderFiles = [[]];
@@ -214,13 +214,15 @@ class MonthEntry extends Component
     protected function pageUrl(array $query = []): string
     {
         return $this->unitId
-            ? route('finance.unit', ['financeUnit' => $this->unitId] + $query)
+            ? route('finance.unit', ['financeUnit' => $this->unitId, 'account' => $this->account()->slug()] + $query)
             : route($this->account()->pageRoute(), $query);
     }
 
     protected function pageTitle(): string
     {
-        return $this->unit()?->name ?? $this->account()->label();
+        $unit = $this->unit();
+
+        return $unit ? $unit->name.' — '.$this->account()->label() : $this->account()->label();
     }
 
     protected function account(): FinanceAccount
@@ -378,8 +380,8 @@ class MonthEntry extends Component
     protected function carriedIn(FinanceAccount $account): int
     {
         return $this->editingId
-            ? TelecomLedger::carriedInto($account, CarbonImmutable::parse($this->month))
-            : TelecomLedger::closingBalance($account);
+            ? TelecomLedger::carriedInto($account, $this->unitId, CarbonImmutable::parse($this->month))
+            : TelecomLedger::closingBalance($account, $this->unitId);
     }
 
     /**
@@ -402,7 +404,7 @@ class MonthEntry extends Component
             return;
         }
 
-        $negative = TelecomLedger::firstNegative($account, [$this->editingId => ['income' => $income, 'expense' => $expense]]);
+        $negative = TelecomLedger::firstNegative($account, $this->unitId, [$this->editingId => ['income' => $income, 'expense' => $expense]]);
         if ($negative) {
             throw ValidationException::withMessages([
                 'expense' => __('home.fin_correction_negative', [
@@ -903,7 +905,7 @@ class MonthEntry extends Component
             'amountWords' => $amount !== null ? AmountInWords::pounds($amount) : null,
             'warnings'    => $this->reviewWarnings($account, $amount),
             'record'      => $record,
-            'needsOpening' => $account->needsOpening(),
+            'needsOpening' => $account->needsOpening($this->unitId),
             'ledgerCalc'  => $this->ledger && $this->month ? $this->ledgerCalc($account) : null,
             // بترتيب `itemIds` (ترتيب العناصر وقت فتح الفورم)
             'itemRows'    => $this->itemIds

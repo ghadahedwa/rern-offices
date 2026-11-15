@@ -93,13 +93,13 @@ it('يفتح السوبر أدمن الوحدات كلها بلا ربط', funct
 it('يُدخل شهر وحدته ويُرفض على وحدةٍ ليست له', function () {
     $this->actingAs(entryAs(['بالقاهرة']));
 
-    enterUnit(unitOf('بالقاهرة'))->assertHasNoErrors()->assertRedirect(route('finance.unit', ['financeUnit' => unitOf('بالقاهرة'), 'year' => 2026]));
+    enterUnit(unitOf('بالقاهرة'))->assertHasNoErrors()->assertRedirect(route('finance.unit', ['financeUnit' => unitOf('بالقاهرة'), 'account' => 'court-buildings', 'year' => 2026]));
 
     $month = FinanceMonth::sole();
     expect($month->finance_unit_id)->toBe(unitOf('بالقاهرة')->id)
         ->and($month->amount)->toBe(8000);
 
-    $this->get(route('finance.unit-entry', unitOf('بطنطا')))->assertForbidden();
+    $this->get(route('finance.unit-entry', [unitOf('بطنطا'), 'court-buildings']))->assertForbidden();
     Livewire::test(MonthEntry::class, ['account' => 'court-buildings', 'financeUnit' => unitOf('بطنطا')])->assertForbidden();
 });
 
@@ -107,7 +107,7 @@ it('لا تُدخل الوحدة المعطَّلة شهراً جديداً', fu
     $this->actingAs(entryAs(['بطنطا']));
     unitOf('بطنطا')->update(['is_active' => false]);
 
-    $this->get(route('finance.unit-entry', unitOf('بطنطا')))->assertForbidden();
+    $this->get(route('finance.unit-entry', [unitOf('بطنطا'), 'court-buildings']))->assertForbidden();
 });
 
 it('كل وحدة ماشية بشهورها والشهر نفسه لوحدتين', function () {
@@ -208,8 +208,8 @@ it('رابط الوحدة في رأس الجدول على وحدات المست�
     $this->actingAs(entryAs(['بالقاهرة']));
 
     Livewire::test(CourtBuildings::class)
-        ->assertSeeHtml('href="'.route('finance.unit', unitOf('بالقاهرة')).'"')
-        ->assertDontSeeHtml('href="'.route('finance.unit', unitOf('بطنطا')).'"');
+        ->assertSeeHtml('href="'.route('finance.unit', [unitOf('بالقاهرة'), 'court-buildings']).'"')
+        ->assertDontSeeHtml('href="'.route('finance.unit', [unitOf('بطنطا'), 'court-buildings']).'"');
 });
 
 it('لا يُدخَل أبنية المحاكم من غير وحدة', function () {

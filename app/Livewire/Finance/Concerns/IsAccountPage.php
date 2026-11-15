@@ -5,6 +5,7 @@ namespace App\Livewire\Finance\Concerns;
 use App\Models\FinanceAccount;
 use App\Models\FinanceMonth;
 use App\Models\FinanceNote;
+use App\Models\FinanceOpening;
 use App\Models\FinanceUnit;
 use App\Support\Finance\FinanceAccess;
 use App\Support\Finance\FinanceCalendar;
@@ -26,6 +27,8 @@ use Livewire\Attributes\Url;
  */
 trait IsAccountPage
 {
+    use BuildsUnitsTotal;
+
     /**
      * وحدة الصفحة — صفحة الوحدة الحسابية (`Finance\Unit`)، وNULL للحسابات الثلاثة.
      * ⚠️ كل استعلامٍ هنا داخل دفتر الوحدة: شهورها وآخر شهرها وملاحظاتها وسجلّها.
@@ -196,13 +199,23 @@ trait IsAccountPage
         return preg_replace('/[\s,٬،]/u', '', \App\Support\ArabicDigits::toLatin(trim($value))) ?? '';
     }
 
+    /** حساب الصفحة ذو الرصيد في صفحة وحدة — الرصيد الافتتاحي لكل وحدة، ولا دفتر للإجمالي */
+    protected function ledgerAccountOrFail(): FinanceAccount
+    {
+        $account = FinanceAccount::byKey($this->accountKey());
+        abort_unless($account->isLedger() && $this->unitId !== null, 404);
+
+        return $account;
+    }
+
     /**
-     * يُكتب **مرة واحدة** بإدخال الحسابات العامة ويُقفل كالشهر (قرار المستخدمة). ⚠️ الحارسان في
-     * الإجراء: الصلاحية، و«لم يُكتب بعد» تحت قفل الحساب — نداءٌ ثانٍ لا يستبدل رصيداً قائماً.
+     * يُكتب **مرة واحدة** لكل وحدة بإدخالها ويُقفل كالشهر (قرار المستخدمة). ⚠️ الحارسان في
+     * الإجراء: إدخال الوحدة، و«لم يُكتب بعد» تحت قفل الحساب — نداءٌ ثانٍ لا يستبدل رصيداً قائماً.
      */
     public function saveOpening(): void
     {
-        abort_unless(FinanceAccess::canEnter(auth()->user(), FinanceAccount::byKey($this->accountKey())), 403);
+        $this->ledgerAccountOrFail();
+        abort_unless(FinanceAccess::canEnterUnit(auth()->user(), $this->unit()), 403);
 
         $this->openingInput = self::openingDigits($this->openingInput);
         $this->validate(
@@ -212,16 +225,17 @@ trait IsAccountPage
 
         $saved = DB::transaction(function () {
             $account = FinanceAccount::where('key', $this->accountKey())->lockForUpdate()->firstOrFail();
-            abort_unless($account->isLedger(), 404);
 
-            if ($account->opening_balance !== null) {
+            if ($account->openingFor($this->unitId) !== null) {
                 return false;
             }
 
-            $account->update([
-                'opening_balance' => (int) $this->openingInput,
-                'opening_set_by'  => auth()->id(),
-                'opening_set_at'  => now(),
+            FinanceOpening::create([
+                'finance_account_id' => $account->id,
+                'finance_unit_id'    => $this->unitId,
+                'amount'             => (int) $this->openingInput,
+                'set_by'             => auth()->id(),
+                'set_at'             => now(),
             ]);
 
             return true;
@@ -236,9 +250,10 @@ trait IsAccountPage
 
     public function startOpeningCorrection(): void
     {
-        abort_unless(auth()->user()?->can('finance.edit'), 403);
+        $opening = $this->ledgerAccountOrFail()->openingFor($this->unitId);
+        abort_unless(auth()->user()?->can('finance.edit') && $opening, 403);
 
-        $this->openingInput      = (string) FinanceAccount::byKey($this->accountKey())->opening_balance;
+        $this->openingInput      = (string) $opening->amount;
         $this->openingReason     = '';
         $this->correctingOpening = true;
         $this->resetErrorBag();
@@ -250,6 +265,7 @@ trait IsAccountPage
      */
     public function correctOpening(): void
     {
+        $this->ledgerAccountOrFail();
         abort_unless(auth()->user()?->can('finance.edit'), 403);
 
         $this->openingInput  = self::openingDigits($this->openingInput);
@@ -266,16 +282,17 @@ trait IsAccountPage
 
         DB::transaction(function () {
             $account = FinanceAccount::where('key', $this->accountKey())->lockForUpdate()->firstOrFail();
-            abort_unless($account->isLedger() && $account->opening_balance !== null, 404);
+            $opening = $account->openingFor($this->unitId);
+            abort_if($opening === null, 404);
 
-            $old = (int) $account->opening_balance;
+            $old = $opening->amount;
             $new = (int) $this->openingInput;
 
             if ($old === $new) {
                 throw ValidationException::withMessages(['openingReason' => __('home.fin_correction_unchanged')]);
             }
 
-            $negative = TelecomLedger::firstNegative($account, [], $new);
+            $negative = TelecomLedger::firstNegative($account, $this->unitId, [], $new);
             if ($negative) {
                 throw ValidationException::withMessages(['openingInput' => __('home.fin_correction_negative', [
                     'month'   => FinanceCalendar::monthLabel($negative['month']),
@@ -286,8 +303,9 @@ trait IsAccountPage
             FinanceHistory::record(
                 FinanceHistory::EVENT_CORRECTED, $account, FinanceHistory::OPENING, $this->openingReason,
                 ['amount' => $old, 'orders' => []], ['amount' => $new, 'orders' => []],
+                unitId: $this->unitId,
             );
-            $account->update(['opening_balance' => $new]);
+            $opening->update(['amount' => $new]);
         });
 
         $this->correctingOpening = false;
@@ -416,9 +434,63 @@ trait IsAccountPage
         Flux::toast(variant: 'success', text: __('home.fin_month_deleted', ['month' => FinanceCalendar::monthLabel($deleted)]));
     }
 
+    /**
+     * شريط «المطلوب إدخاله الآن» أعلى صفحة الوحدة (نموذج وافقت عليه المستخدمة 2026-11-15): كارتٌ لكل
+     * حساب بحالة دفتر الوحدة فيه — `pending` شهرٌ بدأ ينتظر الإدخال · `opening` اتصالات بلا رصيدٍ
+     * افتتاحي · `done` مُدخَلٌ حتى الشهر الجاري.
+     * ⚠️ الزرّ لمن يُدخل الوحدة وحده (`canEnterUnit`) — العارض يرى الحالة بلا زرّ.
+     */
+    protected function unitStrip(FinanceUnit $unit): array
+    {
+        $canEnter = FinanceAccess::canEnterUnit(auth()->user(), $unit);
+
+        return FinanceAccount::unitAccounts()->map(function (FinanceAccount $account) use ($unit, $canEnter) {
+            $next = FinanceCalendar::nextMonth($account, $unit->id);
+            $card = ['label' => __('home.fin_tab_'.$account->key)];
+
+            if ($account->needsOpening($unit->id)) {
+                return $card + [
+                    'state' => 'opening',
+                    'month' => FinanceCalendar::monthLabel($next),
+                    'url'   => $canEnter ? route('finance.unit', [$unit, $account->slug()]) : null,
+                ];
+            }
+
+            if (FinanceCalendar::isDue($next)) {
+                return $card + [
+                    'state' => 'pending',
+                    'month' => FinanceCalendar::monthLabel($next),
+                    'url'   => $canEnter ? route('finance.unit-entry', [$unit, $account->slug()]) : null,
+                ];
+            }
+
+            // مُدخَلٌ حتى الشهر الجاري — ورقمه: المبلغ، واتصالات رصيدها بعده
+            $last = $this->lastMonthOf($account, $unit->id);
+
+            return $card + [
+                'state'  => 'done',
+                'url'    => null,
+                'month'  => FinanceCalendar::monthLabel($next->subMonth()),
+                'amount' => $account->isLedger() ? TelecomLedger::closingBalance($account, $unit->id) : $last?->amount,
+                'ledger' => $account->isLedger(),
+                'opens'  => FinanceCalendar::monthLabel($next),
+            ];
+        })->all();
+    }
+
+    protected function lastMonthOf(FinanceAccount $account, int $unitId): ?FinanceMonth
+    {
+        return FinanceMonth::where('finance_account_id', $account->id)->forUnit($unitId)->orderByDesc('month')->first();
+    }
+
     public function render()
     {
         $account = FinanceAccount::byKey($this->accountKey());
+
+        // صفحة حسابٍ تُدخله الوحدات = إجماليها (لا دفتر لها بلا وحدة)
+        if ($this->unitId === null && $account->byUnits()) {
+            return $this->renderUnitsTotal($account);
+        }
 
         $data = [
             'account'    => $account,
@@ -440,6 +512,7 @@ trait IsAccountPage
             'canDelete'  => false,
             'notes'      => collect(),
             'noteAdd'    => [],
+            'needsOpening' => false,
         ];
 
         if ($account->acceptsEntry()) {
@@ -502,20 +575,23 @@ trait IsAccountPage
 
             if ($account->isLedger()) {
                 // السلسلة كلها لا شهور السنة وحدها — مرحَّل يوليو من يونيو السنة السابقة
-                $chain = TelecomLedger::chain($account);
-                $data['ledger']        = $chain;
-                $data['yearIncome']    = $records->sum('income');
-                $data['yearExpense']   = $records->sum('amount');
-                $data['balanceNow']    = $chain ? end($chain)['balance'] : $account->opening_balance;
-                $data['balanceAfter']  = $chain ? FinanceCalendar::monthLabel(end($chain)['month']) : null;
-                $data['openingBy']     = $account->openingSetter?->name;
+                $chain   = TelecomLedger::chain($account, $this->unitId);
+                $opening = $account->openingFor($this->unitId);
+                $data['ledger']         = $chain;
+                $data['yearIncome']     = $records->sum('income');
+                $data['yearExpense']    = $records->sum('amount');
+                $data['openingBalance'] = $opening?->amount;
+                $data['balanceNow']     = $chain ? end($chain)['balance'] : $opening?->amount;
+                $data['balanceAfter']   = $chain ? FinanceCalendar::monthLabel(end($chain)['month']) : null;
+                $data['openingBy']      = $opening?->setter?->name;
                 // صفّ الافتتاحي في جدول سنته الأولى وحدها
-                $data['showOpening']   = $account->opening_balance !== null && $months[0]->lessThanOrEqualTo(FinanceCalendar::firstMonth());
-                $data['canSetOpening'] = $account->needsOpening() && FinanceAccess::canEnter(auth()->user(), $account);
+                $data['showOpening']    = $opening !== null && $months[0]->lessThanOrEqualTo(FinanceCalendar::firstMonth());
+                $data['canSetOpening']  = $opening === null && $this->canEnterHere($account);
             }
+            $data['needsOpening'] = $account->needsOpening($this->unitId);
             $data['nextMonth']  = $next;
             $data['nextDue']    = $nextDue;
-            $data['canEnter']   = $this->canEnterHere($account) && $nextDue && ! $account->needsOpening();
+            $data['canEnter']   = $this->canEnterHere($account) && $nextDue && ! $data['needsOpening'];
             $data['history']    = FinanceHistory::forAccount($account, $this->unitId);
             $data['lastId']     = $this->lastMonth($account)?->id;
             $data['canCorrect'] = auth()->user()->can('finance.edit');
@@ -526,11 +602,20 @@ trait IsAccountPage
         // روابط الدفتر: الوحدة براوتاتها، والحسابات الثلاثة براوتات الحساب
         $data['unit']       = $unit;
         $data['pageTitle']  = $unit?->name ?? $account->label();
-        $data['entryUrl']   = $unit ? route('finance.unit-entry', $unit) : route('finance.entry', $account->slug());
+        $data['entryUrl']   = $unit ? route('finance.unit-entry', [$unit, $account->slug()]) : route('finance.entry', $account->slug());
         $data['correctUrl'] = fn (FinanceMonth $m) => $unit
-            ? route('finance.unit-correct', [$unit, $m->month->format('Y-m')])
+            ? route('finance.unit-correct', [$unit, $account->slug(), $m->month->format('Y-m')])
             : route('finance.correct', [$account->slug(), $m->month->format('Y-m')]);
 
-        return view('livewire.finance.account', $data)->title($data['pageTitle']);
+        // تبويبات صفحة الوحدة: حساباتها بترتيبها
+        $data['unitTabs'] = $unit ? FinanceAccount::unitAccounts()->map(fn (FinanceAccount $a) => [
+            'label'  => __('home.fin_tab_'.$a->key),
+            'url'    => route('finance.unit', [$unit, $a->slug()]),
+            'active' => $a->id === $account->id,
+        ])->all() : [];
+
+        $data['unitStrip'] = $unit ? $this->unitStrip($unit) : [];
+
+        return view('livewire.finance.account', $data)->title($unit ? $unit->name.' — '.$account->label() : $data['pageTitle']);
     }
 }

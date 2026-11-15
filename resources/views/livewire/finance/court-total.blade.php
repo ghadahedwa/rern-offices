@@ -25,6 +25,12 @@
         </div>
     </div>
 
+    {{-- اتصالات: الخلايا منصرف كل وحدة (ما يغطيه أمر الدفع)، والإيراد والرصيد في صفحاتها —
+         شكل جدولها في «الإجمالي العام» (المرحلة ٣) --}}
+    @if($account->isLedger())
+        <p class="text-sm text-zinc-500 dark:text-zinc-400 -mt-3">{{ __('home.fin_total_ledger_note') }}</p>
+    @endif
+
     {{-- ── الملخّص: إجمالي السنة + أقدم شهرٍ لم يكتمل ── --}}
     <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div class="sm:col-span-2 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-sm p-5">
@@ -97,7 +103,7 @@
                                 <th scope="row" class="px-3 py-3 font-medium sticky right-0 bg-white dark:bg-zinc-900 z-10 whitespace-nowrap border-l border-zinc-200 dark:border-zinc-700" title="{{ $unit->name }}">
                                     @if($linked->contains($unit->id))
                                         {{-- رابط الوحدة على ما يفتحه المستخدم وحده — والحارس في صفحة الوحدة --}}
-                                        <a href="{{ route('finance.unit', $unit) }}" wire:navigate
+                                        <a href="{{ route('finance.unit', [$unit, $account->slug()]) }}" wire:navigate
                                            class="text-[#b8962e] dark:text-[#d8b856] font-semibold underline decoration-dotted underline-offset-4 hover:text-[#c9a847]">{{ $unit->shortName() }}</a>
                                     @else
                                         <span class="text-zinc-800 dark:text-zinc-100">{{ $unit->shortName() }}</span>

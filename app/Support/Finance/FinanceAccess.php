@@ -58,13 +58,13 @@ class FinanceAccess
     }
 
     /**
-     * إدخال الحسابات الثلاثة (والرصيد الافتتاحي). أبنية المحاكم لا تُدخَل إلا بوحدةٍ (`canEnterUnit`)،
-     * و«الإدخال» عليها هنا لملاحظات صفحة الإجمالي وحدها: عرضه مع إدخال الوحدات.
+     * إدخال الحساب بلا وحدة (اتصالات ورصيدها الافتتاحي). حسابات الوحدات لا تُدخَل إلا بوحدةٍ
+     * (`canEnterUnit`)، و«الإدخال» عليها هنا لملاحظات صفحة إجماليها وحدها: عرضه مع إدخال الوحدات.
      */
     public static function canEnter(?User $user, FinanceAccount $account): bool
     {
-        return $account->isItemized()
-            ? (bool) ($user?->can(self::UNITS_CREATE) && $user->can(self::COURT_TOTAL_VIEW))
+        return $account->byUnits()
+            ? (bool) ($user?->can(self::UNITS_CREATE) && self::canView($user, $account))
             : (bool) $user?->can(self::ACCOUNTS_CREATE);
     }
 
@@ -111,7 +111,7 @@ class FinanceAccess
     public static function canViewMonth(?User $user, FinanceMonth $month): bool
     {
         if ($month->finance_unit_id !== null) {
-            return (bool) $user?->can(self::COURT_TOTAL_VIEW) || self::canViewUnit($user, $month->finance_unit_id);
+            return self::canView($user, $month->account) || self::canViewUnit($user, $month->finance_unit_id);
         }
 
         return self::canView($user, $month->account);

@@ -1,6 +1,6 @@
 <?php
 
-use App\Livewire\Finance\Mechanization;
+use App\Livewire\Finance\Unit;
 use App\Livewire\Finance\MonthEntry;
 use App\Models\FinanceAttachment;
 use App\Models\FinanceMonth;
@@ -23,7 +23,7 @@ beforeEach(function () {
     $this->travelTo(CarbonImmutable::parse('2026-11-05 10:00:00', 'UTC'));
 });
 
-function correctionUser(array $abilities = ['finance.accounts.view', 'finance.court-total.view', 'finance.accounts.create', 'finance.units.create', 'finance.edit', 'finance.delete']): User
+function correctionUser(array $abilities = ['finance.accounts.view', 'finance.court-total.view', 'finance.units.view', 'finance.accounts.create', 'finance.units.create', 'finance.edit', 'finance.delete']): User
 {
     foreach ($abilities as $ability) {
         Permission::findOrCreate($ability, 'web');
@@ -32,13 +32,13 @@ function correctionUser(array $abilities = ['finance.accounts.view', 'finance.co
     $role = Role::findOrCreate('fin-corr-'.uniqid(), 'web');
     $role->givePermissionTo($abilities);
 
-    return tap(User::factory()->create())->assignRole($role);
+    return tap(User::factory()->create(), fn (User $u) => $u->financeUnits()->attach(finCairo()))->assignRole($role);
 }
 
 /** يحفظ الشهر التالي بأمرٍ وصورتين ويُرجعه. */
 function savedMonth(string $amount = '150000', string $number = '1234'): FinanceMonth
 {
-    Livewire::test(MonthEntry::class, ['account' => 'mechanization'])
+    Livewire::test(MonthEntry::class, ['account' => 'mechanization', 'financeUnit' => finCairo()])
         ->set('amount', $amount)
         ->set('orders.0.number', $number)
         ->set('orders.0.issued_on', '2026-11-02')
@@ -51,7 +51,7 @@ function savedMonth(string $amount = '150000', string $number = '1234'): Finance
 
 function correction(string $period = '2026-10')
 {
-    return Livewire::test(MonthEntry::class, ['account' => 'mechanization', 'period' => $period]);
+    return Livewire::test(MonthEntry::class, ['account' => 'mechanization', 'financeUnit' => finCairo(), 'period' => $period]);
 }
 
 // ── التصحيح ──────────────────────────────────────────────
@@ -66,14 +66,14 @@ it('يفتح التصحيح بالقيم المحفوظة لصاحب finance.edi
         ->assertSet('orders.0.issued_on', '2026-11-02')
         ->assertSee(__('home.fin_correction_for', ['month' => 'أكتوبر 2026']));
 
-    $this->actingAs(correctionUser(['finance.accounts.view', 'finance.court-total.view', 'finance.accounts.create', 'finance.units.create']));
-    $this->get(route('finance.correct', ['mechanization', '2026-10']))->assertForbidden();
+    $this->actingAs(correctionUser(['finance.accounts.view', 'finance.court-total.view', 'finance.units.view', 'finance.accounts.create', 'finance.units.create']));
+    $this->get(route('finance.unit-correct', [finCairo(), 'mechanization', '2026-10']))->assertForbidden();
 });
 
 it('يردّ 404 لشهرٍ لم يُدخَل', function () {
     $this->actingAs(correctionUser());
 
-    $this->get(route('finance.correct', ['mechanization', '2026-10']))->assertNotFound();
+    $this->get(route('finance.unit-correct', [finCairo(), 'mechanization', '2026-10']))->assertNotFound();
 });
 
 it('يصحّح المبلغ ويسجّل القيمة قبله وبعده والسبب', function () {
@@ -101,7 +101,7 @@ it('يصحّح المبلغ ويسجّل القيمة قبله وبعده وال
         ->and($log->properties['before']['amount'])->toBe(150000)
         ->and($log->properties['after']['amount'])->toBe(160000);
 
-    $this->get(route('finance.mechanization'))
+    $this->get(route('finance.unit', [finCairo(), 'mechanization']))
         ->assertSee(__('home.fin_history_badge', ['count' => 1]))
         ->assertSee('المبلغ كُتب خطأً');
 });
@@ -113,14 +113,14 @@ it('يعرض السجلّ الأحدث أولاً بأرقام وقوعه وسط
     correction()->set('amount', '160000')->set('reason', 'التصحيح الأول')->call('save')->assertHasNoErrors();
     correction()->set('amount', '165000')->set('reason', 'التصحيح الثاني')->call('save')->assertHasNoErrors();
 
-    $this->get(route('finance.mechanization'))->assertSeeInOrder([
+    $this->get(route('finance.unit', [finCairo(), 'mechanization']))->assertSeeInOrder([
         '2', __('home.fin_history_latest'), 'التصحيح الثاني', '165,000',
         '1', 'التصحيح الأول', '160,000',
         __('home.fin_history_origin'), '150,000',
     ]);
 
     // الرقم داخل دائرته — «2» و«1» مجرّدَين يطابقان أي مكان في الصفحة
-    $this->get(route('finance.mechanization'))->assertSeeInOrder([
+    $this->get(route('finance.unit', [finCairo(), 'mechanization']))->assertSeeInOrder([
         'text-amber-300">2</span>', 'التصحيح الثاني',
         'text-amber-300">1</span>', 'التصحيح الأول',
     ], false);
@@ -130,7 +130,7 @@ it('يضع الأصل بين تصحيحات الصفّ الحالي وحذف ا�
     $this->actingAs(correctionUser());
     $first = savedMonth('70000', '1111');
 
-    Livewire::test(Mechanization::class)
+    Livewire::test(Unit::class, ['financeUnit' => finCairo(), 'account' => 'mechanization'])
         ->call('confirmDelete', $first->id)
         ->set('deleteReason', 'الحساب الخطأ')
         ->call('deleteRow');
@@ -138,7 +138,7 @@ it('يضع الأصل بين تصحيحات الصفّ الحالي وحذف ا�
     savedMonth('80000', '2222');
     correction()->set('amount', '81000')->set('reason', 'تصحيح المبلغ')->call('save')->assertHasNoErrors();
 
-    $this->get(route('finance.mechanization'))->assertSeeInOrder([
+    $this->get(route('finance.unit', [finCairo(), 'mechanization']))->assertSeeInOrder([
         'تصحيح المبلغ', '81,000',
         __('home.fin_history_origin'), '80,000',
         'الحساب الخطأ', '70,000',
@@ -241,7 +241,7 @@ it('يصحّح بنفسه حتى بلا finance.create', function () {
     $this->actingAs(correctionUser());
     savedMonth();
 
-    $this->actingAs(correctionUser(['finance.accounts.view', 'finance.court-total.view', 'finance.edit']));
+    $this->actingAs(correctionUser(['finance.accounts.view', 'finance.court-total.view', 'finance.units.view', 'finance.edit']));
     correction()->set('amount', '1')->set('reason', 'تصحيح المبلغ')->call('save')->assertHasNoErrors();
 
     expect(FinanceMonth::sole()->amount)->toBe(1);
@@ -270,7 +270,7 @@ it('يحذف آخر شهرٍ بصوره ويسجّله بسببه', function () 
     $last  = savedMonth('90000', '5678');
     $paths = $last->paymentOrders[0]->attachments->pluck('path');
 
-    Livewire::test(Mechanization::class)
+    Livewire::test(Unit::class, ['financeUnit' => finCairo(), 'account' => 'mechanization'])
         ->call('confirmDelete', $last->id)
         ->assertSet('showDelete', true)
         ->set('deleteReason', 'أُدخل في الحساب الخطأ')
@@ -290,7 +290,7 @@ it('يحذف آخر شهرٍ بصوره ويسجّله بسببه', function () 
         ->and($log->properties['after'])->toBeNull();
 
     // السجلّ يبقى ظاهراً على الشهر الذي ينتظر إعادة إدخاله
-    $this->get(route('finance.mechanization'))
+    $this->get(route('finance.unit', [finCairo(), 'mechanization']))
         ->assertSee('أُدخل في الحساب الخطأ')
         ->assertSee(__('home.fin_history_badge_deleted', ['count' => 1]));
 
@@ -298,7 +298,7 @@ it('يحذف آخر شهرٍ بصوره ويسجّله بسببه', function () 
     savedMonth('90000', '5678');
     correction('2026-11')->set('amount', '91000')->set('reason', 'تصحيح المبلغ')->call('save')->assertHasNoErrors();
 
-    $this->get(route('finance.mechanization'))
+    $this->get(route('finance.unit', [finCairo(), 'mechanization']))
         ->assertSee(__('home.fin_history_badge', ['count' => 1]).' · '.__('home.fin_history_badge_deleted', ['count' => 1]));
 });
 
@@ -307,7 +307,7 @@ it('لا يحذف شهراً في الوسط', function () {
     $first = savedMonth();
     savedMonth('90000', '5678');
 
-    Livewire::test(Mechanization::class)->call('confirmDelete', $first->id)->assertForbidden();
+    Livewire::test(Unit::class, ['financeUnit' => finCairo(), 'account' => 'mechanization'])->call('confirmDelete', $first->id)->assertForbidden();
 
     expect(FinanceMonth::count())->toBe(2);
 });
@@ -316,7 +316,7 @@ it('يرفض الحذف بلا سبب', function () {
     $this->actingAs(correctionUser());
     $month = savedMonth();
 
-    Livewire::test(Mechanization::class)
+    Livewire::test(Unit::class, ['financeUnit' => finCairo(), 'account' => 'mechanization'])
         ->call('confirmDelete', $month->id)
         ->call('deleteRow')
         ->assertHasErrors('deleteReason');
@@ -328,7 +328,7 @@ it('لا يحذف إن أُدخل شهرٌ بعده والمودال مفتوح'
     $this->actingAs(correctionUser());
     $october = savedMonth();
 
-    $page = Livewire::test(Mechanization::class)->call('confirmDelete', $october->id);
+    $page = Livewire::test(Unit::class, ['financeUnit' => finCairo(), 'account' => 'mechanization'])->call('confirmDelete', $october->id);
 
     savedMonth('90000', '5678');
 
@@ -341,8 +341,8 @@ it('يمنع الحذف بلا finance.delete', function () {
     $this->actingAs(correctionUser());
     $month = savedMonth();
 
-    $this->actingAs(correctionUser(['finance.accounts.view', 'finance.court-total.view', 'finance.edit']));
-    Livewire::test(Mechanization::class)->call('confirmDelete', $month->id)->assertForbidden();
+    $this->actingAs(correctionUser(['finance.accounts.view', 'finance.court-total.view', 'finance.units.view', 'finance.edit']));
+    Livewire::test(Unit::class, ['financeUnit' => finCairo(), 'account' => 'mechanization'])->call('confirmDelete', $month->id)->assertForbidden();
 
     expect(FinanceMonth::count())->toBe(1);
 });
@@ -352,14 +352,14 @@ it('يُظهر التصحيح لصاحبه، والحذف على آخر شهرٍ
     $october  = savedMonth();
     $november = savedMonth('90000', '5678');
 
-    Livewire::test(Mechanization::class)
-        ->assertSee(route('finance.correct', ['mechanization', '2026-10']), false)
-        ->assertSee(route('finance.correct', ['mechanization', '2026-11']), false)
+    Livewire::test(Unit::class, ['financeUnit' => finCairo(), 'account' => 'mechanization'])
+        ->assertSee(route('finance.unit-correct', [finCairo(), 'mechanization', '2026-10']), false)
+        ->assertSee(route('finance.unit-correct', [finCairo(), 'mechanization', '2026-11']), false)
         ->assertSeeHtml('confirmDelete('.$november->id.')')
         ->assertDontSeeHtml('confirmDelete('.$october->id.')');
 
-    $this->actingAs(correctionUser(['finance.accounts.view', 'finance.court-total.view', 'finance.accounts.create', 'finance.units.create']));
-    Livewire::test(Mechanization::class)
-        ->assertDontSee(route('finance.correct', ['mechanization', '2026-10']), false)
+    $this->actingAs(correctionUser(['finance.accounts.view', 'finance.court-total.view', 'finance.units.view', 'finance.accounts.create', 'finance.units.create']));
+    Livewire::test(Unit::class, ['financeUnit' => finCairo(), 'account' => 'mechanization'])
+        ->assertDontSee(route('finance.unit-correct', [finCairo(), 'mechanization', '2026-10']), false)
         ->assertDontSeeHtml('confirmDelete(');
 });

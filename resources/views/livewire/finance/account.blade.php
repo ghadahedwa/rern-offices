@@ -18,8 +18,25 @@
         @endif
     </div>
 
+    {{-- صفحة الوحدة: تبويبٌ لكل حساب — روابط (التبويب في الرابط) لا حالة في الصفحة --}}
+    @if($unitStrip)
+        @include('livewire.finance.partials.unit-strip')
+    @endif
+
+    @if($unitTabs)
+        <div class="border-b border-zinc-200 dark:border-zinc-700 overflow-x-auto">
+            <nav class="flex gap-1 min-w-max">
+                @foreach($unitTabs as $tab)
+                    <a href="{{ $tab['url'] }}" wire:navigate
+                       @if($tab['active']) aria-current="page" @endif
+                       class="px-4 py-2.5 text-sm font-medium border-b-2 whitespace-nowrap transition {{ $tab['active'] ? 'border-[#c9a847] text-[#c9a847]' : 'border-transparent text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200' }}">{{ $tab['label'] }}</a>
+                @endforeach
+            </nav>
+        </div>
+    @endif
+
     @if($account->acceptsEntry())
-        @if($account->needsOpening())
+        @if($needsOpening)
             @include('livewire.finance.partials.ledger-opening')
         @endif
 

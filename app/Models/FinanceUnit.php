@@ -64,10 +64,13 @@ class FinanceUnit extends Model
      * ⚠️ يفحص وجود العمود أولاً (نمط `CourtBuildingItem::isInUse`): فيصير الحارس حقيقياً
      *    **لحظة إضافة العمود** في الدفعة الثانية بلا تعديلٍ يُنسى هنا.
      * ⚠️ وحدةٌ لها شهر لا تُحذف: حذفها يُنقص إجمالي أبنية المحاكم لشهرٍ مقفول.
+     * ⚠️ ولا وحدةٌ لها رصيدٌ افتتاحي في اتصالات (المفتاح الأجنبي `restrictOnDelete` يرفضه أيضاً).
      */
     public function isInUse(): bool
     {
-        return Schema::hasColumn(self::MONTHS_TABLE, self::MONTHS_COLUMN)
-            && DB::table(self::MONTHS_TABLE)->where(self::MONTHS_COLUMN, $this->id)->exists();
+        return (Schema::hasColumn(self::MONTHS_TABLE, self::MONTHS_COLUMN)
+                && DB::table(self::MONTHS_TABLE)->where(self::MONTHS_COLUMN, $this->id)->exists())
+            || (Schema::hasTable('finance_openings')
+                && DB::table('finance_openings')->where('finance_unit_id', $this->id)->exists());
     }
 }
