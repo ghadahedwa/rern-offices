@@ -9,34 +9,30 @@ use App\Models\User;
 use Illuminate\Support\Collection;
 
 /**
- * صلاحيات الشئون المالية — المصدر الواحد (ملف العميل 2026-11-11 · الدفعة الأولى).
+ * صلاحيات الشئون المالية — المصدر الواحد. ستٌّ منذ 2026-11-15 (كانت ثمانياً): الحسابات الأربعة
+ * تُدخلها الوحدات، فلا «حسابات عامة» بعد اليوم.
  *
  * صلاحياتٌ صغيرة يركّب منها العميل أدواره من شاشة الأدوار، بلا اسم دورٍ في الكود:
  *
- *   الحسابات العامة (الميكنة · اتصالات · وزارة المالية)   عرض · إدخال
- *   إجمالي أبنية المحاكم                                    عرض
- *   الوحدات الحسابية (المربوطة بالمستخدم)                   عرض · إدخال
- *   تصحيح · حذف · تقارير                                     على كل ما يراه
+ *   إجمالي الحسابات الأربعة (كل الوحدات)        عرض
+ *   الوحدات الحسابية (المربوطة بالمستخدم)        عرض · إدخال
+ *   تصحيح · حذف · تقارير                          على كل ما يراه
  *
  * ⚠️ كل حارسٍ يقرأ من هنا لا يكتب اسم صلاحيةٍ بنفسه — صفحة الحساب · الإدخال · الملاحظات ·
  *    الصور · القائمة الجانبية · الفرع.
  */
 class FinanceAccess
 {
-    public const ACCOUNTS_VIEW    = 'finance.accounts.view';
-    public const ACCOUNTS_CREATE  = 'finance.accounts.create';
-    public const COURT_TOTAL_VIEW = 'finance.court-total.view';
-    public const UNITS_VIEW       = 'finance.units.view';
-    public const UNITS_CREATE     = 'finance.units.create';
-    public const EDIT             = 'finance.edit';
-    public const DELETE           = 'finance.delete';
-    public const REPORTS          = 'finance.reports';
+    public const TOTAL_VIEW   = 'finance.total.view';
+    public const UNITS_VIEW   = 'finance.units.view';
+    public const UNITS_CREATE = 'finance.units.create';
+    public const EDIT         = 'finance.edit';
+    public const DELETE       = 'finance.delete';
+    public const REPORTS      = 'finance.reports';
 
     /** بترتيب العرض في شاشة الأدوار */
     public const ALL = [
-        self::ACCOUNTS_VIEW,
-        self::ACCOUNTS_CREATE,
-        self::COURT_TOTAL_VIEW,
+        self::TOTAL_VIEW,
         self::UNITS_VIEW,
         self::UNITS_CREATE,
         self::EDIT,
@@ -46,26 +42,23 @@ class FinanceAccess
 
     /** ما يفتح فرع الشئون المالية — صلاحيات العرض وحدها، والباقي لا يفتحه بلا عرض */
     public const BRANCH = [
-        self::ACCOUNTS_VIEW,
-        self::COURT_TOTAL_VIEW,
+        self::TOTAL_VIEW,
         self::UNITS_VIEW,
     ];
 
-    /** صفحة الحساب: أبنية المحاكم بإجماليها، والثلاثة بالحسابات العامة */
+    /** صفحة إجمالي الحساب — الحسابات الأربعة بصلاحيةٍ واحدة */
     public static function canView(?User $user, FinanceAccount $account): bool
     {
-        return (bool) $user?->can($account->isItemized() ? self::COURT_TOTAL_VIEW : self::ACCOUNTS_VIEW);
+        return (bool) $user?->can(self::TOTAL_VIEW);
     }
 
     /**
-     * إدخال الحساب بلا وحدة (اتصالات ورصيدها الافتتاحي). حسابات الوحدات لا تُدخَل إلا بوحدةٍ
-     * (`canEnterUnit`)، و«الإدخال» عليها هنا لملاحظات صفحة إجماليها وحدها: عرضه مع إدخال الوحدات.
+     * «الإدخال» على صفحة الإجمالي = ملاحظاتها وحدها (الشهور تُدخَل من الوحدات بـ`canEnterUnit`):
+     * عرض الإجمالي مع إدخال الوحدات.
      */
     public static function canEnter(?User $user, FinanceAccount $account): bool
     {
-        return $account->byUnits()
-            ? (bool) ($user?->can(self::UNITS_CREATE) && self::canView($user, $account))
-            : (bool) $user?->can(self::ACCOUNTS_CREATE);
+        return (bool) ($user?->can(self::UNITS_CREATE) && self::canView($user, $account));
     }
 
     // ── الوحدات الحسابية: الصلاحية **و** الربط في فورم المستخدم ──

@@ -138,9 +138,9 @@ it('يمنع كتابة الرصيد الافتتاحي بلا إدخال الو
 });
 
 it('لا يُكتب رصيدٌ افتتاحي في صفحة إجمالي اتصالات (لا دفتر بلا وحدة)', function () {
-    Permission::findOrCreate('finance.accounts.view', 'web');
-    Permission::findOrCreate('finance.accounts.create', 'web');
-    $user = tap(User::factory()->create())->givePermissionTo(['finance.accounts.view', 'finance.accounts.create']);
+    Permission::findOrCreate('finance.total.view', 'web');
+    Permission::findOrCreate('finance.units.create', 'web');
+    $user = tap(User::factory()->create())->givePermissionTo(['finance.total.view', 'finance.units.create']);
     $this->actingAs($user);
 
     Livewire::test(\App\Livewire\Finance\Telecom::class)

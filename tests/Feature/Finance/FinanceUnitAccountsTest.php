@@ -94,7 +94,7 @@ it('لكل وحدة شهورها في كل حساب — والحسابات من�
 });
 
 it('لا يُدخَل حساب وحداتٍ بلا وحدة', function () {
-    $this->actingAs(uaUser([...UA_ENTRY, 'finance.accounts.view', 'finance.accounts.create'], ['بالقاهرة']));
+    $this->actingAs(uaUser([...UA_ENTRY, 'finance.total.view', 'finance.units.create'], ['بالقاهرة']));
 
     $this->get(route('finance.entry', 'mechanization'))->assertNotFound();
     $this->get(route('finance.entry', 'ministry-of-finance'))->assertNotFound();
@@ -140,7 +140,7 @@ it('صفحة الميكنة إجمالي الوحدات بالشهور، ورا�
     uaEnter(uaUnit('بالقاهرة'), 'mechanization', '8000')->assertHasNoErrors();
     uaEnter(uaUnit('بطنطا'), 'mechanization', '4000', '9')->assertHasNoErrors();
 
-    $this->actingAs(uaUser(['finance.accounts.view', 'finance.units.view'], ['بالقاهرة']));
+    $this->actingAs(uaUser(['finance.total.view', 'finance.units.view'], ['بالقاهرة']));
     Livewire::test(Mechanization::class)
         ->assertSee('8,000')->assertSee('4,000')->assertSee('12,000')
         ->assertSee(__('home.fin_units_of', ['entered' => 2, 'count' => 6]))
@@ -156,12 +156,8 @@ it('صورة أمر دفع شهر وحدةٍ في الميكنة: لعارض ا�
     uaEnter(uaUnit('بالقاهرة'), 'mechanization')->assertHasNoErrors();
     $file = FinanceAttachment::sole();
 
-    $this->actingAs(uaUser(['finance.accounts.view']));
+    $this->actingAs(uaUser(['finance.total.view']));
     $this->get(route('finance.attachments.show', $file))->assertOk();
-
-    // إجمالي أبنية المحاكم لا يفتح صور الميكنة
-    $this->actingAs(uaUser(['finance.court-total.view']));
-    $this->get(route('finance.attachments.show', $file))->assertForbidden();
 
     $this->actingAs(uaUser(['finance.units.view'], ['بطنطا']));
     $this->get(route('finance.attachments.show', $file))->assertForbidden();
@@ -171,7 +167,7 @@ it('صورة أمر دفع شهر وحدةٍ في الميكنة: لعارض ا�
 });
 
 it('ملاحظات صفحة إجمالي الميكنة بلا وحدة، ولا تظهر في صفحة الوحدة', function () {
-    $this->actingAs(uaUser([...UA_ENTRY, 'finance.accounts.view'], ['بالقاهرة']));
+    $this->actingAs(uaUser([...UA_ENTRY, 'finance.total.view'], ['بالقاهرة']));
 
     Livewire::test(Mechanization::class)
         ->set('noteDrafts.2026-10', 'ملاحظة الإجمالي')
@@ -216,7 +212,7 @@ it('شريط الوحدة: كارتٌ لكل حساب بحالة دفتره وز
 });
 
 it('شريط الوحدة للعارض بلا أزرار، ولا شريط في صفحة الإجمالي', function () {
-    $this->actingAs(uaUser(['finance.units.view', 'finance.accounts.view'], ['بطنطا']));
+    $this->actingAs(uaUser(['finance.units.view', 'finance.total.view'], ['بطنطا']));
     $tanta = uaUnit('بطنطا');
 
     $this->get(route('finance.unit', $tanta))->assertOk()

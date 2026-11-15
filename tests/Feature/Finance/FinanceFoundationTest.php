@@ -61,7 +61,7 @@ it('يزرع عناصر أبنية المحاكم الثمانية مفعَّل�
         ->and($items->every->is_active)->toBeTrue();
 });
 
-it('يزرع صلاحيات الشئون المالية الثماني بلا القديمتين', function () {
+it('يزرع صلاحيات الشئون المالية الست وحدها', function () {
     expect(Permission::where('name', 'like', 'finance.%')->pluck('name')->sort()->values()->all())
         ->toBe(collect(\App\Support\Finance\FinanceAccess::ALL)->sort()->values()->all());
 });
@@ -69,7 +69,7 @@ it('يزرع صلاحيات الشئون المالية الثماني بلا ا
 // ── الفرع والصفحات ───────────────────────────────────────
 
 it('يفتح الصفحات الأربع لصاحب العرض باسم حسابها', function () {
-    $this->actingAs(finUser(['finance.accounts.view', 'finance.court-total.view']));
+    $this->actingAs(finUser(['finance.total.view']));
 
     foreach (FIN_PAGES as $route) {
         $key = str_replace('-', '_', substr($route, strlen('finance.')));
@@ -79,7 +79,7 @@ it('يفتح الصفحات الأربع لصاحب العرض باسم حساب
 });
 
 it('يطلب عناصر أبنية المحاكم في فورم شهر الوحدة وحده', function () {
-    $user = finUser(['finance.accounts.view', 'finance.accounts.create', 'finance.units.view', 'finance.units.create']);
+    $user = finUser(['finance.total.view', 'finance.units.create', 'finance.units.view', 'finance.units.create']);
     $unit = \App\Models\FinanceUnit::ordered()->first();
     $user->financeUnits()->sync([$unit->id]);
     $this->actingAs($user);
@@ -89,7 +89,7 @@ it('يطلب عناصر أبنية المحاكم في فورم شهر الوح�
 });
 
 it('يمنع الصفحات عمّن لا يملك العرض — ولو ملك الإدخال والتصحيح', function () {
-    $this->actingAs(finUser(['finance.accounts.create', 'finance.units.create', 'finance.edit', 'finance.delete']));
+    $this->actingAs(finUser(['finance.units.create', 'finance.edit', 'finance.delete']));
 
     foreach (FIN_PAGES as $route) {
         $this->get(route($route))->assertForbidden();
@@ -97,13 +97,13 @@ it('يمنع الصفحات عمّن لا يملك العرض — ولو ملك 
 });
 
 it('لا يفتح الفرع إلا بالعرض', function () {
-    expect(Branch::canAccess('finance', finUser(['finance.accounts.view', 'finance.court-total.view'])))->toBeTrue()
-        ->and(Branch::canAccess('finance', finUser(['finance.accounts.create', 'finance.units.create', 'finance.edit', 'finance.delete'])))->toBeFalse()
+    expect(Branch::canAccess('finance', finUser(['finance.total.view'])))->toBeTrue()
+        ->and(Branch::canAccess('finance', finUser(['finance.units.create', 'finance.edit', 'finance.delete'])))->toBeFalse()
         ->and(Branch::canAccess('finance', finUser(['offices.index'])))->toBeFalse();
 });
 
 it('يجعل أبنية المحاكم صفحة دخول الفرع', function () {
-    expect(Branch::entryUrlFor('finance', finUser(['finance.accounts.view', 'finance.court-total.view'])))
+    expect(Branch::entryUrlFor('finance', finUser(['finance.total.view'])))
         ->toBe(route('finance.court-buildings'));
 });
 
@@ -118,7 +118,7 @@ it('يضع الصفحات في فرع الشئون المالية وعناصره
 });
 
 it('يعرض بنود الحسابات الأربعة في القائمة الجانبية', function () {
-    $this->actingAs(finUser(['finance.accounts.view', 'finance.court-total.view']));
+    $this->actingAs(finUser(['finance.total.view']));
 
     $response = $this->get(route('finance.mechanization'));
 
@@ -132,13 +132,13 @@ it('يجمع الصلاحيات تحت عنوانها بلا نطاق محافظ
 
     expect($groups['home.branch_finance']['الشئون المالية']->pluck('name')->all())
         ->toBe(\App\Support\Finance\FinanceAccess::ALL)
-        ->and(PermissionGroups::needsGovernorates(['finance.accounts.view', 'finance.court-total.view', 'finance.accounts.create', 'finance.units.create']))->toBeFalse();
+        ->and(PermissionGroups::needsGovernorates(['finance.total.view', 'finance.units.create']))->toBeFalse();
 });
 
 // ── عناصر أبنية المحاكم ──────────────────────────────────
 
 it('يقصر قائمة العناصر على السوبر أدمن', function () {
-    $this->actingAs(finUser(['finance.accounts.view', 'finance.court-total.view', 'finance.accounts.create', 'finance.units.create', 'finance.edit', 'finance.delete']));
+    $this->actingAs(finUser(['finance.total.view', 'finance.units.create', 'finance.edit', 'finance.delete']));
 
     $this->get(route('court-building-items.index'))->assertForbidden();
     $this->get(route('court-building-items.create'))->assertForbidden();
@@ -149,7 +149,7 @@ it('يقصر قائمة العناصر على السوبر أدمن', function (
 });
 
 it('يرفض مكوّني العناصر من غير السوبر أدمن', function () {
-    $this->actingAs(finUser(['finance.accounts.view', 'finance.court-total.view', 'finance.edit', 'finance.delete']));
+    $this->actingAs(finUser(['finance.total.view', 'finance.edit', 'finance.delete']));
 
     Livewire::test(ItemIndex::class)->assertForbidden();
     Livewire::test(ItemCreate::class)->assertForbidden();
@@ -220,23 +220,13 @@ it('لا يعطِّل ولا يحذف آخر عنصر مفعَّل', function ()
     expect(CourtBuildingItem::find($last->id))->not->toBeNull();
 });
 
-it('يسحب التصحيح والحذف من دور admin ويُبقي له العرض والإدخال', function () {
-    // الأدوار تُنشأ من الشاشة لا من الهجرات — فاختبار الداتابيز الجديدة بلا admin، ويُنشأ هنا كما على السيرفر
-    $admin = Role::findOrCreate('admin', 'web');
-    $admin->givePermissionTo(['finance.accounts.view', 'finance.accounts.create', 'finance.edit', 'finance.delete']);
 
-    (require database_path('migrations/2026_11_07_000003_revoke_finance_corrections_from_admin.php'))->up();
+// ── الصلاحيات الست (المرحلة ٤ · 2026-11-15) ───────────────
 
-    expect($admin->fresh()->permissions->pluck('name')->sort()->values()->all())
-        ->toBe(['finance.accounts.create', 'finance.accounts.view']);
-});
-
-// ── تقسيم الصلاحيات (ملف العميل 2026-11-11) ───────────────
-
-/** يُرجع الداتابيز لما قبل التقسيم: القديمتان على الأدوار، ثم يُشغَّل التقسيم */
-function splitWith(array $old): Role
+/** يُرجع الداتابيز لما قبل الدمج: الأسماء الثمانية القديمة على دور، ثم يُشغَّل الدمج */
+function mergeWith(array $old): Role
 {
-    $migration = require database_path('migrations/2026_11_11_000002_split_finance_permissions.php');
+    $migration = require database_path('migrations/2026_11_15_000002_merge_finance_permissions.php');
     $migration->down();
 
     $role = Role::findOrCreate('legacy-'.uniqid(), 'web');
@@ -247,58 +237,51 @@ function splitWith(array $old): Role
     return $role->fresh();
 }
 
-it('لا يفقد دورٌ شيئاً بالتقسيم: العرض ثلاثاً والإدخال اثنين', function () {
-    $role = splitWith(['finance.view', 'finance.create']);
-
-    expect($role->permissions->pluck('name')->sort()->values()->all())->toBe([
-        'finance.accounts.create', 'finance.accounts.view', 'finance.court-total.view',
-        'finance.units.create', 'finance.units.view',
-    ])->and(Permission::whereIn('name', ['finance.view', 'finance.create'])->exists())->toBeFalse();
-});
-
-it('يأخذ صاحب الأربع القديمة كلها الثماني مع التقارير', function () {
-    $role = splitWith(['finance.view', 'finance.create', 'finance.edit', 'finance.delete']);
+it('لا يفقد دورٌ شيئاً بالدمج: عرض الحسابات العامة ← الإجمالي، وإدخالها ← إدخال الوحدات', function () {
+    $role = mergeWith(['finance.accounts.view', 'finance.accounts.create']);
 
     expect($role->permissions->pluck('name')->sort()->values()->all())
-        ->toBe(collect(\App\Support\Finance\FinanceAccess::ALL)->sort()->values()->all());
+        ->toBe(['finance.total.view', 'finance.units.create'])
+        ->and(Permission::whereIn('name', ['finance.accounts.view', 'finance.accounts.create', 'finance.court-total.view'])->exists())->toBeFalse();
 });
 
-it('العرض وحده لا يأخذ إدخالاً ولا تقارير', function () {
-    $role = splitWith(['finance.view']);
+it('يحتفظ صاحب إجمالي أبنية المحاكم بالإجمالي (إعادة تسمية لا حذف)', function () {
+    $role = mergeWith(['finance.court-total.view', 'finance.units.view', 'finance.edit']);
 
     expect($role->permissions->pluck('name')->sort()->values()->all())
-        ->toBe(['finance.accounts.view', 'finance.court-total.view', 'finance.units.view']);
+        ->toBe(['finance.edit', 'finance.total.view', 'finance.units.view']);
 });
 
-// ── الفصل بين الحسابات العامة وأبنية المحاكم ────────────────
+it('العرض القديم وحده لا يأخذ إدخالاً', function () {
+    $role = mergeWith(['finance.accounts.view']);
 
-it('يفصل عرض الحسابات العامة عن إجمالي أبنية المحاكم', function () {
-    $this->actingAs(finUser(['finance.accounts.view']));
-
-    $this->get(route('finance.mechanization'))->assertOk();
-    $this->get(route('finance.telecom'))->assertOk();
-    $this->get(route('finance.court-buildings'))->assertForbidden();
-    $this->get(route('finance.mechanization'))->assertDontSee('href="'.route('finance.court-buildings').'"', false);
-
-    $this->actingAs(finUser(['finance.court-total.view']));
-
-    $this->get(route('finance.court-buildings'))->assertOk();
-    $this->get(route('finance.ministry-of-finance'))->assertForbidden();
+    expect($role->permissions->pluck('name')->all())->toBe(['finance.total.view']);
 });
 
-it('يهبط صاحب الحسابات العامة وحدها على الميكنة لا على أبنية المحاكم', function () {
-    $this->actingAs(finUser(['finance.accounts.view']));
+// ── عرض الإجمالي والوحدات ─────────────────────────────────
 
-    expect(Branch::entryUrlFor('finance', auth()->user()))->toBe(route('finance.mechanization'));
+it('عرض الإجمالي يفتح صفحات الحسابات الأربعة كلها', function () {
+    $this->actingAs(finUser(['finance.total.view']));
+
+    foreach (['finance.court-buildings', 'finance.mechanization', 'finance.telecom', 'finance.ministry-of-finance'] as $route) {
+        $this->get(route($route))->assertOk();
+    }
+
+    $this->actingAs(finUser(['finance.units.view']));
+    $this->get(route('finance.mechanization'))->assertForbidden();
 });
 
-it('يفصل إدخال الحسابات العامة عن إدخال الوحدات — وحسابات الوحدات لا تُدخَل إلا من وحدة', function () {
-    $this->actingAs(finUser(['finance.accounts.view', 'finance.accounts.create']));
+it('يهبط عارض الإجمالي على أبنية المحاكم، وصاحب الوحدات وحدها على وحدته', function () {
+    expect(Branch::entryUrlFor('finance', finUser(['finance.total.view'])))->toBe(route('finance.court-buildings'))
+        ->and(Branch::entryUrlFor('finance', finUser(['finance.units.view'])))->toBe(route('finance.my-unit'));
+});
+
+it('الحسابات الأربعة لا تُدخَل إلا من وحدةٍ مربوطة', function () {
+    $this->actingAs(finUser(['finance.total.view', 'finance.units.create']));
 
     $unit = \App\Models\FinanceUnit::ordered()->first();
 
     $this->get(route('finance.unit-entry', [$unit, 'mechanization']))->assertForbidden();
-    $this->get(route('finance.unit-entry', [$unit, 'telecom']))->assertForbidden();
 
     $unitUser = finUser(['finance.units.view', 'finance.units.create']);
     $unitUser->financeUnits()->sync([$unit->id]);
@@ -311,31 +294,67 @@ it('يفصل إدخال الحسابات العامة عن إدخال الوحد
     }
 });
 
-it('ملاحظة الشهر المفتوح بإدخال حسابها نفسه', function () {
-    $this->actingAs(finUser(['finance.court-total.view', 'finance.units.create']));
+it('ملاحظة صفحة الإجمالي بعرضه مع إدخال الوحدات — والعرض وحده لا يكتبها', function () {
+    $this->actingAs(finUser(['finance.total.view', 'finance.units.create']));
     Livewire::test(\App\Livewire\Finance\CourtBuildings::class)
         ->set('noteDrafts.2026-10', 'ملاحظة الوحدات')
         ->call('addNote', '2026-10')
         ->assertHasNoErrors();
 
-    $this->actingAs(finUser(['finance.court-total.view', 'finance.accounts.create']));
+    $this->actingAs(finUser(['finance.total.view']));
     Livewire::test(\App\Livewire\Finance\CourtBuildings::class)
-        ->set('noteDrafts.2026-10', 'ملاحظة الحسابات العامة')
+        ->set('noteDrafts.2026-10', 'ملاحظة العارض')
         ->call('addNote', '2026-10')
         ->assertForbidden();
 
     expect(\App\Models\FinanceNote::count())->toBe(1);
 })->travelTo('2026-11-05 10:00:00');
 
-it('لا يفتح صاحب الحسابات العامة صورة أمر دفعٍ من أبنية المحاكم برابطها', function () {
+it('لا يفتح صاحب الوحدات صورة أمر دفعٍ لوحدةٍ ليست له برابطها', function () {
+    [$mine, $other] = \App\Models\FinanceUnit::ordered()->take(2)->get()->all();
+
     $month = \App\Models\FinanceMonth::create([
-        'finance_account_id' => FinanceAccount::byKey('court_buildings')->id,
+        'finance_account_id' => FinanceAccount::byKey('mechanization')->id,
+        'finance_unit_id'    => $other->id,
         'month'              => '2026-10-01',
         'amount'             => 0,
     ]);
     $attachment = $month->paymentOrders()->create(['number' => '1', 'issued_on' => '2026-10-02', 'position' => 1])
         ->attachments()->create(['path' => 'payment-orders/x.jpg', 'original_name' => 'x.jpg']);
 
-    $this->actingAs(finUser(['finance.accounts.view']));
+    $user = finUser(['finance.units.view']);
+    $user->financeUnits()->sync([$mine->id]);
+    $this->actingAs($user);
+
     $this->get(route('finance.attachments.show', $attachment))->assertForbidden();
+});
+
+// ── فورم الدور والقائمة الجانبية ──────────────────────────
+
+it('فورم الدور يعرض الصلاحيات الست بسطر شرحٍ تحت كلٍّ منها', function () {
+    $html = view('livewire.roles.partials.permissions-grid', [
+        'permissions'         => Permission::where('name', 'like', 'finance.%')->get(),
+        'selectedPermissions' => [],
+    ])->render();
+
+    expect($html)->toContain('عرض الإجمالي')
+        ->toContain('أرقام الحسابات الأربعة لكل الوحدات مجمَّعة')
+        ->toContain('صفحة الوحدة المربوط بها المستخدم وحدها')
+        ->not->toContain('finance.accounts.view');
+});
+
+it('القائمة: «وحدتي» لمن رُبط بوحدةٍ واحدة، ولا قائمة وحدات لعارض الإجمالي', function () {
+    $units = \App\Models\FinanceUnit::ordered()->get();
+
+    $unitUser = finUser(['finance.units.view']);
+    $unitUser->financeUnits()->sync([$units[1]->id]);
+    $this->actingAs($unitUser)->get(route('finance.unit', $units[1]))
+        ->assertSee(__('home.fin_my_unit'))
+        ->assertDontSee(__('home.fin_account_mechanization'));
+
+    $viewer = finUser(['finance.total.view', 'finance.units.view']);
+    $viewer->financeUnits()->sync($units->pluck('id')->all());
+    $this->actingAs($viewer)->get(route('finance.mechanization'))
+        ->assertDontSee(__('home.fin_my_unit'))
+        ->assertDontSee('href="'.route('finance.unit', $units[2]).'"', false);
 });

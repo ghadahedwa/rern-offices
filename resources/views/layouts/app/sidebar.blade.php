@@ -358,9 +358,19 @@
                             {{ __('home.'.$finLabel) }}
                         </flux:sidebar.item>
                     @endforeach
-                    {{-- الوحدات الحسابية التي يفتحها المستخدم (صلاحية العرض والربط) — تحت أبنية المحاكم --}}
-                    @if(Route::has('finance.unit'))
-                        @foreach(\App\Support\Finance\FinanceAccess::viewableUnits(auth()->user()) as $finUnit)
+                    {{-- «وحدتي» لمن رُبط بوحدةٍ واحدة (قرار المستخدمة: لا قائمة وحدات في المنيو) — وعارض الإجمالي
+                         يفتح الوحدات من أسمائها في صفحته. ومَن رُبط بأكثر من وحدة بلا عرض الإجمالي تُسرد وحداته،
+                         وإلا لم يبلغها من أي مكان. --}}
+                    @php
+                        $finUnits     = \App\Support\Finance\FinanceAccess::viewableUnits(auth()->user());
+                        $finSeesTotal = auth()->user()?->can(\App\Support\Finance\FinanceAccess::TOTAL_VIEW);
+                    @endphp
+                    @if($finUnits->count() === 1 && Route::has('finance.unit'))
+                        <flux:sidebar.item icon="building-office" :href="route('finance.unit', $finUnits->first())" :current="request()->routeIs('finance.unit*')" wire:navigate>
+                            {{ __('home.fin_my_unit') }}
+                        </flux:sidebar.item>
+                    @elseif(! $finSeesTotal && Route::has('finance.unit'))
+                        @foreach($finUnits as $finUnit)
                             <flux:sidebar.item icon="building-office" :href="route('finance.unit', $finUnit)" :current="request()->routeIs('finance.unit*') && (int) request()->route('financeUnit')?->id === $finUnit->id" wire:navigate>
                                 {{ $finUnit->name }}
                             </flux:sidebar.item>

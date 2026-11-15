@@ -23,7 +23,7 @@ function unitsSuperAdmin(): User
 
 function unitsFinUser(): User
 {
-    $abilities = ['finance.accounts.view', 'finance.court-total.view', 'finance.accounts.create', 'finance.units.create', 'finance.edit', 'finance.delete'];
+    $abilities = ['finance.total.view', 'finance.units.create', 'finance.edit', 'finance.delete'];
     foreach ($abilities as $ability) {
         Permission::findOrCreate($ability, 'web');
     }
@@ -155,10 +155,10 @@ function unitId(string $city): int
     return FinanceUnit::where('name', 'like', '%'.$city)->value('id');
 }
 
-it('يُظهر قسم الوحدات لدور الوحدات وحده لا للحسابات العامة', function () {
+it('يُظهر قسم الوحدات لدور الوحدات وحده لا لعارض الإجمالي', function () {
     $this->actingAs(unitsSuperAdmin());
     financeRole('وحدة حسابية', ['finance.units.view', 'finance.units.create']);
-    financeRole('حسابات عامة فقط', ['finance.accounts.view', 'finance.accounts.create']);
+    financeRole('حسابات عامة فقط', ['finance.total.view']);
 
     Livewire::test(\App\Livewire\Users\Create::class)
         ->set('role', 'وحدة حسابية')
@@ -219,7 +219,7 @@ it('يحمّل وحدات المستخدم في التعديل ويحدّثها'
 it('يُفرّغ الوحدات حين يتغيّر الدور إلى دورٍ بلا وحدات — ولو أرسلها المتصفح', function () {
     $this->actingAs(unitsSuperAdmin());
     financeRole('وحدة حسابية', ['finance.units.view']);
-    financeRole('حسابات عامة فقط', ['finance.accounts.view']);
+    financeRole('حسابات عامة فقط', ['finance.total.view']);
 
     $user = tap(User::factory()->create())->assignRole('وحدة حسابية');
     $user->financeUnits()->sync([unitId('بالقاهرة')]);

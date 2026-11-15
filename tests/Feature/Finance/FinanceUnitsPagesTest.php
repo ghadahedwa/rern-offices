@@ -48,7 +48,7 @@ function unitUser(array $abilities, array $cities = []): User
 
 function entryAs(array $cities = ['بالقاهرة']): User
 {
-    return unitUser(['finance.units.view', 'finance.units.create', 'finance.court-total.view'], $cities);
+    return unitUser(['finance.units.view', 'finance.units.create', 'finance.total.view'], $cities);
 }
 
 /** يحفظ الشهر التالي للوحدة بقيمٍ ثمانٍ متساوية (المجموع ٨ × القيمة) */
@@ -75,7 +75,7 @@ it('يفتح المستخدمُ وحدته وحدها ولو كتب رابط غ�
 });
 
 it('لا يفتح الوحدة بربطٍ بلا صلاحية ولا بصلاحيةٍ بلا ربط', function () {
-    $this->actingAs(unitUser(['finance.accounts.view'], ['بالقاهرة']));
+    $this->actingAs(unitUser(['finance.total.view'], ['بالقاهرة']));
     $this->get(route('finance.unit', unitOf('بالقاهرة')))->assertForbidden();
 
     $this->actingAs(unitUser(['finance.units.view'], []));
@@ -173,7 +173,7 @@ it('لا يفتح مستخدم وحدةٍ صورةَ أمر دفع وحدةٍ أ
     $this->actingAs(unitUser(['finance.units.view'], ['بطنطا']));
     $this->get(route('finance.attachments.show', $attachment))->assertForbidden();
 
-    $this->actingAs(unitUser(['finance.court-total.view']));
+    $this->actingAs(unitUser(['finance.total.view']));
     $this->get(route('finance.attachments.show', $attachment))->assertOk();
 });
 

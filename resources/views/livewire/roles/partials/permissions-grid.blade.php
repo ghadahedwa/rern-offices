@@ -86,14 +86,22 @@
         'contractors.settings'   => 'إدارة حالات الحضور',
 
         // الشهر يُقفل لحظة حفظه — فالتعديل والحذف تصحيحٌ لا عمل يومي، والوصف يقول ذلك
-        'finance.accounts.view'    => 'عرض الحسابات العامة (الميكنة · اتصالات · وزارة المالية)',
-        'finance.accounts.create'  => 'إدخال شهور الحسابات العامة',
-        'finance.court-total.view' => 'عرض إجمالي أبنية المحاكم',
-        'finance.units.view'       => 'عرض الوحدات الحسابية (المربوطة بالمستخدم)',
-        'finance.units.create'     => 'إدخال شهور الوحدات الحسابية (المربوطة بالمستخدم)',
-        'finance.edit'             => 'تصحيح أرقام شهر محفوظ',
-        'finance.delete'           => 'حذف أرقام شهر محفوظ',
-        'finance.reports'          => 'تقارير الشئون المالية (PDF · Excel)',
+        'finance.total.view'   => 'عرض الإجمالي',
+        'finance.units.view'   => 'عرض الوحدات',
+        'finance.units.create' => 'إدخال الوحدات',
+        'finance.edit'         => 'تصحيح شهر محفوظ',
+        'finance.delete'       => 'حذف شهر محفوظ',
+        'finance.reports'      => 'التقارير',
+    ];
+
+    // سطر شرحٍ تحت الصلاحية — لما لا يكفيه اسمه (الشئون المالية: الربط بالوحدة يحدّد ما يُرى)
+    $hints = [
+        'finance.total.view'   => 'أرقام الحسابات الأربعة لكل الوحدات مجمَّعة',
+        'finance.units.view'   => 'صفحة الوحدة المربوط بها المستخدم وحدها',
+        'finance.units.create' => 'إدخال شهور الحسابات الأربعة لوحدته',
+        'finance.edit'         => 'بسببٍ إجباري يُحفظ في السجلّ',
+        'finance.delete'       => 'آخر شهرٍ مُدخَل وحده، بسببٍ إجباري',
+        'finance.reports'      => 'PDF · Excel',
     ];
 
     // الصلاحيات مجمّعة حسب الفرع ← من المصدر الواحد App\Support\PermissionGroups،
@@ -210,6 +218,9 @@
                                                 <span class="text-[11px] text-zinc-800 dark:text-zinc-100 leading-snug">
                                                     {{ $labels[$permission->name] ?? $permission->name }}
                                                 </span>
+                                                @isset($hints[$permission->name])
+                                                    <span class="text-[10px] text-zinc-500 dark:text-zinc-400 leading-snug">{{ $hints[$permission->name] }}</span>
+                                                @endisset
                                                 <span class="text-[10px] text-zinc-400 dark:text-zinc-500 font-mono truncate">
                                                     {{ $permission->name }}
                                                 </span>

@@ -172,8 +172,7 @@ return [
         'default_route' => 'finance.court-buildings',
         // الهبوط على أول صفحةٍ يملك عرضها (الراوت => الصلاحية)
         'entries' => [
-            'finance.court-buildings' => 'finance.court-total.view',
-            'finance.mechanization'   => 'finance.accounts.view',
+            'finance.court-buildings' => 'finance.total.view',
             // صاحب الوحدات وحدها يهبط على أول وحدةٍ له (راوتٌ بلا معاملات يحوّل إليها)
             'finance.my-unit'         => 'finance.units.view',
         ],
@@ -183,8 +182,7 @@ return [
         'super_admin_only' => false,
         // صلاحيات العرض وحدها تفتح الفرع (`FinanceAccess::BRANCH`) — الإدخال والتصحيح لا يفتحانه بلا عرض.
         'permissions' => [
-            'finance.accounts.view',
-            'finance.court-total.view',
+            'finance.total.view',
             'finance.units.view',
         ],
     ],

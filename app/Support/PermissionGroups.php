@@ -116,9 +116,7 @@ class PermissionGroups
         'contractors.delete',
 
         // الشئون المالية: العرض والإدخال لكل جزء، ثم التصحيح والحذف والتقارير (FinanceAccess::ALL)
-        'finance.accounts.view',
-        'finance.accounts.create',
-        'finance.court-total.view',
+        'finance.total.view',
         'finance.units.view',
         'finance.units.create',
         'finance.edit',

@@ -25,7 +25,7 @@ beforeEach(function () {
     $this->travelTo(CarbonImmutable::parse('2026-11-05 10:00:00', 'UTC'));
 });
 
-function noteUser(array $abilities = ['finance.accounts.view', 'finance.court-total.view', 'finance.units.view', 'finance.accounts.create', 'finance.units.create']): User
+function noteUser(array $abilities = ['finance.total.view', 'finance.units.view', 'finance.units.create']): User
 {
     foreach ($abilities as $ability) {
         Permission::findOrCreate($ability, 'web');
@@ -39,7 +39,7 @@ function noteUser(array $abilities = ['finance.accounts.view', 'finance.court-to
 
 function adminNoteUser(): User
 {
-    return noteUser(['finance.accounts.view', 'finance.court-total.view', 'finance.units.view', 'finance.accounts.create', 'finance.units.create', 'finance.edit', 'finance.delete']);
+    return noteUser(['finance.total.view', 'finance.units.view', 'finance.units.create', 'finance.edit', 'finance.delete']);
 }
 
 /** يحفظ أكتوبر للميكنة — فيُقفل وملاحظاته معه */
