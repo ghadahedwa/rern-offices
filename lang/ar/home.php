@@ -1927,6 +1927,7 @@ return [
     'fin_account_ministry_of_finance' => 'حساب وزارة المالية',
     // تبويبات صفحة الوحدة — بلا «حساب» لتتسع شاشة الموبايل
     'fin_my_unit'                     => 'وحدتي',
+    'fin_units_menu'                  => 'الوحدات',
     'fin_tab_court_buildings'         => 'أبنية المحاكم',
     'fin_tab_mechanization'           => 'الميكنة (الوزير)',
     'fin_tab_telecom'                 => 'اتصالات',

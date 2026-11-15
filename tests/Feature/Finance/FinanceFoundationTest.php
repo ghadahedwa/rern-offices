@@ -343,7 +343,7 @@ it('فورم الدور يعرض الصلاحيات الست بسطر شرحٍ �
         ->not->toContain('finance.accounts.view');
 });
 
-it('القائمة: «وحدتي» لمن رُبط بوحدةٍ واحدة، ولا قائمة وحدات لعارض الإجمالي', function () {
+it('القائمة: «وحدتي» لمن رُبط بوحدةٍ واحدة، ووحداته بأسمائها الكاملة لمن يفتح أكثر', function () {
     $units = \App\Models\FinanceUnit::ordered()->get();
 
     $unitUser = finUser(['finance.units.view']);
@@ -354,7 +354,16 @@ it('القائمة: «وحدتي» لمن رُبط بوحدةٍ واحدة، و�
 
     $viewer = finUser(['finance.total.view', 'finance.units.view']);
     $viewer->financeUnits()->sync($units->pluck('id')->all());
-    $this->actingAs($viewer)->get(route('finance.mechanization'))
+    // صفحة وحدةٍ — لا رابط فيها لغيرها إلا من القائمة
+    $page = $this->actingAs($viewer)->get(route('finance.unit', $units[0]))
         ->assertDontSee(__('home.fin_my_unit'))
-        ->assertDontSee('href="'.route('finance.unit', $units[2]).'"', false);
+        ->assertSee(__('home.fin_units_menu'));
+    foreach ($units as $unit) {
+        $page->assertSee('href="'.route('finance.unit', $unit).'"', false)->assertSee($unit->name);
+    }
+
+    // والأدمن بلا ربط يرى الست
+    $this->actingAs(finSuperAdmin())->get(route('finance.unit', $units[0]))
+        ->assertSee(__('home.fin_units_menu'))
+        ->assertSee('href="'.route('finance.unit', $units[5]).'"', false);
 });

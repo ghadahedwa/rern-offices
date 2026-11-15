@@ -358,23 +358,22 @@
                             {{ __('home.'.$finLabel) }}
                         </flux:sidebar.item>
                     @endforeach
-                    {{-- «وحدتي» لمن رُبط بوحدةٍ واحدة (قرار المستخدمة: لا قائمة وحدات في المنيو) — وعارض الإجمالي
-                         يفتح الوحدات من أسمائها في صفحته. ومَن رُبط بأكثر من وحدة بلا عرض الإجمالي تُسرد وحداته،
-                         وإلا لم يبلغها من أي مكان. --}}
-                    @php
-                        $finUnits     = \App\Support\Finance\FinanceAccess::viewableUnits(auth()->user());
-                        $finSeesTotal = auth()->user()?->can(\App\Support\Finance\FinanceAccess::TOTAL_VIEW);
-                    @endphp
+                    {{-- «وحدتي» لمن يفتح وحدةً واحدة، ومَن يفتح أكثر (الأدمن · عارض الإجمالي) تُسرد وحداته تحت
+                         عنوان «الوحدات» بأسمائها كاملة (قرار المستخدمة 2026-11-15: الوحدات خلف صفحة الإجمالي غير عملية —
+                         الشغل كله من صفحة الوحدة). والمفتوحة منها معلَّمة. --}}
+                    @php $finUnits = \App\Support\Finance\FinanceAccess::viewableUnits(auth()->user()); @endphp
                     @if($finUnits->count() === 1 && Route::has('finance.unit'))
                         <flux:sidebar.item icon="building-office" :href="route('finance.unit', $finUnits->first())" :current="request()->routeIs('finance.unit*')" wire:navigate>
                             {{ __('home.fin_my_unit') }}
                         </flux:sidebar.item>
-                    @elseif(! $finSeesTotal && Route::has('finance.unit'))
-                        @foreach($finUnits as $finUnit)
-                            <flux:sidebar.item icon="building-office" :href="route('finance.unit', $finUnit)" :current="request()->routeIs('finance.unit*') && (int) request()->route('financeUnit')?->id === $finUnit->id" wire:navigate>
-                                {{ $finUnit->name }}
-                            </flux:sidebar.item>
-                        @endforeach
+                    @elseif($finUnits->isNotEmpty() && Route::has('finance.unit'))
+                        <flux:sidebar.group :heading="__('home.fin_units_menu')">
+                            @foreach($finUnits as $finUnit)
+                                <flux:sidebar.item icon="building-office" :href="route('finance.unit', $finUnit)" :current="request()->routeIs('finance.unit*') && (int) request()->route('financeUnit')?->id === $finUnit->id" wire:navigate>
+                                    {{ $finUnit->name }}
+                                </flux:sidebar.item>
+                            @endforeach
+                        </flux:sidebar.group>
                     @endif
                     @endif {{-- /branch: finance --}}
 
