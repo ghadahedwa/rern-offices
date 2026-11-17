@@ -313,6 +313,7 @@
                 <div class="field"><div class="label">أجهزة البصمة</div><div class="value">{{ $office->fingerprints_count ?? $dash }}</div></div>
                 <div class="field"><div class="label">المكيفات</div><div class="value">{{ $office->air_conditioners_count ?? $dash }}</div></div>
                 <div class="field"><div class="label">UPS</div><div class="value">{{ $office->ups_count ?? $dash }}</div></div>
+                <div class="field"><div class="label">طفايات الحريق</div><div class="value">{{ $office->fire_extinguishers_count ?? $dash }}</div></div>
             </div>
         </div>
 

@@ -140,6 +140,10 @@
                         <input wire:model="ups_count" type="number" min="0" placeholder="0" class="{{ $inp }}" />
                     </div>
                     <div>
+                        <label class="{{ $lbl }}">{{ __('home.fire_extinguishers_count') }}</label>
+                        <input wire:model="fire_extinguishers_count" type="number" min="0" placeholder="0" class="{{ $inp }}" />
+                    </div>
+                    <div>
                         <label class="{{ $lbl }}">{{ __('home.electricity_meter_type') }}</label>
                         <select wire:model="electricity_meter_type" class="{{ $inp }}">
                             <option value="">{{ __('home.select_option') }}</option>

@@ -17,7 +17,7 @@ use Maatwebsite\Excel\Facades\Excel;
 #[Title('بيان الأجهزة العددي')]
 class DeviceCount extends Component
 {
-    /** الأجهزة الشغالة الثمانية: عمود قاعدة البيانات => التسمية */
+    /** الأجهزة الشغالة: عمود قاعدة البيانات => التسمية */
     public const DEVICES = [
         'computers_count'        => 'كمبيوتر',
         'monitors_count'         => 'شاشات العرض',
@@ -27,6 +27,7 @@ class DeviceCount extends Component
         'payment_machine_count'  => 'ماكينات دفع',
         'air_conditioners_count' => 'مكيفات',
         'ups_count'              => 'UPS',
+        'fire_extinguishers_count' => 'طفايات حريق',
     ];
 
     // ── الفلاتر ──

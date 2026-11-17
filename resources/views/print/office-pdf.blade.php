@@ -228,7 +228,7 @@
             <tr>
                 <td><div class="lbl">مكيفات</div><div class="val">{{ $office->air_conditioners_count ?? $dash }}</div></td>
                 <td><div class="lbl">UPS</div><div class="val">{{ $office->ups_count ?? $dash }}</div></td>
-                <td></td>
+                <td><div class="lbl">طفايات حريق</div><div class="val">{{ $office->fire_extinguishers_count ?? $dash }}</div></td>
             </tr>
         </table>
     </div>

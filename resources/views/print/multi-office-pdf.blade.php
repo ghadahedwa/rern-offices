@@ -165,6 +165,7 @@
                     <div class="f"><span class="k">ماكينات دفع:</span> <span class="v">{{ $office->payment_machine_count ?? 0 }}</span></div>
                     <div class="f"><span class="k">مكيفات:</span> <span class="v">{{ $office->air_conditioners_count ?? 0 }}</span></div>
                     <div class="f"><span class="k">UPS:</span> <span class="v">{{ $office->ups_count ?? 0 }}</span></div>
+                    <div class="f"><span class="k">طفايات حريق:</span> <span class="v">{{ $office->fire_extinguishers_count ?? 0 }}</span></div>
                 </td>
 
                 {{-- العدادات --}}

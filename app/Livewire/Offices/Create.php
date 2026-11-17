@@ -105,6 +105,7 @@ class Create extends Component
     public string $windows_count = '';
     public string $air_conditioners_count = '';
     public string $ups_count = '';
+    public string $fire_extinguishers_count = '';
     public string $electricity_meter_type = '';
     public string $electricity_meter_debt = '';
     public string $water_meter_type = '';
@@ -247,6 +248,7 @@ class Create extends Component
         $this->windows_count                    = (string) ($office->windows_count ?? '');
         $this->air_conditioners_count           = (string) ($office->air_conditioners_count ?? '');
         $this->ups_count                        = (string) ($office->ups_count ?? '');
+        $this->fire_extinguishers_count         = (string) ($office->fire_extinguishers_count ?? '');
         $this->electricity_meter_type           = $office->electricity_meter_type ?? '';
         $this->electricity_meter_debt           = $office->electricity_meter_debt ?? '';
         $this->water_meter_type                 = $office->water_meter_type ?? '';
@@ -466,6 +468,7 @@ $existing = OfficeMedia::where('office_id', $this->office_id)->where('type', 'do
             'fingerprints_count'                => $this->fingerprints_count !== '' ? (int) $this->fingerprints_count : null,
             'air_conditioners_count'            => $this->air_conditioners_count !== '' ? (int) $this->air_conditioners_count : null,
             'ups_count'                         => $this->ups_count !== '' ? (int) $this->ups_count : null,
+            'fire_extinguishers_count'          => $this->fire_extinguishers_count !== '' ? (int) $this->fire_extinguishers_count : null,
             'electricity_meter_type'            => $this->electricity_meter_type ?: null,
             'electricity_meter_debt'            => $this->electricity_meter_debt ?: null,
             'water_meter_type'                  => $this->water_meter_type ?: null,

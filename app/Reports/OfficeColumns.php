@@ -252,6 +252,11 @@ class OfficeColumns
                 'filter' => null, 'fixed' => false, 'excelOnly' => false,
                 'value' => fn (Office $o) => $o->ups_count ?? 0,
             ],
+            'fire_extinguishers_count' => [
+                'label' => 'طفايات حريق', 'group' => 'عدد الأجهزة',
+                'filter' => null, 'fixed' => false, 'excelOnly' => false,
+                'value' => fn (Office $o) => $o->fire_extinguishers_count ?? 0,
+            ],
             // عمود مجمّع للتقرير المخصّص فقط (customOnly) — كل الأجهزة الشغالة في خلية واحدة
             'working_devices' => [
                 'label' => 'الأجهزة التي تعمل', 'group' => 'عدد الأجهزة',
@@ -266,6 +271,7 @@ class OfficeColumns
                         'ماكينات دفع'  => $o->payment_machine_count,
                         'مكيفات'       => $o->air_conditioners_count,
                         'UPS'          => $o->ups_count,
+                        'طفايات حريق'  => $o->fire_extinguishers_count,
                     ];
                     $parts = [];
                     foreach ($devices as $label => $cnt) {
