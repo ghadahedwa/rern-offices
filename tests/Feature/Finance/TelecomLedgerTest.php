@@ -143,9 +143,9 @@ it('لا يُكتب رصيدٌ افتتاحي في صفحة إجمالي اتص�
     $user = tap(User::factory()->create())->givePermissionTo(['finance.total.view', 'finance.units.create']);
     $this->actingAs($user);
 
-    Livewire::test(\App\Livewire\Finance\Telecom::class)
-        ->assertSee(__('home.fin_total_ledger_note'))
-        ->set('openingInput', '5000')->call('saveOpening')->assertNotFound();
+    // صفحة الإجمالي العام بلا خانة رصيد ولا إجراءٍ له
+    $this->get(route('finance.total'))->assertOk()->assertDontSee(__('home.fin_opening_save'));
+    expect(method_exists(\App\Livewire\Finance\Total::class, 'saveOpening'))->toBeFalse();
 
     expect(FinanceOpening::count())->toBe(0);
 });

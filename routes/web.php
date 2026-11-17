@@ -300,10 +300,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // فرع الشئون المالية — صفحة لكل حساب. الحراسة `FinanceAccess::canView` في المكوّن،
     // و`create`/`edit`/`delete` داخل إجراءاتها (المرحلة ب فما بعد).
     // ⚠️ بلا نطاق محافظات: الأرقام للجمهورية كلها.
-    Route::livewire('finance/court-buildings', \App\Livewire\Finance\CourtBuildings::class)->name('finance.court-buildings');
-    Route::livewire('finance/mechanization', \App\Livewire\Finance\Mechanization::class)->name('finance.mechanization');
-    Route::livewire('finance/telecom', \App\Livewire\Finance\Telecom::class)->name('finance.telecom');
-    Route::livewire('finance/ministry-of-finance', \App\Livewire\Finance\MinistryOfFinance::class)->name('finance.ministry-of-finance');
+    // «الإجمالي العام» — جداول الحسابات الأربعة في صفحة واحدة (المرحلة ٣)
+    Route::livewire('finance/total', \App\Livewire\Finance\Total::class)->name('finance.total');
+    // صفحات الإجمالي الأربع القديمة ← الإجمالي العام على جدول حسابها (الروابط المحفوظة لا تنكسر)
+    foreach (['court-buildings', 'mechanization', 'telecom', 'ministry-of-finance'] as $finSlug) {
+        Route::get('finance/'.$finSlug, fn () => redirect(route('finance.total', request()->query()).'#fin-'.$finSlug))
+            ->name('finance.'.$finSlug);
+    }
     // إدخال الشهر التالي — `FinanceAccess::canEnter` في المكوّن، والحساب بقائمةٍ بيضاء من الرابط
     Route::livewire('finance/{account}/entry', \App\Livewire\Finance\MonthEntry::class)
         ->whereIn('account', ['court-buildings', 'mechanization', 'telecom', 'ministry-of-finance'])

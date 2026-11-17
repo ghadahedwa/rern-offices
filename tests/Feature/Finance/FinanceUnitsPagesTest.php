@@ -1,6 +1,6 @@
 <?php
 
-use App\Livewire\Finance\CourtBuildings;
+use App\Livewire\Finance\Total;
 use App\Livewire\Finance\MonthEntry;
 use App\Livewire\Finance\Unit;
 use App\Models\CourtBuildingItem;
@@ -162,7 +162,7 @@ it('سجلّ الوحدة وملاحظاتها لا تظهر في وحدةٍ أ�
     $this->get(route('finance.unit', unitOf('بطنطا')))->assertDontSee('ملاحظة القاهرة');
 
     Livewire::test(Unit::class, ['financeUnit' => unitOf('بطنطا')])->call('startEditNote', $note->id)->assertNotFound();
-    Livewire::test(CourtBuildings::class)->call('startEditNote', $note->id)->assertNotFound();
+    Livewire::test(Total::class)->call('startEditNote', $note->id)->assertNotFound();
 });
 
 it('لا يفتح مستخدم وحدةٍ صورةَ أمر دفع وحدةٍ أخرى، ويفتحها عارض الإجمالي', function () {
@@ -184,11 +184,11 @@ it('يعرض الشهور × الوحدات والإجمالي والناقص', 
     enterUnit(unitOf('بالقاهرة'), 1000);   // ٨٠٠٠
     enterUnit(unitOf('بطنطا'), 500, '9');  // ٤٠٠٠
 
-    Livewire::test(CourtBuildings::class)
+    Livewire::test(Total::class)
         ->assertSee('8,000')->assertSee('4,000')
         ->assertSee('12,000')
         ->assertSee(__('home.fin_units_of', ['entered' => 2, 'count' => 6]))
-        ->assertSee(__('home.fin_units_missing', ['names' => 'الإسكندرية · الأقصر · أسيوط · الإسماعيلية']))
+        ->assertSee(__('home.fin_card_month_of', ['month' => 'أكتوبر 2026', 'entered' => 2, 'count' => 6]))
         ->assertSee(__('home.fin_month_open'))
         ->assertSeeInOrder(['الإسكندرية', __('home.fin_not_entered')]);
 });
@@ -198,7 +198,7 @@ it('يجمع العناصر للشهر وللسنة', function () {
     enterUnit(unitOf('بالقاهرة'), 1000);
     enterUnit(unitOf('بطنطا'), 500, '9');
 
-    Livewire::test(CourtBuildings::class)
+    Livewire::test(Total::class)
         ->assertSee(__('home.fin_items_of_month', ['month' => 'أكتوبر 2026']))
         ->assertSee(__('home.fin_items_of_year'))
         ->assertSeeInOrder(['مكاتب مميزة', '1,500']);
@@ -207,7 +207,7 @@ it('يجمع العناصر للشهر وللسنة', function () {
 it('رابط الوحدة في رأس الجدول على وحدات المستخدم وحدها', function () {
     $this->actingAs(entryAs(['بالقاهرة']));
 
-    Livewire::test(CourtBuildings::class)
+    Livewire::test(Total::class)
         ->assertSeeHtml('href="'.route('finance.unit', [unitOf('بالقاهرة'), 'court-buildings']).'"')
         ->assertDontSeeHtml('href="'.route('finance.unit', [unitOf('بطنطا'), 'court-buildings']).'"');
 });
@@ -229,6 +229,5 @@ it('يهبط صاحب الوحدة وحدها على وحدته وقائمته �
     $this->get(route('finance.unit', unitOf('بطنطا')))
         ->assertSee('href="'.route('finance.unit', unitOf('بطنطا')).'"', false)
         ->assertDontSee('href="'.route('finance.unit', unitOf('بالقاهرة')).'"', false)
-        ->assertDontSee('href="'.route('finance.court-buildings').'"', false)
-        ->assertDontSee('href="'.route('finance.mechanization').'"', false);
+        ->assertDontSee('href="'.route('finance.total').'"', false);
 });

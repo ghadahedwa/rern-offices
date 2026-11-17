@@ -17,12 +17,7 @@ use Spatie\Permission\Models\Role;
 
 uses(RefreshDatabase::class);
 
-const FIN_PAGES = [
-    'finance.court-buildings',
-    'finance.mechanization',
-    'finance.telecom',
-    'finance.ministry-of-finance',
-];
+const FIN_PAGES = ['finance.total'];
 
 function finUser(array $abilities): User
 {
@@ -71,10 +66,9 @@ it('يزرع صلاحيات الشئون المالية الست وحدها', fu
 it('يفتح الصفحات الأربع لصاحب العرض باسم حسابها', function () {
     $this->actingAs(finUser(['finance.total.view']));
 
-    foreach (FIN_PAGES as $route) {
-        $key = str_replace('-', '_', substr($route, strlen('finance.')));
-
-        $this->get(route($route))->assertOk()->assertSee(__('home.fin_account_'.$key));
+    $page = $this->get(route('finance.total'))->assertOk();
+    foreach (FinanceAccount::UNIT_ACCOUNTS as $key) {
+        $page->assertSee(__('home.fin_tab_'.$key));
     }
 });
 
@@ -104,13 +98,13 @@ it('لا يفتح الفرع إلا بالعرض', function () {
 
 it('يجعل أبنية المحاكم صفحة دخول الفرع', function () {
     expect(Branch::entryUrlFor('finance', finUser(['finance.total.view'])))
-        ->toBe(route('finance.court-buildings'));
+        ->toBe(route('finance.total'));
 });
 
 it('يضع الصفحات في فرع الشئون المالية وعناصرها في إدارة النظام', function () {
     $this->actingAs(finSuperAdmin());
 
-    $this->get(route('finance.telecom'));
+    $this->get(route('finance.total'));
     expect(Branch::current())->toBe('finance');
 
     $this->get(route('court-building-items.index'));
@@ -120,11 +114,9 @@ it('يضع الصفحات في فرع الشئون المالية وعناصره
 it('يعرض بنود الحسابات الأربعة في القائمة الجانبية', function () {
     $this->actingAs(finUser(['finance.total.view']));
 
-    $response = $this->get(route('finance.mechanization'));
-
-    foreach (FIN_PAGES as $route) {
-        $response->assertSee(route($route), false);
-    }
+    $this->get(route('finance.total'))
+        ->assertSee('href="'.route('finance.total').'"', false)
+        ->assertSee(__('home.fin_general_total'));
 });
 
 it('يجمع الصلاحيات تحت عنوانها بلا نطاق محافظات', function () {
@@ -263,16 +255,19 @@ it('العرض القديم وحده لا يأخذ إدخالاً', function () 
 it('عرض الإجمالي يفتح صفحات الحسابات الأربعة كلها', function () {
     $this->actingAs(finUser(['finance.total.view']));
 
-    foreach (['finance.court-buildings', 'finance.mechanization', 'finance.telecom', 'finance.ministry-of-finance'] as $route) {
-        $this->get(route($route))->assertOk();
+    $this->get(route('finance.total'))->assertOk();
+
+    // الروابط القديمة تحوّل إلى جدول حسابها
+    foreach (['court-buildings', 'mechanization', 'telecom', 'ministry-of-finance'] as $slug) {
+        $this->get(route('finance.'.$slug))->assertRedirect(route('finance.total').'#fin-'.$slug);
     }
 
     $this->actingAs(finUser(['finance.units.view']));
-    $this->get(route('finance.mechanization'))->assertForbidden();
+    $this->get(route('finance.total'))->assertForbidden();
 });
 
 it('يهبط عارض الإجمالي على أبنية المحاكم، وصاحب الوحدات وحدها على وحدته', function () {
-    expect(Branch::entryUrlFor('finance', finUser(['finance.total.view'])))->toBe(route('finance.court-buildings'))
+    expect(Branch::entryUrlFor('finance', finUser(['finance.total.view'])))->toBe(route('finance.total'))
         ->and(Branch::entryUrlFor('finance', finUser(['finance.units.view'])))->toBe(route('finance.my-unit'));
 });
 
@@ -296,15 +291,15 @@ it('الحسابات الأربعة لا تُدخَل إلا من وحدةٍ م�
 
 it('ملاحظة صفحة الإجمالي بعرضه مع إدخال الوحدات — والعرض وحده لا يكتبها', function () {
     $this->actingAs(finUser(['finance.total.view', 'finance.units.create']));
-    Livewire::test(\App\Livewire\Finance\CourtBuildings::class)
-        ->set('noteDrafts.2026-10', 'ملاحظة الوحدات')
-        ->call('addNote', '2026-10')
+    Livewire::test(\App\Livewire\Finance\Total::class)
+        ->set('noteDrafts.court_buildings@2026-10', 'ملاحظة الوحدات')
+        ->call('addNote', 'court_buildings@2026-10')
         ->assertHasNoErrors();
 
     $this->actingAs(finUser(['finance.total.view']));
-    Livewire::test(\App\Livewire\Finance\CourtBuildings::class)
-        ->set('noteDrafts.2026-10', 'ملاحظة العارض')
-        ->call('addNote', '2026-10')
+    Livewire::test(\App\Livewire\Finance\Total::class)
+        ->set('noteDrafts.court_buildings@2026-10', 'ملاحظة العارض')
+        ->call('addNote', 'court_buildings@2026-10')
         ->assertForbidden();
 
     expect(\App\Models\FinanceNote::count())->toBe(1);

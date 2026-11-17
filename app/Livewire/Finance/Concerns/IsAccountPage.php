@@ -27,7 +27,7 @@ use Livewire\Attributes\Url;
  */
 trait IsAccountPage
 {
-    use BuildsUnitsTotal;
+    use HandlesNotes;
 
     /**
      * وحدة الصفحة — صفحة الوحدة الحسابية (`Finance\Unit`)، وNULL للحسابات الثلاثة.
@@ -56,142 +56,22 @@ trait IsAccountPage
     public string $openingReason = '';
     public bool $correctingOpening = false;
 
-    // ── الملاحظات (المرحلة و) ──
-    /** مسوّدة ملاحظةٍ جديدة لكل شهر: ['Y-m' => '…'] */
-    public array $noteDrafts = [];
-
-    #[Locked]
-    public ?int $editingNoteId = null;
-
-    public string $editingNoteBody = '';
-
-    /** ملاحظةٌ مرشّحة للحذف — المودال المشترك نفسه بلا خانة سبب */
-    #[Locked]
-    public ?int $deletingNoteId = null;
-
     abstract protected function accountKey(): string;
 
-    /** الشهر من مفتاح الرابط `Y-m` — التالف null */
-    protected static function monthFromKey(string $key): ?CarbonImmutable
+    /** خانة الملاحظة في صفحة الوحدة مفتاحها الشهر وحده — والحساب حساب الصفحة */
+    protected function noteTarget(string $key): array
     {
-        if (! preg_match('/^\d{4}-\d{2}$/', $key)) {
-            return null;
-        }
-
-        return CarbonImmutable::createFromFormat('!Y-m', $key) ?: null;
+        return [FinanceAccount::byKey($this->accountKey()), self::monthFromKey($key)];
     }
 
-    protected function noteRules(string $field): array
+    protected function noteAccountKeys(): array
     {
-        return [$field => ['required', 'string', 'max:'.FinanceNote::MAX_LENGTH]];
+        return [$this->accountKey()];
     }
 
-    public function addNote(string $key): void
+    protected function noteUnitId(): ?int
     {
-        $account = FinanceAccount::byKey($this->accountKey());
-        $month   = self::monthFromKey($key);
-
-        abort_unless($month && FinanceNote::canAdd(auth()->user(), $account, $month, $this->unit()), 403);
-
-        $body = trim((string) ($this->noteDrafts[$key] ?? ''));
-        $this->noteDrafts[$key] = $body;
-        $this->validate(
-            $this->noteRules("noteDrafts.$key"),
-            ["noteDrafts.$key.required" => __('home.fin_note_required')],
-        );
-
-        FinanceNote::create([
-            'finance_account_id' => $account->id,
-            'finance_unit_id'    => $this->unitId,
-            'month'              => $month->toDateString(),
-            'body'               => $body,
-            'created_by'         => auth()->id(),
-        ]);
-
-        unset($this->noteDrafts[$key]);
-    }
-
-    protected function noteOf(int $id): FinanceNote
-    {
-        // ⚠️ معرّفٌ من المتصفح: ملاحظة حسابٍ آخر لا تُفتح من صفحة هذا الحساب
-        $note = FinanceNote::with('account')
-            ->whereKey($id)
-            ->whereHas('account', fn ($q) => $q->where('key', $this->accountKey()))
-            // ⚠️ وملاحظة وحدةٍ أخرى (أو الإجمالي) لا تُفتح من صفحة هذه الوحدة
-            ->when($this->unitId === null, fn ($q) => $q->whereNull('finance_unit_id'), fn ($q) => $q->where('finance_unit_id', $this->unitId))
-            ->first();
-        abort_if($note === null, 404);
-
-        return $note;
-    }
-
-    public function startEditNote(int $id): void
-    {
-        $note = $this->noteOf($id);
-        abort_unless($note->canBeEditedBy(auth()->user()), 403);
-
-        $this->editingNoteId   = $note->id;
-        $this->editingNoteBody = $note->body;
-        $this->resetErrorBag();
-    }
-
-    public function cancelEditNote(): void
-    {
-        $this->editingNoteId   = null;
-        $this->editingNoteBody = '';
-    }
-
-    /** ⚠️ الصلاحية تُفحص من جديد: الشهر قد يُقفل والتعديل مفتوح، فيصير لصاحب `finance.edit` وحده */
-    public function saveNote(): void
-    {
-        if ($this->editingNoteId === null) {
-            return;
-        }
-
-        $note = $this->noteOf($this->editingNoteId);
-        abort_unless($note->canBeEditedBy(auth()->user()), 403);
-
-        $this->editingNoteBody = trim($this->editingNoteBody);
-        $this->validate($this->noteRules('editingNoteBody'), ['editingNoteBody.required' => __('home.fin_note_required')]);
-
-        if ($note->body !== $this->editingNoteBody) {
-            DB::transaction(function () use ($note) {
-                if ($note->isLocked()) {
-                    FinanceHistory::recordNote(FinanceHistory::EVENT_NOTE_EDITED, $note->account, $note->month, $note->body, $this->editingNoteBody, $note->finance_unit_id);
-                }
-                $note->update(['body' => $this->editingNoteBody]);
-            });
-        }
-
-        $this->cancelEditNote();
-    }
-
-    public function confirmDeleteNote(int $id): void
-    {
-        $note = $this->noteOf($id);
-        abort_unless($note->canBeDeletedBy(auth()->user()), 403);
-
-        $this->deletingId      = null;
-        $this->deletingNoteId  = $note->id;
-        $this->deletingLabel   = \Illuminate\Support\Str::limit($note->body, 80);
-        $this->deletingWarning = '';
-        $this->showDelete      = true;
-    }
-
-    protected function deleteNote(): void
-    {
-        $note = $this->noteOf($this->deletingNoteId);
-        abort_unless($note->canBeDeletedBy(auth()->user()), 403);
-
-        DB::transaction(function () use ($note) {
-            if ($note->isLocked()) {
-                FinanceHistory::recordNote(FinanceHistory::EVENT_NOTE_DELETED, $note->account, $note->month, $note->body, null, $note->finance_unit_id);
-            }
-            $note->delete();
-        });
-
-        $this->showDelete     = false;
-        $this->deletingNoteId = null;
+        return $this->unitId;
     }
 
     protected static function openingDigits(string $value): string
@@ -487,10 +367,6 @@ trait IsAccountPage
     {
         $account = FinanceAccount::byKey($this->accountKey());
 
-        // صفحة حسابٍ تُدخله الوحدات = إجماليها (لا دفتر لها بلا وحدة)
-        if ($this->unitId === null && $account->byUnits()) {
-            return $this->renderUnitsTotal($account);
-        }
 
         $data = [
             'account'    => $account,

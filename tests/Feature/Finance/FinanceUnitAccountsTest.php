@@ -1,7 +1,6 @@
 <?php
 
-use App\Livewire\Finance\Mechanization;
-use App\Livewire\Finance\MinistryOfFinance;
+use App\Livewire\Finance\Total;
 use App\Livewire\Finance\MonthEntry;
 use App\Models\FinanceAttachment;
 use App\Models\FinanceMonth;
@@ -141,14 +140,16 @@ it('صفحة الميكنة إجمالي الوحدات بالشهور، ورا�
     uaEnter(uaUnit('بطنطا'), 'mechanization', '4000', '9')->assertHasNoErrors();
 
     $this->actingAs(uaUser(['finance.total.view', 'finance.units.view'], ['بالقاهرة']));
-    Livewire::test(Mechanization::class)
+    Livewire::test(Total::class)
         ->assertSee('8,000')->assertSee('4,000')->assertSee('12,000')
         ->assertSee(__('home.fin_units_of', ['entered' => 2, 'count' => 6]))
         ->assertSeeHtml('href="'.route('finance.unit', [uaUnit('بالقاهرة'), 'mechanization']).'"')
         ->assertDontSeeHtml('href="'.route('finance.unit', [uaUnit('بطنطا'), 'mechanization']).'"');
 
     // وزارة المالية بلا أرقام الميكنة
-    Livewire::test(MinistryOfFinance::class)->assertDontSee('12,000')->assertDontSee('8,000');
+    $units = \App\Models\FinanceUnit::ordered()->get();
+    expect(\App\Support\Finance\UnitsTotal::build(\App\Models\FinanceAccount::byKey('ministry_of_finance'), 2026, $units)['yearTotal'])->toBe(0)
+        ->and(\App\Support\Finance\UnitsTotal::build(\App\Models\FinanceAccount::byKey('mechanization'), 2026, $units)['yearTotal'])->toBe(12000);
 });
 
 it('صورة أمر دفع شهر وحدةٍ في الميكنة: لعارض الإجمالي ولصاحب الوحدة وحدهما', function () {
@@ -169,13 +170,13 @@ it('صورة أمر دفع شهر وحدةٍ في الميكنة: لعارض ا�
 it('ملاحظات صفحة إجمالي الميكنة بلا وحدة، ولا تظهر في صفحة الوحدة', function () {
     $this->actingAs(uaUser([...UA_ENTRY, 'finance.total.view'], ['بالقاهرة']));
 
-    Livewire::test(Mechanization::class)
-        ->set('noteDrafts.2026-10', 'ملاحظة الإجمالي')
-        ->call('addNote', '2026-10')
+    Livewire::test(Total::class)
+        ->set('noteDrafts.mechanization@2026-10', 'ملاحظة الإجمالي')
+        ->call('addNote', 'mechanization@2026-10')
         ->assertHasNoErrors()
         // الإجمالي حتى الشهر الجاري — لا «الشهر التالي» لدفترٍ بلا وحدة (لا شهور له فيبقى أكتوبر)
-        ->set('noteDrafts.2026-11', 'ملاحظة نوفمبر')
-        ->call('addNote', '2026-11')
+        ->set('noteDrafts.mechanization@2026-11', 'ملاحظة نوفمبر')
+        ->call('addNote', 'mechanization@2026-11')
         ->assertHasNoErrors();
 
     expect(\App\Models\FinanceNote::whereNotNull('finance_unit_id')->exists())->toBeFalse()
@@ -220,5 +221,5 @@ it('شريط الوحدة للعارض بلا أزرار، ولا شريط في 
         ->assertDontSee(__('home.fin_strip_enter', ['month' => 'أكتوبر 2026']))
         ->assertDontSee(__('home.fin_strip_opening_write'));
 
-    $this->get(route('finance.mechanization'))->assertOk()->assertDontSee(__('home.fin_strip_title'));
+    $this->get(route('finance.total'))->assertOk()->assertDontSee(__('home.fin_strip_title'));
 });

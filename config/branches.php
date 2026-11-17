@@ -169,10 +169,10 @@ return [
     'finance' => [
         'label'         => 'home.branch_finance',
         'icon'          => 'banknotes',
-        'default_route' => 'finance.court-buildings',
+        'default_route' => 'finance.total',
         // الهبوط على أول صفحةٍ يملك عرضها (الراوت => الصلاحية)
         'entries' => [
-            'finance.court-buildings' => 'finance.total.view',
+            'finance.total'           => 'finance.total.view',
             // صاحب الوحدات وحدها يهبط على أول وحدةٍ له (راوتٌ بلا معاملات يحوّل إليها)
             'finance.my-unit'         => 'finance.units.view',
         ],

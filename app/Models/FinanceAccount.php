@@ -53,7 +53,7 @@ class FinanceAccount extends Model
         return static::byKey(str_replace('-', '_', $slug));
     }
 
-    /** راوت صفحة الحساب — اسمه `finance.{slug}`. */
+    /** راوت صفحة الحساب — اسمه `finance.{slug}` (يحوّل إلى «الإجمالي العام» على جدول الحساب). */
     public function pageRoute(): string
     {
         return 'finance.'.$this->slug();

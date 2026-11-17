@@ -345,19 +345,12 @@
 
                     @if($currentBranch === 'finance')
                     {{-- ⚠️ حارس Route::has على كل بند: route() في الـlayout مع cache راوتات قديم يُسقط كل الصفحات بـ500 --}}
-                    {{-- كل بندٍ بصلاحية عرض حسابه (FinanceAccess::canView) --}}
-                    @foreach([
-                        'finance.court-buildings'     => ['building-library', 'fin_account_court_buildings'],
-                        'finance.mechanization'       => ['cpu-chip', 'fin_account_mechanization'],
-                        'finance.telecom'             => ['phone', 'fin_account_telecom'],
-                        'finance.ministry-of-finance' => ['banknotes', 'fin_account_ministry_of_finance'],
-                    ] as $finRoute => [$finIcon, $finLabel])
-                        @continue(! Route::has($finRoute))
-                        @continue(! \App\Support\Finance\FinanceAccess::canView(auth()->user(), \App\Models\FinanceAccount::bySlug(substr($finRoute, strlen('finance.')))))
-                        <flux:sidebar.item :icon="$finIcon" :href="route($finRoute)" :current="request()->routeIs($finRoute)" wire:navigate>
-                            {{ __('home.'.$finLabel) }}
+                    {{-- «الإجمالي العام» — الحسابات الأربعة في صفحة واحدة (المرحلة ٣) --}}
+                    @if(Route::has('finance.total') && auth()->user()?->can(\App\Support\Finance\FinanceAccess::TOTAL_VIEW))
+                        <flux:sidebar.item icon="table-cells" :href="route('finance.total')" :current="request()->routeIs('finance.total')" wire:navigate>
+                            {{ __('home.fin_general_total') }}
                         </flux:sidebar.item>
-                    @endforeach
+                    @endif
                     {{-- «وحدتي» لمن يفتح وحدةً واحدة، ومَن يفتح أكثر (الأدمن · عارض الإجمالي) تُسرد وحداته تحت
                          عنوان «الوحدات» بأسمائها كاملة (قرار المستخدمة 2026-11-15: الوحدات خلف صفحة الإجمالي غير عملية —
                          الشغل كله من صفحة الوحدة). والمفتوحة منها معلَّمة. --}}
