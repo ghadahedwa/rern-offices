@@ -82,11 +82,18 @@ class MonthEntry extends Component
     public string $reason = '';
 
     /**
-     * أبنية المحاكم: عناصر الفورم بترتيبها — المفعَّلة عند الإدخال، وعناصر الشهر نفسه عند
-     * التصحيح (عنصرٌ عُطِّل بعده يبقى، وعنصرٌ أُضيف بعده لا يُطلب في شهرٍ مقفول).
+     * أبنية المحاكم: عناصر الفورم بترتيبها — المفعَّلة عند الإدخال، وعند التصحيح عناصر الشهر نفسه
+     * (عنصرٌ عُطِّل بعده يبقى) وما أُضيف بعده من المفعَّلة اختيارياً.
      */
     #[Locked]
     public array $itemIds = [];
+
+    /**
+     * التصحيح: عناصر أُضيفت بعد الشهر — **اختيارية** (طلب المستخدمة 2026-11-17: «اللي دخل ميتأثرش»):
+     * الفارغ لا يُحفظ ولا يدخل الإجمالي، فتصحيحُ شيءٍ آخر في الشهر لا يغيّر عناصره.
+     */
+    #[Locked]
+    public array $optionalItemIds = [];
 
     /** قيمة كل عنصر بمعرّفه: [id => '…'] — الإجمالي يُحسب منها لا يُكتب */
     public array $items = [];
@@ -152,8 +159,20 @@ class MonthEntry extends Component
         $record->load('paymentOrders.attachments', 'items');
 
         if ($account->isItemized()) {
-            $this->itemIds = $record->items->pluck('court_building_item_id')->all();
-            $this->items   = $record->items->mapWithKeys(fn ($i) => [$i->court_building_item_id => (string) $i->amount])->all();
+            // عناصر الشهر (والمعطَّل بعده يبقى بقيمته) **وما أُضيف بعده من المفعَّلة** — بلاغ المستخدمة
+            // 2026-11-17: عناصر أُضيفت على السيرفر لم تظهر في تصحيح شهرٍ قديم فلا تُكتب قيمتها أبداً.
+            // الجديد يظهر فارغاً **واختيارياً** (`optionalItemIds`)، وبترتيب العناصر.
+            $saved = $record->items->pluck('amount', 'court_building_item_id');
+
+            $this->itemIds = CourtBuildingItem::query()
+                ->where(fn ($q) => $q->whereIn('id', $saved->keys())->orWhere('is_active', true))
+                ->ordered()
+                ->pluck('id')
+                ->all();
+            $this->items = collect($this->itemIds)
+                ->mapWithKeys(fn ($id) => [$id => $saved->has($id) ? (string) $saved[$id] : ''])
+                ->all();
+            $this->optionalItemIds = array_values(array_diff($this->itemIds, $saved->keys()->all()));
         }
 
         $this->editingId = $record->id;
@@ -356,6 +375,16 @@ class MonthEntry extends Component
 
     // ── الخطوات ──────────────────────────────────────────
 
+    /** ما يُحفظ من العناصر — الاختياري الفارغ يُسقط فلا يُنشأ له صفّ */
+    protected function itemsToSave(): array
+    {
+        return array_filter(
+            $this->items,
+            fn ($value, $id) => ! (in_array((int) $id, $this->optionalItemIds, true) && $value === ''),
+            ARRAY_FILTER_USE_BOTH,
+        );
+    }
+
     protected function itemValue(int|string $id): ?int
     {
         return self::parseAmount((string) ($this->items[$id] ?? ''));
@@ -437,7 +466,12 @@ class MonthEntry extends Component
         // أبنية المحاكم: كل عنصرٍ إلزامي (الصفر مسموح) — والإجمالي يُحسب بعد التحقق
         $amount = match (true) {
             $this->ledger => ['income' => ['required', 'regex:/^\d{1,12}$/'], 'expense' => ['required', 'regex:/^\d{1,12}$/']],
-            (bool) $this->itemIds => ['items' => ['required', 'array'], 'items.*' => ['required', 'regex:/^\d{1,12}$/']],
+            // والعنصر المضاف بعد الشهر اختياريٌّ في تصحيحه
+            (bool) $this->itemIds => ['items' => ['required', 'array']] + collect($this->itemIds)->mapWithKeys(fn ($id) => [
+                "items.$id" => in_array($id, $this->optionalItemIds, true)
+                    ? ['nullable', 'regex:/^\d{1,12}$/']
+                    : ['required', 'regex:/^\d{1,12}$/'],
+            ])->all(),
             default => ['amount' => ['required', 'regex:/^\d{1,12}$/']],
         };
 
@@ -509,7 +543,7 @@ class MonthEntry extends Component
         $this->validate();
 
         if ($this->itemIds) {
-            $this->amount = (string) array_sum(array_map('intval', $this->items));
+            $this->amount = (string) array_sum(array_map('intval', $this->itemsToSave()));
         }
 
         if ($this->ledger) {
@@ -697,12 +731,13 @@ class MonthEntry extends Component
                     'income' => $this->ledger ? (int) $this->income : $record->income,
                 ]);
 
-                // العناصر: قيمٌ لعناصر الشهر نفسه (`itemIds` من الصفّ عند الفتح)
-                foreach ($this->items as $itemId => $value) {
+                // العناصر: عناصر الشهر تُحدَّث، وما أُضيف بعده وكُتبت له قيمةٌ يُنشأ
+                foreach ($this->itemsToSave() as $itemId => $value) {
                     // ⚠️ لا عبر علاقة `items()` — فيها join، وsqlite لا يقبل UPDATE بـjoin
-                    FinanceMonthItem::where('finance_month_id', $record->id)
-                        ->where('court_building_item_id', $itemId)
-                        ->update(['amount' => (int) $value]);
+                    FinanceMonthItem::updateOrCreate(
+                        ['finance_month_id' => $record->id, 'court_building_item_id' => $itemId],
+                        ['amount' => (int) $value],
+                    );
                 }
 
                 $existing = $record->paymentOrders->keyBy('id');

@@ -130,6 +130,36 @@ it('لا يطلب العنصر المعطَّل في شهرٍ جديد، ويب�
         ->assertSet("items.{$item->id}", '6000');
 });
 
+it('عنصرٌ أُضيف بعد الشهر يظهر في تصحيحه اختيارياً: فارغه لا يغيّر الشهر، وقيمته تُحفظ', function () {
+    // بلاغ المستخدمة 2026-11-17: عناصر أُضيفت على السيرفر لم تظهر في تصحيح شهر الإسماعيلية
+    // — و«اللي دخل ميتأثرش»: تصحيحُ شيءٍ آخر لا يُنشئ للجديد صفّاً
+    $this->actingAs(courtUser());
+    courtEntry()->call('save');
+
+    $new   = CourtBuildingItem::create(['name' => 'عنصر جديد', 'order' => 99, 'is_active' => true]);
+    $other = CourtBuildingItem::where('name', 'مكاتب مميزة')->first();
+    $open  = fn () => Livewire::test(MonthEntry::class, ['account' => 'court-buildings', 'period' => '2026-10', 'financeUnit' => cairo()]);
+
+    $open()->assertSee('عنصر جديد')
+        ->assertSee(__('home.fin_item_added_later'))
+        ->assertSet("items.{$new->id}", '')
+        ->set("items.{$other->id}", '7500')
+        ->set('reason', 'تصحيح مكاتب مميزة وحدها')
+        ->call('save')
+        ->assertHasNoErrors();
+
+    $month = FinanceMonth::with('items')->sole();
+    expect($month->items)->toHaveCount(8)
+        ->and($month->amount)->toBe(36500);
+
+    $open()->set("items.{$new->id}", '500')->set('reason', 'إضافة قيمة العنصر الجديد')->call('save')->assertHasNoErrors();
+
+    $month = FinanceMonth::with('items')->sole();
+    expect($month->items)->toHaveCount(9)
+        ->and($month->items->firstWhere('court_building_item_id', $new->id)->amount)->toBe(500)
+        ->and($month->amount)->toBe(37000);
+});
+
 it('يصحّح عنصراً فيتبعه الإجمالي، والسجلّ يسمّي العنصر', function () {
     $this->actingAs(courtUser());
     courtEntry()->call('save');

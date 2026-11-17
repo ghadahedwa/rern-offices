@@ -105,7 +105,13 @@
                         <div wire:key="fin-item-{{ $itemId }}" class="py-2">
                             <label class="flex items-center gap-3">
                                 <span class="w-5 shrink-0 text-xs text-zinc-400">{{ $n + 1 }}</span>
-                                <span class="flex-1 min-w-0 text-sm text-zinc-700 dark:text-zinc-200">{{ $itemRows->get($itemId)?->name }}</span>
+                                <span class="flex-1 min-w-0 text-sm text-zinc-700 dark:text-zinc-200">
+                                    {{ $itemRows->get($itemId)?->name }}
+                                    @if(in_array($itemId, $optionalItemIds, true))
+                                        {{-- أُضيف بعد الشهر: فارغه لا يُحفظ فلا يتغيّر الشهر --}}
+                                        <span class="block text-xs text-zinc-400">{{ __('home.fin_item_added_later') }}</span>
+                                    @endif
+                                </span>
                                 {{-- نمط خانة المبلغ: الحروف تُحذف والنقطة تبقى فيرفضها الخادم --}}
                                 <input type="text" inputmode="numeric" dir="ltr" autocomplete="off"
                                        oninput="this.value = this.value.replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d)).replace(/[۰-۹]/g, d => '۰۱۲۳۴۵۶۷۸۹'.indexOf(d)).replace(/[^0-9.,٬،]/g, '')"
@@ -346,6 +352,8 @@
                     @php $savedItems = $record?->items->pluck('amount', 'court_building_item_id') ?? collect(); @endphp
                     <div class="mx-6 mb-4 rounded-lg bg-zinc-50 dark:bg-zinc-800 px-3 py-2 divide-y divide-zinc-200/70 dark:divide-zinc-700 text-xs">
                         @foreach($itemIds as $itemId)
+                            {{-- عنصرٌ أُضيف بعد الشهر وتُرك فارغاً لا يُحفظ — لا يُعرض صفراً --}}
+                            @continue(in_array($itemId, $optionalItemIds, true) && ($items[$itemId] ?? '') === '')
                             @php $value = (int) ($items[$itemId] ?? 0); $old = $savedItems->get($itemId); @endphp
                             <div class="flex items-center justify-between gap-3 py-1">
                                 <span class="text-zinc-600 dark:text-zinc-300">{{ $itemRows->get($itemId)?->name }}</span>

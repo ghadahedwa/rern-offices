@@ -1928,6 +1928,7 @@ return [
     'fin_account_ministry_of_finance' => 'حساب وزارة المالية',
     // تبويبات صفحة الوحدة — بلا «حساب» لتتسع شاشة الموبايل
     'fin_my_unit'                     => 'وحدتي',
+    'fin_item_added_later'            => 'أُضيف بعد هذا الشهر — اختياري، واتركه فارغاً لو لا قيمة له',
     'fin_general_total'               => 'الإجمالي العام',
     'fin_balance_now_label'           => 'الرصيد الآن',
     'fin_card_month_of'               => ':month: :entered من :count وحدات',
