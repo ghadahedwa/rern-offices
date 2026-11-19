@@ -1313,7 +1313,7 @@ return [
     // المقترحات
     'fr_topics'                   => 'العناوين المختارة',
     'fr_topics_count'             => 'عدد العناوين',
-    'fr_other_suggestion'         => 'اقتراح حر',
+    'fr_other_suggestion'         => 'اكتب اقتراحك',
     'fr_no_topics'                => 'لم يختر عناوين',
     'fr_no_suggestions'           => 'لا توجد مقترحات مطابقة',
 
