@@ -351,6 +351,11 @@
                             {{ __('home.fin_general_total') }}
                         </flux:sidebar.item>
                     @endif
+                    @if(Route::has('finance.reports') && auth()->user()?->can(\App\Support\Finance\FinanceAccess::REPORTS))
+                        <flux:sidebar.item icon="document-chart-bar" :href="route('finance.reports')" :current="request()->routeIs('finance.reports')" wire:navigate>
+                            {{ __('home.fin_reports') }}
+                        </flux:sidebar.item>
+                    @endif
                     {{-- «وحدتي» لمن يفتح وحدةً واحدة، ومَن يفتح أكثر (الأدمن · عارض الإجمالي) تُسرد وحداته تحت
                          عنوان «الوحدات» بأسمائها كاملة (قرار المستخدمة 2026-11-15: الوحدات خلف صفحة الإجمالي غير عملية —
                          الشغل كله من صفحة الوحدة). والمفتوحة منها معلَّمة. --}}

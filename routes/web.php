@@ -302,6 +302,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // ⚠️ بلا نطاق محافظات: الأرقام للجمهورية كلها.
     // «الإجمالي العام» — جداول الحسابات الأربعة في صفحة واحدة (المرحلة ٣)
     Route::livewire('finance/total', \App\Livewire\Finance\Total::class)->name('finance.total');
+    // التقارير (المرحلة ٥) — الحارس `finance.reports` في المكوّن والكنترولر
+    Route::livewire('finance/reports', \App\Livewire\Finance\Reports::class)->name('finance.reports');
+    Route::get('finance/reports/pdf', \App\Http\Controllers\Finance\FinanceReportPdfController::class)->name('finance.reports.pdf');
     // صفحات الإجمالي الأربع القديمة ← الإجمالي العام على جدول حسابها (الروابط المحفوظة لا تنكسر)
     foreach (['court-buildings', 'mechanization', 'telecom', 'ministry-of-finance'] as $finSlug) {
         Route::get('finance/'.$finSlug, fn () => redirect(route('finance.total', request()->query()).'#fin-'.$finSlug))
