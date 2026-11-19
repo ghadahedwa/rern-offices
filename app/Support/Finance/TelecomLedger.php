@@ -24,25 +24,38 @@ class TelecomLedger
      * السلسلة كاملة بترتيب الشهور: ['Y-m' => [month, carried, income, expense, balance]].
      *
      * @param  array<int, array{income:int, expense:int}>  $overrides  قيمٌ بديلة لشهورٍ بمعرّفها (فحص تصحيح قبل حفظه)
+     * @param  array{month:CarbonImmutable, income:int, expense:int}|null  $insert  شهرٌ جديد يُدرَج بموضعه (فحص إدخالٍ في ثغرة)
+     * @param  int[]  $skip  شهورٌ تُستبعد بمعرّفها (فحص حذفٍ قبل تنفيذه)
      */
-    public static function chain(FinanceAccount $account, ?int $unitId, array $overrides = [], ?int $opening = null): array
+    public static function chain(FinanceAccount $account, ?int $unitId, array $overrides = [], ?int $opening = null, ?array $insert = null, array $skip = []): array
     {
         $balance = $opening ?? self::opening($account, $unitId);
         $rows    = [];
 
         $months = FinanceMonth::where('finance_account_id', $account->id)
             ->forUnit($unitId)
+            ->whereNotIn('id', $skip)
             ->orderBy('month')
-            ->get(['id', 'month', 'income', 'amount']);
+            ->get(['id', 'month', 'income', 'amount'])
+            ->map(fn (FinanceMonth $m) => [
+                'id'      => $m->id,
+                'month'   => CarbonImmutable::parse($m->month)->startOfMonth(),
+                'income'  => $overrides[$m->id]['income'] ?? (int) $m->income,
+                'expense' => $overrides[$m->id]['expense'] ?? (int) $m->amount,
+            ]);
+
+        if ($insert) {
+            $months = $months->push(['id' => null] + $insert)->sortBy(fn ($m) => $m['month']->format('Y-m'))->values();
+        }
 
         foreach ($months as $month) {
-            $income  = $overrides[$month->id]['income'] ?? (int) $month->income;
-            $expense = $overrides[$month->id]['expense'] ?? (int) $month->amount;
+            $income  = $month['income'];
+            $expense = $month['expense'];
             $carried = $balance;
             $balance = $carried + $income - $expense;
 
-            $rows[$month->month->format('Y-m')] = [
-                'month'   => CarbonImmutable::parse($month->month),
+            $rows[$month['month']->format('Y-m')] = [
+                'month'   => $month['month'],
                 'carried' => $carried,
                 'income'  => $income,
                 'expense' => $expense,
@@ -67,6 +80,14 @@ class TelecomLedger
         return (int) $account->openingFor($unitId)?->amount;
     }
 
+    /** الرصيد قبل شهرٍ ما (محفوظاً كان أو ثغرةً يُدخَل فيها) — رصيد آخر شهرٍ قبله، أو الافتتاحي */
+    public static function balanceBefore(FinanceAccount $account, ?int $unitId, CarbonImmutable $month): int
+    {
+        $before = collect(self::chain($account, $unitId))->filter(fn ($r) => $r['month']->lessThan($month))->last();
+
+        return $before['balance'] ?? self::opening($account, $unitId);
+    }
+
     /** المرحَّل إلى شهرٍ محفوظ — رصيد ما قبله */
     public static function carriedInto(FinanceAccount $account, ?int $unitId, CarbonImmutable $month): int
     {
@@ -74,9 +95,9 @@ class TelecomLedger
     }
 
     /** أول شهرٍ يصير رصيده سالباً لو طُبّقت هذه القيم — null إن بقيت السلسلة سليمة */
-    public static function firstNegative(FinanceAccount $account, ?int $unitId, array $overrides = [], ?int $opening = null): ?array
+    public static function firstNegative(FinanceAccount $account, ?int $unitId, array $overrides = [], ?int $opening = null, ?array $insert = null, array $skip = []): ?array
     {
-        foreach (self::chain($account, $unitId, $overrides, $opening) as $row) {
+        foreach (self::chain($account, $unitId, $overrides, $opening, $insert, $skip) as $row) {
             if ($row['balance'] < 0) {
                 return $row;
             }

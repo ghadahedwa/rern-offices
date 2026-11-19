@@ -229,13 +229,27 @@ trait IsAccountPage
         }
     }
 
-    /**
-     * آخر شهرٍ مُدخَل في الحساب — **وحده يُحذف** (قرار المستخدمة): الإدخال بالترتيب، وحذف
-     * شهرٍ في الوسط يترك ثغرةً لا يملؤها الإدخال التالي. والخطأ فيما قبله يُصحَّح بالتعديل.
-     */
-    protected function lastMonth(FinanceAccount $account): ?FinanceMonth
+    /** شهرٌ من دفتر الصفحة بمعرّفه — ⚠️ المعرّف من المتصفح: شهر حسابٍ أو وحدةٍ أخرى لا يُفتح */
+    protected function monthOfPage(FinanceAccount $account, int $id): ?FinanceMonth
     {
-        return FinanceMonth::where('finance_account_id', $account->id)->forUnit($this->unitId)->orderByDesc('month')->first();
+        return FinanceMonth::where('finance_account_id', $account->id)->forUnit($this->unitId)->whereKey($id)->first();
+    }
+
+    /**
+     * اتصالات: حذف شهرٍ يغيّر مرحَّل كل ما بعده — يُرفض إن صار أحدها سالباً، والرسالة تسمّيه.
+     */
+    protected function deleteBlockedBy(FinanceAccount $account, FinanceMonth $month): ?string
+    {
+        if (! $account->isLedger()) {
+            return null;
+        }
+
+        $negative = TelecomLedger::firstNegative($account, $this->unitId, skip: [$month->id]);
+
+        return $negative ? __('home.fin_delete_negative', [
+            'month'   => FinanceCalendar::monthLabel($negative['month']),
+            'balance' => number_format($negative['balance']),
+        ]) : null;
     }
 
     public function confirmDelete(int $id): void
@@ -243,8 +257,14 @@ trait IsAccountPage
         abort_unless(auth()->user()?->can('finance.delete'), 403);
 
         $account = FinanceAccount::byKey($this->accountKey());
-        $last    = $this->lastMonth($account);
-        abort_unless($last && $last->id === $id, 403);
+        $last    = $this->monthOfPage($account, $id);
+        abort_if($last === null, 404);
+
+        if ($blocked = $this->deleteBlockedBy($account, $last)) {
+            Flux::toast(variant: 'danger', text: $blocked);
+
+            return;
+        }
 
         $this->deletingNoteId  = null;
         $this->deletingId      = $id;
@@ -256,8 +276,9 @@ trait IsAccountPage
     }
 
     /**
-     * ⚠️ الحارسان في الإجراء لا في القالب: الصلاحية، و«آخر شهر» يُعاد فحصه تحت قفل الحساب —
-     *    شهرٌ أُدخل بعد فتح المودال يجعل المحدَّد في الوسط.
+     * أي شهرٍ في الدفتر (طلب المستخدمة 2026-11-19 — كان آخر شهرٍ وحده)، ويعود أول شهرٍ يُدخَل.
+     * ⚠️ الحارسان في الإجراء لا في القالب: الصلاحية، والشهر من دفتر الصفحة ويُعاد فحصه تحت قفل الحساب —
+     *    واتصالات: فحص السالب بعد استبعاده يُعاد هناك أيضاً (تصحيحٌ في الأثناء يغيّر الأرصدة).
      * ⚠️ الصور تُحذف بالموديل (`FinanceMonth::booted`) فتزول ملفاتها بعد الاعتماد.
      */
     public function deleteRow(): void
@@ -285,9 +306,13 @@ trait IsAccountPage
         $deleted = DB::transaction(function () use ($account) {
             FinanceAccount::whereKey($account->id)->lockForUpdate()->first();
 
-            $last = $this->lastMonth($account);
-            if (! $last || $last->id !== $this->deletingId) {
+            $last = $this->monthOfPage($account, $this->deletingId);
+            if (! $last) {
                 return null;
+            }
+
+            if ($blocked = $this->deleteBlockedBy($account, $last)) {
+                return $blocked;
             }
 
             $month = CarbonImmutable::parse($last->month);
@@ -305,8 +330,8 @@ trait IsAccountPage
         $this->showDelete = false;
         $this->deletingId = null;
 
-        if ($deleted === null) {
-            Flux::toast(variant: 'danger', text: __('home.fin_delete_not_last'));
+        if (! $deleted instanceof CarbonImmutable) {
+            Flux::toast(variant: 'danger', text: $deleted ?? __('home.fin_delete_gone'));
 
             return;
         }
@@ -383,7 +408,6 @@ trait IsAccountPage
             'yearTo'     => null,
             'partial'    => false,
             'history'    => collect(),
-            'lastId'     => null,
             'canCorrect' => false,
             'canDelete'  => false,
             'notes'      => collect(),
@@ -469,7 +493,6 @@ trait IsAccountPage
             $data['nextDue']    = $nextDue;
             $data['canEnter']   = $this->canEnterHere($account) && $nextDue && ! $data['needsOpening'];
             $data['history']    = FinanceHistory::forAccount($account, $this->unitId);
-            $data['lastId']     = $this->lastMonth($account)?->id;
             $data['canCorrect'] = auth()->user()->can('finance.edit');
             $data['canDelete']  = auth()->user()->can('finance.delete');
         }

@@ -313,3 +313,45 @@ it('يمنع تصحيح الرصيد الافتتاحي بلا finance.edit', fu
 
     expect(openingOf())->toBe(5000);
 });
+
+// ── الحذف من الوسط (2026-11-19) ─────────────────────────
+
+it('حذف شهرٍ في الوسط يُرفض إن صار ما بعده سالباً، ويُقبل إن بقي موجباً', function () {
+    $this->actingAs(telUser());
+    setOpening();
+    $october = (function () { telEntry('10000', '7000')->call('save'); return FinanceMonth::sole(); })(); // 8,000
+    telEntry('0', '8000')->call('save');  // نوفمبر: صفر
+
+    // حذف أكتوبر يجعل نوفمبر 5,000 − 8,000 = −3,000
+    Livewire::test(Unit::class, ['financeUnit' => telUnit(), 'account' => 'telecom'])
+        ->call('confirmDelete', $october->id)
+        ->assertSet('showDelete', false);
+    expect(FinanceMonth::count())->toBe(2);
+});
+
+it('إعادة إدخال شهرٍ في ثغرة: مرحَّله من الشهر الذي قبله، وما بعده لا يصير سالباً', function () {
+    $this->actingAs(telUser());
+    setOpening();
+    telEntry('10000', '7000')->call('save');  // أكتوبر: 8,000
+    telEntry('1000', '2000')->call('save');   // نوفمبر: 7,000
+    $october = FinanceMonth::orderBy('month')->first();
+
+    Livewire::test(Unit::class, ['financeUnit' => telUnit(), 'account' => 'telecom'])
+        ->call('confirmDelete', $october->id)
+        ->set('deleteReason', 'أكتوبر أُدخل بالخطأ')
+        ->call('deleteRow')
+        ->assertHasNoErrors();
+    // بلا أكتوبر: نوفمبر 5,000 + 1,000 − 2,000 = 4,000
+    expect(telClosing())->toBe(4000);
+
+    // إعادة أكتوبر: المرحَّل الافتتاحي (5,000) لا رصيد نوفمبر — ومنصرفٌ يجعل نوفمبر سالباً يُرفض
+    telEntry('0', '4500')
+        ->assertSet('month', '2026-10-01')
+        ->assertSee(__('home.fin_carried_from', ['from' => __('home.fin_opening_balance')]))
+        ->call('review')
+        ->assertHasErrors('expense')
+        ->assertSee(__('home.fin_correction_negative', ['month' => 'نوفمبر 2026', 'balance' => '-500']));
+
+    telEntry('10000', '7000')->call('save')->assertHasNoErrors();
+    expect(telClosing())->toBe(7000);
+});

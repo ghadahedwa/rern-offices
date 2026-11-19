@@ -85,7 +85,7 @@ class FinanceNote extends Model
             ? FinanceCalendar::currentMonth()
             : FinanceCalendar::nextMonth($account, $unitId);
 
-        if (! $user || $month->lessThan(FinanceCalendar::firstMonth()) || $month->greaterThan($last)) {
+        if (! $user || $month->lessThan(FinanceCalendar::firstMonth())) {
             return false;
         }
 
@@ -93,8 +93,13 @@ class FinanceNote extends Model
             return false;
         }
 
+        // المقفول أينما وقع (شهرٌ بعد ثغرةٍ حُذفت أسبق من «التالي») — والمفتوح حتى الشهر التالي وحده
         if (self::monthIsLocked($account, $month, $unitId)) {
             return FinanceAccess::canCorrect($user);
+        }
+
+        if ($month->greaterThan($last)) {
+            return false;
         }
 
         return $unit ? FinanceAccess::canEnterUnit($user, $unit) : FinanceAccess::canEnter($user, $account);

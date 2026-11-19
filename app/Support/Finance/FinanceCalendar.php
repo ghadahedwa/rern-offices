@@ -65,16 +65,21 @@ class FinanceCalendar
     }
 
     /**
-     * الشهر الذي يُدخَل بعد آخر مُدخَل — أكتوبر ٢٠٢٦ إن لم يُدخَل شيء.
-     * ⚠️ داخل دفتر الوحدة لأبنية المحاكم: كل وحدة ماشية بشهورها (قرار المستخدمة).
+     * الشهر الذي يُدخَل الآن — **أول شهرٍ ناقص** من أكتوبر ٢٠٢٦: بعد آخر مُدخَل عادةً، وشهرٌ حُذف من
+     * الوسط يعود أولاً (السوبر أدمن يحذف أي شهر — طلب المستخدمة 2026-11-19)، فلا تبقى ثغرةٌ لا تُملأ.
+     * ⚠️ داخل دفتر الوحدة: كل وحدة ماشية بشهورها (قرار المستخدمة).
      */
     public static function nextMonth(FinanceAccount $account, ?int $unitId = null): CarbonImmutable
     {
-        $last = FinanceMonth::where('finance_account_id', $account->id)->forUnit($unitId)->max('month');
+        $entered = FinanceMonth::where('finance_account_id', $account->id)->forUnit($unitId)->pluck('month')
+            ->mapWithKeys(fn ($m) => [CarbonImmutable::parse($m)->format('Y-m') => true]);
 
-        return $last
-            ? CarbonImmutable::parse($last)->startOfMonth()->addMonth()
-            : self::firstMonth();
+        $month = self::firstMonth();
+        while ($entered->has($month->format('Y-m'))) {
+            $month = $month->addMonth();
+        }
+
+        return $month;
     }
 
     /** هل بدأ الشهر فيُسمح بإدخاله؟ */

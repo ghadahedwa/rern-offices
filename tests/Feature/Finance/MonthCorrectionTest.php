@@ -302,14 +302,35 @@ it('يحذف آخر شهرٍ بصوره ويسجّله بسببه', function () 
         ->assertSee(__('home.fin_history_badge', ['count' => 1]).' · '.__('home.fin_history_badge_deleted', ['count' => 1]));
 });
 
-it('لا يحذف شهراً في الوسط', function () {
+it('يحذف شهراً في الوسط فيعود أول شهرٍ يُدخَل، ثم يتابع بعد آخر مُدخَل', function () {
+    // طلب المستخدمة 2026-11-19: الحذف لأي شهر لا لآخر شهرٍ وحده
     $this->actingAs(correctionUser());
-    $first = savedMonth();
+    $october = savedMonth();
     savedMonth('90000', '5678');
 
-    Livewire::test(Unit::class, ['financeUnit' => finCairo(), 'account' => 'mechanization'])->call('confirmDelete', $first->id)->assertForbidden();
+    Livewire::test(Unit::class, ['financeUnit' => finCairo(), 'account' => 'mechanization'])
+        ->call('confirmDelete', $october->id)
+        ->set('deleteReason', 'أُدخل بالخطأ في هذا الشهر')
+        ->call('deleteRow')
+        ->assertHasNoErrors();
 
-    expect(FinanceMonth::count())->toBe(2);
+    expect(FinanceMonth::find($october->id))->toBeNull()
+        ->and(FinanceMonth::count())->toBe(1);
+
+    // الثغرة أولاً: أكتوبر يعود، وبعد ملئه ديسمبر (نوفمبر مُدخَل)
+    Livewire::test(MonthEntry::class, ['account' => 'mechanization', 'financeUnit' => finCairo()])->assertSet('month', '2026-10-01');
+    savedMonth('120000', '7777');
+    expect(\App\Support\Finance\FinanceCalendar::nextMonth(\App\Models\FinanceAccount::byKey('mechanization'), finCairo()->id)->format('Y-m'))->toBe('2026-12');
+});
+
+it('لا يحذف شهر حسابٍ أو وحدةٍ أخرى بمعرّفه من صفحةٍ ليست له', function () {
+    $this->actingAs(correctionUser());
+    $october = savedMonth();
+
+    Livewire::test(Unit::class, ['financeUnit' => finCairo(), 'account' => 'ministry-of-finance'])
+        ->call('confirmDelete', $october->id)->assertNotFound();
+
+    expect(FinanceMonth::count())->toBe(1);
 });
 
 it('يرفض الحذف بلا سبب', function () {
@@ -324,17 +345,17 @@ it('يرفض الحذف بلا سبب', function () {
     expect(FinanceMonth::count())->toBe(1);
 });
 
-it('لا يحذف إن أُدخل شهرٌ بعده والمودال مفتوح', function () {
+it('لا يحذف شهراً حُذف في الأثناء والمودال مفتوح', function () {
     $this->actingAs(correctionUser());
     $october = savedMonth();
 
     $page = Livewire::test(Unit::class, ['financeUnit' => finCairo(), 'account' => 'mechanization'])->call('confirmDelete', $october->id);
 
-    savedMonth('90000', '5678');
+    $october->delete();
 
     $page->set('deleteReason', 'سببٌ كافٍ')->call('deleteRow');
 
-    expect(FinanceMonth::count())->toBe(2);
+    expect(\Spatie\Activitylog\Models\Activity::where('log_name', \App\Support\Finance\FinanceHistory::LOG)->count())->toBe(0);
 });
 
 it('يمنع الحذف بلا finance.delete', function () {
@@ -347,7 +368,7 @@ it('يمنع الحذف بلا finance.delete', function () {
     expect(FinanceMonth::count())->toBe(1);
 });
 
-it('يُظهر التصحيح لصاحبه، والحذف على آخر شهرٍ وحده', function () {
+it('يُظهر التصحيح لصاحبه، والحذف على كل شهر', function () {
     $this->actingAs(correctionUser());
     $october  = savedMonth();
     $november = savedMonth('90000', '5678');
@@ -356,10 +377,29 @@ it('يُظهر التصحيح لصاحبه، والحذف على آخر شهرٍ
         ->assertSee(route('finance.unit-correct', [finCairo(), 'mechanization', '2026-10']), false)
         ->assertSee(route('finance.unit-correct', [finCairo(), 'mechanization', '2026-11']), false)
         ->assertSeeHtml('confirmDelete('.$november->id.')')
-        ->assertDontSeeHtml('confirmDelete('.$october->id.')');
+        ->assertSeeHtml('confirmDelete('.$october->id.')');
 
     $this->actingAs(correctionUser(['finance.total.view', 'finance.units.view', 'finance.units.create']));
     Livewire::test(Unit::class, ['financeUnit' => finCairo(), 'account' => 'mechanization'])
         ->assertDontSee(route('finance.unit-correct', [finCairo(), 'mechanization', '2026-10']), false)
         ->assertDontSeeHtml('confirmDelete(');
+});
+
+it('شهرٌ مقفول بعد ثغرةٍ حُذفت يقبل الملاحظة من صاحب التصحيح', function () {
+    $this->actingAs(correctionUser());
+    $october = savedMonth();
+    savedMonth('90000', '5678');
+
+    Livewire::test(Unit::class, ['financeUnit' => finCairo(), 'account' => 'mechanization'])
+        ->call('confirmDelete', $october->id)
+        ->set('deleteReason', 'أُدخل بالخطأ في هذا الشهر')
+        ->call('deleteRow');
+
+    // «الشهر التالي» صار أكتوبر، ونوفمبر بعده مقفول — يقبل الملاحظة
+    Livewire::test(Unit::class, ['financeUnit' => finCairo(), 'account' => 'mechanization'])
+        ->set('noteDrafts.2026-11', 'ملاحظة نوفمبر بعد الحذف')
+        ->call('addNote', '2026-11')
+        ->assertHasNoErrors();
+
+    expect(\App\Models\FinanceNote::sole()->body)->toBe('ملاحظة نوفمبر بعد الحذف');
 });

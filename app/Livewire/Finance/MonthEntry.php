@@ -403,14 +403,14 @@ class MonthEntry extends Component
     }
 
     /**
-     * اتصالات: المرحَّل إلى هذا الشهر — رصيد ما قبله. للإدخال رصيد آخر شهر، وللتصحيح
-     * رصيد ما قبل الشهر نفسه في السلسلة.
+     * اتصالات: المرحَّل إلى هذا الشهر — رصيد ما قبله في السلسلة، إدخالاً وتصحيحاً. ⚠️ لا «رصيد آخر شهر»:
+     * شهرٌ حُذف من الوسط يُعاد إدخاله وبعده شهورٌ مُدخَلة.
      */
     protected function carriedIn(FinanceAccount $account): int
     {
         return $this->editingId
             ? TelecomLedger::carriedInto($account, $this->unitId, CarbonImmutable::parse($this->month))
-            : TelecomLedger::closingBalance($account, $this->unitId);
+            : TelecomLedger::balanceBefore($account, $this->unitId, CarbonImmutable::parse($this->month));
     }
 
     /**
@@ -427,6 +427,19 @@ class MonthEntry extends Component
             if ($expense > $available) {
                 throw ValidationException::withMessages([
                     'expense' => __('home.fin_expense_over_available', ['available' => number_format($available)]),
+                ]);
+            }
+
+            // شهرٌ يُعاد في ثغرة: ما بعده من الشهور يتغيّر مرحَّله فيُفحص كالتصحيح
+            $negative = TelecomLedger::firstNegative($account, $this->unitId, insert: [
+                'month' => CarbonImmutable::parse($this->month), 'income' => $income, 'expense' => $expense,
+            ]);
+            if ($negative) {
+                throw ValidationException::withMessages([
+                    'expense' => __('home.fin_correction_negative', [
+                        'month'   => FinanceCalendar::monthLabel($negative['month']),
+                        'balance' => number_format($negative['balance']),
+                    ]),
                 ]);
             }
 

@@ -123,7 +123,7 @@ it('كل وحدة ماشية بشهورها والشهر نفسه لوحدتين
     expect($months)->toBe(['القاهرة 2026-10', 'القاهرة 2026-11', 'طنطا 2026-10']);
 });
 
-it('يحذف آخر شهر الوحدة نفسها لا آخر شهر الحساب', function () {
+it('يحذف شهر الوحدة نفسها، ولا يحذف شهر وحدةٍ أخرى بمعرّفه', function () {
     $this->actingAs(entryAs(['بالقاهرة', 'بطنطا']));
     enterUnit(unitOf('بالقاهرة'));
     enterUnit(unitOf('بالقاهرة'));
@@ -132,7 +132,7 @@ it('يحذف آخر شهر الوحدة نفسها لا آخر شهر الحسا
     $this->actingAs(unitUser(['finance.units.view', 'finance.delete'], ['بالقاهرة', 'بطنطا']));
     $tanta = FinanceMonth::where('finance_unit_id', unitOf('بطنطا')->id)->sole();
 
-    // أكتوبر طنطا آخر شهرٍ لطنطا — ولو كان لنوفمبر القاهرة بعده
+    // أكتوبر طنطا من صفحة طنطا
     Livewire::test(Unit::class, ['financeUnit' => unitOf('بطنطا')])
         ->call('confirmDelete', $tanta->id)
         ->set('deleteReason', 'أُدخل للوحدة الخطأ')
@@ -141,9 +141,10 @@ it('يحذف آخر شهر الوحدة نفسها لا آخر شهر الحسا
     expect(FinanceMonth::find($tanta->id))->toBeNull()
         ->and(FinanceMonth::count())->toBe(2);
 
-    // وأكتوبر القاهرة ليس آخر شهرٍ للقاهرة
+    // وأكتوبر القاهرة لا يُحذف من صفحة طنطا
     $octCairo = FinanceMonth::where('finance_unit_id', unitOf('بالقاهرة')->id)->orderBy('month')->first();
-    Livewire::test(Unit::class, ['financeUnit' => unitOf('بالقاهرة')])->call('confirmDelete', $octCairo->id)->assertForbidden();
+    Livewire::test(Unit::class, ['financeUnit' => unitOf('بطنطا')])->call('confirmDelete', $octCairo->id)->assertNotFound();
+    expect(FinanceMonth::find($octCairo->id))->not->toBeNull();
 });
 
 it('سجلّ الوحدة وملاحظاتها لا تظهر في وحدةٍ أخرى ولا تُفتح منها', function () {
