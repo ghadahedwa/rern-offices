@@ -391,6 +391,12 @@
                         {{ __('home.fr_suggestions') }}
                     </flux:sidebar.item>
 
+                    @if(Route::has('feedback-results.opinions'))
+                    <flux:sidebar.item icon="chat-bubble-left-right" :href="route('feedback-results.opinions')" :current="request()->routeIs('feedback-results.opinions')" wire:navigate>
+                        {{ __('home.fr_opinions') }}
+                    </flux:sidebar.item>
+                    @endif
+
                     <flux:sidebar.item icon="device-phone-mobile" :href="route('feedback-results.digital')" :current="request()->routeIs('feedback-results.digital')" wire:navigate>
                         {{ __('home.fr_digital') }}
                     </flux:sidebar.item>
