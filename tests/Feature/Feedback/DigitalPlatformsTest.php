@@ -47,13 +47,13 @@ function digitalBookedPath($component)
 
 /* ===================== البوابة ===================== */
 
-it('تعرض صفحة البوابة الكروت الثلاثة ومنها تقييم المنصات الرقمية', function () {
+it('تعرض صفحة البوابة الكروت الثلاثة ومنها تقييم الخدمات الإلكترونية', function () {
     $this->get(route('feedback'))
         ->assertOk()
         ->assertSee(route('feedback.rating'))
         ->assertSee(route('feedback.suggestion'))
         ->assertSee(route('feedback.digital'))
-        ->assertSee('تقييم المنصات الرقمية');
+        ->assertSee('تقييم الخدمات الإلكترونية')->assertDontSee('المنصات الرقمية');
 });
 
 it('لا تُعرض الأسئلة قبل اختيار المقر، وأول سؤال وحده يظهر بعده', function () {

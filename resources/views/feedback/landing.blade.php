@@ -125,7 +125,7 @@ h1 .accent{color:var(--gold-dark)}
       </div>
     </a>
 
-    {{-- تقييم المنصات الرقمية --}}
+    {{-- تقييم الخدمات الإلكترونية --}}
     <a href="{{ route('feedback.digital') }}" wire:navigate class="card" style="--c:var(--digital);--tint:var(--digital-tint)">
       <div class="ic">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
@@ -133,7 +133,7 @@ h1 .accent{color:var(--gold-dark)}
         </svg>
       </div>
       <div class="body">
-        <h3>تقييم المنصات الرقمية</h3>
+        <h3>تقييم الخدمات الإلكترونية</h3>
         <p>حجزت إلكترونياً أو سمعت عن منصات الحجز؟ شاركنا تجربتك.</p>
         <span class="go">ابدأ الآن
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>

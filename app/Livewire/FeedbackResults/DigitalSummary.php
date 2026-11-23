@@ -18,7 +18,7 @@ use Livewire\Component;
  * الحسابات كلها في DigitalReport، والشاشة والتقريران يقرؤون منه معاً.
  */
 #[Layout('layouts.app')]
-#[Title('ملخص المنصات الرقمية')]
+#[Title('ملخص الخدمات الإلكترونية')]
 class DigitalSummary extends Component
 {
     use WithFeedbackExport, WithFeedbackFilters;

@@ -23,7 +23,7 @@ use Livewire\WithPagination;
  * صف التفاصيل يعرض **المسار الذي مشى فيه المواطن سؤالاً بسؤال**، والأرقام في «ملخص المنصات».
  */
 #[Layout('layouts.app')]
-#[Title('تقييم المنصات الرقمية')]
+#[Title('تقييم الخدمات الإلكترونية')]
 class DigitalRatings extends Component
 {
     use WithBulkDelete, WithFeedbackExport, WithFeedbackFilters, WithFeedbackSorting, WithPagination;

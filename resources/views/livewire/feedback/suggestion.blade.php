@@ -45,7 +45,7 @@
   <div class="fb-hero">
     <span class="eyebrow">صوتك مسموع</span>
     <h1>تقديم <span class="accent">اقتراح</span></h1>
-    <p class="lead">لديك فكرة لتطوير الخدمة؟ اختر ما يخصّك من العناوين، أو اكتب اقتراحك بحرية. رأيك يصنع الفرق.</p>
+    <p class="lead">لديك فكرة لتطوير الخدمة؟ اختر ما يخصّك من العناوين، أو اكتب مقترحك بحرية. رأيك يصنع الفرق.</p>
     <div class="stepper">
       <span class="dot on">١</span>
       <span class="sep"></span>
@@ -85,9 +85,9 @@
           @endforeach
         </div>
 
-        {{-- اقتراح آخر --}}
+        {{-- اكتب مقترحك --}}
         <div class="sec">
-          <div class="sec-head"><span class="bar"></span><h2>اقتراح آخر <span class="h2-opt">(اختياري)</span></h2></div>
+          <div class="sec-head"><span class="bar"></span><h2>اكتب مقترحك <span class="h2-opt">(اختياري)</span></h2></div>
           <div class="field">
             <textarea class="inp" rows="3" wire:model="other_suggestion"
                       placeholder="اكتب هنا أي مقترح آخر لا يوجد ضمن العناوين السابقة..."></textarea>

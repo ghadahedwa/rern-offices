@@ -1313,7 +1313,7 @@ return [
     // المقترحات
     'fr_topics'                   => 'العناوين المختارة',
     'fr_topics_count'             => 'عدد العناوين',
-    'fr_other_suggestion'         => 'اكتب اقتراحك',
+    'fr_other_suggestion'         => 'اكتب مقترحك',
     'fr_no_topics'                => 'لم يختر عناوين',
     'fr_no_suggestions'           => 'لا توجد مقترحات مطابقة',
 
@@ -1326,7 +1326,7 @@ return [
     'fr_type'                     => 'النوع',
     'fr_type_rating'              => 'تقييم',
     'fr_type_suggestion'          => 'اقتراح',
-    'fr_type_digital'             => 'تقييم المنصات',
+    'fr_type_digital'             => 'الخدمات الإلكترونية',
     // تقرير آراء المواطنين (التقييمات والمقترحات معاً)
     'fr_opinions'                 => 'آراء المواطنين',
     'fr_opinions_hint'            => 'التقييمات والمقترحات معاً: بيانات المواطن والمقر والمحافظة وما كتبه، على الفترة التي تحدّدها.',
@@ -1341,9 +1341,9 @@ return [
     'fr_match_with'               => 'مع :type أُرسل :at',
     'fr_match_column'             => 'المطابقة',
 
-    // تقييم المنصات الرقمية — الشاشة والملخص والتصدير
-    'fr_digital'                  => 'تقييم المنصات الرقمية',
-    'fr_dg_summary'               => 'ملخص المنصات',
+    // تقييم الخدمات الإلكترونية — الشاشة والملخص والتصدير
+    'fr_digital'                  => 'تقييم الخدمات الإلكترونية',
+    'fr_dg_summary'               => 'ملخص الخدمات الإلكترونية',
     'fr_dg_path'                  => 'المسار',
     'fr_dg_path_all'              => 'الكل',
     'fr_dg_path_booked'           => 'حجز',
@@ -1390,14 +1390,14 @@ return [
     'fr_dg_booked_count'          => 'عدد مَن حجزوا',
     'fr_dg_card_hint'             => 'آراء المواطنين في الحجز الإلكتروني ومنصاته',
     'fr_dg_open_summary'          => 'عرض الملخص',
-    'fr_export_digital_summary_title' => 'ملخص تقييم المنصات الرقمية',
+    'fr_export_digital_summary_title' => 'ملخص تقييم الخدمات الإلكترونية',
     'fr_export_sheet_distributions'   => 'التوزيعات',
     'fr_export_question'          => 'السؤال',
     'fr_export_answer'            => 'الإجابة',
     'fr_export_base'              => 'عدد مَن سُئلوا',
     'fr_export_score'             => 'الدرجة',
     'fr_export_text'              => 'النص',
-    'fr_export_anonymous_digital' => 'آراء المنصات المجهولة',
+    'fr_export_anonymous_digital' => 'آراء الخدمات الإلكترونية المجهولة',
     'fr_ip'                       => 'عنوان الجهاز',
     'fr_user_agent'               => 'المتصفح',
     'fr_no_rejected'              => 'لا توجد محاولات مرفوضة',

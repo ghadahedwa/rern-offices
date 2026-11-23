@@ -120,9 +120,9 @@
 
         {{-- ملاحظات --}}
         <div class="sec">
-          <div class="sec-head"><span class="bar"></span><h2>ملاحظات إضافية <span style="font-weight:400;color:var(--ink-soft);font-size:12px">(اختياري)</span></h2></div>
+          <div class="sec-head"><span class="bar"></span><h2>اكتب تقييمك <span style="font-weight:400;color:var(--ink-soft);font-size:12px">(اختياري)</span></h2></div>
           <div class="field">
-            <textarea class="inp" rows="3" wire:model="notes" placeholder="أي ملاحظة تودّ إضافتها..."></textarea>
+            <textarea class="inp" rows="3" wire:model="notes" placeholder="اكتب هنا تقييمك للخدمة في هذا المقر..."></textarea>
             @error('notes')<p class="err">{{ $message }}</p>@enderror
           </div>
         </div>

@@ -21,7 +21,7 @@ use Livewire\Component;
  * المكوّن يعرض ويتحقق ويحفظ **ما يظهر وحده** عبر visibleQuestions().
  */
 #[Layout('components.layouts.feedback')]
-#[Title('تقييم المنصات الرقمية')]
+#[Title('تقييم الخدمات الإلكترونية')]
 class DigitalPlatforms extends Component
 {
     use InteractsWithFeedbackGate;

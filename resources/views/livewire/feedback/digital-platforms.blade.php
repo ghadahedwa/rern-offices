@@ -45,7 +45,7 @@
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
     </div>
     <h2>شكراً لتقييمك</h2>
-    <p>وصلنا رأيك في المنصات الرقمية بنجاح، وسيساعدنا في تطوير خدمات الحجز الإلكتروني. نقدّر وقتك ومشاركتك.</p>
+    <p>وصلنا رأيك في الخدمات الإلكترونية بنجاح، وسيساعدنا في تطوير خدمات الحجز الإلكتروني. نقدّر وقتك ومشاركتك.</p>
     <div class="actions">
       @foreach($this->otherForms() as $form)
         <a href="{{ $form['url'] }}" wire:navigate class="also">
@@ -60,7 +60,7 @@
   {{-- ===== هيدر ===== --}}
   <div class="fb-hero">
     <span class="eyebrow">رأيك يهمنا</span>
-    <h1>تقييم <span class="accent">المنصات الرقمية</span></h1>
+    <h1>تقييم <span class="accent">الخدمات الإلكترونية</span></h1>
     <p class="lead">شاركنا تجربتك مع الحجز الإلكتروني ومنصات الشهر العقاري الرقمية. لن يستغرق الأمر سوى دقائق.</p>
     <div class="stepper">
       <span class="dot on">١</span>
@@ -80,7 +80,7 @@
       <div class="stage2" x-data x-init="$el.scrollIntoView({behavior:'smooth',block:'nearest'})">
 
         <div class="sec">
-          <div class="sec-head"><span class="bar"></span><h2>تقييم المنصات الرقمية</h2></div>
+          <div class="sec-head"><span class="bar"></span><h2>تقييم الخدمات الإلكترونية</h2></div>
 
           @foreach($this->visibleQuestions() as $key)
             @php([$type, $label, $options] = $questions[$key])
@@ -151,7 +151,7 @@
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
         </div>
         <p>
-          لا يتيح النظام تقييم المنصات الرقمية لهذا المقر أكثر من مرة كل أسبوع.<br>
+          لا يتيح النظام تقييم الخدمات الإلكترونية لهذا المقر أكثر من مرة كل أسبوع.<br>
           يمكنك المحاولة اعتباراً من <span class="date">{{ $gateRetryDate }}</span>.
         </p>
         @include('livewire.feedback.includes.other-forms-alt')

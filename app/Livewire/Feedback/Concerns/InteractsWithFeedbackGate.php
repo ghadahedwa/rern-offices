@@ -234,7 +234,7 @@ trait InteractsWithFeedbackGate
         $forms = [
             FeedbackGate::TYPE_RATING     => ['feedback.rating', 'قيّم الخدمة أيضاً', 'هل ترغب بتقييم الخدمة؟'],
             FeedbackGate::TYPE_SUGGESTION => ['feedback.suggestion', 'قدّم اقتراحاً أيضاً', 'لديك ملاحظة أخرى؟ قدّم اقتراح'],
-            FeedbackGate::TYPE_DIGITAL    => ['feedback.digital', 'قيّم المنصات الرقمية أيضاً', 'قيّم المنصات الرقمية'],
+            FeedbackGate::TYPE_DIGITAL    => ['feedback.digital', 'قيّم الخدمات الإلكترونية أيضاً', 'قيّم الخدمات الإلكترونية'],
         ];
 
         unset($forms[$this->feedbackType()]);
