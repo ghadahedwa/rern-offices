@@ -8,6 +8,12 @@
 
 /* hero */
 .fb-hero{text-align:center;margin-bottom:22px}
+/* رجوع إلى كروت البوابة — أعلى الفورم في المنتصف (طلب المستخدمة) */
+.fb-back{display:flex;width:fit-content;margin-inline:auto;align-items:center;gap:7px;margin-bottom:14px;padding:7px 14px;border-radius:999px;
+  font-size:13px;font-weight:600;color:var(--ink-soft);text-decoration:none;background:var(--paper-2);
+  border:1px solid var(--line);transition:.18s}
+.fb-back:hover{color:var(--accent-strong);border-color:var(--accent)}
+.fb-back svg{width:15px;height:15px}
 .fb-hero .eyebrow{font-family:'Reem Kufi',sans-serif;font-size:12.5px;font-weight:500;letter-spacing:.14em;
   color:var(--accent-strong);display:inline-flex;align-items:center;gap:10px;margin-bottom:12px}
 .fb-hero .eyebrow::before,.fb-hero .eyebrow::after{content:"";width:24px;height:1px;background:var(--accent)}
@@ -53,6 +59,23 @@
   background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%235b667f' stroke-width='2' stroke-linecap='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
   background-repeat:no-repeat;background-position:left 12px center;background-size:16px;padding-inline-start:36px}
 .field select.inp:disabled{opacity:.55;cursor:not-allowed}
+/* منسدلة المقر ببحثٍ داخلها: زرٌّ بشكل الـselect + لوحة فيها سطر البحث ثم الخيارات */
+[x-cloak]{display:none!important}
+.field.combo{position:relative}
+.field .combo-btn{text-align:start;cursor:pointer;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%235b667f' stroke-width='2' stroke-linecap='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:left 12px center;background-size:16px;padding-inline-end:36px}
+.field .combo-btn .ph{color:var(--ink-soft)}
+.field .combo-btn:disabled{opacity:.55;cursor:not-allowed}
+.combo-panel{position:absolute;z-index:30;inset-inline:0;top:100%;margin-top:6px;background:var(--paper-2);
+  border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow-hover);padding:8px}
+.field .combo-search{padding:9px 12px}
+.combo-list{list-style:none;margin-top:6px;max-height:260px;overflow-y:auto}
+.combo-list button{width:100%;text-align:start;font-family:inherit;font-size:14px;line-height:1.5;color:var(--ink);
+  background:none;border:0;border-radius:9px;padding:9px 10px;cursor:pointer}
+.combo-list button:hover{background:var(--accent-tint)}
+.combo-list button.sel{background:var(--accent-tint);color:var(--accent-strong);font-weight:600}
+.combo-empty{padding:10px;font-size:12.5px;color:var(--ink-soft)}
 .err{color:var(--danger);font-size:11.5px;margin-top:5px}
 
 /* submit */

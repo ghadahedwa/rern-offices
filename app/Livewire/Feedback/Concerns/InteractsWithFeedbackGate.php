@@ -2,10 +2,14 @@
 
 namespace App\Livewire\Feedback\Concerns;
 
+use App\Models\Governorate;
+use App\Models\Office;
 use App\Services\FeedbackGate;
+use App\Support\ArabicText;
 use App\Support\FeedbackDevice;
 use Carbon\CarbonInterface;
 use Illuminate\Support\Facades\DB;
+use Livewire\Attributes\Computed;
 
 /**
  * منطق بوابة الحماية المشترك بين فورمي التقييم والمقترحات:
@@ -23,6 +27,9 @@ trait InteractsWithFeedbackGate
     /** تاريخ السماح القادم (منسّق بالعربية) عند الحجب. */
     public string $gateRetryDate = '';
 
+    /** بحث في مقرات المحافظة المختارة — المحافظة أولاً لأن أسماء المقرات تتكرر بين المحافظات. */
+    public string $officeSearch = '';
+
     abstract protected function feedbackType(): string;
 
     /**
@@ -39,6 +46,47 @@ trait InteractsWithFeedbackGate
 
     /** يحفظ الإرسال في قاعدة البيانات (داخل transaction). */
     abstract protected function persist(string $ip): void;
+
+    /* ===== المحافظة والمقر — مشتركة بين الفورمات كلها (كانت منسوخة في كل مكوّن) ===== */
+
+    public function updatedGovernorateId(): void
+    {
+        $this->office_id = null;
+        $this->officeSearch = '';
+        $this->gateBlocked = false;
+        $this->gateRetryDate = '';
+    }
+
+    /** المحافظات التي بها مقر واحد على الأقل من نوع ظاهر للمواطن. */
+    #[Computed]
+    public function governorates()
+    {
+        return Governorate::whereHas('offices', fn ($q) => $q->publicFeedback())
+            ->orderBy('order')->orderBy('name')->get(['id', 'name']);
+    }
+
+    /**
+     * مقرات المحافظة المختارة الظاهرة للمواطن، مفلترةً ببحثه.
+     *
+     * البحث بـArabicText (قاعدة البحث العربي في المشروع)، و⚠️ **المقر المختار يبقى في
+     * القائمة ولو لم يطابق البحث** — وإلا اختفى من المنسدلة فبدا أن اختياره ضاع.
+     */
+    #[Computed]
+    public function offices()
+    {
+        if (! $this->governorate_id) {
+            return collect();
+        }
+
+        $term = ArabicText::normalize($this->officeSearch);
+
+        return Office::publicFeedback()
+            ->where('governorate_id', $this->governorate_id)
+            ->when($term !== '', fn ($q) => $q->where(fn ($w) => $w
+                ->whereRaw(ArabicText::sqlNormalize('name').' LIKE ?', ['%'.$term.'%'])
+                ->when($this->office_id, fn ($s) => $s->orWhere('id', $this->office_id))))
+            ->orderBy('name')->get(['id', 'name']);
+    }
 
     /**
      * محافظة المقر المختار — تُشتق من المقر نفسه لا من مُدخَل المستخدم،

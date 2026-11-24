@@ -8,25 +8,19 @@
 <div class="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-sm p-5">
     {{-- ⚠️ الفئتان صريحتان لا مركّبتان بالنص — البناء لا يرى lg:grid-cols-{{ $n }} --}}
     <div class="grid grid-cols-1 md:grid-cols-2 {{ $withIdentity ? 'lg:grid-cols-5' : 'lg:grid-cols-4' }} gap-4">
-        <div>
-            <label class="{{ $lbl }}">{{ __('home.fr_governorate') }}</label>
-            <select wire:model.live="governorate_id" class="{{ $inp }}">
-                <option value="">{{ __('home.fr_all_governorates') }}</option>
-                @foreach($this->governorateOptions as $gov)
-                    <option value="{{ $gov->id }}">{{ $gov->name }}</option>
-                @endforeach
-            </select>
-        </div>
+        {{-- منسدلتان ببحثٍ داخلهما (شكل «تقرير بحث متقدم») — والمقر بعد المحافظة دائماً: أسماء المقرات تتكرر بين المحافظات --}}
+        @include('livewire.feedback-results.includes.search-select', [
+            'label' => __('home.fr_governorate'), 'model' => 'governorate_id', 'search' => 'governorateSearch',
+            'options' => $this->governorateOptions, 'all' => __('home.fr_all_governorates'),
+            'placeholder' => __('home.fr_search_governorate'),
+        ])
 
-        <div>
-            <label class="{{ $lbl }}">{{ __('home.fr_office') }}</label>
-            <select wire:model.live="office_id" class="{{ $inp }}" @disabled($governorate_id === '')>
-                <option value="">{{ __('home.fr_all_offices') }}</option>
-                @foreach($this->officeOptions as $office)
-                    <option value="{{ $office->id }}">{{ $office->name }}</option>
-                @endforeach
-            </select>
-        </div>
+        @include('livewire.feedback-results.includes.search-select', [
+            'label' => __('home.fr_office'), 'model' => 'office_id', 'search' => 'officeSearch',
+            'options' => $this->officeOptions, 'all' => __('home.fr_all_offices'),
+            'placeholder' => __('home.fr_search_office'),
+            'disabled' => $governorate_id === '', 'disabledText' => __('home.fr_pick_governorate_first'),
+        ])
 
         <div>
             <label class="{{ $lbl }}">{{ __('home.fr_date_from') }}</label>

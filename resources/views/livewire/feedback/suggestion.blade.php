@@ -42,6 +42,7 @@
   </div>
 @else
   {{-- ===== هيدر ===== --}}
+  @include('livewire.feedback.includes.back-link')
   <div class="fb-hero">
     <span class="eyebrow">صوتك مسموع</span>
     <h1>تقديم <span class="accent">اقتراح</span></h1>

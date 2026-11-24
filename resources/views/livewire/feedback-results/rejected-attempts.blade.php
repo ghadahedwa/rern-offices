@@ -88,9 +88,14 @@
                                             'at'   => \App\Support\LocalTime::stamp($attempt->matched_at),
                                         ]);
                                         $matchRoute = ['rating' => 'feedback-results.ratings', 'suggestion' => 'feedback-results.suggestions', 'digital' => 'feedback-results.digital'][$attempt->type] ?? null;
+                                        $matchParams = [];
+                                        if (! $matchRoute && \App\Models\FeedbackMessage::isType($attempt->type)) {
+                                            $matchRoute = 'feedback-results.messages';
+                                            $matchParams = ['messageType' => $attempt->type];
+                                        }
                                     @endphp
                                     @if($matchRoute && $attempt->office)
-                                        <a href="{{ route($matchRoute, ['gov' => $attempt->office->governorate_id, 'office' => $attempt->office_id]) }}" wire:navigate
+                                        <a href="{{ route($matchRoute, $matchParams + ['gov' => $attempt->office->governorate_id, 'office' => $attempt->office_id]) }}" wire:navigate
                                            class="block text-xs text-[#c9a847] hover:underline">{{ $matchLabel }}</a>
                                     @else
                                         <span class="block text-xs text-zinc-400">{{ $matchLabel }}</span>

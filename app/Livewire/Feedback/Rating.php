@@ -4,8 +4,6 @@ namespace App\Livewire\Feedback;
 
 use App\Livewire\Feedback\Concerns\InteractsWithFeedbackGate;
 use App\Models\FeedbackRating;
-use App\Models\Governorate;
-use App\Models\Office;
 use App\Rules\EgyptianNationalId;
 use App\Rules\PublicFeedbackOffice;
 use App\Services\FeedbackGate;
@@ -56,13 +54,6 @@ class Rating extends Component
     }
 
     /** عند تغيير المحافظة نصفّر المقر المختار ونعيد ضبط البوابة */
-    public function updatedGovernorateId(): void
-    {
-        $this->office_id = null;
-        $this->gateBlocked = false;
-        $this->gateRetryDate = '';
-    }
-
     /** تحقق فوري من الرقم القومي + فحص التكرار مع الكتابة */
     public function updatedNationalId(): void
     {
@@ -82,26 +73,6 @@ class Rating extends Component
     public function updatedPhone(): void
     {
         $this->evaluateGate();
-    }
-
-    #[Computed]
-    public function governorates()
-    {
-        // فقط المحافظات التي بها مقر واحد على الأقل من نوع ظاهر للمواطن
-        return Governorate::whereHas('offices', fn ($q) => $q->publicFeedback())
-            ->orderBy('order')->orderBy('name')->get(['id', 'name']);
-    }
-
-    #[Computed]
-    public function offices()
-    {
-        if (! $this->governorate_id) {
-            return collect();
-        }
-
-        return Office::publicFeedback()
-            ->where('governorate_id', $this->governorate_id)
-            ->orderBy('name')->get(['id', 'name']);
     }
 
     /** تظهر بنود التقييم بعد اختيار المقر وطالما لم يُحجب بقاعدة التكرار */

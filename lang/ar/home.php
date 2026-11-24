@@ -1327,6 +1327,17 @@ return [
     'fr_type_rating'              => 'تقييم',
     'fr_type_suggestion'          => 'اقتراح',
     'fr_type_digital'             => 'الخدمات الإلكترونية',
+    'fr_type_thanks'              => 'شكر موظف',
+    'fr_search_governorate'       => 'ابحث عن محافظة...',
+    'fr_search_office'            => 'ابحث عن مقر...',
+    'fr_pick_governorate_first'   => 'اختر المحافظة أولاً',
+    'fr_no_matches'               => 'لا توجد نتائج مطابقة',
+    // رسائل المواطنين النصية (FeedbackMessage::TYPES) — اسم شاشة كل نوع
+    'fr_msg_thanks'               => 'شكر الموظفين',
+    'fr_msg_employee'             => 'الموظف',
+    'fr_msg_body'                 => 'نص الرسالة',
+    'fr_msg_search_placeholder'   => 'بحث بالاسم أو اسم الموظف أو الرقم القومي أو الهاتف أو داخل النص',
+    'fr_no_messages'              => 'لا توجد رسائل مطابقة',
     // تقرير آراء المواطنين (التقييمات والمقترحات معاً)
     'fr_opinions'                 => 'آراء المواطنين',
     'fr_opinions_hint'            => 'التقييمات والمقترحات معاً: بيانات المواطن والمقر والمحافظة وما كتبه، على الفترة التي تحدّدها.',

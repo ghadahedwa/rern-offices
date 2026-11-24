@@ -16,8 +16,13 @@ h1 .accent{color:var(--gold-dark)}
   color:var(--ink-soft)}
 
 /* ============ Cards ============ */
-.cards{margin-top:clamp(18px,3vh,34px);width:100%;max-width:1000px;
-  display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+.groups{margin-top:clamp(18px,3vh,34px);width:100%;max-width:1000px;
+  display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px;text-align:start}
+.group{--n:1;grid-column:span var(--n);min-width:0;display:flex;flex-direction:column}
+.group-head{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.group-head::before{content:"";width:4px;height:18px;border-radius:4px;background:var(--gold);flex:none}
+.group-head h2{font-family:'Reem Kufi',sans-serif;font-weight:600;font-size:16px;color:var(--ink)}
+.cards{flex:1;display:grid;grid-template-columns:repeat(var(--n),minmax(0,1fr));gap:20px}
 .card{--c:var(--gold);--tint:var(--rating-tint);
   position:relative;background:var(--paper-2);border:1px solid var(--line);border-radius:20px;
   padding:28px 24px 24px;text-align:center;cursor:pointer;text-decoration:none;color:inherit;
@@ -47,7 +52,9 @@ h1 .accent{color:var(--gold-dark)}
   .card h3{font-size:18px}
 }
 @media (max-width:820px){
-  .cards{grid-template-columns:1fr;max-width:420px;gap:16px}
+  .groups{grid-template-columns:minmax(0,1fr);max-width:420px;gap:18px}
+  .group{grid-column:auto}
+  .cards{grid-template-columns:minmax(0,1fr);gap:16px}
   .card{flex-direction:row;text-align:start;padding:20px;align-items:center;gap:18px}
   .card .ic{margin-bottom:0;width:60px;height:60px;border-radius:18px;flex:none}
   .card .ic svg{width:30px;height:30px}
@@ -87,23 +94,12 @@ h1 .accent{color:var(--gold-dark)}
     شاركنا رأيك في خدماتنا، ولن يستغرق الأمر سوى دقائق.
   </p>
 
-  <div class="cards">
+  <div class="groups">
 
-    {{-- اقتراح --}}
-    <a href="{{ route('feedback.suggestion') }}" wire:navigate class="card" style="--c:var(--suggestion);--tint:var(--suggestion-tint)">
-      <div class="ic">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-4 10.5c.6.6 1 1.4 1 2.5h6c0-1.1.4-1.9 1-2.5A6 6 0 0 0 12 3Z"/>
-        </svg>
-      </div>
-      <div class="body">
-        <h3>تقديم اقتراح</h3>
-        <p>لديك فكرة لتطوير الخدمة؟ نرحّب بمقترحاتك ونوليها كل اهتمام.</p>
-        <span class="go">ابدأ الآن
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
-        </span>
-      </div>
-    </a>
+  {{-- ===== قيّم ===== --}}
+  <section class="group" style="--n:2" aria-labelledby="group-rate">
+    <div class="group-head"><h2 id="group-rate">قيّم تجربتك</h2></div>
+    <div class="cards">
 
     {{-- تقييم --}}
     <a href="{{ route('feedback.rating') }}" wire:navigate class="card" style="--c:var(--rating);--tint:var(--rating-tint)">
@@ -140,6 +136,57 @@ h1 .accent{color:var(--gold-dark)}
         </span>
       </div>
     </a>
+
+    </div>
+  </section>
+
+  {{-- ===== شارك ===== --}}
+  <section class="group" aria-labelledby="group-share">
+    <div class="group-head"><h2 id="group-share">شارك بأفكارك</h2></div>
+    <div class="cards">
+
+    {{-- اقتراح --}}
+    <a href="{{ route('feedback.suggestion') }}" wire:navigate class="card" style="--c:var(--suggestion);--tint:var(--suggestion-tint)">
+      <div class="ic">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-4 10.5c.6.6 1 1.4 1 2.5h6c0-1.1.4-1.9 1-2.5A6 6 0 0 0 12 3Z"/>
+        </svg>
+      </div>
+      <div class="body">
+        <h3>تقديم اقتراح</h3>
+        <p>لديك فكرة لتطوير الخدمة؟ نرحّب بمقترحاتك ونوليها كل اهتمام.</p>
+        <span class="go">ابدأ الآن
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+        </span>
+      </div>
+    </a>
+
+    </div>
+  </section>
+
+  {{-- ===== بلّغ واشكر ===== --}}
+  <section class="group" aria-labelledby="group-report">
+    <div class="group-head"><h2 id="group-report">بلّغ واشكر</h2></div>
+    <div class="cards">
+
+    {{-- شكر موظف --}}
+    <a href="{{ route('feedback.message', 'thanks') }}" wire:navigate class="card" style="--c:var(--thanks);--tint:var(--thanks-tint)">
+      <div class="ic">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M20.5 5.6a5 5 0 0 0-7.1 0L12 7l-1.4-1.4a5 5 0 0 0-7.1 7.1L12 21.2l8.5-8.5a5 5 0 0 0 0-7.1Z"/>
+        </svg>
+      </div>
+      <div class="body">
+        <h3>شكر موظف أو الإشادة بمتميز</h3>
+        <p>سجّل رسالة شكر لموظف قدّم لك خدمة متميزة.</p>
+        <span class="go">ابدأ الآن
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+        </span>
+      </div>
+    </a>
+
+    </div>
+  </section>
 
   </div>
 

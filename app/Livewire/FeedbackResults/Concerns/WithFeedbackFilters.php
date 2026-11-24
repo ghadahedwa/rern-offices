@@ -6,6 +6,7 @@ use App\Models\Governorate;
 use App\Models\Office;
 use App\Support\FeedbackResults\FeedbackAccess;
 use App\Support\FeedbackResults\FeedbackFilterSet;
+use App\Support\ArabicText;
 use App\Support\FeedbackResults\FeedbackScope;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Builder;
@@ -43,14 +44,26 @@ trait WithFeedbackFilters
     #[Url(as: 'identity', except: '')]
     public string $identity = '';
 
+    /**
+     * بحث داخل منسدلتي المحافظة والمقر — لا في الرابط: أداة تضييق للقائمة لا فلتر للصفوف.
+     * والمقر بعد المحافظة دائماً (أسماء المقرات تتكرر بين المحافظات).
+     */
+    public string $governorateSearch = '';
+
+    public string $officeSearch = '';
+
+    /** الاختيار يمسح بحث منسدلته — فتُفتح المرة التالية على القائمة كاملة. */
     public function updatedGovernorateId(): void
     {
         $this->office_id = '';
+        $this->governorateSearch = '';
+        $this->officeSearch = '';
         $this->afterFilterChange();
     }
 
     public function updatedOfficeId(): void
     {
+        $this->officeSearch = '';
         $this->afterFilterChange();
     }
 
@@ -132,7 +145,7 @@ trait WithFeedbackFilters
 
     public function resetFilters(): void
     {
-        $this->reset('governorate_id', 'office_id', 'from', 'to', 'identity');
+        $this->reset('governorate_id', 'office_id', 'from', 'to', 'identity', 'governorateSearch', 'officeSearch');
         $this->afterFilterChange();
     }
 
@@ -218,8 +231,24 @@ trait WithFeedbackFilters
     {
         $allowed = $this->scopedGovernorateIds();
 
-        return Governorate::when($allowed !== null, fn ($q) => $q->whereIn('id', $allowed))
-            ->orderBy('order')->orderBy('name')->get(['id', 'name']);
+        return $this->searchOptions(
+            Governorate::when($allowed !== null, fn ($q) => $q->whereIn('id', $allowed)),
+            $this->governorateSearch,
+            $this->governorate_id,
+        )->orderBy('order')->orderBy('name')->get(['id', 'name']);
+    }
+
+    /**
+     * يضيّق منسدلةً ببحثٍ عربي مطبَّع (ArabicText). ⚠️ **المختار يبقى ظاهراً ولو لم
+     * يطابق** — وإلا اختفى من المنسدلة فبدا الفلتر مُلغى وهو ما زال يفلتر الصفوف.
+     */
+    private function searchOptions(Builder $query, string $search, string $selected): Builder
+    {
+        $term = ArabicText::normalize($search);
+
+        return $query->when($term !== '', fn ($q) => $q->where(fn ($w) => $w
+            ->whereRaw(ArabicText::sqlNormalize('name').' LIKE ?', ['%'.$term.'%'])
+            ->when(ctype_digit($selected), fn ($s) => $s->orWhere('id', (int) $selected))));
     }
 
     /**
@@ -243,7 +272,10 @@ trait WithFeedbackFilters
             return collect();
         }
 
-        return Office::where('governorate_id', $this->governorate_id)
-            ->orderBy('name')->get(['id', 'name']);
+        return $this->searchOptions(
+            Office::where('governorate_id', $this->governorate_id),
+            $this->officeSearch,
+            $this->office_id,
+        )->orderBy('name')->get(['id', 'name']);
     }
 }

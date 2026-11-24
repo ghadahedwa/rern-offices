@@ -59,6 +59,7 @@
   </div>
 @else
   {{-- ===== هيدر ===== --}}
+  @include('livewire.feedback.includes.back-link')
   <div class="fb-hero">
     <span class="eyebrow">رأيك يهمنا</span>
     <h1>تقييم <span class="accent">الخدمة</span></h1>

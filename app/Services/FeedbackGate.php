@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\FeedbackDigitalRating;
+use App\Models\FeedbackMessage;
 use App\Models\FeedbackRating;
 use App\Models\FeedbackRejectedAttempt;
 use App\Models\FeedbackSuggestion;
@@ -22,8 +23,14 @@ class FeedbackGate
     public const TYPE_SUGGESTION = 'suggestion';
     public const TYPE_DIGITAL = 'digital';
 
-    /** كل الأنواع — تقرؤها شاشة المحاولات المرفوضة في فلترها. */
+    /** أنواع الفورمات الثلاثة — والرسائل النصية بعدها من FeedbackMessage::types() (انظر types()). */
     public const TYPES = [self::TYPE_RATING, self::TYPE_SUGGESTION, self::TYPE_DIGITAL];
+
+    /** كل الأنواع — تقرؤها شاشة المحاولات المرفوضة في فلترها. */
+    public static function types(): array
+    {
+        return [...self::TYPES, ...FeedbackMessage::types()];
+    }
 
     /**
      * جدول كل نوع. ⚠️ **النوع المجهول استثناء لا سقوط إلى التقييمات** — كان الكود
@@ -38,8 +45,23 @@ class FeedbackGate
             self::TYPE_RATING     => FeedbackRating::class,
             self::TYPE_SUGGESTION => FeedbackSuggestion::class,
             self::TYPE_DIGITAL    => FeedbackDigitalRating::class,
-            default               => throw new \InvalidArgumentException("نوع رأي غير معروف: {$type}"),
+            default               => FeedbackMessage::isType($type)
+                ? FeedbackMessage::class
+                : throw new \InvalidArgumentException("نوع رأي غير معروف: {$type}"),
         };
+    }
+
+    /**
+     * استعلام صفوف النوع وحده. ⚠️ الرسائل أنواعٌ في جدولٍ واحد، فبلا `ofType` كان
+     * مَن شكر موظفاً يُحجب عن الإبلاغ عن مشكلة في المقر نفسه.
+     */
+    private function queryFor(string $type): \Illuminate\Database\Eloquent\Builder
+    {
+        $model = $this->modelFor($type);
+
+        return $model === FeedbackMessage::class
+            ? FeedbackMessage::query()->ofType($type)
+            : $model::query();
     }
 
     /**
@@ -80,11 +102,10 @@ class FeedbackGate
         }
 
         $windowDays = (int) config('feedback.window_days', 7);
-        $model = $this->modelFor($type);
 
         // withTrashed: الصف المحذوف إدارياً (سلة المحذوفات) يظل حارساً للنافذة.
         // بدونها يصير حذف رأي عبثي من شاشة النتائج إذناً لصاحبه بإعادة إرساله فوراً.
-        $last = $model::query()
+        $last = $this->queryFor($type)
             ->withTrashed()
             ->where('office_id', $officeId)
             ->where(function ($q) use ($keys) {

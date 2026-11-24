@@ -10,6 +10,10 @@ Route::view('feedback', 'feedback.landing')->name('feedback');
 Route::livewire('feedback/rating', \App\Livewire\Feedback\Rating::class)->name('feedback.rating');
 Route::livewire('feedback/suggestion', \App\Livewire\Feedback\Suggestion::class)->name('feedback.suggestion');
 Route::livewire('feedback/digital', \App\Livewire\Feedback\DigitalPlatforms::class)->name('feedback.digital');
+// الرسائل النصية (شكر موظف · …) — فورم واحد، والنوع مقيَّد بأنواع FeedbackMessage::TYPES
+Route::livewire('feedback/{messageType}', \App\Livewire\Feedback\Message::class)
+    ->whereIn('messageType', \App\Models\FeedbackMessage::types())
+    ->name('feedback.message');
 
 Route::middleware(['auth', 'verified'])->group(function () {
     //Route::view('dashboard', 'dashboard')->name('dashboard');
@@ -180,6 +184,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::livewire('opinions', \App\Livewire\FeedbackResults\Opinions::class)->name('opinions');
             Route::livewire('digital', \App\Livewire\FeedbackResults\DigitalRatings::class)->name('digital');
             Route::livewire('digital/summary', \App\Livewire\FeedbackResults\DigitalSummary::class)->name('digital-summary');
+            Route::livewire('messages/{messageType}', \App\Livewire\FeedbackResults\Messages::class)
+                ->whereIn('messageType', \App\Models\FeedbackMessage::types())
+                ->name('messages');
             Route::livewire('rejected', \App\Livewire\FeedbackResults\RejectedAttempts::class)->name('rejected');
 
             // تقارير PDF — الفلاتر تصل في الـ query string نفسه الذي على الشاشة
@@ -189,6 +196,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::get('suggestions/pdf', \App\Http\Controllers\FeedbackSuggestionsPdfController::class)->name('suggestions.pdf');
             Route::get('opinions/pdf', \App\Http\Controllers\FeedbackOpinionsPdfController::class)->name('opinions.pdf');
             Route::get('digital/summary/pdf', \App\Http\Controllers\FeedbackDigitalSummaryPdfController::class)->name('digital-summary.pdf');
+            Route::get('messages/{messageType}/pdf', \App\Http\Controllers\FeedbackMessagesPdfController::class)
+                ->whereIn('messageType', \App\Models\FeedbackMessage::types())
+                ->name('messages.pdf');
         });
 
     // المستخدمون والأدوار — super-admin فقط حالياً (users.manage مؤجّلة)

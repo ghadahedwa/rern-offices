@@ -2,6 +2,7 @@
 
 namespace App\Support\FeedbackResults;
 
+use App\Models\FeedbackMessage;
 use App\Models\User;
 
 /**
@@ -52,6 +53,32 @@ final class FeedbackAccess
     public static function canViewRejected(?User $user): bool
     {
         return (bool) $user?->can(self::REJECTED);
+    }
+
+    /**
+     * شاشة رسائل نوعٍ بعينه — حسب `access` في FeedbackMessage::TYPES:
+     * الشكر لصاحب العرض كباقي الآراء، والبلاغات للسوبر أدمن وحده (قرار العميل).
+     */
+    public static function canViewMessages(?User $user, string $type): bool
+    {
+        if (! FeedbackMessage::isType($type) || $user === null) {
+            return false;
+        }
+
+        return match (FeedbackMessage::config($type)['access']) {
+            'view'        => self::canView($user),
+            'super-admin' => $user->hasRole('super-admin'),
+            default       => false,
+        };
+    }
+
+    /** أنواع الرسائل التي يفتح المستخدم شاشاتها — للقائمة الجانبية. */
+    public static function viewableMessageTypes(?User $user): array
+    {
+        return array_values(array_filter(
+            FeedbackMessage::types(),
+            fn (string $type) => self::canViewMessages($user, $type),
+        ));
     }
 
     /**

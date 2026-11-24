@@ -406,6 +406,15 @@
                     </flux:sidebar.item>
                     @endcan
 
+                    {{-- رسائل المواطنين — لكل نوعٍ صلاحيته (الشكر بالعرض، والبلاغات للسوبر أدمن وحده) --}}
+                    @if(Route::has('feedback-results.messages'))
+                    @foreach(\App\Support\FeedbackResults\FeedbackAccess::viewableMessageTypes(auth()->user()) as $msgType)
+                    <flux:sidebar.item :icon="\App\Models\FeedbackMessage::config($msgType)['icon']" :href="route('feedback-results.messages', $msgType)" :current="request()->routeIs('feedback-results.messages') && request()->route('messageType') === $msgType" wire:navigate>
+                        {{ __('home.fr_msg_'.$msgType) }}
+                    </flux:sidebar.item>
+                    @endforeach
+                    @endif
+
                     @can('feedback.rejected')
                     <flux:sidebar.item icon="shield-exclamation" :href="route('feedback-results.rejected')" :current="request()->routeIs('feedback-results.rejected')" wire:navigate>
                         {{ __('home.fr_rejected') }}
