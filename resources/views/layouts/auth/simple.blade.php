@@ -13,6 +13,8 @@
             input[type="checkbox"]:focus { box-shadow: 0 0 0 2px #c9a84766; }
         </style>
     </head>
+    {{-- الصفحة على قدّ الشاشة بلا سكرول (قرار المستخدمة) — فشاشة الصيانة مضغوطة لتسعها:
+         شعار أصغر، ويختفي حين يُفتح «دخول مدير النظام» (`.auth-logo` في frozen-card). --}}
     <body class="antialiased min-h-dvh lg:h-dvh lg:overflow-hidden" style="background-image: url('/images/bg-image.jpg'); background-size: cover; background-position: center; background-repeat: no-repeat;">
         {{-- Background overlay --}}
         <div class="fixed inset-0" style="background-color: rgba(255, 255, 255, 0.7);"></div>
@@ -27,7 +29,8 @@
             {{-- Main content --}}
             <div class="flex flex-col items-center w-full max-w-xl z-10 gap-3 flex-1 justify-center">
 
-                <img src="{{ asset('images/logo3.png') }}" class="w-58 h-58 object-contain" alt="الشعار" />
+                <img src="{{ asset('images/logo3.png') }}" alt="الشعار"
+                     class="auth-logo object-contain {{ \App\Support\SystemFreeze::isActive() ? 'w-36 h-36' : 'w-58 h-58' }}" />
 
                 {{-- Page title --}}
                 <p class="text-xl text-center" style="color: #2c3e6b;">{{ __('home.app_name') }}</p>
@@ -36,7 +39,8 @@
                 {{ $slot }}
             </div>
 
-            {{-- Footer --}}
+            {{-- Footer — لا يظهر على شاشة الصيانة وقت تجميد النظام (طلب المستشار محمد عبده 2026-11-24) --}}
+            @unless(\App\Support\SystemFreeze::isActive())
             <footer class="z-10 flex items-center gap-2 text-sm mt-6" style="color: #2c3e6b;">
                 <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none"
                      stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -45,6 +49,7 @@
                 </svg>
                 جميع الحقوق محفوظة &copy; وزارة العدل
             </footer>
+            @endunless
         </div>
 
         @persist('toast')

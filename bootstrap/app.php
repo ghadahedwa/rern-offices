@@ -16,6 +16,9 @@ return Application::configure(basePath: dirname(__DIR__))
             'permission' => \Spatie\Permission\Middleware\PermissionMiddleware::class,
             'role_or_permission' => \Spatie\Permission\Middleware\RoleOrPermissionMiddleware::class,
         ]);
+
+        // تجميد النظام — يُخرج كل داخلٍ غير super-admin (App\Support\SystemFreeze)
+        $middleware->appendToGroup('web', \App\Http\Middleware\BlockWhenSystemFrozen::class);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

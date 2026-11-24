@@ -369,6 +369,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::livewire('finance-units/{financeUnit}/edit', \App\Livewire\Finance\Units\Create::class)->name('finance-units.edit');
     });
 
+    // تجميد النظام — سوبر أدمن وحده (App\Support\SystemFreeze؛ شكٌّ في سرقة حسابات 2026-11-24)
+    Route::livewire('system-freeze', \App\Livewire\System\Freeze::class)
+        ->middleware('role:super-admin')
+        ->name('system-freeze');
+
     // العطلات الرسمية — **سوبر أدمن وحده** (قرار العميل)، أضيق من contractors.settings:
     // ⚠️ القائمة قومية لا محلية، وعطلةٌ بتاريخ خاطئ تغيّر أيام العمل في تقارير المحافظات جميعاً.
     Route::middleware('role:super-admin')->group(function () {

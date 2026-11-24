@@ -450,6 +450,15 @@
                             </flux:sidebar.item>
                         </div>
                     </div>
+
+                    @if(Route::has('system-freeze'))
+                    <flux:sidebar.item icon="lock-closed" :href="route('system-freeze')" :current="request()->routeIs('system-freeze')" wire:navigate>
+                        {{ __('home.freeze_page') }}
+                        @if(\App\Support\SystemFreeze::isActive())
+                            <span class="ms-1 inline-block w-2 h-2 rounded-full bg-amber-500 align-middle"></span>
+                        @endif
+                    </flux:sidebar.item>
+                    @endif
                     @endif
 
                     {{-- إعدادات المخازن (الأصناف + الأنواع + الوحدات — إدارة المخازن نفسها انتقلت لفرع المخازن) — صلاحية warehouses.settings --}}

@@ -4,11 +4,15 @@ namespace App\Providers;
 
 use App\Actions\Fortify\CreateNewUser;
 use App\Actions\Fortify\ResetUserPassword;
+use App\Models\User;
+use App\Support\SystemFreeze;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 use Laravel\Fortify\Fortify;
 
 class FortifyServiceProvider extends ServiceProvider
@@ -38,6 +42,26 @@ class FortifyServiceProvider extends ServiceProvider
     {
         Fortify::resetUserPasswordsUsing(ResetUserPassword::class);
         Fortify::createUsersUsing(CreateNewUser::class);
+
+        // تجميد النظام: كلمة سرٍّ صحيحة لغير super-admin تُرفض برسالة الصيانة وتُسجَّل محاولةً
+        // (مَن · متى · من أي IP) — هي الدليل حين يُشكّ في سرقة حساب. الخاطئة تبقى خطأً عادياً.
+        Fortify::authenticateUsing(function (Request $request) {
+            $user = User::where(Fortify::username(), $request->input(Fortify::username()))->first();
+
+            if (! $user || ! Hash::check((string) $request->input('password'), $user->password)) {
+                return null;
+            }
+
+            if (SystemFreeze::blocks($user)) {
+                SystemFreeze::logBlocked($user, 'login');
+
+                throw ValidationException::withMessages([
+                    Fortify::username() => __('home.freeze_login_blocked'),
+                ]);
+            }
+
+            return $user;
+        });
     }
 
     /**
