@@ -15,17 +15,17 @@ h1 .accent{color:var(--gold-dark)}
 .lead{margin-top:10px;max-width:46ch;font-size:clamp(13px,1.8vw,15px);line-height:1.75;
   color:var(--ink-soft)}
 
-/* ============ Cards ============ */
-.groups{margin-top:clamp(18px,3vh,34px);width:100%;max-width:1000px;
-  display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px;text-align:start}
+/* ============ Cards — النموذج المعتمَد (2026-11-24): ٤ أعمدة، والمجموعة تأخذ أعمدةً بعدد كروتها (--n) ============ */
+.groups{margin-top:clamp(18px,3vh,30px);width:100%;max-width:1240px;
+  display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:18px 16px;text-align:start}
 .group{--n:1;grid-column:span var(--n);min-width:0;display:flex;flex-direction:column}
-.group-head{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.group-head{display:flex;align-items:center;gap:10px;margin-bottom:9px}
 .group-head::before{content:"";width:4px;height:18px;border-radius:4px;background:var(--gold);flex:none}
 .group-head h2{font-family:'Reem Kufi',sans-serif;font-weight:600;font-size:16px;color:var(--ink)}
-.cards{flex:1;display:grid;grid-template-columns:repeat(var(--n),minmax(0,1fr));gap:20px}
+.cards{flex:1;display:grid;grid-template-columns:repeat(var(--n),minmax(0,1fr));gap:16px}
 .card{--c:var(--gold);--tint:var(--rating-tint);
-  position:relative;background:var(--paper-2);border:1px solid var(--line);border-radius:20px;
-  padding:28px 24px 24px;text-align:center;cursor:pointer;text-decoration:none;color:inherit;
+  position:relative;background:var(--paper-2);border:1px solid var(--line);border-radius:18px;
+  padding:18px 16px 15px;text-align:center;cursor:pointer;text-decoration:none;color:inherit;
   display:flex;flex-direction:column;align-items:center;
   box-shadow:var(--shadow);overflow:hidden;
   transition:transform .28s cubic-bezier(.2,.7,.2,1),box-shadow .28s,border-color .28s}
@@ -34,33 +34,36 @@ h1 .accent{color:var(--gold-dark)}
 .card:hover,.card:focus-visible{transform:translateY(-6px);box-shadow:var(--shadow-hover);
   border-color:color-mix(in srgb,var(--c) 55%,var(--line));outline:none}
 .card:hover::before,.card:focus-visible::before{transform:scaleX(1)}
-.card .ic{width:62px;height:62px;border-radius:18px;background:var(--tint);color:var(--c);
-  display:grid;place-items:center;margin-bottom:16px;transition:transform .28s}
+.card .ic{width:50px;height:50px;border-radius:15px;background:var(--tint);color:var(--c);
+  display:grid;place-items:center;margin-bottom:10px;flex:none;transition:transform .28s}
 .card:hover .ic{transform:scale(1.06) rotate(-3deg)}
-.card .ic svg{width:32px;height:32px}
-.card h3{font-family:'Reem Kufi',sans-serif;font-weight:600;font-size:20px;color:var(--ink)}
-.card p{margin-top:8px;font-size:13px;line-height:1.7;color:var(--ink-soft);max-width:24ch}
-.card .go{margin-top:16px;display:inline-flex;align-items:center;gap:8px;font-size:13px;
+.card .ic svg{width:26px;height:26px}
+.card .body{flex:1;display:flex;flex-direction:column;align-items:center;width:100%}
+.card h3{font-family:'Reem Kufi',sans-serif;font-weight:600;font-size:17px;line-height:1.45;color:var(--ink)}
+/* التفصيل بخط رفيع (طلب العميل) */
+.card p{margin-top:5px;font-size:12.5px;font-weight:300;line-height:1.65;color:var(--ink-soft);flex:1}
+.card .go{margin-top:9px;display:inline-flex;align-items:center;gap:7px;font-size:12.5px;
   font-weight:600;color:var(--c)}
-.card .go svg{width:16px;height:16px;transition:transform .28s}
+.card .go svg{width:15px;height:15px;transition:transform .28s}
 .card:hover .go svg{transform:translateX(-5px)}
-.card .stars{display:flex;gap:3px;margin-top:2px}
-.card .stars svg{width:15px;height:15px;fill:var(--rating);stroke:none}
+.card .stars{display:flex;gap:3px;margin-top:9px}
+.card .stars svg{width:14px;height:14px;fill:var(--rating);stroke:none}
 
-@media (max-width:980px) and (min-width:821px){
-  .card{padding:24px 16px 20px}
-  .card h3{font-size:18px}
+/* شاشة متوسطة: المجموعات تحت بعضها، والكروت بعرضٍ ثابت (ثلث الصف) — كارتٌ وحده لا يتمدّد بعرض الشاشة */
+@media (max-width:900px) and (min-width:821px){
+  .groups{grid-template-columns:minmax(0,1fr);max-width:820px}
+  .group{grid-column:auto}
+  .cards{grid-template-columns:repeat(3,minmax(0,1fr))}
 }
 @media (max-width:820px){
   .groups{grid-template-columns:minmax(0,1fr);max-width:420px;gap:18px}
   .group{grid-column:auto}
-  .cards{grid-template-columns:minmax(0,1fr);gap:16px}
-  .card{flex-direction:row;text-align:start;padding:20px;align-items:center;gap:18px}
-  .card .ic{margin-bottom:0;width:60px;height:60px;border-radius:18px;flex:none}
-  .card .ic svg{width:30px;height:30px}
-  .card .body{flex:1}
-  .card .go{margin-top:10px}
-  .card p{max-width:none}
+  .cards{grid-template-columns:minmax(0,1fr);gap:11px}
+  .card{flex-direction:row;text-align:start;padding:14px;align-items:center;gap:13px}
+  .card .ic{margin-bottom:0}
+  .card .body{align-items:flex-start}
+  .card h3{font-size:16px}
+  .card .go,.card .stars{display:none}
 }
 
 /* ============ شريط إرشادي — الشكاوى الرسمية ============ */
