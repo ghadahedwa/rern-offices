@@ -63,7 +63,8 @@ function gtOpening(string $city, int $amount): void
     FinanceOpening::create([
         'finance_account_id' => FinanceAccount::byKey('telecom')->id,
         'finance_unit_id'    => gtUnit($city)->id,
-        'amount'             => $amount,
+        // بالجنيه ← قروش (Money)
+        'amount'             => $amount * 100,
     ]);
 }
 
@@ -89,14 +90,15 @@ it('اتصالات: الخلية رصيد آخر الشهر وتحته الإي�
     $cairo = gtUnit('بالقاهرة')->id;
     $tanta = gtUnit('بطنطا')->id;
 
-    expect($t['ledger']['start'][$cairo])->toBe(5000)
-        ->and($t['ledger']['start'][$tanta])->toBe(100)
-        ->and($t['ledger']['startTotal'])->toBe(5100)
-        ->and($t['rows'][0]['ledger'][$cairo])->toMatchArray(['balance' => 8000, 'income' => 10000, 'expense' => 7000])
+    // القيم بالقروش
+    expect($t['ledger']['start'][$cairo])->toBe(500000)
+        ->and($t['ledger']['start'][$tanta])->toBe(10000)
+        ->and($t['ledger']['startTotal'])->toBe(510000)
+        ->and($t['rows'][0]['ledger'][$cairo])->toMatchArray(['balance' => 800000, 'income' => 1000000, 'expense' => 700000])
         // طنطا لم تُدخل أكتوبر: لا خلية لها، ورصيدها في عمود السنة افتتاحيُّها
         ->and($t['rows'][0]['ledger'])->not->toHaveKey($tanta)
-        ->and($t['ledger']['year'][$tanta])->toMatchArray(['balance' => 100, 'entered' => false])
-        ->and($t['ledger']['yearTotal'])->toBe(['balance' => 8100, 'income' => 10000, 'expense' => 7000])
+        ->and($t['ledger']['year'][$tanta])->toMatchArray(['balance' => 10000, 'entered' => false])
+        ->and($t['ledger']['yearTotal'])->toBe(['balance' => 810000, 'income' => 1000000, 'expense' => 700000])
         // وحدةٌ بلا افتتاحي «—» لا صفر
         ->and($t['ledger']['start'][gtUnit('بأسيوط')->id])->toBeNull();
 
@@ -115,7 +117,7 @@ it('رصيد أول السنة التالية مرحَّلٌ من آخر شهر�
 
     $t = UnitsTotal::build(FinanceAccount::byKey('telecom'), 2027, FinanceUnit::ordered()->get());
 
-    expect($t['ledger']['start'][gtUnit('بالقاهرة')->id])->toBe(8000)
+    expect($t['ledger']['start'][gtUnit('بالقاهرة')->id])->toBe(800000)
         ->and($t['ledger']['firstYear'])->toBeFalse();
 });
 

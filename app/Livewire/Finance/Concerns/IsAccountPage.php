@@ -10,6 +10,7 @@ use App\Models\FinanceUnit;
 use App\Support\Finance\FinanceAccess;
 use App\Support\Finance\FinanceCalendar;
 use App\Support\Finance\FinanceHistory;
+use App\Support\Finance\Money;
 use Carbon\CarbonImmutable;
 use Flux\Flux;
 use App\Support\Finance\TelecomLedger;
@@ -76,7 +77,7 @@ trait IsAccountPage
 
     protected static function openingDigits(string $value): string
     {
-        return preg_replace('/[\s,٬،]/u', '', \App\Support\ArabicDigits::toLatin(trim($value))) ?? '';
+        return Money::normalize($value);
     }
 
     /** حساب الصفحة ذو الرصيد في صفحة وحدة — الرصيد الافتتاحي لكل وحدة، ولا دفتر للإجمالي */
@@ -99,7 +100,7 @@ trait IsAccountPage
 
         $this->openingInput = self::openingDigits($this->openingInput);
         $this->validate(
-            ['openingInput' => ['required', 'regex:/^\d{1,12}$/']],
+            ['openingInput' => ['required', 'regex:'.Money::PATTERN]],
             ['openingInput.required' => __('home.fin_amount_invalid'), 'openingInput.regex' => __('home.fin_amount_invalid')],
         );
 
@@ -113,7 +114,7 @@ trait IsAccountPage
             FinanceOpening::create([
                 'finance_account_id' => $account->id,
                 'finance_unit_id'    => $this->unitId,
-                'amount'             => (int) $this->openingInput,
+                'amount'             => Money::parse($this->openingInput),
                 'set_by'             => auth()->id(),
                 'set_at'             => now(),
             ]);
@@ -133,7 +134,7 @@ trait IsAccountPage
         $opening = $this->ledgerAccountOrFail()->openingFor($this->unitId);
         abort_unless(auth()->user()?->can('finance.edit') && $opening, 403);
 
-        $this->openingInput      = (string) $opening->amount;
+        $this->openingInput      = Money::input($opening->amount);
         $this->openingReason     = '';
         $this->correctingOpening = true;
         $this->resetErrorBag();
@@ -151,7 +152,7 @@ trait IsAccountPage
         $this->openingInput  = self::openingDigits($this->openingInput);
         $this->openingReason = trim($this->openingReason);
         $this->validate(
-            ['openingInput' => ['required', 'regex:/^\d{1,12}$/'], 'openingReason' => ['required', 'string', 'min:5', 'max:1000']],
+            ['openingInput' => ['required', 'regex:'.Money::PATTERN], 'openingReason' => ['required', 'string', 'min:5', 'max:1000']],
             [
                 'openingInput.required'  => __('home.fin_amount_invalid'),
                 'openingInput.regex'     => __('home.fin_amount_invalid'),
@@ -166,7 +167,7 @@ trait IsAccountPage
             abort_if($opening === null, 404);
 
             $old = $opening->amount;
-            $new = (int) $this->openingInput;
+            $new = Money::parse($this->openingInput);
 
             if ($old === $new) {
                 throw ValidationException::withMessages(['openingReason' => __('home.fin_correction_unchanged')]);
@@ -176,7 +177,7 @@ trait IsAccountPage
             if ($negative) {
                 throw ValidationException::withMessages(['openingInput' => __('home.fin_correction_negative', [
                     'month'   => FinanceCalendar::monthLabel($negative['month']),
-                    'balance' => number_format($negative['balance']),
+                    'balance' => Money::format($negative['balance']),
                 ])]);
             }
 
@@ -248,7 +249,7 @@ trait IsAccountPage
 
         return $negative ? __('home.fin_delete_negative', [
             'month'   => FinanceCalendar::monthLabel($negative['month']),
-            'balance' => number_format($negative['balance']),
+            'balance' => Money::format($negative['balance']),
         ]) : null;
     }
 

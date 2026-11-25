@@ -90,7 +90,7 @@ it('يصحّح المبلغ ويسجّل القيمة قبله وبعده وال
         ->call('save')
         ->assertRedirect();
 
-    expect($month->fresh()->amount)->toBe(160000);
+    expect($month->fresh()->amount)->toBe(16000000);
 
     $log = Activity::where('log_name', FinanceHistory::LOG)->sole();
     expect($log->event)->toBe(FinanceHistory::EVENT_CORRECTED)
@@ -98,8 +98,8 @@ it('يصحّح المبلغ ويسجّل القيمة قبله وبعده وال
         ->and($log->subject_type)->toBeNull()
         ->and($log->properties['month'])->toBe('2026-10')
         ->and($log->properties['reason'])->toBe('المبلغ كُتب خطأً')
-        ->and($log->properties['before']['amount'])->toBe(150000)
-        ->and($log->properties['after']['amount'])->toBe(160000);
+        ->and($log->properties['before']['amount'])->toBe(15000000)
+        ->and($log->properties['after']['amount'])->toBe(16000000);
 
     $this->get(route('finance.unit', [finCairo(), 'mechanization']))
         ->assertSee(__('home.fin_history_badge', ['count' => 1]))
@@ -151,7 +151,7 @@ it('يرفض التصحيح بلا سبب', function () {
 
     correction()->set('amount', '160000')->call('review')->assertHasErrors('reason');
 
-    expect(FinanceMonth::sole()->amount)->toBe(150000);
+    expect(FinanceMonth::sole()->amount)->toBe(15000000);
 });
 
 it('يرفض تصحيحاً لا يغيّر شيئاً ولا يسجّله', function () {
@@ -244,7 +244,7 @@ it('يصحّح بنفسه حتى بلا finance.create', function () {
     $this->actingAs(correctionUser(['finance.total.view', 'finance.units.view', 'finance.edit']));
     correction()->set('amount', '1')->set('reason', 'تصحيح المبلغ')->call('save')->assertHasNoErrors();
 
-    expect(FinanceMonth::sole()->amount)->toBe(1);
+    expect(FinanceMonth::sole()->amount)->toBe(100);
 });
 
 it('يرفض حفظ التصحيح إن سُحبت الصلاحية والصفحة مفتوحة', function () {
@@ -259,7 +259,7 @@ it('يرفض حفظ التصحيح إن سُحبت الصلاحية والصفح
     app(\Spatie\Permission\PermissionRegistrar::class)->forgetCachedPermissions();
 
     $c->call('save')->assertForbidden();
-    expect(FinanceMonth::sole()->amount)->toBe(150000);
+    expect(FinanceMonth::sole()->amount)->toBe(15000000);
 });
 
 // ── الحذف ────────────────────────────────────────────────
@@ -286,7 +286,7 @@ it('يحذف آخر شهرٍ بصوره ويسجّله بسببه', function () 
     $log = Activity::where('log_name', FinanceHistory::LOG)->sole();
     expect($log->event)->toBe(FinanceHistory::EVENT_DELETED)
         ->and($log->properties['month'])->toBe('2026-11')
-        ->and($log->properties['before']['amount'])->toBe(90000)
+        ->and($log->properties['before']['amount'])->toBe(9000000)
         ->and($log->properties['after'])->toBeNull();
 
     // السجلّ يبقى ظاهراً على الشهر الذي ينتظر إعادة إدخاله

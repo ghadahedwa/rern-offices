@@ -48,8 +48,9 @@ function frMonth(string $account, string $city, string $month, int $amount, ?int
         'finance_account_id' => FinanceAccount::byKey($account)->id,
         'finance_unit_id'    => frUnit($city)->id,
         'month'              => $month.'-01',
-        'amount'             => $amount,
-        'income'             => $income,
+        // بالجنيه ← قروش (Money)
+        'amount'             => $amount * 100,
+        'income'             => $income === null ? null : $income * 100,
     ]);
     for ($i = 1; $i <= $orders; $i++) {
         $m->paymentOrders()->create(['number' => (string) $i, 'issued_on' => $month.'-02', 'position' => $i]);
@@ -63,15 +64,15 @@ function frSeed(): void
 {
     $court = frMonth('court_buildings', 'بالقاهرة', '2026-10', 1000, orders: 1);
     $items = CourtBuildingItem::ordered()->take(2)->get();
-    FinanceMonthItem::create(['finance_month_id' => $court->id, 'court_building_item_id' => $items[0]->id, 'amount' => 700]);
-    FinanceMonthItem::create(['finance_month_id' => $court->id, 'court_building_item_id' => $items[1]->id, 'amount' => 300]);
+    FinanceMonthItem::create(['finance_month_id' => $court->id, 'court_building_item_id' => $items[0]->id, 'amount' => 70000]);
+    FinanceMonthItem::create(['finance_month_id' => $court->id, 'court_building_item_id' => $items[1]->id, 'amount' => 30000]);
 
     frMonth('mechanization', 'بالقاهرة', '2026-10', 500, orders: 2);
     frMonth('mechanization', 'بالقاهرة', '2026-11', 600, orders: 1);
 
     $telecom = FinanceAccount::byKey('telecom')->id;
-    FinanceOpening::create(['finance_account_id' => $telecom, 'finance_unit_id' => frUnit('بالقاهرة')->id, 'amount' => 5000]);
-    FinanceOpening::create(['finance_account_id' => $telecom, 'finance_unit_id' => frUnit('بطنطا')->id, 'amount' => 100]);
+    FinanceOpening::create(['finance_account_id' => $telecom, 'finance_unit_id' => frUnit('بالقاهرة')->id, 'amount' => 500000]);
+    FinanceOpening::create(['finance_account_id' => $telecom, 'finance_unit_id' => frUnit('بطنطا')->id, 'amount' => 10000]);
     frMonth('telecom', 'بالقاهرة', '2026-10', 7000, income: 10000, orders: 1);
 }
 
@@ -103,15 +104,16 @@ it('تقرير الوحدة: الشهور صفوف × الحسابات، وات�
     $d = $r->unitReport();
 
     expect($d['rows'])->toHaveCount(2)
-        ->and($d['rows'][0]['cells'])->toMatchArray(['court_buildings' => 1000, 'mechanization' => 500, 'ministry_of_finance' => null])
-        ->and($d['rows'][0]['telecom'])->toBe(['income' => 10000, 'expense' => 7000, 'balance' => 8000])
+        // القيم بالقروش
+        ->and($d['rows'][0]['cells'])->toMatchArray(['court_buildings' => 100000, 'mechanization' => 50000, 'ministry_of_finance' => null])
+        ->and($d['rows'][0]['telecom'])->toBe(['income' => 1000000, 'expense' => 700000, 'balance' => 800000])
         ->and($d['rows'][0]['orders'])->toBe(4)
         // نوفمبر: اتصالات لم تُدخَل
         ->and($d['rows'][1]['telecom'])->toBeNull()
-        ->and($d['rows'][1]['cells']['mechanization'])->toBe(600)
+        ->and($d['rows'][1]['cells']['mechanization'])->toBe(60000)
         // الإجمالي: المبالغ تُجمع، ورصيد اتصالات آخر شهرٍ مُدخَل، و«—» لما لم يُسجَّل
-        ->and($d['totals']['cells'])->toMatchArray(['court_buildings' => 1000, 'mechanization' => 1100, 'ministry_of_finance' => null])
-        ->and($d['totals']['telecom'])->toBe(['income' => 10000, 'expense' => 7000, 'balance' => 8000])
+        ->and($d['totals']['cells'])->toMatchArray(['court_buildings' => 100000, 'mechanization' => 110000, 'ministry_of_finance' => null])
+        ->and($d['totals']['telecom'])->toBe(['income' => 1000000, 'expense' => 700000, 'balance' => 800000])
         ->and($d['totals']['orders'])->toBe(5);
 });
 
@@ -120,7 +122,7 @@ it('تقرير الوحدة لوحدةٍ أخرى لا يرى أرقام الق�
     $d = frReport(['kind' => 'unit', 'unit' => frUnit('بطنطا')->id, 'period' => 'month', 'month' => '2026-10'])->unitReport();
 
     expect($d['rows'][0]['cells'])->toMatchArray(['court_buildings' => null, 'mechanization' => null])
-        ->and($d['totals']['telecom']['balance'])->toBe(100);
+        ->and($d['totals']['telecom']['balance'])->toBe(10000);
 });
 
 it('يعرض تقرير الوحدة على الشاشة بشهوره و«لم يُدخَل» للشهر المنتهي', function () {
@@ -149,23 +151,23 @@ it('التقرير الإجمالي: الوحدات صفوف بمجموع الف
     $tanta = $rows[frUnit('بطنطا')->id];
 
     expect($rows)->toHaveCount(6)
-        ->and($cairo['cells'])->toMatchArray(['court_buildings' => 1000, 'mechanization' => 1100, 'ministry_of_finance' => null])
-        ->and($cairo['telecom']['balance'])->toBe(8000)
+        ->and($cairo['cells'])->toMatchArray(['court_buildings' => 100000, 'mechanization' => 110000, 'ministry_of_finance' => null])
+        ->and($cairo['telecom']['balance'])->toBe(800000)
         // ٢ شهر × ٤ حسابات = ٨، والمسجَّل ٤
         ->and($cairo['entered'])->toBe(4)->and($cairo['required'])->toBe(8)
         ->and($tanta['cells']['mechanization'])->toBeNull()
-        ->and($tanta['telecom']['balance'])->toBe(100)
+        ->and($tanta['telecom']['balance'])->toBe(10000)
         // رصيد الوحدات بلا افتتاحي «—» فلا يدخل المجموع
         ->and($rows[frUnit('بأسيوط')->id]['telecom']['balance'])->toBeNull()
-        ->and($d['totals']['telecom']['balance'])->toBe(8100)
-        ->and($d['totals']['cells']['mechanization'])->toBe(1100);
+        ->and($d['totals']['telecom']['balance'])->toBe(810000)
+        ->and($d['totals']['cells']['mechanization'])->toBe(110000);
 });
 
 it('العناصر الثمانية مجموعةً في الفترة — للوحدة وللإجمالي', function () {
     frSeed();
     [$a, $b] = CourtBuildingItem::ordered()->take(2)->pluck('name')->all();
 
-    expect(frReport(['kind' => 'total', 'period' => 'year', 'year' => 2026])->items())->toBe([$a => 700, $b => 300])
+    expect(frReport(['kind' => 'total', 'period' => 'year', 'year' => 2026])->items())->toBe([$a => 70000, $b => 30000])
         ->and(frReport(['kind' => 'unit', 'unit' => frUnit('بطنطا')->id, 'period' => 'year', 'year' => 2026])->items())->toBe([]);
 });
 
@@ -211,12 +213,12 @@ it('Excel: ورقة الجدول كالشاشة وورقة بيانات صفٌّ
     $table = (new FinanceReportTableSheet($r))->array();
     $total = collect($table)->first(fn ($row) => ($row[0] ?? null) === __('home.fin_total_label'));
     // الوحدة · أبنية · ميكنة · إيراد · منصرف · رصيد · مالية · المُدخَل
-    expect($total)->toBe([__('home.fin_total_label'), 1000, 1100, 10000, 7000, 8100, null, null]);
+    expect($total)->toBe([__('home.fin_total_label'), 1000.0, 1100.0, 10000.0, 7000.0, 8100.0, null, null]);
 
     $data = (new FinanceReportDataSheet($r))->array();
     expect($data)->toHaveCount(4)
         ->and(collect($data)->first(fn ($row) => $row[1] === __('home.fin_tab_telecom')))
-        ->toBe([frUnit('بالقاهرة')->name, __('home.fin_tab_telecom'), 'أكتوبر 2026', 7000, 10000, 8000, 1]);
+        ->toBe([frUnit('بالقاهرة')->name, __('home.fin_tab_telecom'), 'أكتوبر 2026', 7000.0, 10000.0, 8000.0, 1]);
 
     $this->actingAs(frUser());
     Livewire::withQueryParams(['kind' => 'total'])->test(Reports::class)->call('exportExcel')->assertFileDownloaded();

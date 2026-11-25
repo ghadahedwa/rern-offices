@@ -23,7 +23,7 @@
                     @if($card['amount'] !== null)
                         <p class="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
                             @if($card['ledger']) {{ __('home.fin_strip_balance') }} @endif
-                            <span dir="ltr">{{ number_format($card['amount']) }}</span>
+                            <span dir="ltr">{{ \App\Support\Finance\Money::format($card['amount']) }}</span>
                         </p>
                     @endif
                     <p class="text-xs text-zinc-400 mt-1">{{ __('home.fin_strip_opens', ['month' => $card['opens']]) }}</p>

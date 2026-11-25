@@ -12,7 +12,7 @@
     @foreach($list as $name)
         <div class="flex items-baseline justify-between gap-3 border-b border-dashed border-zinc-200 dark:border-zinc-700 pb-1">
             <span class="text-zinc-600 dark:text-zinc-300">{{ $loop->iteration }} · {{ $name }}</span>
-            <span dir="ltr" class="shrink-0 {{ $items[$name] === 0 ? 'text-zinc-400' : 'font-semibold text-zinc-800 dark:text-zinc-100' }}">{{ number_format($items[$name]) }}</span>
+            <span dir="ltr" class="shrink-0 {{ $items[$name] === 0 ? 'text-zinc-400' : 'font-semibold text-zinc-800 dark:text-zinc-100' }}">{{ \App\Support\Finance\Money::format($items[$name]) }}</span>
         </div>
     @endforeach
 </div>

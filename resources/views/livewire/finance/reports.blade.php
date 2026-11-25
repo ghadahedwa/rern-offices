@@ -3,7 +3,7 @@
 @php
     $seg     = fn (bool $on) => $on ? 'bg-[#c9a847] text-white font-medium' : 'text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800';
     $select  = 'border border-zinc-300 dark:border-zinc-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-[#c9a847]';
-    $fmt     = fn ($v) => $v === null ? '—' : number_format($v);
+    $fmt     = fn ($v) => $v === null ? '—' : \App\Support\Finance\Money::format($v);
     $sticky  = 'sticky right-0 z-10 border-l border-zinc-200 dark:border-zinc-700';
     $pending = 'px-3 py-2.5 text-xs text-center bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300 whitespace-nowrap';
 @endphp
@@ -128,16 +128,16 @@
                                 @foreach($report->accounts() as $account)
                                     @if($account->isLedger())
                                         @if($row['telecom'])
-                                            <td class="px-3 py-2.5 text-center text-emerald-700 dark:text-emerald-400" dir="ltr">{{ number_format($row['telecom']['income']) }}</td>
-                                            <td class="px-3 py-2.5 text-center text-red-600 dark:text-red-400" dir="ltr">{{ number_format($row['telecom']['expense']) }}</td>
-                                            <td class="px-3 py-2.5 text-center font-semibold" dir="ltr">{{ number_format($row['telecom']['balance']) }}</td>
+                                            <td class="px-3 py-2.5 text-center text-emerald-700 dark:text-emerald-400" dir="ltr">{{ \App\Support\Finance\Money::format($row['telecom']['income']) }}</td>
+                                            <td class="px-3 py-2.5 text-center text-red-600 dark:text-red-400" dir="ltr">{{ \App\Support\Finance\Money::format($row['telecom']['expense']) }}</td>
+                                            <td class="px-3 py-2.5 text-center font-semibold" dir="ltr">{{ \App\Support\Finance\Money::format($row['telecom']['balance']) }}</td>
                                         @elseif($row['ended'])
                                             <td colspan="3" class="{{ $pending }}">⏳ {{ __('home.fin_not_entered') }}</td>
                                         @else
                                             <td colspan="3" class="px-3 py-2.5 text-center text-zinc-300 dark:text-zinc-600">—</td>
                                         @endif
                                     @elseif($row['cells'][$account->key] !== null)
-                                        <td class="px-3 py-2.5 text-center text-zinc-800 dark:text-zinc-100" dir="ltr">{{ number_format($row['cells'][$account->key]) }}</td>
+                                        <td class="px-3 py-2.5 text-center text-zinc-800 dark:text-zinc-100" dir="ltr">{{ \App\Support\Finance\Money::format($row['cells'][$account->key]) }}</td>
                                     @elseif($row['ended'])
                                         <td class="{{ $pending }}">⏳ {{ __('home.fin_not_entered') }}</td>
                                     @else
@@ -153,8 +153,8 @@
                                 <th scope="row" class="px-3 py-2.5 font-medium bg-white dark:bg-zinc-900 whitespace-nowrap text-zinc-800 dark:text-zinc-100 {{ $sticky }}">{{ $row['unit']->name }}</th>
                                 @foreach($report->accounts() as $account)
                                     @if($account->isLedger())
-                                        <td class="px-3 py-2.5 text-center text-emerald-700 dark:text-emerald-400" dir="ltr">{{ number_format($row['telecom']['income']) }}</td>
-                                        <td class="px-3 py-2.5 text-center text-red-600 dark:text-red-400" dir="ltr">{{ number_format($row['telecom']['expense']) }}</td>
+                                        <td class="px-3 py-2.5 text-center text-emerald-700 dark:text-emerald-400" dir="ltr">{{ \App\Support\Finance\Money::format($row['telecom']['income']) }}</td>
+                                        <td class="px-3 py-2.5 text-center text-red-600 dark:text-red-400" dir="ltr">{{ \App\Support\Finance\Money::format($row['telecom']['expense']) }}</td>
                                         <td class="px-3 py-2.5 text-center font-semibold" dir="ltr">{{ $fmt($row['telecom']['balance']) }}</td>
                                     @else
                                         <td class="px-3 py-2.5 text-center text-zinc-800 dark:text-zinc-100" dir="ltr">{{ $fmt($row['cells'][$account->key]) }}</td>
@@ -172,8 +172,8 @@
                         <th scope="row" class="px-3 py-2.5 bg-[#f7f1e0] dark:bg-zinc-800 text-zinc-800 dark:text-zinc-100 {{ $sticky }}">{{ __('home.fin_total_label') }}</th>
                         @foreach($report->accounts() as $account)
                             @if($account->isLedger())
-                                <td class="px-3 py-2.5 text-center text-emerald-700 dark:text-emerald-400" dir="ltr">{{ number_format($data['totals']['telecom']['income']) }}</td>
-                                <td class="px-3 py-2.5 text-center text-red-600 dark:text-red-400" dir="ltr">{{ number_format($data['totals']['telecom']['expense']) }}</td>
+                                <td class="px-3 py-2.5 text-center text-emerald-700 dark:text-emerald-400" dir="ltr">{{ \App\Support\Finance\Money::format($data['totals']['telecom']['income']) }}</td>
+                                <td class="px-3 py-2.5 text-center text-red-600 dark:text-red-400" dir="ltr">{{ \App\Support\Finance\Money::format($data['totals']['telecom']['expense']) }}</td>
                                 <td class="px-3 py-2.5 text-center" dir="ltr">{{ $fmt($data['totals']['telecom']['balance']) }}</td>
                             @else
                                 <td class="px-3 py-2.5 text-center" dir="ltr">{{ $fmt($data['totals']['cells'][$account->key]) }}</td>

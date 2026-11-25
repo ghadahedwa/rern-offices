@@ -3,6 +3,7 @@
 namespace App\Exports;
 
 use App\Support\Finance\FinanceReport;
+use App\Support\Finance\Money;
 use Maatwebsite\Excel\Concerns\FromArray;
 use Maatwebsite\Excel\Concerns\ShouldAutoSize;
 use Maatwebsite\Excel\Concerns\WithEvents;
@@ -32,7 +33,8 @@ class FinanceReportDataSheet implements FromArray, WithHeadings, WithEvents, Wit
 
     public function array(): array
     {
-        return $this->report->dataRows();
+        // المبالغ والإيراد والرصيد قروشٌ في التقرير ← جنيهات في الخلية
+        return array_map(fn (array $r) => [$r[0], $r[1], $r[2], Money::pounds($r[3]), Money::pounds($r[4]), Money::pounds($r[5]), $r[6]], $this->report->dataRows());
     }
 
     public function registerEvents(): array
@@ -47,7 +49,7 @@ class FinanceReportDataSheet implements FromArray, WithHeadings, WithEvents, Wit
                     'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF']],
                     'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => 'C9A847']],
                 ]);
-                $sheet->getStyle("D2:F{$lastRow}")->getNumberFormat()->setFormatCode('#,##0');
+                $sheet->getStyle("D2:F{$lastRow}")->getNumberFormat()->setFormatCode('#,##0.00');
                 $sheet->setAutoFilter("A1:G{$lastRow}");
                 $sheet->freezePane('A2');
             },

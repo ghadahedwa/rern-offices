@@ -58,7 +58,7 @@
                 $c = $ledgerCalc;
                 $negative = $c['balance'] < 0;
                 $numIn = 'w-full rounded-lg px-4 py-2.5 font-bold text-left text-zinc-800 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-[#c9a847]';
-                $digitsOnly = "this.value = this.value.replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d)).replace(/[۰-۹]/g, d => '۰۱۲۳۴۵۶۷۸۹'.indexOf(d)).replace(/[^0-9.,٬،]/g, '')";
+                $digitsOnly = "this.value = this.value.replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d)).replace(/[۰-۹]/g, d => '۰۱۲۳۴۵۶۷۸۹'.indexOf(d)).replace(/[^0-9.,٬،٫]/g, '')";
             @endphp
             <div class="p-6 md:col-span-3 space-y-5">
                 <div class="grid grid-cols-2 gap-4">
@@ -78,17 +78,17 @@
                 </div>
 
                 <div class="rounded-lg border border-zinc-200 dark:border-zinc-700 overflow-hidden text-sm">
-                    <div class="flex justify-between px-4 py-2 bg-zinc-50 dark:bg-zinc-800/60"><span class="text-zinc-500">{{ __('home.fin_carried_from', ['from' => $c['carriedFrom']]) }}</span><span dir="ltr" class="font-semibold text-zinc-700 dark:text-zinc-200">{{ number_format($c['carried']) }}</span></div>
-                    <div class="flex justify-between px-4 py-2"><span class="text-zinc-500">+ {{ __('home.fin_income') }}</span><span dir="ltr" class="font-semibold text-emerald-700 dark:text-emerald-400">{{ number_format($c['income']) }}</span></div>
-                    <div class="flex justify-between px-4 py-2 border-t border-dashed border-zinc-200 dark:border-zinc-700"><span class="text-zinc-500">= {{ __('home.fin_available') }}</span><span dir="ltr" class="font-semibold text-zinc-800 dark:text-zinc-100">{{ number_format($c['available']) }}</span></div>
-                    <div class="flex justify-between px-4 py-2"><span class="text-zinc-500">− {{ __('home.fin_expense') }}</span><span dir="ltr" class="font-semibold text-red-600 dark:text-red-400">{{ number_format($c['expense']) }}</span></div>
+                    <div class="flex justify-between px-4 py-2 bg-zinc-50 dark:bg-zinc-800/60"><span class="text-zinc-500">{{ __('home.fin_carried_from', ['from' => $c['carriedFrom']]) }}</span><span dir="ltr" class="font-semibold text-zinc-700 dark:text-zinc-200">{{ \App\Support\Finance\Money::format($c['carried']) }}</span></div>
+                    <div class="flex justify-between px-4 py-2"><span class="text-zinc-500">+ {{ __('home.fin_income') }}</span><span dir="ltr" class="font-semibold text-emerald-700 dark:text-emerald-400">{{ \App\Support\Finance\Money::format($c['income']) }}</span></div>
+                    <div class="flex justify-between px-4 py-2 border-t border-dashed border-zinc-200 dark:border-zinc-700"><span class="text-zinc-500">= {{ __('home.fin_available') }}</span><span dir="ltr" class="font-semibold text-zinc-800 dark:text-zinc-100">{{ \App\Support\Finance\Money::format($c['available']) }}</span></div>
+                    <div class="flex justify-between px-4 py-2"><span class="text-zinc-500">− {{ __('home.fin_expense') }}</span><span dir="ltr" class="font-semibold text-red-600 dark:text-red-400">{{ \App\Support\Finance\Money::format($c['expense']) }}</span></div>
                     <div class="flex justify-between items-center px-4 py-3 border-t {{ $negative ? 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800' : 'bg-[#c9a847]/10 border-[#c9a847]/40' }}">
                         <span class="font-semibold {{ $negative ? 'text-red-700 dark:text-red-300' : 'text-zinc-700 dark:text-zinc-200' }}">{{ __('home.fin_balance_to', ['month' => $c['nextLabel']]) }}</span>
-                        <span dir="ltr" class="font-bold {{ $negative ? 'text-red-700 dark:text-red-300' : 'text-zinc-800 dark:text-zinc-100' }}" style="font-size: 1.4rem">{{ number_format($c['balance']) }}</span>
+                        <span dir="ltr" class="font-bold {{ $negative ? 'text-red-700 dark:text-red-300' : 'text-zinc-800 dark:text-zinc-100' }}" style="font-size: 1.4rem">{{ \App\Support\Finance\Money::format($c['balance']) }}</span>
                     </div>
                 </div>
                 @if($negative)
-                    <p class="text-xs text-red-600 dark:text-red-400 -mt-3">{{ __('home.fin_expense_over_available', ['available' => number_format($c['available'])]) }}</p>
+                    <p class="text-xs text-red-600 dark:text-red-400 -mt-3">{{ __('home.fin_expense_over_available', ['available' => \App\Support\Finance\Money::format($c['available'])]) }}</p>
                 @endif
                 @error('expense') <p class="text-red-500 text-xs -mt-3">{{ $message }}</p> @enderror
             </div>
@@ -114,7 +114,7 @@
                                 </span>
                                 {{-- نمط خانة المبلغ: الحروف تُحذف والنقطة تبقى فيرفضها الخادم --}}
                                 <input type="text" inputmode="numeric" dir="ltr" autocomplete="off"
-                                       oninput="this.value = this.value.replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d)).replace(/[۰-۹]/g, d => '۰۱۲۳۴۵۶۷۸۹'.indexOf(d)).replace(/[^0-9.,٬،]/g, '')"
+                                       oninput="this.value = this.value.replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d)).replace(/[۰-۹]/g, d => '۰۱۲۳۴۵۶۷۸۹'.indexOf(d)).replace(/[^0-9.,٬،٫]/g, '')"
                                        wire:model.live.debounce.400ms="items.{{ $itemId }}"
                                        class="w-36 shrink-0 rounded-lg px-3 py-1.5 text-left font-semibold text-zinc-800 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-[#c9a847] {{ $failed ? 'border-2 border-red-300 bg-red-50/40 dark:bg-red-900/20' : 'border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-800' }}" />
                             </label>
@@ -126,7 +126,7 @@
                 <div class="mt-4 rounded-lg bg-[#c9a847]/10 border border-[#c9a847]/40 px-4 py-3">
                     <div class="flex items-center justify-between gap-3">
                         <span class="text-sm font-semibold text-zinc-700 dark:text-zinc-200">{{ __('home.fin_total_auto') }}</span>
-                        <span dir="ltr" class="font-bold text-zinc-800 dark:text-zinc-100" style="font-size: 1.6rem">{{ $amountValue !== null ? number_format($amountValue) : '—' }}</span>
+                        <span dir="ltr" class="font-bold text-zinc-800 dark:text-zinc-100" style="font-size: 1.6rem">{{ $amountValue !== null ? \App\Support\Finance\Money::format($amountValue) : '—' }}</span>
                     </div>
                     @if($amountWords)
                         <p class="text-xs text-[#b8962e] dark:text-[#d8b856] mt-1">{{ $amountWords }}</p>
@@ -140,7 +140,7 @@
                 {{-- الحروف تُحذف أثناء الكتابة والأرقام العربية تصير لاتينية (نمط رقم الموتور — ⚠️ لا x-data على حقل wire:model).
                      ⚠️ **النقطة تبقى**: حذفها يجعل «12.5» 125 صامتة — تبقى فيرفضها الخادم برسالة. --}}
                 <input type="text" inputmode="numeric" dir="ltr" autocomplete="off"
-                       oninput="this.value = this.value.replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d)).replace(/[۰-۹]/g, d => '۰۱۲۳۴۵۶۷۸۹'.indexOf(d)).replace(/[^0-9.,٬،]/g, '')"
+                       oninput="this.value = this.value.replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d)).replace(/[۰-۹]/g, d => '۰۱۲۳۴۵۶۷۸۹'.indexOf(d)).replace(/[^0-9.,٬،٫]/g, '')"
                        wire:model.live.debounce.400ms="amount"
                        style="font-size: 1.6rem" class="w-full border border-zinc-300 dark:border-zinc-600 rounded-lg px-4 py-3 font-bold text-left tracking-wide bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-[#c9a847]" />
                 @if($amountWords)
@@ -155,23 +155,19 @@
             {{-- أوامر الدفع --}}
             <div class="p-6 space-y-4 {{ $wide ? 'md:col-span-2' : '' }}">
                 <p class="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                    {{ __('home.fin_payment_order') }} @unless($noOrder)<span class="text-red-500">*</span>@endunless
-                    @if($itemized)<span class="block text-xs font-normal text-zinc-400 mt-0.5">{{ __('home.fin_order_covers_total') }}</span>@endif
+                    {{ __('home.fin_payment_order') }} <span class="text-xs font-normal text-zinc-400">({{ __('home.fin_optional') }})</span>
                     @if($ledger)<span class="block text-xs font-normal text-zinc-400 mt-0.5">{{ __('home.fin_order_covers_expense') }}</span>@endif
                 </p>
 
-                {{-- شهرٌ بلا حركة: مبلغه صفر وقد لا يصدر له أمر دفع (قرار المستخدمة) --}}
-                @if($amountValue === 0)
-                    <label class="flex items-start gap-3 cursor-pointer rounded-lg border border-zinc-200 dark:border-zinc-700 px-3.5 py-3">
-                        <input type="checkbox" wire:model.live="noOrder"
-                               class="mt-0.5 w-4 h-4 rounded border-zinc-300 dark:border-zinc-600 text-[#c9a847] focus:ring-[#c9a847]" />
-                        <span>
-                            <span class="block text-sm font-medium text-zinc-700 dark:text-zinc-300">{{ __('home.fin_no_order') }}</span>
-                            <span class="block text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">{{ __('home.fin_no_order_hint') }}</span>
-                        </span>
-                    </label>
-                @endif
-                @error('noOrder') <p class="text-red-500 text-xs">{{ $message }}</p> @enderror
+                {{-- أمر الدفع ليس إجبارياً (2026-11-25): الخانة لأي مبلغ، والخانات الفارغة كلها تعني «بلا أمر» أيضاً --}}
+                <label class="flex items-start gap-3 cursor-pointer rounded-lg border border-zinc-200 dark:border-zinc-700 px-3.5 py-3">
+                    <input type="checkbox" wire:model.live="noOrder"
+                           class="mt-0.5 w-4 h-4 rounded border-zinc-300 dark:border-zinc-600 text-[#c9a847] focus:ring-[#c9a847]" />
+                    <span>
+                        <span class="block text-sm font-medium text-zinc-700 dark:text-zinc-300">{{ __('home.fin_no_order') }}</span>
+                        <span class="block text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">{{ __('home.fin_no_order_hint') }}</span>
+                    </span>
+                </label>
 
                 @unless($noOrder)
                     @foreach($orders as $i => $order)
@@ -200,9 +196,9 @@
                             <div class="grid grid-cols-2 gap-3">
                                 <div>
                                     <label class="{{ $lbl }}">{{ __('home.fin_payment_order_number') }}</label>
-                                    {{-- أرقام فقط: العربية تصير لاتينية وغير الأرقام يُحذف أثناء الكتابة --}}
-                                    <input type="text" inputmode="numeric" dir="ltr" wire:model="orders.{{ $i }}.number" autocomplete="off" class="{{ $inp }} text-left"
-                                           oninput="this.value = this.value.replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d)).replace(/[۰-۹]/g, d => '۰۱۲۳۴۵۶۷۸۹'.indexOf(d)).replace(/[^0-9]/g, '')" />
+                                    {{-- أرقامٌ وحروف (2026-11-25): الأرقام العربية تصير لاتينية، والمسافات تُحذف --}}
+                                    <input type="text" dir="ltr" wire:model="orders.{{ $i }}.number" autocomplete="off" class="{{ $inp }} text-left"
+                                           oninput="this.value = this.value.replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d)).replace(/[۰-۹]/g, d => '۰۱۲۳۴۵۶۷۸۹'.indexOf(d)).replace(/\s/g, '')" />
                                     @error("orders.$i.number") <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
                                 </div>
                                 <div>
@@ -328,21 +324,21 @@
                                 <div class="rounded-lg bg-zinc-50 dark:bg-zinc-800 px-3 py-2">
                                     <p class="text-xs text-zinc-500">{{ __('home.fin_'.$field) }}</p>
                                     @if($old !== null && $old !== $value)
-                                        <p dir="ltr" class="line-through text-zinc-400 text-xs">{{ number_format($old) }}</p>
+                                        <p dir="ltr" class="line-through text-zinc-400 text-xs">{{ \App\Support\Finance\Money::format($old) }}</p>
                                     @endif
-                                    <p dir="ltr" class="font-bold {{ $color }}" style="font-size: 1.2rem">{{ number_format($value) }}</p>
+                                    <p dir="ltr" class="font-bold {{ $color }}" style="font-size: 1.2rem">{{ \App\Support\Finance\Money::format($value) }}</p>
                                 </div>
                             @endforeach
                         </div>
                         <p class="text-xs text-zinc-500 mt-4">{{ __('home.fin_balance_to', ['month' => $ledgerCalc['nextLabel']]) }}</p>
-                        <p class="font-bold text-zinc-800 dark:text-zinc-100 mt-1" dir="ltr" style="font-size: 2rem; line-height: 2.5rem">{{ number_format($ledgerCalc['balance']) }}</p>
+                        <p class="font-bold text-zinc-800 dark:text-zinc-100 mt-1" dir="ltr" style="font-size: 2rem; line-height: 2.5rem">{{ \App\Support\Finance\Money::format($ledgerCalc['balance']) }}</p>
                         <p class="text-sm text-[#b8962e] dark:text-[#d8b856] mt-2">{{ \App\Support\Finance\AmountInWords::pounds(max(0, $ledgerCalc['balance'])) }}</p>
                     @else
                     @if($record && $record->amount !== $amountValue)
                         {{-- المبلغ قبل التصحيح مشطوباً — ليرى المصحِّح الفرق قبل الحفظ --}}
-                        <p class="text-zinc-400 line-through mt-3" dir="ltr" style="font-size: 1.1rem">{{ number_format($record->amount) }}</p>
+                        <p class="text-zinc-400 line-through mt-3" dir="ltr" style="font-size: 1.1rem">{{ \App\Support\Finance\Money::format($record->amount) }}</p>
                     @endif
-                    <p class="font-bold text-zinc-800 dark:text-zinc-100 mt-3" dir="ltr" style="font-size: 2.25rem; line-height: 2.75rem">{{ number_format($amountValue) }}</p>
+                    <p class="font-bold text-zinc-800 dark:text-zinc-100 mt-3" dir="ltr" style="font-size: 2.25rem; line-height: 2.75rem">{{ \App\Support\Finance\Money::format($amountValue) }}</p>
                     <p class="text-sm text-[#b8962e] dark:text-[#d8b856] mt-2">{{ $amountWords }}</p>
                     @endif
                 </div>
@@ -359,9 +355,9 @@
                                 <span class="text-zinc-600 dark:text-zinc-300">{{ $itemRows->get($itemId)?->name }}</span>
                                 <span dir="ltr" class="shrink-0">
                                     @if($old !== null && $old !== $value)
-                                        <span class="line-through text-zinc-400 me-1">{{ number_format($old) }}</span>
+                                        <span class="line-through text-zinc-400 me-1">{{ \App\Support\Finance\Money::format($old) }}</span>
                                     @endif
-                                    <span class="{{ $value === 0 ? 'text-zinc-400' : 'font-semibold text-zinc-800 dark:text-zinc-100' }}">{{ number_format($value) }}</span>
+                                    <span class="{{ $value === 0 ? 'text-zinc-400' : 'font-semibold text-zinc-800 dark:text-zinc-100' }}">{{ \App\Support\Finance\Money::format($value) }}</span>
                                 </span>
                             </div>
                         @endforeach

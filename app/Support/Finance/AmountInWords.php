@@ -8,7 +8,7 @@ namespace App\Support\Finance;
  * ضمانةٌ وافقت عليها المستخدمة: الصفر الزائد في الرقم (٨٥٠٬٠٠٠ بدل ٨٥٬٠٠٠) لا تلاحظه
  * العين في الأرقام، ويلاحظه القارئ حين يصير «ثمانمائة وخمسون ألفاً».
  *
- * جنيهات صحيحة فقط (لا قروش) وحتى ما دون التريليون.
+ * بالقروش منذ 2026-11-25 (كانت جنيهات صحيحة)، وحتى ما دون التريليون.
  */
 class AmountInWords
 {
@@ -29,9 +29,28 @@ class AmountInWords
         1_000         => ['ألف', 'ألفان', 'آلاف', 'ألف'],
     ];
 
-    public static function pounds(int $amount): string
+    /**
+     * المبلغ **بالقروش** (`Money` — 2026-11-25) ← «فقط … جنيه مصري و… قرشاً لا غير».
+     * والقروش بتمييزها: قرش · قرشان · ٣–١٠ قروش · ١١ فأكثر قرشاً.
+     */
+    public static function pounds(int $piasters): string
     {
-        return 'فقط '.self::number($amount).' جنيه مصري لا غير';
+        $pounds = intdiv($piasters, 100);
+        $rest   = $piasters % 100;
+
+        $words = $pounds > 0 || $rest === 0 ? self::number($pounds).' جنيه مصري' : '';
+
+        if ($rest > 0) {
+            $unit = match (true) {
+                $rest === 1  => 'قرش واحد',
+                $rest === 2  => 'قرشان',
+                $rest <= 10  => self::number($rest).' قروش',
+                default      => self::number($rest).' قرشاً',
+            };
+            $words = $words === '' ? $unit : $words.' و'.$unit;
+        }
+
+        return 'فقط '.$words.' لا غير';
     }
 
     public static function number(int $n): string

@@ -56,14 +56,17 @@ function telAccount(): FinanceAccount
     return FinanceAccount::byKey('telecom');
 }
 
+/** بالجنيه — يُخزَّن بالقروش (Money) */
 function setOpening(int $value = 5000, string $city = 'بالقاهرة'): void
 {
-    FinanceOpening::create(['finance_account_id' => telAccount()->id, 'finance_unit_id' => telUnit($city)->id, 'amount' => $value]);
+    FinanceOpening::create(['finance_account_id' => telAccount()->id, 'finance_unit_id' => telUnit($city)->id, 'amount' => $value * 100]);
 }
 
 function openingOf(string $city = 'بالقاهرة'): ?int
 {
-    return telAccount()->openingFor(telUnit($city)->id)?->amount;
+    $amount = telAccount()->openingFor(telUnit($city)->id)?->amount;
+
+    return $amount === null ? null : intdiv($amount, 100);
 }
 
 function telPage(string $city = 'بالقاهرة')
@@ -78,7 +81,7 @@ function telUrl(string $city = 'بالقاهرة'): string
 
 function telClosing(string $city = 'بالقاهرة'): int
 {
-    return TelecomLedger::closingBalance(telAccount(), telUnit($city)->id);
+    return intdiv(TelecomLedger::closingBalance(telAccount(), telUnit($city)->id), 100);
 }
 
 function telEntry(string $income, string $expense, ?string $period = null, string $city = 'بالقاهرة')
@@ -116,7 +119,7 @@ it('يحفظ رصيد الوحدة الافتتاحي مرة واحدة ولا �
     telPage()->set('openingInput', '٥٬٠٠٠')->call('saveOpening')->assertHasNoErrors();
 
     $opening = telAccount()->openingFor(telUnit()->id);
-    expect($opening->amount)->toBe(5000)
+    expect($opening->amount)->toBe(500000)
         ->and($opening->set_by)->toBe($user->id)
         ->and(openingOf('بطنطا'))->toBeNull();
 
@@ -169,8 +172,8 @@ it('يحفظ أكتوبر بإيراده ومنصرفه ويحسب الرصيد 
         ->call('save')->assertRedirect();
 
     $month = FinanceMonth::sole();
-    expect($month->income)->toBe(10000)
-        ->and($month->amount)->toBe(7000)
+    expect($month->income)->toBe(1000000)
+        ->and($month->amount)->toBe(700000)
         ->and($month->finance_unit_id)->toBe(telUnit()->id)
         ->and(telClosing())->toBe(8000);
 
@@ -242,7 +245,7 @@ it('يرفض تصحيح أكتوبر إن صار نوفمبر سالباً، و�
         ->assertHasErrors('expense')
         ->assertSee(__('home.fin_correction_negative', ['month' => 'نوفمبر 2026', 'balance' => '-1,000']));
 
-    expect(FinanceMonth::orderBy('month')->first()->income)->toBe(10000);
+    expect(FinanceMonth::orderBy('month')->first()->income)->toBe(1000000);
 });
 
 it('يصحّح أكتوبر فيتبعه رصيد نوفمبر، والسجلّ يسمّي الإيراد', function () {
@@ -256,8 +259,8 @@ it('يصحّح أكتوبر فيتبعه رصيد نوفمبر، والسجلّ 
     expect(telClosing())->toBe(7000);
 
     $log = Activity::where('log_name', FinanceHistory::LOG)->sole();
-    expect($log->properties['before']['income'])->toBe(10000)
-        ->and($log->properties['after']['income'])->toBe(11000);
+    expect($log->properties['before']['income'])->toBe(1000000)
+        ->and($log->properties['after']['income'])->toBe(1100000);
 
     $this->get(telUrl())->assertSeeInOrder([__('home.fin_income').':', '10,000', '11,000']);
 });

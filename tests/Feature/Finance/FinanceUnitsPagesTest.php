@@ -97,7 +97,7 @@ it('يُدخل شهر وحدته ويُرفض على وحدةٍ ليست له', 
 
     $month = FinanceMonth::sole();
     expect($month->finance_unit_id)->toBe(unitOf('بالقاهرة')->id)
-        ->and($month->amount)->toBe(8000);
+        ->and($month->amount)->toBe(800000);
 
     $this->get(route('finance.unit-entry', [unitOf('بطنطا'), 'court-buildings']))->assertForbidden();
     Livewire::test(MonthEntry::class, ['account' => 'court-buildings', 'financeUnit' => unitOf('بطنطا')])->assertForbidden();

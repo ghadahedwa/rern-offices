@@ -144,8 +144,8 @@ class FinanceHistory
             if ($old !== $value) {
                 $lines[] = [
                     'label' => $name,
-                    'from'  => $old === null ? null : number_format((int) $old),
-                    'to'    => number_format((int) $value),
+                    'from'  => $old === null ? null : \App\Support\Finance\Money::format((int) $old),
+                    'to'    => \App\Support\Finance\Money::format((int) $value),
                 ];
             }
         }
@@ -153,8 +153,8 @@ class FinanceHistory
         if (array_key_exists('income', $after) && ($before['income'] ?? null) !== $after['income']) {
             $lines[] = [
                 'label' => __('home.fin_income'),
-                'from'  => number_format((int) ($before['income'] ?? 0)),
-                'to'    => number_format((int) $after['income']),
+                'from'  => \App\Support\Finance\Money::format((int) ($before['income'] ?? 0)),
+                'to'    => \App\Support\Finance\Money::format((int) $after['income']),
             ];
         }
 
@@ -166,8 +166,8 @@ class FinanceHistory
                     isset($after['income']) => __('home.fin_expense'),
                     default                 => __('home.fin_amount_label'),
                 },
-                'from'  => number_format((int) ($before['amount'] ?? 0)),
-                'to'    => number_format((int) ($after['amount'] ?? 0)),
+                'from'  => \App\Support\Finance\Money::format((int) ($before['amount'] ?? 0)),
+                'to'    => \App\Support\Finance\Money::format((int) ($after['amount'] ?? 0)),
             ];
         }
 
@@ -214,12 +214,12 @@ class FinanceHistory
     {
         if (array_key_exists('income', $snapshot)) {
             return __('home.fin_history_ledger', [
-                'income'  => number_format((int) $snapshot['income']),
-                'expense' => number_format((int) ($snapshot['amount'] ?? 0)),
+                'income'  => \App\Support\Finance\Money::format((int) $snapshot['income']),
+                'expense' => \App\Support\Finance\Money::format((int) ($snapshot['amount'] ?? 0)),
             ]).' — '.self::describeOrders($snapshot['orders'] ?? []);
         }
 
-        return number_format((int) ($snapshot['amount'] ?? 0)).' — '.self::describeOrders($snapshot['orders'] ?? []);
+        return \App\Support\Finance\Money::format((int) ($snapshot['amount'] ?? 0)).' — '.self::describeOrders($snapshot['orders'] ?? []);
     }
 
     protected static function describeOrders(array $orders): string

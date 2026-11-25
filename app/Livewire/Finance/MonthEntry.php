@@ -12,6 +12,7 @@ use App\Models\FinanceUnit;
 use App\Models\FinancePaymentOrder;
 use App\Support\ArabicDigits;
 use App\Support\Finance\AmountInWords;
+use App\Support\Finance\Money;
 use App\Support\Finance\FinanceAccess;
 use App\Support\Finance\FinanceCalendar;
 use App\Support\Finance\FinanceHistory;
@@ -170,19 +171,19 @@ class MonthEntry extends Component
                 ->pluck('id')
                 ->all();
             $this->items = collect($this->itemIds)
-                ->mapWithKeys(fn ($id) => [$id => $saved->has($id) ? (string) $saved[$id] : ''])
+                ->mapWithKeys(fn ($id) => [$id => $saved->has($id) ? Money::input((int) $saved[$id]) : ''])
                 ->all();
             $this->optionalItemIds = array_values(array_diff($this->itemIds, $saved->keys()->all()));
         }
 
         $this->editingId = $record->id;
         $this->month     = $month->toDateString();
-        $this->amount    = (string) $record->amount;
+        $this->amount    = Money::input((int) $record->amount);
         $this->noOrder   = $record->paymentOrders->isEmpty();
 
         if ($this->ledger) {
-            $this->income  = (string) (int) $record->income;
-            $this->expense = (string) $record->amount;
+            $this->income  = Money::input((int) $record->income);
+            $this->expense = Money::input((int) $record->amount);
         }
 
         $this->orders = $record->paymentOrders->map(fn (FinancePaymentOrder $o) => [
@@ -339,17 +340,16 @@ class MonthEntry extends Component
     // ── المبلغ ───────────────────────────────────────────
 
     /**
-     * الأرقام العربية ← لاتينية، وفواصل الآلاف والمسافات تُحذف («١٥٠٬٠٠٠» = 150000).
-     *
-     * ⚠️ **النقطة لا تُحذف**: «12.5» تصير 125 بلا أثرٍ ظاهر — فتبقى ويرفضها التحقق.
+     * الأرقام العربية ← لاتينية، وفواصل الآلاف والمسافات تُحذف («١٥٠٬٠٠٠» = 150000)، والكسر نقطة
+     * («12.5» = ١٢ جنيهاً و٥٠ قرشاً — 2026-11-25). المصدر الواحد `Money`.
      */
     protected static function normalizeAmount(string $value): string
     {
-        return preg_replace('/[\s,٬،]/u', '', ArabicDigits::toLatin(trim($value))) ?? '';
+        return Money::normalize($value);
     }
 
     /**
-     * المبلغ رقماً إن كان صالحاً — يقرؤه التفقيط الحيّ وشاشة التأكيد.
+     * المبلغ **بالقروش** إن كان صالحاً — يقرؤه التفقيط الحيّ وشاشة التأكيد.
      * أبنية المحاكم: مجموع ما كُتب صالحاً من العناصر (يتحدّث مع الكتابة)، وnull قبل أول رقم.
      */
     public function amountValue(): ?int
@@ -368,9 +368,7 @@ class MonthEntry extends Component
             return $values ? array_sum($values) : null;
         }
 
-        $digits = self::normalizeAmount($this->amount);
-
-        return preg_match('/^\d{1,12}$/', $digits) ? (int) $digits : null;
+        return Money::parse($this->amount);
     }
 
     // ── الخطوات ──────────────────────────────────────────
@@ -390,17 +388,12 @@ class MonthEntry extends Component
         return self::parseAmount((string) ($this->items[$id] ?? ''));
     }
 
+    /** المكتوب ← قروش (`Money`) */
     protected static function parseAmount(string $value): ?int
     {
-        $digits = self::normalizeAmount($value);
-
-        return preg_match('/^\d{1,12}$/', $digits) ? (int) $digits : null;
+        return Money::parse($value);
     }
 
-    public function updatedExpense(): void
-    {
-        $this->updatedAmount();
-    }
 
     /**
      * اتصالات: المرحَّل إلى هذا الشهر — رصيد ما قبله في السلسلة، إدخالاً وتصحيحاً. ⚠️ لا «رصيد آخر شهر»:
@@ -419,14 +412,14 @@ class MonthEntry extends Component
      */
     protected function guardNegative(FinanceAccount $account): void
     {
-        $income  = (int) $this->income;
-        $expense = (int) $this->expense;
+        $income  = Money::parse($this->income) ?? 0;
+        $expense = Money::parse($this->expense) ?? 0;
 
         if (! $this->editingId) {
             $available = $this->carriedIn($account) + $income;
             if ($expense > $available) {
                 throw ValidationException::withMessages([
-                    'expense' => __('home.fin_expense_over_available', ['available' => number_format($available)]),
+                    'expense' => __('home.fin_expense_over_available', ['available' => Money::format($available)]),
                 ]);
             }
 
@@ -438,7 +431,7 @@ class MonthEntry extends Component
                 throw ValidationException::withMessages([
                     'expense' => __('home.fin_correction_negative', [
                         'month'   => FinanceCalendar::monthLabel($negative['month']),
-                        'balance' => number_format($negative['balance']),
+                        'balance' => Money::format($negative['balance']),
                     ]),
                 ]);
             }
@@ -451,24 +444,13 @@ class MonthEntry extends Component
             throw ValidationException::withMessages([
                 'expense' => __('home.fin_correction_negative', [
                     'month'   => FinanceCalendar::monthLabel($negative['month']),
-                    'balance' => number_format($negative['balance']),
+                    'balance' => Money::format($negative['balance']),
                 ]),
             ]);
         }
     }
 
     /** المبلغ تغيّر عن الصفر ← يعود أمر الدفع إجبارياً */
-    public function updatedAmount(): void
-    {
-        if ($this->amountValue() !== 0) {
-            $this->noOrder = false;
-        }
-    }
-
-    public function updatedItems(): void
-    {
-        $this->updatedAmount();
-    }
 
     protected function rules(): array
     {
@@ -478,14 +460,14 @@ class MonthEntry extends Component
 
         // أبنية المحاكم: كل عنصرٍ إلزامي (الصفر مسموح) — والإجمالي يُحسب بعد التحقق
         $amount = match (true) {
-            $this->ledger => ['income' => ['required', 'regex:/^\d{1,12}$/'], 'expense' => ['required', 'regex:/^\d{1,12}$/']],
+            $this->ledger => ['income' => ['required', 'regex:'.Money::PATTERN], 'expense' => ['required', 'regex:'.Money::PATTERN]],
             // والعنصر المضاف بعد الشهر اختياريٌّ في تصحيحه
             (bool) $this->itemIds => ['items' => ['required', 'array']] + collect($this->itemIds)->mapWithKeys(fn ($id) => [
                 "items.$id" => in_array($id, $this->optionalItemIds, true)
-                    ? ['nullable', 'regex:/^\d{1,12}$/']
-                    : ['required', 'regex:/^\d{1,12}$/'],
+                    ? ['nullable', 'regex:'.Money::PATTERN]
+                    : ['required', 'regex:'.Money::PATTERN],
             ])->all(),
-            default => ['amount' => ['required', 'regex:/^\d{1,12}$/']],
+            default => ['amount' => ['required', 'regex:'.Money::PATTERN]],
         };
 
         if ($this->noOrder) {
@@ -494,8 +476,8 @@ class MonthEntry extends Component
 
         return $reason + $amount + [
             'orders'              => ['required', 'array', 'min:1', 'max:'.FinancePaymentOrder::MAX_PER_MONTH],
-            // أرقام فقط (قرار المستخدمة) — بعد توحيد الأرقام العربية في validateEntry
-            'orders.*.number'     => ['required', 'regex:/^\d{1,30}$/', 'distinct'],
+            // أرقامٌ وحروف (طلب المستخدمة 2026-11-25، وكانت أرقاماً فقط) و«/» «-» — بعد توحيد الأرقام العربية
+            'orders.*.number'     => ['required', 'regex:'.FinancePaymentOrder::NUMBER_PATTERN, 'distinct'],
             'orders.*.issued_on'  => ['required', 'date', 'before_or_equal:'.now(LocalTime::timezone())->toDateString()],
             'orderFiles'          => ['array'],
             // التصحيح: الحدّان على المحفوظ + الجديد معاً — في validateEntry
@@ -553,10 +535,17 @@ class MonthEntry extends Component
             $this->orderFiles[$i] ??= [];
         }
 
+        // ⚠️ **أمر الدفع ليس إجبارياً** (طلب المستخدمة 2026-11-25، وكان إلا للشهر الصفري): خاناتٌ تُركت
+        //    فارغةً كلها = شهرٌ بلا أمر دفع. وأمرٌ بدأت كتابته يبقى رقمه وتاريخه وصورته إلزامية — فلا يُحفظ نصف أمر.
+        if (! $this->noOrder && collect($this->orders)->every(fn ($o, $i) => $o['number'] === '' && $o['issued_on'] === ''
+            && empty($this->orderFiles[$i]) && empty($this->kept[$i] ?? []))) {
+            $this->noOrder = true;
+        }
+
         $this->validate();
 
         if ($this->itemIds) {
-            $this->amount = (string) array_sum(array_map('intval', $this->itemsToSave()));
+            $this->amount = Money::input(array_sum(array_map(fn ($v) => Money::parse($v) ?? 0, $this->itemsToSave())));
         }
 
         if ($this->ledger) {
@@ -565,10 +554,6 @@ class MonthEntry extends Component
             $this->guardNegative($this->account());
         }
 
-        // ⚠️ في الإجراء لا في القالب: الخانة تظهر للصفر وحده، والقيمة تصل من المتصفح
-        if ($this->noOrder && (int) $this->amount !== 0) {
-            throw ValidationException::withMessages(['noOrder' => __('home.fin_no_order_zero_only')]);
-        }
 
         if ($this->editingId && ! $this->noOrder) {
             // ⚠️ `kept` يصل من المتصفح: يبقى منه ما هو صورةٌ فعلاً لأمر هذا الصفّ — وإلا عدّ
@@ -640,13 +625,13 @@ class MonthEntry extends Component
                     'finance_account_id' => $account->id,
                     'finance_unit_id'    => $this->unitId,
                     'month'              => $month->toDateString(),
-                    'amount'             => (int) $this->amount,
-                    'income'             => $this->ledger ? (int) $this->income : null,
+                    'amount'             => Money::parse($this->amount),
+                    'income'             => $this->ledger ? Money::parse($this->income) : null,
                     'created_by'         => auth()->id(),
                 ]);
 
                 foreach ($this->items as $itemId => $value) {
-                    $record->items()->create(['court_building_item_id' => $itemId, 'amount' => (int) $value]);
+                    $record->items()->create(['court_building_item_id' => $itemId, 'amount' => Money::parse($value)]);
                 }
 
                 if (($body = trim($this->note)) !== '') {
@@ -740,8 +725,8 @@ class MonthEntry extends Component
                 }
 
                 $record->update([
-                    'amount' => (int) $this->amount,
-                    'income' => $this->ledger ? (int) $this->income : $record->income,
+                    'amount' => Money::parse($this->amount),
+                    'income' => $this->ledger ? Money::parse($this->income) : $record->income,
                 ]);
 
                 // العناصر: عناصر الشهر تُحدَّث، وما أُضيف بعده وكُتبت له قيمةٌ يُنشأ
@@ -749,7 +734,7 @@ class MonthEntry extends Component
                     // ⚠️ لا عبر علاقة `items()` — فيها join، وsqlite لا يقبل UPDATE بـjoin
                     FinanceMonthItem::updateOrCreate(
                         ['finance_month_id' => $record->id, 'court_building_item_id' => $itemId],
-                        ['amount' => (int) $value],
+                        ['amount' => Money::parse($value)],
                     );
                 }
 
@@ -907,7 +892,7 @@ class MonthEntry extends Component
         if ($amount !== null && $previous > 0) {
             $context = [
                 'month'  => FinanceCalendar::monthLabel($month->subMonth()),
-                'amount' => number_format($previous),
+                'amount' => Money::format((int) $previous),
                 'factor' => self::AMOUNT_JUMP_FACTOR,
             ];
 

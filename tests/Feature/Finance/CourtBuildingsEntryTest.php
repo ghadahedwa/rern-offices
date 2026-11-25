@@ -70,17 +70,17 @@ it('يحفظ الشهر بعناصره الثمانية والإجمالي مج�
     $this->actingAs(courtUser());
 
     courtEntry()
-        ->assertSee(AmountInWords::pounds(36000))
+        ->assertSee(AmountInWords::pounds(3600000))
         ->call('review')
         ->assertHasNoErrors()
         ->call('save')
         ->assertRedirect();
 
     $month = FinanceMonth::with('items')->sole();
-    expect($month->amount)->toBe(36000)
+    expect($month->amount)->toBe(3600000)
         ->and($month->items)->toHaveCount(8)
-        ->and($month->items->first()->amount)->toBe(1000)
-        ->and($month->items->last()->amount)->toBe(8000);
+        ->and($month->items->first()->amount)->toBe(100000)
+        ->and($month->items->last()->amount)->toBe(800000);
 });
 
 it('يطلب كل عنصر ويقبل الصفر', function () {
@@ -106,7 +106,7 @@ it('لا يحفظ عنصراً مدسوساً، ويبقى المحذوف من �
     // عنصرٌ ليس في الفورم يُهمَل
     courtEntry()->set('items.99999', '500')->call('save')->assertHasNoErrors();
     expect(FinanceMonthItem::count())->toBe(8)
-        ->and(FinanceMonth::sole()->amount)->toBe(36000);
+        ->and(FinanceMonth::sole()->amount)->toBe(3600000);
 
     // عنصرٌ أُسقط مفتاحه من المتصفح يبقى مطلوباً (نوفمبر)
     $c = courtEntry();
@@ -150,14 +150,14 @@ it('عنصرٌ أُضيف بعد الشهر يظهر في تصحيحه اختي�
 
     $month = FinanceMonth::with('items')->sole();
     expect($month->items)->toHaveCount(8)
-        ->and($month->amount)->toBe(36500);
+        ->and($month->amount)->toBe(3650000);
 
     $open()->set("items.{$new->id}", '500')->set('reason', 'إضافة قيمة العنصر الجديد')->call('save')->assertHasNoErrors();
 
     $month = FinanceMonth::with('items')->sole();
     expect($month->items)->toHaveCount(9)
-        ->and($month->items->firstWhere('court_building_item_id', $new->id)->amount)->toBe(500)
-        ->and($month->amount)->toBe(37000);
+        ->and($month->items->firstWhere('court_building_item_id', $new->id)->amount)->toBe(50000)
+        ->and($month->amount)->toBe(3700000);
 });
 
 it('يصحّح عنصراً فيتبعه الإجمالي، والسجلّ يسمّي العنصر', function () {
@@ -172,12 +172,12 @@ it('يصحّح عنصراً فيتبعه الإجمالي، والسجلّ يس�
         ->assertHasNoErrors();
 
     $month = FinanceMonth::with('items')->sole();
-    expect($month->amount)->toBe(36000 - 7000 + 700)
-        ->and($month->items->firstWhere('court_building_item_id', $item->id)->amount)->toBe(700);
+    expect($month->amount)->toBe((36000 - 7000 + 700) * 100)
+        ->and($month->items->firstWhere('court_building_item_id', $item->id)->amount)->toBe(70000);
 
     $log = Activity::where('log_name', FinanceHistory::LOG)->sole();
-    expect($log->properties['before']['items']['مكاتب مميزة'])->toBe(7000)
-        ->and($log->properties['after']['items']['مكاتب مميزة'])->toBe(700);
+    expect($log->properties['before']['items']['مكاتب مميزة'])->toBe(700000)
+        ->and($log->properties['after']['items']['مكاتب مميزة'])->toBe(70000);
 
     $this->get(route('finance.unit', cairo()))
         ->assertSeeInOrder(['مكاتب مميزة', '7,000', '700', __('home.fin_total_label'), '36,000', '29,700']);

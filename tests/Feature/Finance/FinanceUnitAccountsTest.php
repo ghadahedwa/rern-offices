@@ -149,7 +149,7 @@ it('صفحة الميكنة إجمالي الوحدات بالشهور، ورا�
     // وزارة المالية بلا أرقام الميكنة
     $units = \App\Models\FinanceUnit::ordered()->get();
     expect(\App\Support\Finance\UnitsTotal::build(\App\Models\FinanceAccount::byKey('ministry_of_finance'), 2026, $units)['yearTotal'])->toBe(0)
-        ->and(\App\Support\Finance\UnitsTotal::build(\App\Models\FinanceAccount::byKey('mechanization'), 2026, $units)['yearTotal'])->toBe(12000);
+        ->and(\App\Support\Finance\UnitsTotal::build(\App\Models\FinanceAccount::byKey('mechanization'), 2026, $units)['yearTotal'])->toBe(1200000);
 });
 
 it('صورة أمر دفع شهر وحدةٍ في الميكنة: لعارض الإجمالي ولصاحب الوحدة وحدهما', function () {

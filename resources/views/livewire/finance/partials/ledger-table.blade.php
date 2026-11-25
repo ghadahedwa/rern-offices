@@ -26,7 +26,7 @@
                         @include('livewire.finance.partials.history-badge')
 @include('livewire.finance.partials.notes-button')
                     </td>
-                    <td class="px-3 py-3"><span dir="ltr" class="font-semibold text-zinc-700 dark:text-zinc-200">{{ number_format($openingBalance) }}</span></td>
+                    <td class="px-3 py-3"><span dir="ltr" class="font-semibold text-zinc-700 dark:text-zinc-200">{{ \App\Support\Finance\Money::format($openingBalance) }}</span></td>
                     <td class="px-3 py-3 max-sm:hidden"></td>
                     <td class="px-3 py-3 max-sm:hidden text-xs">
                         <p class="text-zinc-800 dark:text-zinc-100">{{ $openingBy ?? '—' }}</p>
@@ -46,7 +46,7 @@
                                 <div>
                                     <label class="block text-xs text-zinc-500 mb-1">{{ __('home.fin_opening_balance') }}</label>
                                     <input type="text" inputmode="numeric" dir="ltr" wire:model="openingInput"
-                                           oninput="this.value = this.value.replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d)).replace(/[^0-9.,٬،]/g, '')"
+                                           oninput="this.value = this.value.replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d)).replace(/[^0-9.,٬،٫]/g, '')"
                                            class="w-full border border-zinc-300 dark:border-zinc-600 rounded-lg px-3 py-2 text-left font-semibold bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100" />
                                     @error('openingInput') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
                                 </div>
@@ -82,15 +82,15 @@
                             @include('livewire.finance.partials.history-badge')
 @include('livewire.finance.partials.notes-button')
                             <div class="sm:hidden mt-2 space-y-2">
-                                <p class="text-xs text-zinc-400">{{ __('home.fin_carried_in') }}: <span dir="ltr">{{ number_format($calc['carried'] ?? 0) }}</span></p>
+                                <p class="text-xs text-zinc-400">{{ __('home.fin_carried_in') }}: <span dir="ltr">{{ \App\Support\Finance\Money::format($calc['carried'] ?? 0) }}</span></p>
                                 @include('livewire.finance.partials.payment-orders-cell', ['record' => $record])
                                 @include('livewire.finance.partials.month-actions')
                             </div>
                         </td>
-                        <td class="px-3 py-3 max-sm:hidden text-zinc-400" dir="ltr" style="text-align: right">{{ number_format($calc['carried'] ?? 0) }}</td>
-                        <td class="px-3 py-3 font-semibold text-emerald-700 dark:text-emerald-400" dir="ltr" style="text-align: right">{{ number_format((int) $record->income) }}</td>
-                        <td class="px-3 py-3 font-semibold text-red-600 dark:text-red-400" dir="ltr" style="text-align: right">{{ number_format($record->amount) }}</td>
-                        <td class="px-3 py-3 font-bold text-zinc-800 dark:text-zinc-100" dir="ltr" style="text-align: right; font-size: 1.05rem">{{ number_format($calc['balance'] ?? 0) }}</td>
+                        <td class="px-3 py-3 max-sm:hidden text-zinc-400" dir="ltr" style="text-align: right">{{ \App\Support\Finance\Money::format($calc['carried'] ?? 0) }}</td>
+                        <td class="px-3 py-3 font-semibold text-emerald-700 dark:text-emerald-400" dir="ltr" style="text-align: right">{{ \App\Support\Finance\Money::format((int) $record->income) }}</td>
+                        <td class="px-3 py-3 font-semibold text-red-600 dark:text-red-400" dir="ltr" style="text-align: right">{{ \App\Support\Finance\Money::format($record->amount) }}</td>
+                        <td class="px-3 py-3 font-bold text-zinc-800 dark:text-zinc-100" dir="ltr" style="text-align: right; font-size: 1.05rem">{{ \App\Support\Finance\Money::format($calc['balance'] ?? 0) }}</td>
                         <td class="px-3 py-3 max-sm:hidden">
                             @include('livewire.finance.partials.payment-orders-cell', ['record' => $record])
                         </td>

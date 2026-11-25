@@ -53,7 +53,7 @@
                 @if($partial)
                     <p class="text-xs text-zinc-400 mt-0.5">{{ __('home.fin_year_partial', ['count' => $monthCount, 'from' => $yearFrom]) }}</p>
                 @endif
-                <p class="font-bold text-zinc-800 dark:text-zinc-100 mt-1" dir="ltr" style="text-align: right; font-size: 2rem; line-height: 2.5rem">{{ number_format($total) }}</p>
+                <p class="font-bold text-zinc-800 dark:text-zinc-100 mt-1" dir="ltr" style="text-align: right; font-size: 2rem; line-height: 2.5rem">{{ \App\Support\Finance\Money::format($total) }}</p>
                 @if($total > 0)
                     <p class="text-xs text-[#b8962e] dark:text-[#d8b856] mt-1">{{ \App\Support\Finance\AmountInWords::pounds($total) }}</p>
                 @endif
@@ -143,7 +143,7 @@
 @include('livewire.finance.partials.notes-button')
                                 </td>
                                 <td class="px-4 py-3">
-                                    <span class="font-bold text-zinc-800 dark:text-zinc-100" dir="ltr" style="font-size: 1.05rem">{{ number_format($record->amount) }}</span>
+                                    <span class="font-bold text-zinc-800 dark:text-zinc-100" dir="ltr" style="font-size: 1.05rem">{{ \App\Support\Finance\Money::format($record->amount) }}</span>
                                     {{-- على الموبايل: أمر الدفع والمُدخِل تحت المبلغ --}}
                                     <div class="sm:hidden mt-2 space-y-2">
                                         @include('livewire.finance.partials.payment-orders-cell', ['record' => $record])
@@ -173,7 +173,7 @@
                                             @foreach($record->items as $item)
                                                 <div class="flex items-baseline justify-between gap-3 border-b border-dashed border-zinc-200 dark:border-zinc-700 pb-1">
                                                     <span class="text-zinc-600 dark:text-zinc-300">{{ $loop->iteration }} · {{ $item->item->name }}</span>
-                                                    <span dir="ltr" class="shrink-0 {{ $item->amount === 0 ? 'text-zinc-400' : 'font-semibold text-zinc-800 dark:text-zinc-100' }}">{{ number_format($item->amount) }}</span>
+                                                    <span dir="ltr" class="shrink-0 {{ $item->amount === 0 ? 'text-zinc-400' : 'font-semibold text-zinc-800 dark:text-zinc-100' }}">{{ \App\Support\Finance\Money::format($item->amount) }}</span>
                                                 </div>
                                             @endforeach
                                         </div>

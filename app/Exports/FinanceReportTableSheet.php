@@ -3,6 +3,7 @@
 namespace App\Exports;
 
 use App\Support\Finance\FinanceReport;
+use App\Support\Finance\Money;
 use Maatwebsite\Excel\Concerns\FromArray;
 use Maatwebsite\Excel\Concerns\ShouldAutoSize;
 use Maatwebsite\Excel\Concerns\WithEvents;
@@ -56,9 +57,9 @@ class FinanceReportTableSheet implements FromArray, WithEvents, WithTitle, Shoul
             $out = [$first];
             foreach ($accounts as $account) {
                 if ($account->isLedger()) {
-                    array_push($out, $telecom['income'] ?? null, $telecom['expense'] ?? null, $telecom['balance'] ?? null);
+                    array_push($out, Money::pounds($telecom['income'] ?? null), Money::pounds($telecom['expense'] ?? null), Money::pounds($telecom['balance'] ?? null));
                 } else {
-                    $out[] = $cells[$account->key] ?? null;
+                    $out[] = Money::pounds($cells[$account->key] ?? null);
                 }
             }
             $out[] = $last;
@@ -80,7 +81,7 @@ class FinanceReportTableSheet implements FromArray, WithEvents, WithTitle, Shoul
             $rows[] = [];
             $rows[] = [__('home.fin_rep_items_title')];
             foreach ($items as $name => $amount) {
-                $rows[] = [$name, $amount];
+                $rows[] = [$name, Money::pounds($amount)];
             }
         }
 
@@ -106,7 +107,9 @@ class FinanceReportTableSheet implements FromArray, WithEvents, WithTitle, Shoul
                     'font' => ['bold' => true],
                     'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => 'F7F1E0']],
                 ]);
-                $sheet->getStyle("B".($head + 1).":{$col}".$sheet->getHighestRow())->getNumberFormat()->setFormatCode('#,##0');
+                // المبالغ بالجنيه بقرشين، وعمود أوامر الدفع/المُدخَل (الأخير) عددٌ صحيح
+                $sheet->getStyle("B".($head + 1).":{$col}".$sheet->getHighestRow())->getNumberFormat()->setFormatCode('#,##0.00');
+                $sheet->getStyle("{$col}".($head + 1).":{$col}{$this->lastTableRow}")->getNumberFormat()->setFormatCode('0');
                 $sheet->freezePane('B'.($head + 1));
             },
         ];

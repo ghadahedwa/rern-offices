@@ -59,14 +59,14 @@ it('يحفظ أول شهر (أكتوبر) بأمر دفعه وصورته بعد 
         ->call('review')
         ->assertHasNoErrors()
         ->assertSet('reviewing', true)
-        ->assertSee(AmountInWords::pounds(150000))
+        ->assertSee(AmountInWords::pounds(15000000))
         ->call('save')
         ->assertRedirect();
 
     $month = FinanceMonth::with('paymentOrders.attachments')->sole();
 
     expect($month->month->toDateString())->toBe('2026-10-01')
-        ->and($month->amount)->toBe(150000)
+        ->and($month->amount)->toBe(15000000)
         ->and($month->created_by)->toBe($user->id)
         ->and($month->account->key)->toBe('mechanization')
         ->and($month->paymentOrders)->toHaveCount(1)
@@ -112,22 +112,42 @@ it('يرفض أمر دفع بلا صورة', function () {
     expect(FinanceMonth::count())->toBe(0);
 });
 
-it('يرفض الكسر والسالب والنص — ولا يحوّل «12.5» إلى 125', function (string $amount) {
+it('يرفض السالب والنص وأكثر من قرشين — ولا يحوّل «12.555» إلى 12555', function (string $amount) {
     $this->actingAs(entryUser());
 
     filledEntry(amount: $amount)->call('review')->assertHasErrors('amount');
-})->with(['12.5', '-5', 'ألف', '', '1234567890123']);
+})->with(['12.555', '1.2.3', '-5', 'ألف', '', '1234567890123']);
 
-it('يقبل رقم أمر الدفع أرقاماً فقط ويوحّد العربية', function () {
+it('يقبل القروش ويحفظها: «12.5» ١٢ جنيهاً و٥٠ قرشاً، والكسر العربي «٫»', function () {
+    // طلب المستخدمة 2026-11-25 — التخزين بالقروش (Money)
     $this->actingAs(entryUser());
 
-    filledEntry(number: '12/A')->call('review')
-        ->assertHasErrors('orders.0.number')
-        ->assertSee(__('home.fin_order_number_digits'));
+    filledEntry(amount: '١٥٠٬٠٠٠٫٧٥')
+        ->assertSee(AmountInWords::pounds(15000075))
+        ->call('save')->assertHasNoErrors();
 
-    filledEntry(number: '١٢٣')->call('save');
+    expect(FinanceMonth::sole()->amount)->toBe(15000075);
+    $this->get(route('finance.unit', [finCairo(), 'mechanization']))->assertSee('150,000.75');
 
-    expect(\App\Models\FinancePaymentOrder::sole()->number)->toBe('123');
+    expect(\App\Support\Finance\Money::parse('12.5'))->toBe(1250)
+        ->and(\App\Support\Finance\Money::format(1250))->toBe('12.50')
+        ->and(\App\Support\Finance\Money::format(1200))->toBe('12')
+        ->and(AmountInWords::pounds(1250))->toBe('فقط اثنا عشر جنيه مصري وخمسون قرشاً لا غير');
+});
+
+it('يقبل رقم أمر الدفع أرقاماً وحروفاً ويوحّد العربية، ويرفض المسافة والرموز', function () {
+    // طلب المستخدمة 2026-11-25 — كان أرقاماً فقط
+    $this->actingAs(entryUser());
+
+    foreach (['12 3', '12@3'] as $bad) {
+        filledEntry(number: $bad)->call('review')
+            ->assertHasErrors('orders.0.number')
+            ->assertSee(__('home.fin_order_number_digits'));
+    }
+
+    filledEntry(number: 'ق-١٢/A')->call('save')->assertHasNoErrors();
+
+    expect(\App\Models\FinancePaymentOrder::sole()->number)->toBe('ق-12/A');
 });
 
 it('يرفض أمر دفع بتاريخ لم يأتِ ورقمين متكررين', function () {
@@ -205,7 +225,7 @@ it('يرفض الحفظ إن أدخل مستخدمٌ آخر الشهر نفسه 
     $second->call('save');
 
     expect(FinanceMonth::count())->toBe(1)
-        ->and(FinanceMonth::sole()->amount)->toBe(100)
+        ->and(FinanceMonth::sole()->amount)->toBe(10000)
         ->and(Storage::disk(FinanceAttachment::DISK)->allFiles(FinanceAttachment::DIRECTORY))->toHaveCount(1);
 });
 
@@ -258,7 +278,7 @@ it('يعرض شهور السنة المالية وإجماليها وزرّ ال
         ->assertSee('أكتوبر 2026')
         ->assertDontSee('سبتمبر 2026')
         ->assertSee('150,000')
-        ->assertSee(\App\Support\Finance\AmountInWords::pounds(150000))
+        ->assertSee(\App\Support\Finance\AmountInWords::pounds(15000000))
         ->assertSee(__('home.fin_order_number_short', ['number' => '1234']))
         ->assertSee('2026-11-02')
         ->assertSee(__('home.fin_entered_of', ['entered' => 1, 'count' => 9]))
@@ -393,33 +413,36 @@ it('يحفظ شهراً مبلغه صفر بلا أمر دفع ويفتح ما �
     $this->get(route('finance.unit', [finCairo(), 'mechanization']))->assertSee(__('home.fin_no_order'));
 });
 
-it('يرفض «بلا أمر دفع» لمبلغٍ غير الصفر — ولو وصلت من المتصفح', function () {
+it('أمر الدفع ليس إجبارياً: «بلا أمر دفع» لأي مبلغ، والخانات الفارغة كلها مثلها', function () {
+    // طلب المستخدمة 2026-11-25 — كان «بلا أمر» للشهر الصفري وحده
     $this->actingAs(entryUser());
 
     Livewire::test(MonthEntry::class, ['account' => 'mechanization', 'financeUnit' => finCairo()])
-        ->set('amount', '0')
-        ->set('noOrder', true)
-        ->set('amount', '5000')
-        ->assertSet('noOrder', false);
-
-    // القيمة مدسوسة مع مبلغ: لا تمرّ
-    Livewire::test(MonthEntry::class, ['account' => 'mechanization', 'financeUnit' => finCairo()])
-        ->set('noOrder', true)
         ->set('amount', '5000')
         ->set('noOrder', true)
         ->call('save')
-        ->assertHasErrors('noOrder');
+        ->assertHasNoErrors();
 
-    expect(FinanceMonth::count())->toBe(0);
+    // نوفمبر: لا علامة، والخانات متروكة فارغة
+    Livewire::test(MonthEntry::class, ['account' => 'mechanization', 'financeUnit' => finCairo()])
+        ->set('amount', '7000')
+        ->call('save')
+        ->assertHasNoErrors();
+
+    expect(FinanceMonth::count())->toBe(2)
+        ->and(\App\Models\FinancePaymentOrder::count())->toBe(0);
 });
 
-it('يطلب أمر الدفع للصفر ما لم يُعلَّم «بلا أمر دفع»', function () {
+it('أمرٌ بدأت كتابته يبقى رقمه وتاريخه وصورته إلزامية', function () {
     $this->actingAs(entryUser());
 
     Livewire::test(MonthEntry::class, ['account' => 'mechanization', 'financeUnit' => finCairo()])
-        ->set('amount', '0')
+        ->set('amount', '5000')
+        ->set('orders.0.number', 'A12')
         ->call('review')
-        ->assertHasErrors(['orders.0.number', 'orderFiles.0']);
+        ->assertHasErrors(['orders.0.issued_on', 'orderFiles.0']);
+
+    expect(FinanceMonth::count())->toBe(0);
 });
 
 // ── تنبيهات المراجعة ─────────────────────────────────────

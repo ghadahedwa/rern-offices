@@ -26,7 +26,7 @@
                         {{ __('home.fin_tab_'.$acc->key) }}{{ $t['ledger'] ? ' — '.__('home.fin_balance_now_label') : '' }}
                     </p>
                     <p class="font-bold text-zinc-800 dark:text-zinc-100 mt-1" dir="ltr" style="text-align: right; font-size: 1.3rem">
-                        {{ number_format($t['ledger'] ? $t['ledger']['yearTotal']['balance'] : $t['yearTotal']) }}
+                        {{ \App\Support\Finance\Money::format($t['ledger'] ? $t['ledger']['yearTotal']['balance'] : $t['yearTotal']) }}
                     </p>
                     @if($t['oldestLate'])
                         <p class="text-xs text-amber-700 dark:text-amber-300 mt-1">

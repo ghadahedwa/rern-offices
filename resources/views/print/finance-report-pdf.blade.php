@@ -37,7 +37,7 @@
 @php
     $isUnit   = $report->kind === 'unit';
     $accounts = $report->accounts();
-    $fmt      = fn ($v) => $v === null ? '—' : number_format($v);
+    $fmt      = fn ($v) => $v === null ? '—' : \App\Support\Finance\Money::format($v);
     // ⚠️ مجموع نِسَب <th> = ١٠٠٪ — الناقص يوزّعه mpdf عشوائياً
     [$first, $plain, $tel, $last] = $isUnit ? [16, 13, 11, 12] : [22, 12, 10, 12];
 @endphp
@@ -87,8 +87,8 @@
                         @if($isUnit && ! $row['telecom'])
                             <td colspan="3" class="{{ $row['ended'] ? 'pending' : 'muted' }}">{{ $row['ended'] ? __('home.fin_not_entered') : '—' }}</td>
                         @else
-                            <td class="inc">{{ number_format($row['telecom']['income']) }}</td>
-                            <td class="exp">{{ number_format($row['telecom']['expense']) }}</td>
+                            <td class="inc">{{ \App\Support\Finance\Money::format($row['telecom']['income']) }}</td>
+                            <td class="exp">{{ \App\Support\Finance\Money::format($row['telecom']['expense']) }}</td>
                             <td><b>{{ $fmt($row['telecom']['balance']) }}</b></td>
                         @endif
                     @elseif($isUnit && $row['cells'][$account->key] === null)
@@ -108,8 +108,8 @@
             <td class="rt-start">{{ __('home.fin_total_label') }}</td>
             @foreach($accounts as $account)
                 @if($account->isLedger())
-                    <td class="inc">{{ number_format($data['totals']['telecom']['income']) }}</td>
-                    <td class="exp">{{ number_format($data['totals']['telecom']['expense']) }}</td>
+                    <td class="inc">{{ \App\Support\Finance\Money::format($data['totals']['telecom']['income']) }}</td>
+                    <td class="exp">{{ \App\Support\Finance\Money::format($data['totals']['telecom']['expense']) }}</td>
                     <td>{{ $fmt($data['totals']['telecom']['balance']) }}</td>
                 @else
                     <td>{{ $fmt($data['totals']['cells'][$account->key]) }}</td>
@@ -143,9 +143,9 @@
             <thead><tr><th style="width: 8%">#</th><th style="width: 62%">{{ __('home.fin_rep_item') }}</th><th style="width: 30%">{{ __('home.fin_rep_amount') }}</th></tr></thead>
             <tbody>
                 @foreach($items as $name => $amount)
-                    <tr><td>{{ $loop->iteration }}</td><td class="rt-start">{{ $name }}</td><td>{{ number_format($amount) }}</td></tr>
+                    <tr><td>{{ $loop->iteration }}</td><td class="rt-start">{{ $name }}</td><td>{{ \App\Support\Finance\Money::format($amount) }}</td></tr>
                 @endforeach
-                <tr class="total"><td></td><td class="rt-start">{{ __('home.fin_total_label') }}</td><td>{{ number_format(array_sum($items)) }}</td></tr>
+                <tr class="total"><td></td><td class="rt-start">{{ __('home.fin_total_label') }}</td><td>{{ \App\Support\Finance\Money::format(array_sum($items)) }}</td></tr>
             </tbody>
         </table>
     </div>

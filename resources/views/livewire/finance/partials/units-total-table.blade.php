@@ -65,7 +65,7 @@
                             </th>
                             @if($isLedger)
                                 <td class="px-3 py-3 text-center text-zinc-500 dark:text-zinc-400 whitespace-nowrap" dir="ltr">
-                                    {{ $t['ledger']['start'][$unit->id] !== null ? number_format($t['ledger']['start'][$unit->id]) : '—' }}
+                                    {{ $t['ledger']['start'][$unit->id] !== null ? \App\Support\Finance\Money::format($t['ledger']['start'][$unit->id]) : '—' }}
                                 </td>
                             @endif
                             @foreach($t['rows'] as $row)
@@ -75,7 +75,7 @@
                                             @include('livewire.finance.partials.ledger-cell', ['c' => $row['ledger'][$unit->id]])
                                         </td>
                                     @else
-                                        <td class="px-3 py-3 font-semibold text-zinc-800 dark:text-zinc-100 text-center whitespace-nowrap" dir="ltr">{{ number_format($row['cells'][$unit->id]) }}</td>
+                                        <td class="px-3 py-3 font-semibold text-zinc-800 dark:text-zinc-100 text-center whitespace-nowrap" dir="ltr">{{ \App\Support\Finance\Money::format($row['cells'][$unit->id]) }}</td>
                                     @endif
                                 @elseif($unit->is_active && $row['ended'])
                                     <td class="px-3 py-3 text-xs text-center whitespace-nowrap bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300">⏳ {{ __('home.fin_not_entered') }}</td>
@@ -90,12 +90,12 @@
                                     @if($y['entered'])
                                         @include('livewire.finance.partials.ledger-cell', ['c' => $y])
                                     @else
-                                        <span dir="ltr" class="text-zinc-500">{{ $y['balance'] !== null ? number_format($y['balance']) : '—' }}</span>
+                                        <span dir="ltr" class="text-zinc-500">{{ $y['balance'] !== null ? \App\Support\Finance\Money::format($y['balance']) : '—' }}</span>
                                     @endif
                                 </td>
                             @else
                                 <td class="px-3 py-3 text-center font-semibold whitespace-nowrap bg-[#c9a847]/5 text-zinc-800 dark:text-zinc-100" dir="ltr">
-                                    {{ $t['unitTotals']->has($unit->id) ? number_format($t['unitTotals'][$unit->id]) : '—' }}
+                                    {{ $t['unitTotals']->has($unit->id) ? \App\Support\Finance\Money::format($t['unitTotals'][$unit->id]) : '—' }}
                                 </td>
                             @endif
                         </tr>
@@ -105,7 +105,7 @@
                     <tr class="bg-[#c9a847]/10 font-bold">
                         <th scope="row" class="px-3 py-3 bg-[#f7f1e0] dark:bg-zinc-800 text-zinc-800 dark:text-zinc-100 {{ $stickyTh }}">{{ __('home.fin_total_label') }}</th>
                         @if($isLedger)
-                            <td class="px-3 py-3 text-center whitespace-nowrap" dir="ltr">{{ number_format($t['ledger']['startTotal']) }}</td>
+                            <td class="px-3 py-3 text-center whitespace-nowrap" dir="ltr">{{ \App\Support\Finance\Money::format($t['ledger']['startTotal']) }}</td>
                         @endif
                         @foreach($t['rows'] as $row)
                             <td class="px-3 py-2 text-center whitespace-nowrap">
@@ -115,7 +115,7 @@
                                     @if($isLedger)
                                         @include('livewire.finance.partials.ledger-cell', ['c' => $row['ledgerTotal']])
                                     @else
-                                        <span dir="ltr" class="{{ $row['complete'] ? 'text-zinc-900 dark:text-zinc-50' : 'text-zinc-500' }}">{{ number_format($row['total']) }}</span>
+                                        <span dir="ltr" class="{{ $row['complete'] ? 'text-zinc-900 dark:text-zinc-50' : 'text-zinc-500' }}">{{ \App\Support\Finance\Money::format($row['total']) }}</span>
                                     @endif
                                     @unless($row['complete'])
                                         <span class="block text-[11px] font-normal text-amber-700 dark:text-amber-300">{{ __('home.fin_so_far') }}</span>
@@ -127,7 +127,7 @@
                             @if($isLedger)
                                 @include('livewire.finance.partials.ledger-cell', ['c' => $t['ledger']['yearTotal']])
                             @else
-                                <span dir="ltr">{{ number_format($t['yearTotal']) }}</span>
+                                <span dir="ltr">{{ \App\Support\Finance\Money::format($t['yearTotal']) }}</span>
                             @endif
                         </td>
                     </tr>
