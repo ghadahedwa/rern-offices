@@ -4,7 +4,7 @@
 
     {{-- Donut Chart: توزيع المقرات حسب النوع --}}
     @if($officesByType->isNotEmpty())
-    <div class="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-sm p-5">
+    <div class="min-w-0 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-sm p-5">
         <div class="flex items-center gap-3 mb-5">
             <div class="w-1 h-5 bg-[#c9a847] rounded-full"></div>
             <h3 class="text-sm font-semibold text-zinc-600 dark:text-zinc-400 uppercase tracking-wide">
@@ -26,6 +26,7 @@
                 },
                 options: {
                     responsive: true,
+                    maintainAspectRatio: false,
                     cutout: '65%',
                     plugins: {
                         legend: {
@@ -36,14 +37,15 @@
                 }
             })
         ">
-            <canvas x-ref="donutChart" style="max-height: 240px;"></canvas>
+            {{-- طول ثابت بلا نسبة: max-height مع النسبة كان يصغّر الرسم حتى يختفي على الموبايل --}}
+            <div class="relative" style="height: 240px;"><canvas x-ref="donutChart"></canvas></div>
         </div>
     </div>
     @endif
 
     {{-- Horizontal Bar: توزيع المقرات حسب الحالة الإنشائية --}}
     @if($officesByStructure->isNotEmpty())
-    <div class="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-sm p-5">
+    <div class="min-w-0 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-sm p-5">
         <div class="flex items-center gap-3 mb-5">
             <div class="w-1 h-5 bg-[#c9a847] rounded-full"></div>
             <h3 class="text-sm font-semibold text-zinc-600 dark:text-zinc-400 uppercase tracking-wide">
@@ -66,6 +68,7 @@
                 options: {
                     indexAxis: 'y',
                     responsive: true,
+                    maintainAspectRatio: false,
                     plugins: { legend: { display: false } },
                     scales: {
                         x: { ticks: { font: { size: 10 }, color: '#9ca3af' }, grid: { color: 'rgba(156,163,175,0.1)' }, beginAtZero: true },
@@ -74,7 +77,7 @@
                 }
             })
         ">
-            <canvas x-ref="structureChart" style="max-height: 240px;"></canvas>
+            <div class="relative" style="height: 240px;"><canvas x-ref="structureChart"></canvas></div>
         </div>
     </div>
     @endif
