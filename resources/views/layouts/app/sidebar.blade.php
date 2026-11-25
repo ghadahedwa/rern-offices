@@ -459,6 +459,12 @@
                         @endif
                     </flux:sidebar.item>
                     @endif
+
+                    @if(Route::has('design-guide'))
+                    <flux:sidebar.item icon="swatch" :href="route('design-guide')" :current="request()->routeIs('design-guide')" wire:navigate>
+                        {{ __('home.design_guide') }}
+                    </flux:sidebar.item>
+                    @endif
                     @endif
 
                     {{-- إعدادات المخازن (الأصناف + الأنواع + الوحدات — إدارة المخازن نفسها انتقلت لفرع المخازن) — صلاحية warehouses.settings --}}

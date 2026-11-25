@@ -198,6 +198,7 @@ return [
         'route_patterns' => [
             'system-dashboard',
             'system-freeze',
+            'design-guide',
             'users.*',
             'roles.*',
             // إعدادات المخازن (الأصناف والأنواع والوحدات — قوائم مرجعية). إدارة المخازن نفسها انتقلت لفرع المخازن.

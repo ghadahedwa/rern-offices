@@ -374,6 +374,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->middleware('role:super-admin')
         ->name('system-freeze');
 
+    // دليل التصميم الموحّد — سوبر أدمن وحده. الصفحة إطار، والملف يُخدم كما هو (بلا بيانات من الجداول)
+    Route::middleware('role:super-admin')->group(function () {
+        Route::livewire('design-guide', \App\Livewire\System\DesignGuide::class)->name('design-guide');
+        Route::get('design-guide/file', fn () => response()->file(
+            base_path('documentation/design-guide.html'),
+            ['Content-Type' => 'text/html; charset=UTF-8'],
+        ))->name('design-guide.file');
+    });
+
     // العطلات الرسمية — **سوبر أدمن وحده** (قرار العميل)، أضيق من contractors.settings:
     // ⚠️ القائمة قومية لا محلية، وعطلةٌ بتاريخ خاطئ تغيّر أيام العمل في تقارير المحافظات جميعاً.
     Route::middleware('role:super-admin')->group(function () {
