@@ -12,7 +12,23 @@
         </a>
     </div>
 
-    <iframe src="{{ route('design-guide.file') }}" title="{{ __('home.design_guide') }}"
-            class="w-full rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white shadow-sm"
-            style="height: calc(100dvh - 170px)"></iframe>
+    {{-- الإطار بطول الدليل كله فيتمرّر مع الصفحة (سكرول واحد لا سكرول داخل سكرول).
+         الدليل من الدومين نفسه فيُقرأ ارتفاعه، ويُعاد قياسه مع أي تغيّر داخله (فتح منسدلة · الوضع الغامق). --}}
+    <iframe src="{{ route('design-guide.file') }}" title="{{ __('home.design_guide') }}" scrolling="no"
+            x-data="{
+                bound: false,
+                attach() {
+                    const doc = $el.contentDocument;
+                    if (this.bound || ! doc || doc.readyState !== 'complete' || ! doc.body?.childElementCount) return;
+                    this.bound = true;
+                    const fit = () => { $el.style.height = doc.documentElement.scrollHeight + 'px'; };
+                    fit();
+                    new ResizeObserver(fit).observe(doc.body);
+                    new MutationObserver(fit).observe(doc.body, { subtree: true, childList: true, attributes: true });
+                },
+            }"
+            x-init="attach()"
+            x-on:load="attach()"
+            class="w-full rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white shadow-sm overflow-hidden"
+            style="height: 80vh"></iframe>
 </div>
