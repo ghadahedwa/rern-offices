@@ -519,9 +519,15 @@ class MonthEntry extends Component
 
         // ⚠️ العناصر من `itemIds` المقفولة لا من مفاتيح ما وصل — مفتاحٌ مدسوس لا يُحفظ،
         //    وعنصرٌ حُذف مفتاحه من المتصفح يبقى مطلوباً
+        // ⚠️ **العنصر المتروك فارغاً صفر** (طلب المستخدمة 2026-11-25 — كان «مطلوب» فرُفض حفظ وحدةٍ
+        //    تركت ما لا قيمة له عندها). إلا المضاف بعد الشهر في تصحيحه: فارغه لا يُحفظ أصلاً
         if ($this->itemIds) {
             $this->items = collect($this->itemIds)
-                ->mapWithKeys(fn ($id) => [$id => self::normalizeAmount((string) ($this->items[$id] ?? ''))])
+                ->mapWithKeys(function ($id) {
+                    $value = self::normalizeAmount((string) ($this->items[$id] ?? ''));
+
+                    return [$id => $value === '' && ! in_array($id, $this->optionalItemIds, true) ? '0' : $value];
+                })
                 ->all();
         }
         $this->orders = array_map(fn (array $o) => [

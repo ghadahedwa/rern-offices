@@ -83,22 +83,24 @@ it('يحفظ الشهر بعناصره الثمانية والإجمالي مج�
         ->and($month->items->last()->amount)->toBe(800000);
 });
 
-it('يطلب كل عنصر ويقبل الصفر', function () {
+it('العنصر المتروك فارغاً يُحفظ صفراً', function () {
+    // طلب المستخدمة 2026-11-25 — كان «مطلوب» فرُفض حفظ وحدة الإسماعيلية
     $this->actingAs(courtUser());
     $values = courtValues();
     $ids    = array_keys($values);
 
-    $values[$ids[7]] = '';
-    $values[$ids[5]] = '0';
+    $values[$ids[7]] = '';   // ٨٬٠٠٠ ← صفر
+    $values[$ids[5]] = '0';  // ٦٬٠٠٠ ← صفر
 
-    courtEntry($values)->call('review')
-        ->assertHasErrors("items.{$ids[7]}")
-        ->assertHasNoErrors("items.{$ids[5]}");
+    courtEntry($values)->call('save')->assertHasNoErrors();
 
-    expect(FinanceMonth::count())->toBe(0);
+    $month = FinanceMonth::with('items')->sole();
+    expect($month->items)->toHaveCount(8)
+        ->and($month->items->firstWhere('court_building_item_id', $ids[7])->amount)->toBe(0)
+        ->and($month->amount)->toBe((36000 - 8000 - 6000) * 100);
 });
 
-it('لا يحفظ عنصراً مدسوساً، ويبقى المحذوف من المتصفح مطلوباً', function () {
+it('لا يحفظ عنصراً مدسوساً، ويبقى المحذوف من المتصفح في الشهر', function () {
     $this->actingAs(courtUser());
     $values = courtValues();
     $ids    = array_keys($values);
@@ -108,11 +110,14 @@ it('لا يحفظ عنصراً مدسوساً، ويبقى المحذوف من �
     expect(FinanceMonthItem::count())->toBe(8)
         ->and(FinanceMonth::sole()->amount)->toBe(3600000);
 
-    // عنصرٌ أُسقط مفتاحه من المتصفح يبقى مطلوباً (نوفمبر)
-    $c = courtEntry();
+    // عنصرٌ أُسقط مفتاحه من المتصفح يبقى في الشهر — صفراً (نوفمبر)
     $partial = $values;
     unset($partial[$ids[0]]);
-    $c->set('items', $partial)->call('review')->assertHasErrors("items.{$ids[0]}");
+    courtEntry()->set('items', $partial)->call('save')->assertHasNoErrors();
+
+    $november = FinanceMonth::with('items')->orderByDesc('month')->first();
+    expect($november->items)->toHaveCount(8)
+        ->and($november->items->firstWhere('court_building_item_id', $ids[0])->amount)->toBe(0);
 });
 
 it('لا يطلب العنصر المعطَّل في شهرٍ جديد، ويبقى في تصحيح شهرٍ سُجِّل فيه', function () {

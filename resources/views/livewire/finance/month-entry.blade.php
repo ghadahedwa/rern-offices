@@ -116,6 +116,7 @@
                                 <input type="text" inputmode="numeric" dir="ltr" autocomplete="off"
                                        oninput="this.value = this.value.replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d)).replace(/[۰-۹]/g, d => '۰۱۲۳۴۵۶۷۸۹'.indexOf(d)).replace(/[^0-9.,٬،٫]/g, '')"
                                        wire:model.live.debounce.400ms="items.{{ $itemId }}"
+                                       @unless(in_array($itemId, $optionalItemIds, true)) placeholder="0" @endunless
                                        class="w-36 shrink-0 rounded-lg px-3 py-1.5 text-left font-semibold text-zinc-800 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-[#c9a847] {{ $failed ? 'border-2 border-red-300 bg-red-50/40 dark:bg-red-900/20' : 'border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-800' }}" />
                             </label>
                             @error("items.$itemId") <p class="text-red-500 text-xs mt-1 ms-8">{{ $message }}</p> @enderror
