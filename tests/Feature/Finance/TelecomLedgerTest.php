@@ -196,6 +196,20 @@ it('سلسلة كل وحدة مستقلة: رصيد القاهرة لا يغطي
         ->and(telClosing())->toBe(49000);
 });
 
+it('الإيراد والمنصرف المتروكان فارغين يُحفظان صفراً', function () {
+    // طلب المستخدمة 2026-11-26 — كعناصر أبنية المحاكم
+    $this->actingAs(telUser());
+    setOpening();
+
+    telEntry('', '3000')->call('save')->assertHasNoErrors();
+    telEntry('2000', '')->call('save')->assertHasNoErrors();
+
+    $months = FinanceMonth::orderBy('month')->get();
+    expect($months[0]->income)->toBe(0)
+        ->and($months[1]->amount)->toBe(0)
+        ->and($months[1]->income)->toBe(200000);
+});
+
 it('يرفض منصرفاً أكبر من المتاح ويقبل ما يساويه', function () {
     $this->actingAs(telUser());
     setOpening();

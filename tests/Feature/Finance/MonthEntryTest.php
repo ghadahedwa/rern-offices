@@ -116,7 +116,19 @@ it('يرفض السالب والنص وأكثر من قرشين — ولا يح�
     $this->actingAs(entryUser());
 
     filledEntry(amount: $amount)->call('review')->assertHasErrors('amount');
-})->with(['12.555', '1.2.3', '-5', 'ألف', '', '1234567890123']);
+})->with(['12.555', '1.2.3', '-5', 'ألف', '1234567890123']);
+
+it('المبلغ المتروك فارغاً يُحفظ صفراً', function () {
+    // طلب المستخدمة 2026-11-26 — كعناصر أبنية المحاكم، وكان «مطلوب»
+    $this->actingAs(entryUser());
+
+    Livewire::test(MonthEntry::class, ['account' => 'mechanization', 'financeUnit' => finCairo()])
+        ->set('amount', '')
+        ->call('save')
+        ->assertHasNoErrors();
+
+    expect(FinanceMonth::sole()->amount)->toBe(0);
+});
 
 it('يقبل القروش ويحفظها: «12.5» ١٢ جنيهاً و٥٠ قرشاً، والكسر العربي «٫»', function () {
     // طلب المستخدمة 2026-11-25 — التخزين بالقروش (Money)

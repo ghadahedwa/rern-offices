@@ -63,16 +63,16 @@
             <div class="p-6 md:col-span-3 space-y-5">
                 <div class="grid grid-cols-2 gap-4">
                     <div>
-                        <label class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">{{ __('home.fin_income') }} <span class="text-red-500">*</span></label>
+                        <label class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">{{ __('home.fin_income') }}</label>
                         <input type="text" inputmode="numeric" dir="ltr" autocomplete="off" oninput="{{ $digitsOnly }}"
-                               wire:model.live.debounce.400ms="income" style="font-size: 1.4rem"
+                               wire:model.live.debounce.400ms="income" placeholder="0" style="font-size: 1.4rem"
                                class="{{ $numIn }} {{ $errors->has('income') ? 'border-2 border-red-300 bg-red-50/40 dark:bg-red-900/20' : 'border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-800' }}" />
                         @error('income') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">{{ __('home.fin_expense') }} <span class="text-red-500">*</span></label>
+                        <label class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">{{ __('home.fin_expense') }}</label>
                         <input type="text" inputmode="numeric" dir="ltr" autocomplete="off" oninput="{{ $digitsOnly }}"
-                               wire:model.live.debounce.400ms="expense" style="font-size: 1.4rem"
+                               wire:model.live.debounce.400ms="expense" placeholder="0" style="font-size: 1.4rem"
                                class="{{ $numIn }} {{ $negative || $errors->has('expense') ? 'border-2 border-red-300 bg-red-50/40 dark:bg-red-900/20' : 'border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-800' }}" />
                     </div>
                 </div>
@@ -137,12 +137,12 @@
             @else
             {{-- المبلغ --}}
             <div class="p-6 space-y-2">
-                <label class="block text-sm font-medium text-zinc-700 dark:text-zinc-300">{{ __('home.fin_amount_label') }} <span class="text-red-500">*</span></label>
+                <label class="block text-sm font-medium text-zinc-700 dark:text-zinc-300">{{ __('home.fin_amount_label') }}</label>
                 {{-- الحروف تُحذف أثناء الكتابة والأرقام العربية تصير لاتينية (نمط رقم الموتور — ⚠️ لا x-data على حقل wire:model).
                      ⚠️ **النقطة تبقى**: حذفها يجعل «12.5» 125 صامتة — تبقى فيرفضها الخادم برسالة. --}}
                 <input type="text" inputmode="numeric" dir="ltr" autocomplete="off"
                        oninput="this.value = this.value.replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d)).replace(/[۰-۹]/g, d => '۰۱۲۳۴۵۶۷۸۹'.indexOf(d)).replace(/[^0-9.,٬،٫]/g, '')"
-                       wire:model.live.debounce.400ms="amount"
+                       wire:model.live.debounce.400ms="amount" placeholder="0"
                        style="font-size: 1.6rem" class="w-full border border-zinc-300 dark:border-zinc-600 rounded-lg px-4 py-3 font-bold text-left tracking-wide bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-[#c9a847]" />
                 @if($amountWords)
                     <p class="text-sm text-[#b8962e] dark:text-[#d8b856]">{{ $amountWords }}</p>
